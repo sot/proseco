@@ -437,11 +437,13 @@ def get_imposter_stars(dark, star_row, star_col, thresh=None,
                'img_sum': img_sum,
                'mag': mag,
                'mag_err': get_mag_std(mag),
-              }
+               }
         outs.append(out)
 
-    outs = Table(outs)
-    outs.sort('mag')
+    if len(outs) > 0:
+        outs = Table(outs)
+        outs.sort('mag')
+
     return outs
 
 
