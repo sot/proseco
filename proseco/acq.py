@@ -142,9 +142,9 @@ def get_stars(att, date=None, radius=1.2):
 
     # Make printed table look nicer
     for name in ('yang', 'zang', 'row', 'col', 'mag', 'mag_err'):
-        stars[name].info.format = '.2f'
+        stars[name].format = '.2f'
     for name in ('ra', 'dec', 'RA_PMCORR', 'DEC_PMCORR'):
-        stars[name].info.format = '.6f'
+        stars[name].format = '.6f'
 
     # Filter stars in or near ACA FOV
     rcmax = 512.0 + 200 / 5  # 200 arcsec padding around CCD edge
