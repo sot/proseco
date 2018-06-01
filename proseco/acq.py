@@ -21,9 +21,6 @@ BOX_SIZES = np.array([160, 140, 120, 100, 80, 60])  # MUST be descending order
 MAX_CCD_ROW = 512 - 8  # Max allowed row for stars (SOURCE?)
 MAX_CCD_COL = 512 - 1  # Max allow col for stars (SOURCE?)
 
-# Columns that are most useful for printing acq catalog
-STARCAT_COLS = 'idx', 'AGASC_ID', 'yang', 'zang', 'mag', 'mag_err', 'halfw', 'p_acq', 'COLOR1'
-
 P_BIG = 0.01
 P_ANOM = 0.001
 P_NORMAL = 1 - P_BIG - P_ANOM
@@ -34,6 +31,26 @@ P_MAN_ERR_ANGLES = np.array([60,  # Normal
 P_MAN_ERRS = np.array([P_NORMAL,
                        P_BIG / 3, P_BIG / 3, P_BIG / 3,
                        P_ANOM / 2, P_ANOM / 2])
+
+
+class AcqTable(Table):
+    @property
+    def _non_object_table(self):
+        names = [name for name in self.colnames
+                 if self[name].dtype.kind != 'O']
+        return self[names]
+
+    def _repr_html_(self):
+        return Table._repr_html_(self._non_object_table)
+
+    def __repr__(self):
+        return Table.__repr__(self._non_object_table)
+
+    def __str__(self):
+        return Table.__str__(self._non_object_table)
+
+    def __bytes__(self):
+        return Table.__bytes__(self._non_object_table)
 
 
 def get_p_man_err(man_err, man_angle=None):
@@ -196,6 +213,13 @@ def get_acq_candidates(stars, max_candidates=20):
 
     acqs = acqs[goods]
 
+    acqs.rename_column('AGASC_ID', 'id')
+    acqs.rename_column('COLOR1', 'color')
+    # Drop all the other AGASC columns.  No longer useful.
+    names = [name for name in acqs.colnames if not name.isupper()]
+    acqs = AcqTable(acqs[names])
+    # acqs['AGASC_ID'] = acqs['id']
+
     # Make this suitable for plotting
     acqs['idx'] = np.arange(len(acqs))
     acqs['type'] = 'ACQ'
@@ -217,7 +241,7 @@ def get_acq_candidates(stars, max_candidates=20):
     acqs['imposters_box'] = -999.0  # Cached value of box_size + dither for imposters
 
     acqs['p_acq'].format = '.3f'
-    acqs['COLOR1'].format = '.2f'
+    acqs['color'].format = '.2f'
 
     return acqs, bads
 
@@ -251,7 +275,7 @@ def get_spoiler_stars(stars, acq, box_size):
     ok = ((np.abs(stars['yang'] - acq['yang']) < box_size) &
           (np.abs(stars['zang'] - acq['zang']) < box_size) &
           (stars['mag'] - acq['mag'] < 3 * mag_diff_err) &
-          (stars['AGASC_ID'] != acq['AGASC_ID'])
+          (stars['AGASC_ID'] != acq['id'])
           )
     spoilers = stars[ok]
     spoilers.sort('mag')
@@ -638,7 +662,7 @@ def calc_acq_p_vals(acq, box_size, man_err, dither, stars, dark, t_ccd, date):
 
         # Acquisition probability model value (function of box_size only)
         p_acq_model = acq_success_prob(date=date, t_ccd=t_ccd,
-                                       mag=acq['mag'], color=acq['COLOR1'],
+                                       mag=acq['mag'], color=acq['color'],
                                        spoiler=False, halfwidth=box_size)
         acq['p_acq_model'][box_size] = p_acq_model
 
@@ -778,9 +802,9 @@ def optimize_catalog(acqs, verbose=False):
 
     # Now try to swap in a new star from the candidate list and see if
     # it can improve p_safe.
-    acq_ids = set(acqs['AGASC_ID'])
+    acq_ids = set(acqs['id'])
     for cand_acq in acqs.meta['cand_acqs']:
-        cand_id = cand_acq['AGASC_ID']
+        cand_id = cand_acq['id']
         if cand_id in acq_ids:
             continue
         else:

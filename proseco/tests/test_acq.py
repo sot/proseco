@@ -40,7 +40,7 @@ def add_spoiler(stars, acq, dyang, dzang, dmag, mag_err=0.05):
     and mag relative to an ``acq`` star.  Returns a new stars table.
     """
     stars = stars.copy()
-    ok = stars['AGASC_ID'] == acq['AGASC_ID']
+    ok = stars['AGASC_ID'] == acq['id']
     stars.add_row(stars[ok][0])
     star = stars[-1]
     star['AGASC_ID'] = -star['AGASC_ID']
@@ -232,6 +232,6 @@ def test_calc_p_in_box():
 def test_get_acq_catalog():
     """Put it all together.  Mostly a regression test."""
     acqs = get_acq_catalog(21007)
-    assert np.all(acqs['AGASC_ID'] == [189417400, 189410928, 189409160, 189417920,
-                                       189406216, 189417752, 189015480, 189416328])
+    assert np.all(acqs['id'] == [189417400, 189410928, 189409160, 189417920,
+                                 189406216, 189417752, 189015480, 189416328])
     assert np.all(acqs['halfw'] == [160, 160, 160, 120, 60, 100, 60, 60])
