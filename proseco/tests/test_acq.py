@@ -10,6 +10,7 @@ from ..acq import (get_p_man_err, P_NORMAL, P_BIG, P_ANOM, bin2x2,
                    get_imposter_stars, get_stars, get_acq_candidates,
                    get_image_props, calc_p_brightest, BOX_SIZES,
                    calc_p_in_box, MAX_CCD_ROW, MAX_CCD_COL,
+                   get_acq_catalog,
                    )
 
 TEST_DATE = '2018:144'  # Fixed date for doing tests
@@ -226,3 +227,11 @@ def test_calc_p_in_box():
     # Same but for a negative col number
     p_in_boxes = calc_p_in_box(0, -(MAX_CCD_COL - 1), [20])
     assert np.allclose(p_in_boxes, [0.625])
+
+
+def test_get_acq_catalog():
+    """Put it all together.  Mostly a regression test."""
+    acqs = get_acq_catalog(21007)
+    assert np.all(acqs['AGASC_ID'] == [189417400, 189410928, 189409160, 189417920,
+                                       189406216, 189417752, 189015480, 189416328])
+    assert np.all(acqs['halfw'] == [160, 160, 160, 120, 60, 100, 60, 60])
