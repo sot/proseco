@@ -477,7 +477,7 @@ def calc_p_brightest_compare(acq, intruders):
     return prob
 
 
-def get_intruders(acq, box_size, name, get_func, kwargs):
+def get_intruders(acq, box_size, name, n_sigma, get_func, kwargs):
     """
     Get intruders table for name='spoilers' or 'imposters') from ``acq``.
     If not already in acq then call get_func(**kwargs) to get it.
@@ -488,6 +488,14 @@ def get_intruders(acq, box_size, name, get_func, kwargs):
     if acq[name] is None:
         acq[name] = get_func(**kwargs)
         acq[name_box] = box_size
+
+        if len(acq[name]) > 0:
+            # Clip to within n_sigma.  d_mag < 0 for intruder brighter than acq
+            d_mag = acq[name]['mag'] - acq['mag']
+            d_mag_err = np.sqrt(acq[name]['mag_err'] ** 2 + acq['mag_err'] ** 2)
+            ok = d_mag < n_sigma * d_mag_err
+            acq[name] = acq[name][ok]
+
     else:
         # Ensure cached spoilers cover the current case
         if box_size > acq[name_box]:
@@ -519,17 +527,19 @@ def calc_p_brightest(acq, box_size, stars, dark, man_err=0,
     ext_box_size = box_size + man_err
     kwargs = dict(stars=stars, acq=acq, box_size=ext_box_size)
     spoilers = get_intruders(acq, ext_box_size, 'spoilers',
+                             n_sigma=2.0,  # TO DO: put to characteristics
                              get_func=get_spoiler_stars, kwargs=kwargs)
 
     # Imposters
     ext_box_size = box_size + dither
     kwargs = dict(star_row=acq['row'], star_col=acq['col'],
-                  maxmag=acq['mag'] + 1.5,
+                  maxmag=acq['mag'] + acq['mag_err'],  # + 1.5, TO DO: put to characteristics
                   box_size=ext_box_size,
                   dark=dark,
                   bgd=bgd,  # TO DO deal with this
                   )
     imposters = get_intruders(acq, ext_box_size, 'imposters',
+                              n_sigma=1.0,  # TO DO: put to characteristics
                               get_func=get_imposter_stars, kwargs=kwargs)
 
     intruders = vstack([spoilers, imposters])
