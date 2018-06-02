@@ -52,6 +52,37 @@ class AcqTable(Table):
     def __bytes__(self):
         return Table.__bytes__(self._non_object_table)
 
+    def to_struct(self):
+        """Turn table into a list of dict (rows)"""
+        rows = []
+        colnames = self.colnames
+        for row in self:
+            outrow = {}
+            for name in colnames:
+                val = row[name]
+                if isinstance(val, np.ndarray):
+                    if val.ndim == 1:
+                        val = val.item()
+                    else:
+                        # Skip non-scalar values
+                        continue
+                elif isinstance(val, Table):
+                    val = AcqTable.to_struct(val)
+                outrow[name] = val
+            rows.append(outrow)
+        return rows
+
+    @classmethod
+    def from_struct(cls, rows):
+        out = cls(rows)
+        for name in out.colnames:
+            col = out[name]
+            if col.dtype.kind == 'O':
+                for idx, val in enumerate(col):
+                    if isinstance(val, list) and len(val) > 0 and isinstance(val[0], dict):
+                        col[idx] = Table(val)
+        return out
+
 
 def get_p_man_err(man_err, man_angle=None):
     """
@@ -877,3 +908,73 @@ def get_acq_catalog(obsid=None, att=None,
         optimize_catalog(acqs, verbose)
 
     return acqs
+
+
+def plot_acq(acq, vmin=-100, vmax=2000, figsize=(8, 8), r=None, c=None, filename=None):
+    """
+    Plot dark current, relevant boxes, imposters and spoilers.
+    """
+    # Local imports, most use of this module won't need this function
+    import matplotlib.pyplot as plt
+    from matplotlib import patches
+    from chandra_aca.aca_image import ACAImage
+
+    acqs = acq.table  # Parent table of this row
+    drc = int(np.max(BOX_SIZES) / 5 * 2) + 5
+
+    # Make an image of `dark` centered on acq row, col.  Use ACAImage
+    # arithmetic to handle the corner case where row/col are near edge
+    # and a square image goes off the edge.
+    if r is None:
+        r = int(np.round(acq['row']))
+        c = int(np.round(acq['col']))
+    img = ACAImage(np.zeros(shape=(drc * 2, drc * 2)), row0=r - drc, col0=c - drc)
+    dark = ACAImage(acqs.meta['dark'], row0=-512, col0=-512)
+    img += dark.aca
+
+    fig = plt.figure(figsize=figsize)
+    ax = fig.add_subplot(111)
+    ax.imshow(img.transpose(), interpolation='none', cmap='hot', origin='lower',
+              vmin=vmin, vmax=vmax)
+
+    for idx, imp in enumerate(acq['imposters']):
+        r = imp['row0'] - img.row0
+        c = imp['col0'] - img.col0
+        patch = patches.Rectangle((r + 0.5, c + 0.5), 6, 6,
+                                  edgecolor="y", facecolor="none", lw=1.5)
+        ax.add_patch(patch)
+        plt.text(r + 7, c + 7, str(idx), color='y', fontsize='large')
+
+    rc = img.shape[0] // 2 + 0.5
+    cc = img.shape[1] // 2 + 0.5
+    exts = np.array([0, 60, 120, 160])
+    labels = ['Search', 'Normal', 'Big', 'Anomalous']
+    for ext, label in zip(exts, labels):
+        hw = acq['halfw'] + ext
+        hwp = hw / 5
+        lw = 3 if ext == 0 else 1
+        patch = patches.Rectangle((rc - hwp, cc - hwp), hwp * 2, hwp * 2, edgecolor='r',
+                                  facecolor='none', lw=lw, alpha=1)
+        ax.add_patch(patch)
+        plt.text(rc - hwp + 1, cc - hwp + 1, label, color='y', fontsize='large')
+
+    for idx, sp in enumerate(acq['spoilers']):
+        r = sp['row'] - img.row0
+        c = sp['col'] - img.col0
+        patch = patches.Circle((r + 0.5, c + 0.5), 2, edgecolor="y", facecolor="none", lw=3)
+        ax.add_patch(patch)
+        plt.text(r + 3, c + 3, str(idx), color='y')
+
+    # Hack to fix up ticks to have proper row/col coords.  There must be a
+    # correct way to do this.
+    xticks = [str(int(label) + img.row0) for label in ax.get_xticks().tolist()]
+    ax.set_xticklabels(xticks)
+    ax.set_xlabel('Row')
+    yticks = [str(int(label) + img.col0) for label in ax.get_yticks().tolist()]
+    ax.set_yticklabels(yticks)
+    ax.set_ylabel('Column')
+
+    if filename is not None:
+        plt.savefig(filename)
+
+    return img, ax
