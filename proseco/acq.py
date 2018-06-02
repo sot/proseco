@@ -910,7 +910,7 @@ def get_acq_catalog(obsid=None, att=None,
     return acqs
 
 
-def plot_acq(acq, vmin=-100, vmax=2000, figsize=(8, 8), r=None, c=None, filename=None):
+def plot_acq(acq, vmin=100, vmax=2000, figsize=(8, 8), r=None, c=None, filename=None):
     """
     Plot dark current, relevant boxes, imposters and spoilers.
     """
