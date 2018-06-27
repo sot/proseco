@@ -906,6 +906,8 @@ def get_acq_catalog(obsid=None, att=None,
     if optimize:
         optimize_catalog(acqs, verbose)
 
+    acqs['slot'] = np.arange(len(acqs))
+
     return acqs
 
 
