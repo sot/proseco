@@ -1,7 +1,7 @@
 # coding: utf-8
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-from __future__ import division, print_function  # For Py2 compatibility
+from __future__ import division, print_function, absolute_import  # For Py2 compatibility
 
 import numpy as np
 
@@ -15,22 +15,9 @@ from astropy.table import Table, Column, vstack
 from Quaternion import Quat
 from scipy import ndimage, stats
 from scipy.interpolate import interp1d
+from mica.cache import lru_cache
 
-
-BOX_SIZES = np.array([160, 140, 120, 100, 80, 60])  # MUST be descending order
-MAX_CCD_ROW = 512 - 8  # Max allowed row for stars (SOURCE?)
-MAX_CCD_COL = 512 - 1  # Max allow col for stars (SOURCE?)
-
-P_BIG = 0.01
-P_ANOM = 0.001
-P_NORMAL = 1 - P_BIG - P_ANOM
-P_MAN_ERR_ANGLES = np.array([60,  # Normal
-                             80, 100, 120,  # Big
-                             140, 160  # Anomalous
-                             ], dtype=float)
-P_MAN_ERRS = np.array([P_NORMAL,
-                       P_BIG / 3, P_BIG / 3, P_BIG / 3,
-                       P_ANOM / 2, P_ANOM / 2])
+from . import characteristics as CHAR
 
 
 class AcqTable(Table):
@@ -84,7 +71,7 @@ class AcqTable(Table):
         return out
 
 
-def get_p_man_err(man_err, man_angle=None):
+def get_p_man_err(man_err, man_angle):
     """
     Probability for given ``man_err`` given maneuver angle ``man_angle``.
 
@@ -94,13 +81,16 @@ def get_p_man_err(man_err, man_angle=None):
     For maneuvers 2-10 degrees make p_big be 0.001 and p_anom=0.0.  Some
     analysis needs to go into this.
     """
-    if man_err > P_MAN_ERR_ANGLES[-1]:
-        raise ValueError('man_err must be <= {}'.format(P_MAN_ERR_ANGLES[-1]))
+    pmea = CHAR.p_man_errs_angles  # [0, 5, 20, 40, 60, 80, 100, 120, 180]
+    pme = CHAR.p_man_errs
+    man_angle_idx = np.searchsorted(pmea, man_angle) if (man_angle > 0) else 1
+    name = '{}-{}'.format(pmea[man_angle_idx - 1], pmea[man_angle_idx])
 
-    # Find largest idx with man_err <= P_MAN_ERR_ANGLES[idx]
-    idx = np.searchsorted(P_MAN_ERR_ANGLES, man_err)
+    man_err_idx = np.searchsorted(pme['man_err_hi'], man_err)
+    if man_err_idx == len(pme):
+        raise ValueError('man_err must be <= {}'.format(pme['man_err_hi']))
 
-    return P_MAN_ERRS[idx]
+    return pme[name][man_err_idx]
 
 
 # AGASC columns not needed (at this moment) for acq star selection.
@@ -213,8 +203,8 @@ def get_acq_candidates(stars, max_candidates=20):
           (stars['MAG_ACA'] > 5.9) &
           (stars['MAG_ACA'] < 11.0) &
           (~np.isclose(stars['COLOR1'], 0.7)) &
-          (np.abs(stars['row']) < MAX_CCD_ROW) &  # Max usable row
-          (np.abs(stars['col']) < MAX_CCD_COL) &  # Max usable col
+          (np.abs(stars['row']) < CHAR.max_ccd_row) &  # Max usable row
+          (np.abs(stars['col']) < CHAR.max_ccd_col) &  # Max usable col
           (stars['MAG_ACA_ERR'] < 100) &  # Mag err < 1.0 mag
           (stars['ASPQ1'] < 20) &  # Less than 1 arcsec offset from nearby spoiler
           (stars['ASPQ2'] == 0) &  # Proper motion less than 0.5 arcsec/yr
@@ -627,8 +617,8 @@ def calc_p_in_box(row, col, box_sizes):
         p_in_box = 1.0
         half_width = box_size / 5  # half width of box in pixels
         full_width = half_width * 2
-        for rc, max_rc in ((row, MAX_CCD_ROW),
-                           (col, MAX_CCD_COL)):
+        for rc, max_rc in ((row, CHAR.max_ccd_row),
+                           (col, CHAR.max_ccd_col)):
 
             # Pixel boundaries are symmetric so just take abs(row/col)
             rc1 = abs(rc) + half_width
@@ -665,7 +655,7 @@ def select_best_p_acqs(p_acqs, min_p_acq, acq_indices, box_sizes):
     min_p_acq to fill out the catalog.  The acq_indices and box_sizes
     arrays are appended in place in this process.
     """
-    for box_size in BOX_SIZES:
+    for box_size in CHAR.box_sizes:
         # Get array of p_acq values corresponding to box_size and
         # man_err=box_size, for each of the candidate acq stars.
         p_acqs_for_box = np.array([p_acq[box_size, box_size] for p_acq in p_acqs])
@@ -710,7 +700,7 @@ def get_initial_catalog(cand_acqs, stars, dark, dither=20, t_ccd=-11.0, date=Non
     Get the initial catalog of up to 8 candidate acquisition stars.
     """
     for acq in cand_acqs:
-        for box_size in BOX_SIZES:
+        for box_size in CHAR.box_sizes:
             # For initial catalog set man_err to box_size.  TO DO: set man_err to 160 here??
             man_err = box_size
             calc_acq_p_vals(acq, box_size, man_err, dither, stars, dark, t_ccd, date)
@@ -735,7 +725,8 @@ def get_initial_catalog(cand_acqs, stars, dark, dither=20, t_ccd=-11.0, date=Non
 def calc_p_safe(acqs, verbose=False):
     p_no_safe = 1.0
 
-    for man_err, p_man_err in zip(P_MAN_ERR_ANGLES, P_MAN_ERRS):
+    for man_err in CHAR.p_man_errs['man_err_hi']:
+        p_man_err = get_p_man_err(man_err, acqs.meta['man_angle'])
         if verbose:
             print('man_err = {}'.format(man_err))
         p_acqs = []
@@ -775,13 +766,13 @@ def optimize_acq_halfw(acqs, idx, p_safe, verbose=False):
     orig_halfw = acq['halfw']
 
     p_safes = []
-    for box_size in BOX_SIZES:
+    for box_size in CHAR.box_sizes:
         acq['halfw'] = box_size
         p_safes.append(calc_p_safe(acqs))
 
     min_idx = np.argmin(p_safes)
     min_p_safe = p_safes[min_idx]
-    min_halfw = BOX_SIZES[min_idx]
+    min_halfw = CHAR.box_sizes[min_idx]
 
     # If p_safe went down, then consider this an improvement if either:
     #   - acq halfw is increased (bigger boxes are better)
@@ -870,23 +861,31 @@ def optimize_catalog(acqs, verbose=False):
             acqs[idx] = orig_acq
 
 
+@lru_cache(300)
 def get_acq_catalog(obsid=None, att=None,
-                    man_err_mp=50.0, t_ccd=-11.0, date=None, dither=20,
+                    man_angle=None, t_ccd=None, date=None, dither=None,
                     optimize=True, verbose=False):
     if obsid is not None:
         from mica.starcheck import get_starcheck_catalog
         obs = get_starcheck_catalog(obsid)
         obso = obs['obs']
-        att = [obso['point_ra'], obso['point_dec'], obso['point_roll']]
-        date = obso['mp_starcat_time']
-        t_ccd = obs['pred_temp']
-        man_err_mp = obs['manvr']['slew_err_arcsec'][0]
+
+        if att is None:
+            att = [obso['point_ra'], obso['point_dec'], obso['point_roll']]
+        if date is None:
+            date = obso['mp_starcat_time']
+        if t_ccd is None:
+            t_ccd = obs['pred_temp']
+        if man_angle is None:
+            man_angle = obs['manvr']['angle_deg'][0]
 
         # TO DO: deal with non-square dither pattern, esp. 8 x 64.
         dither_y_amp = obso.get('dither_y_amp')
         dither_z_amp = obso.get('dither_z_amp')
         if dither_y_amp is not None and dither_z_amp is not None:
             dither = max(dither_y_amp, dither_z_amp)
+        if dither is None:
+            dither = 20
 
     dark = get_dark_cal_image(date=date, select='nearest', t_ccd_ref=t_ccd)
     stars = get_stars(att)
@@ -896,7 +895,7 @@ def get_acq_catalog(obsid=None, att=None,
     acqs.meta = {'att': att,
                  'date': date,
                  't_ccd': t_ccd,
-                 'man_err_mp': man_err_mp,
+                 'man_angle': man_angle,
                  'dither': dither,
                  'cand_acqs': cand_acqs,
                  'stars': stars,
@@ -920,7 +919,7 @@ def plot_acq(acq, vmin=100, vmax=2000, figsize=(8, 8), r=None, c=None, filename=
     from chandra_aca.aca_image import ACAImage
 
     acqs = acq.table  # Parent table of this row
-    drc = int(np.max(BOX_SIZES) / 5 * 2) + 5
+    drc = int(np.max(CHAR.box_sizes) / 5 * 2) + 5
 
     # Make an image of `dark` centered on acq row, col.  Use ACAImage
     # arithmetic to handle the corner case where row/col are near edge
