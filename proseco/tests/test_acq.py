@@ -6,10 +6,10 @@ import numpy as np
 from chandra_aca.aca_image import AcaPsfLibrary
 from chandra_aca.transform import mag_to_count_rate, yagzag_to_pixels
 
-from ..acq import (get_p_man_err, P_NORMAL, P_BIG, P_ANOM, bin2x2,
+from ..acq import (get_p_man_err, bin2x2, CHAR,
                    get_imposter_stars, get_stars, get_acq_candidates,
-                   get_image_props, calc_p_brightest, BOX_SIZES,
-                   calc_p_in_box, MAX_CCD_ROW, MAX_CCD_COL,
+                   get_image_props, calc_p_brightest,
+                   calc_p_in_box,
                    get_acq_catalog,
                    )
 
@@ -213,20 +213,23 @@ def test_calc_p_brightest_1mag_brighter():
 
 def test_calc_p_in_box():
     # Halfway off in both row and col, (1/4 of area remaining)
-    p_in_boxes = calc_p_in_box(MAX_CCD_ROW, MAX_CCD_COL, [60, 120])
-    assert np.allclose(p_in_boxes, [0.25, 0.25])
+    p_in_box = calc_p_in_box(CHAR.max_ccd_row, CHAR.max_ccd_col, 60)
+    assert np.allclose(p_in_box, 0.25)
+
+    p_in_box = calc_p_in_box(CHAR.max_ccd_row, CHAR.max_ccd_col, 120)
+    assert np.allclose(p_in_box, 0.25)
 
     # 3 of 8 pixels off in row (5/8 of area remaining)
-    p_in_boxes = calc_p_in_box(MAX_CCD_ROW - 1, 0, [20])
-    assert np.allclose(p_in_boxes, [0.625])
+    p_in_box = calc_p_in_box(CHAR.max_ccd_row - 1, 0, 20)
+    assert np.allclose(p_in_box, 0.625)
 
     # Same but for col
-    p_in_boxes = calc_p_in_box(0, MAX_CCD_COL - 1, [20])
-    assert np.allclose(p_in_boxes, [0.625])
+    p_in_box = calc_p_in_box(0, CHAR.max_ccd_col - 1, 20)
+    assert np.allclose(p_in_box, 0.625)
 
     # Same but for a negative col number
-    p_in_boxes = calc_p_in_box(0, -(MAX_CCD_COL - 1), [20])
-    assert np.allclose(p_in_boxes, [0.625])
+    p_in_box = calc_p_in_box(0, -(CHAR.max_ccd_col - 1), 20)
+    assert np.allclose(p_in_box, 0.625)
 
 
 def test_get_acq_catalog():

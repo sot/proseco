@@ -602,39 +602,33 @@ def broadcast_arrays(*args):
     return outs
 
 
-def calc_p_in_box(row, col, box_sizes):
+def calc_p_in_box(row, col, box_size):
     """
-    Calculate the probability that star is in the search box.
+    Calculate the probability that star is in the box.
 
     This uses a simplistic calculation which assumes that ``p_in_box`` is
-    just the fraction of search box area that is within the usable portion
+    just the fraction of box area that is within the usable portion
     of the CCD, regardless of ``man_err``.
     """
-    p_in_boxes = []
-    is_scalar, box_sizes = broadcast_arrays(np.array(box_sizes))
+    p_in_box = 1.0
+    half_width = box_size / 5  # half width of box in pixels
+    full_width = half_width * 2
+    for rc, max_rc in ((row, CHAR.max_ccd_row),
+                       (col, CHAR.max_ccd_col)):
 
-    for box_size in box_sizes:
-        p_in_box = 1.0
-        half_width = box_size / 5  # half width of box in pixels
-        full_width = half_width * 2
-        for rc, max_rc in ((row, CHAR.max_ccd_row),
-                           (col, CHAR.max_ccd_col)):
+        # Pixel boundaries are symmetric so just take abs(row/col)
+        rc1 = abs(rc) + half_width
 
-            # Pixel boundaries are symmetric so just take abs(row/col)
-            rc1 = abs(rc) + half_width
+        pix_off_ccd = rc1 - max_rc
+        if pix_off_ccd > 0:
+            # Reduce p_in_box by fraction of pixels inside usable area.
+            pix_inside = full_width - pix_off_ccd
+            if pix_inside > 0:
+                p_in_box *= pix_inside / full_width
+            else:
+                p_in_box = 0.0
 
-            pix_off_ccd = rc1 - max_rc
-            if pix_off_ccd > 0:
-                # Reduce p_in_box by fraction of pixels inside usable area.
-                pix_inside = full_width - pix_off_ccd
-                if pix_inside > 0:
-                    p_in_box *= pix_inside / full_width
-                else:
-                    p_in_box = 0.0
-
-        p_in_boxes.append(p_in_box)
-
-    return p_in_boxes[0] if is_scalar else p_in_boxes
+    return p_in_box
 
 
 def select_best_p_acqs(p_acqs, min_p_acq, acq_indices, box_sizes):
