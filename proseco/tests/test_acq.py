@@ -189,7 +189,7 @@ def test_calc_p_brightest_same_bright():
     stars_sp = add_spoiler(stars, acq, dyang=65, dzang=65, dmag=0.0, mag_err=mag_err)
     stars_sp = add_spoiler(stars_sp, acq, dyang=85, dzang=0, dmag=0.0, mag_err=mag_err)
     probs = [calc_p_brightest(acq, box_size, stars_sp, dark_imp, dither=0, bgd=bgd)
-             for box_size in BOX_SIZES]
+             for box_size in CHAR.box_sizes]
 
     #  Box size:                160   140   120    100   80   60  arcsec
     assert np.allclose(probs, [0.25, 0.25, 0.25, 0.3334, 0.5, 1.0], rtol=0, atol=0.01)
