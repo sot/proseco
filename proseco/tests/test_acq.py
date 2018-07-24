@@ -2,6 +2,7 @@
 from __future__ import division, print_function  # For Py2 compatibility
 
 import numpy as np
+import pytest
 
 from chandra_aca.aca_image import AcaPsfLibrary
 from chandra_aca.transform import mag_to_count_rate, yagzag_to_pixels
@@ -58,17 +59,31 @@ def add_spoiler(stars, acq, dyang, dzang, dmag, mag_err=0.05):
 
 
 def test_get_p_man_err():
-    assert get_p_man_err(30) == P_NORMAL
-    assert get_p_man_err(60.0) == P_NORMAL
-    assert np.isclose(get_p_man_err(60.001), P_BIG / 3)
-    assert np.isclose(get_p_man_err(120), P_BIG / 3)
-    assert np.isclose(get_p_man_err(160.0), P_ANOM / 2)
-    try:
-        get_p_man_err(170)
-    except ValueError:
-        pass
-    else:
-        assert False
+    # P_man_errs is a table that defines the probability of a maneuver error being
+    # within a defined lo/hi bin [arcsec] given a maneuver angle [deg] within a
+    # bin range.  The first two columns specify the maneuver error bins and the
+    # subsequent column names give the maneuver angle bin in the format
+    # <angle_lo>-<angle_hi>.  The source table does not include the row for
+    # the 0-60 man err case: this is generated automatically from the other
+    # values so the sum is 1.0.
+    #
+    # man_err_lo man_err_hi 0-5 5-20 20-40 40-60 60-80 80-100 100-120 120-180
+    # ---------- ---------- --- ---- ----- ----- ----- ------ ------- -------
+    #         60         80 0.1  0.2   0.5   0.6   1.6    4.0     8.0     8.0
+    #         80        100 0.0  0.1   0.2   0.3   0.5    1.2     2.4     2.4
+    #        100        120 0.0  0.0   0.1   0.2   0.3    0.8     0.8     0.8
+    #        120        140 0.0  0.0  0.05  0.05   0.2    0.4     0.4     0.4
+    #        140        160 0.0  0.0  0.05  0.05   0.2    0.2     0.2     0.4
+
+    assert get_p_man_err(man_err=30, man_angle=0) == 0.999  # 1 - 0.1%
+    assert get_p_man_err(60, 0) == 0.999  # Exactly 60 is in 0-60 bin
+    assert get_p_man_err(60.00001, 0) == 0.001  # Just over 60 in 60-80 bin
+    assert get_p_man_err(30, 5) == 1 - 0.001  # [0-5 deg bin]
+    assert get_p_man_err(30, 5.0001) == 1 - (0.001 + 0.002)  # [5-20 deg bin]
+    assert get_p_man_err(60.0001, 6) == 0.002  # + 0.001) [5-20 deg bin]
+    assert get_p_man_err(60.0001, 0) == 0.001  # Just over 60 in 60-80 bin
+    with pytest.raises(ValueError):
+        get_p_man_err(170, 30)
 
 
 def test_bin2x2():
