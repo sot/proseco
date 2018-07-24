@@ -9,7 +9,7 @@ from chandra_aca.transform import mag_to_count_rate, yagzag_to_pixels
 from ..acq import (get_p_man_err, bin2x2, CHAR,
                    get_imposter_stars, get_stars, get_acq_candidates,
                    get_image_props, calc_p_brightest,
-                   calc_p_in_box,
+                   calc_p_on_ccd,
                    get_acq_catalog,
                    )
 
@@ -211,24 +211,29 @@ def test_calc_p_brightest_1mag_brighter():
     assert np.allclose(probs, [0.0, 1.0], rtol=0, atol=0.001)
 
 
-def test_calc_p_in_box():
+def test_calc_p_on_ccd():
+    # These lines mimic the code in calc_p_on_ccd() which requires that
+    # track readout box is fully within the usable part of CCD.
+    max_ccd_row = CHAR.max_ccd_row - 5
+    max_ccd_col = CHAR.max_ccd_col - 4
+
     # Halfway off in both row and col, (1/4 of area remaining)
-    p_in_box = calc_p_in_box(CHAR.max_ccd_row, CHAR.max_ccd_col, 60)
+    p_in_box = calc_p_on_ccd(max_ccd_row, max_ccd_col, 60)
     assert np.allclose(p_in_box, 0.25)
 
-    p_in_box = calc_p_in_box(CHAR.max_ccd_row, CHAR.max_ccd_col, 120)
+    p_in_box = calc_p_on_ccd(max_ccd_row, max_ccd_col, 120)
     assert np.allclose(p_in_box, 0.25)
 
     # 3 of 8 pixels off in row (5/8 of area remaining)
-    p_in_box = calc_p_in_box(CHAR.max_ccd_row - 1, 0, 20)
+    p_in_box = calc_p_on_ccd(max_ccd_row - 1, 0, 20)
     assert np.allclose(p_in_box, 0.625)
 
     # Same but for col
-    p_in_box = calc_p_in_box(0, CHAR.max_ccd_col - 1, 20)
+    p_in_box = calc_p_on_ccd(0, max_ccd_col - 1, 20)
     assert np.allclose(p_in_box, 0.625)
 
     # Same but for a negative col number
-    p_in_box = calc_p_in_box(0, -(CHAR.max_ccd_col - 1), 20)
+    p_in_box = calc_p_on_ccd(0, -(max_ccd_col - 1), 20)
     assert np.allclose(p_in_box, 0.625)
 
 

@@ -602,19 +602,37 @@ def broadcast_arrays(*args):
     return outs
 
 
-def calc_p_in_box(row, col, box_size):
+def calc_p_on_ccd(row, col, box_size):
     """
-    Calculate the probability that star is in the box.
+    Calculate the probability that star and initial tracked readout box
+    are fully within the usable part of the CCD.
+
+    Note that ``box_size`` here is not a search box size, it is normally
+    ``man_err + dither`` and reflects the size of the box where the star can
+    land on the CCD.  This is independent of the search box size, but does
+    assume that man_err < search box size.  This is always valid because
+    this function only gets called in that case (otherwise p_acq is just
+    set to 0.0 in calc_p_safe.  Dither does not enter into the
+    ``man_err < search box size`` relation because the OBC accounts for
+    dither when setting the search box position.
 
     This uses a simplistic calculation which assumes that ``p_in_box`` is
-    just the fraction of box area that is within the usable portion
-    of the CCD, regardless of ``man_err``.
+    just the fraction of box area that is within the effective usable portion
+    of the CCD.
     """
     p_in_box = 1.0
     half_width = box_size / 5  # half width of box in pixels
     full_width = half_width * 2
-    for rc, max_rc in ((row, CHAR.max_ccd_row),
-                       (col, CHAR.max_ccd_col)):
+
+    # Require that the readout box when candidate acq star is evaluated
+    # by the PEA (via a normal 8x8 readout) is fully on the CCD usable area.
+    # Do so by reducing the effective CCD usable area by the readout
+    # halfwidth (noting that there is a leading row before 8x8).
+    max_ccd_row = CHAR.max_ccd_row - 5
+    max_ccd_col = CHAR.max_ccd_col - 4
+
+    for rc, max_rc in ((row, max_ccd_row),
+                       (col, max_ccd_col)):
 
         # Pixel boundaries are symmetric so just take abs(row/col)
         rc1 = abs(rc) + half_width
@@ -682,7 +700,7 @@ def calc_acq_p_vals(acq, box_size, man_err, dither, stars, dark, t_ccd, date):
         acq['p_acq_model'][box_size] = p_acq_model
 
         # Probability star is in acq box (function of box_size only)
-        p_in_box = calc_p_in_box(acq['row'], acq['col'], box_sizes=box_size)
+        p_in_box = calc_p_on_ccd(acq['row'], acq['col'], box_size=man_err + dither)
         acq['p_in_box'][box_size] = p_in_box
 
         # All together now!
