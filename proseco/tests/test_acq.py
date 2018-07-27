@@ -12,6 +12,7 @@ from ..acq import (get_p_man_err, bin2x2, CHAR,
                    get_image_props, calc_p_brightest,
                    calc_p_on_ccd,
                    get_acq_catalog,
+                   AcqTable,
                    )
 
 TEST_DATE = '2018:144'  # Fixed date for doing tests
@@ -153,14 +154,16 @@ def test_get_imposters_5000():
 
 def get_test_stars():
     if 'stars' not in CACHE:
-        CACHE['stars'] = get_stars(ATT)
+        acqs = AcqTable()
+        CACHE['stars'] = get_stars(acqs, ATT)
     return CACHE['stars']
 
 
 def get_test_cand_acqs():
     if 'cand_acqs' not in CACHE:
+        acqs = AcqTable()
         stars = get_test_stars()
-        CACHE['cand_acqs'], bads = get_acq_candidates(stars)
+        CACHE['cand_acqs'], bads = get_acq_candidates(acqs, stars)
         # Don't care about bads for testing
     return CACHE['cand_acqs'].copy()
 
