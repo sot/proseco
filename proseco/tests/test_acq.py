@@ -2,14 +2,15 @@
 from __future__ import division, print_function  # For Py2 compatibility
 
 import numpy as np
+import pytest
 
 from chandra_aca.aca_image import AcaPsfLibrary
 from chandra_aca.transform import mag_to_count_rate, yagzag_to_pixels
 
-from ..acq import (get_p_man_err, P_NORMAL, P_BIG, P_ANOM, bin2x2,
+from ..acq import (get_p_man_err, bin2x2, CHAR,
                    get_imposter_stars, get_stars, get_acq_candidates,
-                   get_image_props, calc_p_brightest, BOX_SIZES,
-                   calc_p_in_box, MAX_CCD_ROW, MAX_CCD_COL,
+                   get_image_props, calc_p_brightest,
+                   calc_p_on_ccd,
                    get_acq_catalog,
                    )
 
@@ -58,17 +59,31 @@ def add_spoiler(stars, acq, dyang, dzang, dmag, mag_err=0.05):
 
 
 def test_get_p_man_err():
-    assert get_p_man_err(30) == P_NORMAL
-    assert get_p_man_err(60.0) == P_NORMAL
-    assert np.isclose(get_p_man_err(60.001), P_BIG / 3)
-    assert np.isclose(get_p_man_err(120), P_BIG / 3)
-    assert np.isclose(get_p_man_err(160.0), P_ANOM / 2)
-    try:
-        get_p_man_err(170)
-    except ValueError:
-        pass
-    else:
-        assert False
+    # P_man_errs is a table that defines the probability of a maneuver error being
+    # within a defined lo/hi bin [arcsec] given a maneuver angle [deg] within a
+    # bin range.  The first two columns specify the maneuver error bins and the
+    # subsequent column names give the maneuver angle bin in the format
+    # <angle_lo>-<angle_hi>.  The source table does not include the row for
+    # the 0-60 man err case: this is generated automatically from the other
+    # values so the sum is 1.0.
+    #
+    # man_err_lo man_err_hi 0-5 5-20 20-40 40-60 60-80 80-100 100-120 120-180
+    # ---------- ---------- --- ---- ----- ----- ----- ------ ------- -------
+    #         60         80 0.1  0.2   0.5   0.6   1.6    4.0     8.0     8.0
+    #         80        100 0.0  0.1   0.2   0.3   0.5    1.2     2.4     2.4
+    #        100        120 0.0  0.0   0.1   0.2   0.3    0.8     0.8     0.8
+    #        120        140 0.0  0.0  0.05  0.05   0.2    0.4     0.4     0.4
+    #        140        160 0.0  0.0  0.05  0.05   0.2    0.2     0.2     0.4
+
+    assert get_p_man_err(man_err=30, man_angle=0) == 0.999  # 1 - 0.1%
+    assert get_p_man_err(60, 0) == 0.999  # Exactly 60 is in 0-60 bin
+    assert get_p_man_err(60.00001, 0) == 0.001  # Just over 60 in 60-80 bin
+    assert get_p_man_err(30, 5) == 1 - 0.001  # [0-5 deg bin]
+    assert get_p_man_err(30, 5.0001) == 1 - (0.001 + 0.002)  # [5-20 deg bin]
+    assert get_p_man_err(60.0001, 6) == 0.002  # + 0.001) [5-20 deg bin]
+    assert get_p_man_err(60.0001, 0) == 0.001  # Just over 60 in 60-80 bin
+    with pytest.raises(ValueError):
+        get_p_man_err(170, 30)
 
 
 def test_bin2x2():
@@ -174,7 +189,7 @@ def test_calc_p_brightest_same_bright():
     stars_sp = add_spoiler(stars, acq, dyang=65, dzang=65, dmag=0.0, mag_err=mag_err)
     stars_sp = add_spoiler(stars_sp, acq, dyang=85, dzang=0, dmag=0.0, mag_err=mag_err)
     probs = [calc_p_brightest(acq, box_size, stars_sp, dark_imp, dither=0, bgd=bgd)
-             for box_size in BOX_SIZES]
+             for box_size in CHAR.box_sizes]
 
     #  Box size:                160   140   120    100   80   60  arcsec
     assert np.allclose(probs, [0.25, 0.25, 0.25, 0.3334, 0.5, 1.0], rtol=0, atol=0.01)
@@ -211,22 +226,30 @@ def test_calc_p_brightest_1mag_brighter():
     assert np.allclose(probs, [0.0, 1.0], rtol=0, atol=0.001)
 
 
-def test_calc_p_in_box():
+def test_calc_p_on_ccd():
+    # These lines mimic the code in calc_p_on_ccd() which requires that
+    # track readout box is fully within the usable part of CCD.
+    max_ccd_row = CHAR.max_ccd_row - 5
+    max_ccd_col = CHAR.max_ccd_col - 4
+
     # Halfway off in both row and col, (1/4 of area remaining)
-    p_in_boxes = calc_p_in_box(MAX_CCD_ROW, MAX_CCD_COL, [60, 120])
-    assert np.allclose(p_in_boxes, [0.25, 0.25])
+    p_in_box = calc_p_on_ccd(max_ccd_row, max_ccd_col, 60)
+    assert np.allclose(p_in_box, 0.25)
+
+    p_in_box = calc_p_on_ccd(max_ccd_row, max_ccd_col, 120)
+    assert np.allclose(p_in_box, 0.25)
 
     # 3 of 8 pixels off in row (5/8 of area remaining)
-    p_in_boxes = calc_p_in_box(MAX_CCD_ROW - 1, 0, [20])
-    assert np.allclose(p_in_boxes, [0.625])
+    p_in_box = calc_p_on_ccd(max_ccd_row - 1, 0, 20)
+    assert np.allclose(p_in_box, 0.625)
 
     # Same but for col
-    p_in_boxes = calc_p_in_box(0, MAX_CCD_COL - 1, [20])
-    assert np.allclose(p_in_boxes, [0.625])
+    p_in_box = calc_p_on_ccd(0, max_ccd_col - 1, 20)
+    assert np.allclose(p_in_box, 0.625)
 
     # Same but for a negative col number
-    p_in_boxes = calc_p_in_box(0, -(MAX_CCD_COL - 1), [20])
-    assert np.allclose(p_in_boxes, [0.625])
+    p_in_box = calc_p_on_ccd(0, -(max_ccd_col - 1), 20)
+    assert np.allclose(p_in_box, 0.625)
 
 
 def test_get_acq_catalog():
@@ -234,4 +257,4 @@ def test_get_acq_catalog():
     acqs = get_acq_catalog(21007)
     assert np.all(acqs['id'] == [189417400, 189410928, 189409160, 189417920,
                                  189406216, 189417752, 189015480, 189416328])
-    assert np.all(acqs['halfw'] == [160, 160, 160, 120, 60, 100, 60, 60])
+    assert np.all(acqs['halfw'] == [160, 160, 160, 160, 60, 100, 60, 60])
