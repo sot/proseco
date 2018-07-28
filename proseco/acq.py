@@ -281,7 +281,7 @@ def get_acq_candidates(acqs, stars, max_candidates=20):
     cand_acqs['p_acqs'] = empty_dicts()  # Dict keyed on (box_size, man_err) (mult next 3)
     cand_acqs['p_brightest'] = empty_dicts()  # Dict keyed on (box_size, man_err)
     cand_acqs['p_acq_model'] = empty_dicts()  # Dict keyed on box_size
-    cand_acqs['p_in_box'] = empty_dicts()  # Dict keyed on box_size
+    cand_acqs['p_on_ccd'] = empty_dicts()  # Dict keyed on box_size
 
     cand_acqs['spoilers'] = None  # Filled in with Table of spoilers
     cand_acqs['imposters'] = None  # Filled in with Table of imposters
@@ -643,11 +643,11 @@ def calc_p_on_ccd(row, col, box_size):
     ``man_err < search box size`` relation because the OBC accounts for
     dither when setting the search box position.
 
-    This uses a simplistic calculation which assumes that ``p_in_box`` is
+    This uses a simplistic calculation which assumes that ``p_on_ccd`` is
     just the fraction of box area that is within the effective usable portion
     of the CCD.
     """
-    p_in_box = 1.0
+    p_on_ccd = 1.0
     half_width = box_size / 5  # half width of box in pixels
     full_width = half_width * 2
 
@@ -666,14 +666,14 @@ def calc_p_on_ccd(row, col, box_size):
 
         pix_off_ccd = rc1 - max_rc
         if pix_off_ccd > 0:
-            # Reduce p_in_box by fraction of pixels inside usable area.
+            # Reduce p_on_ccd by fraction of pixels inside usable area.
             pix_inside = full_width - pix_off_ccd
             if pix_inside > 0:
-                p_in_box *= pix_inside / full_width
+                p_on_ccd *= pix_inside / full_width
             else:
-                p_in_box = 0.0
+                p_on_ccd = 0.0
 
-    return p_in_box
+    return p_on_ccd
 
 
 def select_best_p_acqs(acqs, p_acqs, min_p_acq, acq_indices, box_sizes):
@@ -720,6 +720,30 @@ def select_best_p_acqs(acqs, p_acqs, min_p_acq, acq_indices, box_sizes):
 
 
 def calc_acq_p_vals(acq, box_size, man_err, dither, stars, dark, t_ccd, date):
+    """
+    Calculate probabilities related to acquisition, in particular an element
+    in the ``p_acqs`` matrix which specifies star acquisition probability
+    for given search box size and maneuver error.
+
+    This updates the ``acq`` row in place, including these columns:
+
+    - ``p_brightest``: probability this star is the brightest in box (function
+        of ``box_size`` and ``man_err``)
+    - ``p_acq_model``: probability of acquisition from the chandra_aca model
+        (function of ``box_size``)
+    - ``p_on_ccd``: probability star is on the usable part of the CCD (function
+        of ``man_err`` and ``dither``)
+    - ``p_acqs``: product of the above three
+
+    :param acq: row in the acqs table
+    :param box_size: search box size (arcsec)
+    :param man_err: maneuver error (arcsec)
+    :param dither: dither (arcsec)
+    :param stars: stars table
+    :param dark: dark current map
+    :param t_ccd: CCD temperature (degC)
+    :param date: observation date
+    """
     if (box_size, man_err) not in acq['p_acqs']:
         # Prob of being brightest in box (function of box_size and man_err,
         # independently because imposter prob is just a function of box_size not man_err).
@@ -734,12 +758,12 @@ def calc_acq_p_vals(acq, box_size, man_err, dither, stars, dark, t_ccd, date):
                                        spoiler=False, halfwidth=box_size)
         acq['p_acq_model'][box_size] = p_acq_model
 
-        # Probability star is in acq box (function of box_size only)
-        p_in_box = calc_p_on_ccd(acq['row'], acq['col'], box_size=man_err + dither)
-        acq['p_in_box'][box_size] = p_in_box
+        # Probability star is in acq box (function of man_err and dither only)
+        p_on_ccd = calc_p_on_ccd(acq['row'], acq['col'], box_size=man_err + dither)
+        acq['p_on_ccd'][box_size] = p_on_ccd
 
         # All together now!
-        acq['p_acqs'][box_size, man_err] = p_brightest * p_acq_model * p_in_box
+        acq['p_acqs'][box_size, man_err] = p_brightest * p_acq_model * p_on_ccd
 
 
 def get_initial_catalog(acqs, cand_acqs, stars, dark, dither=20, t_ccd=-11.0, date=None):
