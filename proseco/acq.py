@@ -42,9 +42,8 @@ class AcqTable(Table):
 
         # Make printed table look nicer.  This is defined in advance
         # and will be applied the first time the table is represented.
-        self._default_formats = {'p_acq': '.3f',
-                                 'color': '.2f'}
-        for name in ('yang', 'zang', 'row', 'col', 'mag', 'mag_err'):
+        self._default_formats = {'p_acq': '.3f'}
+        for name in ('yang', 'zang', 'row', 'col', 'mag', 'mag_err', 'color'):
             self._default_formats[name] = '.2f'
         for name in ('ra', 'dec', 'RA_PMCORR', 'DEC_PMCORR'):
             self._default_formats[name] = '.6f'
@@ -150,8 +149,8 @@ class AcqTable(Table):
                 outrow[name] = val
             rows.append(outrow)
 
-        # Only include rows=[] kwarg if there are rows.  Table initializer is unhappy
-        # with a zero-length list for rows, but is OK with just names=[] dtype=[].
+        # Only include rows=[..] kwarg if there are rows.  Table initializer is unhappy
+        # with a zero-length list for rows, but is OK with just names=[..] dtype=[..].
         if rows:
             out['rows'] = rows
 
