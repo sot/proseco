@@ -256,8 +256,26 @@ def test_calc_p_on_ccd():
 
 
 def test_get_acq_catalog():
-    """Put it all together.  Mostly a regression test."""
+    """Put it all together.  Regression test for selected stars"""
     acqs = get_acq_catalog(21007)
     assert np.all(acqs['id'] == [189417400, 189410928, 189409160, 189417920,
                                  189406216, 189417752, 189015480, 189416328])
     assert np.all(acqs['halfw'] == [160, 160, 160, 160, 60, 100, 60, 60])
+
+
+def test_to_from_yaml():
+    acqs = get_acq_catalog(21007)  # Fast because of caching
+
+    yml = acqs.to_yaml()
+    acqs2 = AcqTable.from_yaml(yml)
+
+    assert repr(acqs) == repr(acqs2)
+    assert repr(acqs.meta['cand_acqs']) == repr(acqs2.meta['cand_acqs'])
+
+    for attr in ['att', 'date', 't_ccd', 'man_angle', 'dither', 'p_safe']:
+        val = acqs.meta[attr]
+        val2 = acqs2.meta[attr]
+        if isinstance(val, float):
+            assert np.isclose(val, val2)
+        else:
+            assert val == val2

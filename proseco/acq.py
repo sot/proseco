@@ -40,6 +40,15 @@ class AcqTable(Table):
         self.log_info['events'] = []
         self.log_info['time0'] = time.time()
 
+        # Make printed table look nicer.  This is defined in advance
+        # and will be applied the first time the table is represented.
+        self._default_formats = {'p_acq': '.3f',
+                                 'color': '.2f'}
+        for name in ('yang', 'zang', 'row', 'col', 'mag', 'mag_err'):
+            self._default_formats[name] = '.2f'
+        for name in ('ra', 'dec', 'RA_PMCORR', 'DEC_PMCORR'):
+            self._default_formats[name] = '.6f'
+
     def log(self, descr, level='info'):
         calling_func_name = inspect.currentframe().f_back.f_code.co_name
         dt = time.time() - self.log_info['time0']
@@ -52,6 +61,13 @@ class AcqTable(Table):
     def _non_object_table(self):
         names = [name for name in self.colnames
                  if self[name].dtype.kind != 'O']
+
+        # Apply default formats to applicable columns and delete
+        # that default format so it doesn't get set again next time.
+        for name in list(self._default_formats.keys()):
+            if name in names:
+                self[name].format = self._default_formats.pop(name)
+
         return self[names]
 
     def _repr_html_(self):
@@ -254,12 +270,6 @@ def get_stars(acqs, att, date=None, radius=1.2):
     mag_err = np.sqrt(mag_aca_err ** 2 + mag_std_dev ** 2)
     stars.add_column(Column(mag_err, name='mag_err'), index=8)
 
-    # Make printed table look nicer
-    for name in ('yang', 'zang', 'row', 'col', 'mag', 'mag_err'):
-        stars[name].format = '.2f'
-    for name in ('ra', 'dec', 'RA_PMCORR', 'DEC_PMCORR'):
-        stars[name].format = '.6f'
-
     # Filter stars in or near ACA FOV
     rcmax = 512.0 + 200 / 5  # 200 arcsec padding around CCD edge
     ok = (row > -rcmax) & (row < rcmax) & (col > -rcmax) & (col < rcmax)
@@ -349,9 +359,6 @@ def get_acq_candidates(acqs, stars, max_candidates=20):
     cand_acqs['imposters'] = None  # Filled in with Table of imposters
     cand_acqs['spoilers_box'] = -999.0  # Cached value of box_size + man_err for spoilers
     cand_acqs['imposters_box'] = -999.0  # Cached value of box_size + dither for imposters
-
-    cand_acqs['p_acq'].format = '.3f'
-    cand_acqs['color'].format = '.2f'
 
     return cand_acqs, bads
 
