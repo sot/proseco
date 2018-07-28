@@ -93,6 +93,7 @@ class AcqTable(Table):
                 out[par] = to_python(self.meta[par])
         out['acqs'] = self.to_struct()
         out['cand_acqs'] = self.meta['cand_acqs'].to_struct()
+        out['log_info'] = self.log_info
 
         return yaml.dump(out)
 
@@ -104,6 +105,8 @@ class AcqTable(Table):
         obj = yaml.load(yaml_str)
         acqs = cls.from_struct(obj.pop('acqs'))
         acqs.meta['cand_acqs'] = cls.from_struct(obj.pop('cand_acqs'))
+        acqs.log_info.update(obj.pop('log_info'))
+
         for par in obj:
             acqs.meta[par] = copy(obj[par])
         return acqs

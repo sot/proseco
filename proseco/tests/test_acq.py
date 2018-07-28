@@ -271,6 +271,7 @@ def test_to_from_yaml():
 
     assert repr(acqs) == repr(acqs2)
     assert repr(acqs.meta['cand_acqs']) == repr(acqs2.meta['cand_acqs'])
+    assert acqs.log_info == acqs2.log_info
 
     for attr in ['att', 'date', 't_ccd', 'man_angle', 'dither', 'p_safe']:
         val = acqs.meta[attr]
