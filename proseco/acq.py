@@ -5,8 +5,13 @@ from __future__ import division, print_function, absolute_import  # For Py2 comp
 
 import inspect
 import time
+from copy import copy
+
 import numpy as np
-from collections import namedtuple
+import yaml
+from scipy import ndimage, stats
+from scipy.interpolate import interp1d
+from astropy.table import Table, Column, vstack
 
 from chandra_aca.star_probs import acq_success_prob, prob_n_acq
 from mica.archive.aca_dark.dark_cal import get_dark_cal_image
@@ -14,13 +19,18 @@ from Ska.quatutil import radec2yagzag
 from chandra_aca.transform import (yagzag_to_pixels, pixels_to_yagzag,
                                    mag_to_count_rate, count_rate_to_mag)
 from agasc import get_agasc_cone
-from astropy.table import Table, Column, vstack
 from Quaternion import Quat
-from scipy import ndimage, stats
-from scipy.interpolate import interp1d
 from mica.cache import lru_cache
 
 from . import characteristics as CHAR
+
+
+def to_python(val):
+    try:
+        val = val.tolist()
+    except AttributeError:
+        pass
+    return val
 
 
 class AcqTable(Table):
@@ -56,35 +66,87 @@ class AcqTable(Table):
     def __bytes__(self):
         return Table.__bytes__(self._non_object_table)
 
+    def to_yaml(self):
+        """
+        Serialize table as YAML and return string
+        """
+        out = {}
+        exclude = ('stars', 'cand_acqs', 'dark', 'bads')
+        for par in self.meta:
+            if par not in exclude:
+                out[par] = to_python(self.meta[par])
+        out['acqs'] = self.to_struct()
+        out['cand_acqs'] = self.meta['cand_acqs'].to_struct()
+
+        return yaml.dump(out)
+
+    @classmethod
+    def from_yaml(cls, yaml_str):
+        """
+        Construct table from YAML string
+        """
+        obj = yaml.load(yaml_str)
+        acqs = cls.from_struct(obj.pop('acqs'))
+        acqs.meta['cand_acqs'] = cls.from_struct(obj.pop('cand_acqs'))
+        for par in obj:
+            acqs.meta[par] = copy(obj[par])
+        return acqs
+
     def to_struct(self):
-        """Turn table into a list of dict (rows)"""
+        """Turn table into a dict structure with keys:
+
+        - names: column names in order
+        - dtype: column dtypes as strings
+        - rows: list of dict with row values
+
+        This takes pains to remove any numpy objects so the YAML serialization
+        is tidy (pure-Python only).
+        """
         rows = []
         colnames = self.colnames
+        dtypes = [col.dtype.str for col in self.itercols()]
+        out = {'names': colnames, 'dtype': dtypes}
+
         for row in self:
             outrow = {}
             for name in colnames:
                 val = row[name]
-                if isinstance(val, np.ndarray):
-                    if val.ndim == 1:
-                        val = val.item()
-                    else:
-                        # Skip non-scalar values
-                        continue
-                elif isinstance(val, Table):
+                if isinstance(val, Table):
                     val = AcqTable.to_struct(val)
+
+                elif isinstance(val, dict):
+                    new_val = {}
+                    for key, item in val.items():
+                        if isinstance(key, tuple):
+                            key = tuple(to_python(k) for k in key)
+                        else:
+                            key = to_python(key)
+                        item = to_python(item)
+                        new_val[key] = item
+                    val = new_val
+
+                else:
+                    val = to_python(val)
+
                 outrow[name] = val
             rows.append(outrow)
-        return rows
+
+        # Only include rows=[] kwarg if there are rows.  Table initializer is unhappy
+        # with a zero-length list for rows, but is OK with just names=[] dtype=[].
+        if rows:
+            out['rows'] = rows
+
+        return out
 
     @classmethod
-    def from_struct(cls, rows):
-        out = cls(rows)
+    def from_struct(cls, struct):
+        out = cls(**struct)
         for name in out.colnames:
             col = out[name]
             if col.dtype.kind == 'O':
                 for idx, val in enumerate(col):
-                    if isinstance(val, list) and len(val) > 0 and isinstance(val[0], dict):
-                        col[idx] = Table(val)
+                    if isinstance(val, dict) and sorted(val.keys()) == ['names', 'rows']:
+                        col[idx] = Table(**val)
         return out
 
 
@@ -265,7 +327,7 @@ def get_acq_candidates(acqs, stars, max_candidates=20):
     cand_acqs.rename_column('COLOR1', 'color')
     # Drop all the other AGASC columns.  No longer useful.
     names = [name for name in cand_acqs.colnames if not name.isupper()]
-    cand_acqs = Table(cand_acqs[names])
+    cand_acqs = AcqTable(cand_acqs[names])
     # cand_acqs['AGASC_ID'] = cand_acqs['id']
 
     # Make this suitable for plotting
