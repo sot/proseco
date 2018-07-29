@@ -163,7 +163,7 @@ class AcqTable(Table):
             col = out[name]
             if col.dtype.kind == 'O':
                 for idx, val in enumerate(col):
-                    if isinstance(val, dict) and sorted(val.keys()) == ['names', 'rows']:
+                    if isinstance(val, dict) and 'dtype' in val.keys():
                         col[idx] = Table(**val)
         return out
 

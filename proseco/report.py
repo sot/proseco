@@ -1,3 +1,8 @@
+# coding: utf-8
+# Licensed under a 3-clause BSD style license - see LICENSE.rst
+
+from __future__ import division, print_function, absolute_import  # For Py2 compatibility
+
 import os
 from copy import copy
 
@@ -14,57 +19,91 @@ from jinja2 import Template
 from . import characteristics as CHAR
 from .acq import AcqTable, get_stars, get_acq_candidates
 from chandra_aca.plot import plot_stars
+from mica.archive.aca_dark.dark_cal import get_dark_cal_image
 
 
 FILEDIR = os.path.dirname(__file__)
 
 
 def make_report(obsid, rootdir='.'):
+    print('Processing obsid {}'.format(obsid))
     template_file = os.path.join(FILEDIR, 'index_template.html')
     template = Template(open(template_file, 'r').read())
 
     obsdir = os.path.join(rootdir, 'obs{}'.format(obsid))
     filename = os.path.join(obsdir, 'info.yaml')
+    print('Reading and parsing {}'.format(filename))
     with open(filename, 'r') as fh:
         yaml_str = fh.read()
     acqs = AcqTable.from_yaml(yaml_str)
+    cand_acqs = acqs.meta['cand_acqs']
     context = copy(acqs.meta)
 
-    #
-    # Candidate acquisition stars section
-    #
+    ######################################################
+    # Candidate acquisition stars summary section
+    ######################################################
+    # Start with table
     cand_acq_cols = ['idx', 'id', 'yang', 'zang',
                      'row', 'col', 'mag', 'mag_err', 'color']
-    cand_acqs = acqs.meta['cand_acqs'][cand_acq_cols]
-    context['cand_acqs_table'] = cand_acqs._repr_html_()
-    context['agasc_ids'] = acqs.meta['cand_acqs']['id'].tolist()
+    context['cand_acqs_table'] = cand_acqs[cand_acq_cols]._repr_html_()
 
     # Get information that is not stored in the info.yaml for space reasons
     stars = get_stars(acqs, acqs.meta['att'])
     _, bad_stars = get_acq_candidates(acqs, stars)
 
-    # Pull a fast-one and mark the final selected ACQ stars as BOT so they
-    # get a circle in the plot.  This might be confusing and need fixing
-    # later, but for now it is an easy way to show the winning candidates.
-    for acq in acqs.meta['cand_acqs']:
-        if acq['id'] in acqs['id']:
-            acq['type'] = 'BOT'
+    # Now plot figure
+    filename = os.path.join(obsdir, 'candidate_stars.png')
+    if not os.path.exists(filename):
+        print('Making candidate stars plot {}'.format(filename))
 
-    fig = plot_stars(acqs.meta['att'], stars=stars,
-                     catalog=acqs.meta['cand_acqs'], bad_stars=bad_stars)
-    fig.savefig(os.path.join(obsdir, 'candidate_stars.png'))
+        # Pull a fast-one and mark the final selected ACQ stars as BOT so they
+        # get a circle in the plot.  This might be confusing and need fixing
+        # later, but for now it is an easy way to show the winning candidates.
+        for acq in acqs.meta['cand_acqs']:
+            if acq['id'] in acqs['id']:
+                acq['type'] = 'BOT'
+
+        fig = plot_stars(acqs.meta['att'], stars=stars,
+                         catalog=acqs.meta['cand_acqs'], bad_stars=bad_stars)
+        fig.savefig(filename)
+
+    ######################################################
+    # Candidate acq star detail sections
+    ######################################################
+    dark = get_dark_cal_image(date=acqs.meta['date'], select='nearest',
+                              t_ccd_ref=acqs.meta['t_ccd'])
+
+    context['cand_acqs'] = []
+    for ii, acq in enumerate(cand_acqs):
+        print('Doing detail for star {}'.format(acq['id']))
+        # Local context dict for each cand_acq star
+        cca = {'id': acq['id']}
+
+        # Make a dict copy of everything in ``acq``
+        acq_cols = ('idx', 'id', 'ra', 'dec', 'yang', 'zang', 'row', 'col',
+                    'mag', 'mag_err')
+        cca['acq_table'] = cand_acqs[acq_cols][ii:ii + 1]._repr_html_()
+
+        # Make the acq detail plot with spoilers and imposters
+        basename = 'star_{}.png'.format(acq['id'])
+        filename = os.path.join(obsdir, basename)
+        cca['acq_plot'] = basename
+        if not os.path.exists(filename):
+            plot_acq(acq, dark, stars, filename=filename)
+
+        context['cand_acqs'].append(cca)
 
     out_html = template.render(context)
-    out_filename = os.path.join(rootdir, 'obs{}/index.html'.format(obsid))
+    out_filename = os.path.join(obsdir, 'index.html')
     with open(out_filename, 'w') as fh:
         fh.write(out_html)
 
 
-def plot_acq(acq, vmin=100, vmax=2000, figsize=(8, 8), r=None, c=None, filename=None):
+def plot_acq(acq, dark, stars, vmin=100, vmax=2000,
+             figsize=(8, 8), r=None, c=None, filename=None):
     """
     Plot dark current, relevant boxes, imposters and spoilers.
     """
-    acqs = acq.table  # Parent table of this row
     drc = int(np.max(CHAR.box_sizes) / 5 * 2) + 5
 
     # Make an image of `dark` centered on acq row, col.  Use ACAImage
@@ -74,7 +113,7 @@ def plot_acq(acq, vmin=100, vmax=2000, figsize=(8, 8), r=None, c=None, filename=
         r = int(np.round(acq['row']))
         c = int(np.round(acq['col']))
     img = ACAImage(np.zeros(shape=(drc * 2, drc * 2)), row0=r - drc, col0=c - drc)
-    dark = ACAImage(acqs.meta['dark'], row0=-512, col0=-512)
+    dark = ACAImage(dark, row0=-512, col0=-512)
     img += dark.aca
 
     # Show the dark current image
@@ -107,7 +146,6 @@ def plot_acq(acq, vmin=100, vmax=2000, figsize=(8, 8), r=None, c=None, filename=
         plt.text(rc - hwp + 1, cc - hwp + 1, label, color='y', fontsize='large', fontweight='bold')
 
     # Field stars
-    stars = acqs.meta['stars']
     ok = ((stars['row'] > img.row0) & (stars['row'] < img.row0 + img.shape[0]) &
           (stars['col'] > img.col0) & (stars['col'] < img.col0 + img.shape[1]))
     if np.any(ok):

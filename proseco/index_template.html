@@ -39,7 +39,7 @@ table.table-striped td {
 
 <h2> Obsid {{obsid}} </h2>
 
-<table>
+<table class="table-striped">
   <tr>  <td> <b>Att</b> </td> <td> {{ att }} </td> </tr>
   <tr>  <td> <b>Date</b> </td> <td> {{ date }} </td> </tr>
   <tr>  <td> <b>T_ccd</b> </td> <td> {{ t_ccd }} </td> </tr>
@@ -58,8 +58,11 @@ table.table-striped td {
 
 <h3> Star details </h3>
 
-{% for agasc_id in agasc_ids %}
-<h4> AGASC ID {{ agasc_id }} </h4>
+{% for acq in cand_acqs %}
+  <h4> AGASC ID {{ acq['id'] }} </h4>
+
+  {{ acq['acq_table'] | safe }}
+  <img src="{{ acq['acq_plot'] }}">
 {% endfor %}
 
 <!--#include virtual="/mta/ASPECT/footer.html"-->
