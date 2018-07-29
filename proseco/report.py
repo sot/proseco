@@ -1,9 +1,63 @@
-import numpy as np
-import matplotlib.pyplot as plt
+import os
+from copy import copy
+
+import matplotlib
+matplotlib.use('tkagg')
 from matplotlib import patches
+import matplotlib.pyplot as plt
+
+import numpy as np
 from chandra_aca.aca_image import ACAImage
 
+from jinja2 import Template
+
 from . import characteristics as CHAR
+from .acq import AcqTable, get_stars, get_acq_candidates
+from chandra_aca.plot import plot_stars
+
+
+FILEDIR = os.path.dirname(__file__)
+
+
+def make_report(obsid, rootdir='.'):
+    template_file = os.path.join(FILEDIR, 'index_template.html')
+    template = Template(open(template_file, 'r').read())
+
+    obsdir = os.path.join(rootdir, 'obs{}'.format(obsid))
+    filename = os.path.join(obsdir, 'info.yaml')
+    with open(filename, 'r') as fh:
+        yaml_str = fh.read()
+    acqs = AcqTable.from_yaml(yaml_str)
+    context = copy(acqs.meta)
+
+    #
+    # Candidate acquisition stars section
+    #
+    cand_acq_cols = ['idx', 'id', 'yang', 'zang',
+                     'row', 'col', 'mag', 'mag_err', 'color']
+    cand_acqs = acqs.meta['cand_acqs'][cand_acq_cols]
+    context['cand_acqs_table'] = cand_acqs._repr_html_()
+    context['agasc_ids'] = acqs.meta['cand_acqs']['id'].tolist()
+
+    # Get information that is not stored in the info.yaml for space reasons
+    stars = get_stars(acqs, acqs.meta['att'])
+    _, bad_stars = get_acq_candidates(acqs, stars)
+
+    # Pull a fast-one and mark the final selected ACQ stars as BOT so they
+    # get a circle in the plot.  This might be confusing and need fixing
+    # later, but for now it is an easy way to show the winning candidates.
+    for acq in acqs.meta['cand_acqs']:
+        if acq['id'] in acqs['id']:
+            acq['type'] = 'BOT'
+
+    fig = plot_stars(acqs.meta['att'], stars=stars,
+                     catalog=acqs.meta['cand_acqs'], bad_stars=bad_stars)
+    fig.savefig(os.path.join(obsdir, 'candidate_stars.png'))
+
+    out_html = template.render(context)
+    out_filename = os.path.join(rootdir, 'obs{}/index.html'.format(obsid))
+    with open(out_filename, 'w') as fh:
+        fh.write(out_html)
 
 
 def plot_acq(acq, vmin=100, vmax=2000, figsize=(8, 8), r=None, c=None, filename=None):

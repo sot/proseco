@@ -1059,7 +1059,8 @@ def get_acq_catalog(obsid=None, att=None,
     for name, col in acqs_init.columns.items():
         acqs[name] = col
 
-    acqs.meta = {'att': att,
+    acqs.meta = {'obsid': obsid,
+                 'att': att,
                  'date': date,
                  't_ccd': t_ccd,
                  'man_angle': man_angle,

@@ -1,0 +1,69 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+  <head>
+    <title>Proseco summary</title>
+    <link href="/mta/ASPECT/aspect.css" rel="stylesheet" type="text/css" media="all" />
+  <style>
+h1,h2,h3,h4 {
+  color: #990000;
+}
+
+table.table-striped {
+        border-width: thin thin thin thin;
+        border-spacing: 1px;
+        border-style: outset outset outset outset;
+        border-color: gray gray gray gray;
+        border-collapse: separate;
+        background-color: white;
+}
+
+table.table-striped th {
+        border-width: 1px 1px 1px 1px;
+        padding: 1px 3px 1px 3px;
+        border-color: gray;
+        border-style: inset;
+}
+table.table-striped td {
+        border-width: 1px 1px 1px 1px;
+        padding: 1px 3px 1px 3px;
+        border-style: inset;
+        border-color: gray;
+        text-align: right;
+}
+</style>
+  </head>
+
+  <body>
+
+<!--#include virtual="/mta/ASPECT/header.html"-->
+
+<h2> Obsid {{obsid}} </h2>
+
+<table>
+  <tr>  <td> <b>Att</b> </td> <td> {{ att }} </td> </tr>
+  <tr>  <td> <b>Date</b> </td> <td> {{ date }} </td> </tr>
+  <tr>  <td> <b>T_ccd</b> </td> <td> {{ t_ccd }} </td> </tr>
+  <tr>  <td> <b>Man angle</b> </td> <td> {{ man_angle }} </td> </tr>
+  <tr>  <td> <b>Dither</b> </td> <td> {{ dither }} </td> </tr>
+</table>
+
+<h3> Candidate acquisition stars summary </h3>
+
+<table>
+  <tr>
+    <td> <img src="candidate_stars.png"> </td>
+    <td> {{ cand_acqs_table | safe }} </td>
+  </tr>
+</table>
+
+<h3> Star details </h3>
+
+{% for agasc_id in agasc_ids %}
+<h4> AGASC ID {{ agasc_id }} </h4>
+{% endfor %}
+
+<!--#include virtual="/mta/ASPECT/footer.html"-->
+<!--footer end-->
+
+  </body>
+</html>
