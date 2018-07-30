@@ -93,6 +93,18 @@ def make_report(obsid, rootdir='.'):
 
         context['cand_acqs'].append(cca)
 
+    ######################################################
+    # Event log
+    ######################################################
+    context['events'] = copy(acqs.log_info['events'])
+    last = context['events'][0]
+    for event in context['events'][1:]:
+        if event['dt'] == last['dt'] and event['func'] == last['func']:
+            event['dt'] = ''
+            event['func'] = ''
+        else:
+            last = event
+
     out_html = template.render(context)
     out_filename = os.path.join(obsdir, 'index.html')
     with open(out_filename, 'w') as fh:

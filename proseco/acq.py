@@ -313,8 +313,8 @@ def get_acq_candidates(acqs, stars, max_candidates=20):
     cand_acqs = stars[ok]
     cand_acqs.sort('MAG_ACA')
     acqs.log('filtering on CLASS, MAG_ACA, COLOR1, row/col, '
-             'MAG_ACA_ERR, ASPQ1/2, POS_ERR:\n'
-             'reduced star list from {} to {} candidate acq stars'
+             'MAG_ACA_ERR, ASPQ1/2, POS_ERR:')
+    acqs.log('reduced star list from {} to {} candidate acq stars'
              .format(len(stars), len(cand_acqs)))
 
     # Reject any candidate with a spoiler that is within a 30" HW box

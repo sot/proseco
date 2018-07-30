@@ -65,6 +65,20 @@ table.table-striped td {
   <img src="{{ acq['acq_plot'] }}">
 {% endfor %}
 
+<h3> Events log </h3>
+
+
+<table>
+{% for event in events %}
+  <tr>
+    <td> <tt> {{event['dt']}} </tt> </td>
+    <td> <tt> {{event['func']}} </tt> </td>
+    <td> <tt> {{event['descr']}} </tt> </td>
+  </tr>
+{% endfor %}
+</table>
+
+
 <!--#include virtual="/mta/ASPECT/footer.html"-->
 <!--footer end-->
 
