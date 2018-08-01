@@ -79,18 +79,6 @@ class AcqTable(Table):
 
         return super(AcqTable, self[names])._base_repr_(*args, **kwargs)
 
-    # def _repr_html_(self):
-    #     return Table._repr_html_(self._non_object_table)
-
-    # def __repr__(self):
-    #     return Table.__repr__(self._non_object_table)
-
-    # def __str__(self):
-    #     return Table.__str__(self._non_object_table)
-
-    # def __bytes__(self):
-    #     return Table.__bytes__(self._non_object_table)
-
     def to_yaml(self):
         """
         Serialize table as YAML and return string
