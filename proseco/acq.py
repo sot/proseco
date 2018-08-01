@@ -407,6 +407,7 @@ def get_spoiler_stars(stars, acq, box_size):
           (stars['AGASC_ID'] != acq['id'])
           )
     spoilers = stars[ok]
+    spoilers.rename_column('AGASC_ID', 'id')
     spoilers.sort('mag')
 
     return spoilers
@@ -850,7 +851,7 @@ def calc_acq_p_vals(acq, box_size, man_err, dither, stars, dark, t_ccd, date):
 
         # Probability star is in acq box (function of man_err and dither only)
         p_on_ccd = calc_p_on_ccd(acq['row'], acq['col'], box_size=man_err + dither)
-        acq['p_on_ccd'][box_size] = p_on_ccd
+        acq['p_on_ccd'][man_err] = p_on_ccd
 
         # All together now!
         acq['p_acqs'][box_size, man_err] = p_brightest * p_acq_model * p_on_ccd
@@ -915,8 +916,7 @@ def calc_p_safe(acqs, verbose=False):
         if verbose:
             acqs.log('man_err = {}'.format(man_err))
             acqs.log('p_acqs =' + ' '.join(['{:.3f}'.format(val) for val in p_acqs]))
-            acqs.log('p N_or_fewer=' + ' '.join(['{:.3f}%'.format(val * 100)
-                                                 for val in p_n_cum[:4]]))
+            acqs.log('log10(p 1_or_fewer) = {:.2f}'.format(np.log10(p_n_cum[1])))
         p_01 = p_n_cum[1]  # 1 or fewer => p_fail at this man_err
 
         p_no_safe *= (1 - p_man_err * p_01)

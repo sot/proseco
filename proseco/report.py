@@ -7,14 +7,14 @@ import os
 from copy import copy
 
 import matplotlib
-matplotlib.use('tkagg')
+matplotlib.use('agg')
 from matplotlib import patches
 import matplotlib.pyplot as plt
-
 import numpy as np
-from chandra_aca.aca_image import ACAImage
-
 from jinja2 import Template
+from astropy.table import Table, Column
+
+from chandra_aca.aca_image import ACAImage
 
 from . import characteristics as CHAR
 from .acq import AcqTable, get_stars, get_acq_candidates
@@ -40,6 +40,72 @@ def table_to_html(tbl):
                               show_dtype=False, descr_vals=[],
                               max_lines=-1, tableclass='table-striped')
         return out
+
+
+def get_p_acqs_table(acq, p_name):
+    """
+    Make HTML tables for an acq star for the following:
+
+    - ``p_brightest``: probability this star is the brightest in box (function
+        of ``box_size`` and ``man_err``)
+    - ``p_acq_model``: probability of acquisition from the chandra_aca model
+        (function of ``box_size``)
+    - ``p_on_ccd``: probability star is on the usable part of the CCD (function
+        of ``man_err`` and ``dither``)
+    - ``p_acqs``: product of the above three
+    """
+    man_errs = CHAR.p_man_errs['man_err_hi']
+    box_sizes = sorted(CHAR.box_sizes)
+    names = ['box \ man_err'] + ['{}"'.format(man_err) for man_err in man_errs]
+    cols = {}
+    cols['box \ man_err'] = ['{}"'.format(box_size) for box_size in box_sizes]
+    for man_err in man_errs:
+        name = '{}"'.format(man_err)
+        cols[name] = [round(acq[p_name].get((box_size, man_err), 0.0), 3)
+                      for box_size in box_sizes]
+
+    return table_to_html(Table(cols, names=names))
+
+
+def get_p_on_ccd_table(acq):
+    """
+    Make HTML tables for an acq star for the following:
+
+    - ``p_brightest``: probability this star is the brightest in box (function
+        of ``box_size`` and ``man_err``)
+    - ``p_acq_model``: probability of acquisition from the chandra_aca model
+        (function of ``box_size``)
+    - ``p_on_ccd``: probability star is on the usable part of the CCD (function
+        of ``man_err`` and ``dither``)
+    - ``p_acqs``: product of the above three
+    """
+    man_errs = CHAR.p_man_errs['man_err_hi']
+    names = ['man_err'] + ['{}"'.format(man_err) for man_err in man_errs]
+    cols = {}
+    cols['man_err'] = ['']
+    for man_err in man_errs:
+        name = '{}"'.format(man_err)
+        cols[name] = [round(acq['p_on_ccd'][man_err], 3)]
+
+    return table_to_html(Table(cols, names=names))
+
+
+def get_p_acq_model_table(acq):
+    """
+    Make HTML tables for an acq star for the following:
+
+    - ``p_acq_model``: probability of acquisition from the chandra_aca model
+        (function of ``box_size``)
+    """
+    box_sizes = sorted(CHAR.box_sizes)
+    names = ['box size'] + ['{}"'.format(box_size) for box_size in box_sizes]
+    cols = {}
+    cols['box size'] = ['']
+    for box_size in box_sizes:
+        name = '{}"'.format(box_size)
+        cols[name] = [round(acq['p_acq_model'][box_size], 3)]
+
+    return table_to_html(Table(cols, names=names))
 
 
 def select_events(events, funcs):
@@ -120,29 +186,57 @@ def make_report(obsid, rootdir='.'):
     for ii, acq in enumerate(cand_acqs):
         print('Doing detail for star {}'.format(acq['id']))
         # Local context dict for each cand_acq star
-        cca = {'id': acq['id']}
+        cca = {'id': acq['id'],
+               'selected': 'SELECTED' if acq['id'] in acqs['id'] else 'not selected'}
 
         # Make a dict copy of everything in ``acq``
         names = ('idx', 'id', 'ra', 'dec', 'yang', 'zang', 'row', 'col',
                  'mag', 'mag_err')
         cca['acq_table'] = table_to_html(cand_acqs[names][ii:ii + 1])
 
+        cca['p_brightest_table'] = get_p_acqs_table(acq, 'p_brightest')
+        cca['p_acqs_table'] = get_p_acqs_table(acq, 'p_acqs')
+        cca['p_acq_model_table'] = get_p_acq_model_table(acq)
+        cca['p_on_ccd_table'] = get_p_on_ccd_table(acq)
+
         # Make the acq detail plot with spoilers and imposters
         basename = 'star_{}.png'.format(acq['id'])
         filename = os.path.join(obsdir, basename)
         cca['acq_plot'] = basename
         if not os.path.exists(filename):
-            plot_acq(acq, acqs.meta['dark'], stars, filename=filename)
+            plot_acq(acq, acqs.meta['dark'], acqs.meta['stars'], filename=filename)
 
         if len(acq['imposters']) > 0:
             names = ('row0', 'col0', 'd_row', 'd_col', 'img_sum', 'mag', 'mag_err')
             fmts = ('d', 'd', '.0f', '.0f', '.0f', '.2f', '.2f')
-            imposters_table = acq['imposters'][names]
+            imposters = acq['imposters'][names]
             for name, fmt in zip(names, fmts):
-                imposters_table[name].info.format = fmt
-            cca['imposters_table'] = table_to_html(imposters_table)
+                imposters[name].info.format = fmt
+
+            idx = Column(np.arange(len(acq['imposters'])), name='idx')
+            imposters.add_column(idx, index=0)
+
+            cca['imposters_table'] = table_to_html(imposters)
         else:
             cca['imposters_table'] = '<em> No imposters </em>'
+
+        if len(acq['spoilers']) > 0:
+            names = ('id', 'yang', 'zang', 'mag', 'mag_err')
+            fmts = ('d', '.1f', '.1f', '.2f', '.2f')
+            spoilers = acq['spoilers'][names]
+            for name, fmt in zip(names, fmts):
+                spoilers[name].info.format = fmt
+
+            idx = Column(np.arange(len(spoilers)), name='idx')
+            d_yang = Column(spoilers['yang'] - acq['yang'], name='d_yang', format='.1f')
+            d_zang = Column(spoilers['zang'] - acq['zang'], name='d_zang', format='.1f')
+            spoilers.add_column(d_zang, index=3)
+            spoilers.add_column(d_yang, index=3)
+            spoilers.add_column(idx, index=0)
+
+            cca['spoilers_table'] = table_to_html(spoilers)
+        else:
+            cca['spoilers_table'] = '<em> No spoilers </em>'
 
         context['cand_acqs'].append(cca)
 
