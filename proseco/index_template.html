@@ -37,7 +37,7 @@ table.table-striped td {
 
 <!--#include virtual="/mta/ASPECT/header.html"-->
 
-<h2> Obsid {{obsid}} </h2>
+<h1> Obsid {{obsid}} at {{date}}</h1>
 
 <table class="table-striped">
   <tr>  <td> <b>Att</b> </td> <td> {{ att }} </td> </tr>
@@ -47,7 +47,7 @@ table.table-striped td {
   <tr>  <td> <b>Dither</b> </td> <td> {{ dither }} </td> </tr>
 </table>
 
-<h3> Candidate acquisition stars summary </h3>
+<h2> Candidate acquisition stars summary </h2>
 
 <table>
   <tr>
@@ -56,24 +56,39 @@ table.table-striped td {
   </tr>
 </table>
 
-<h3> Star details </h3>
-
-{% for acq in cand_acqs %}
-  <h4> AGASC ID {{ acq['id'] }} </h4>
-
-  {{ acq['acq_table'] | safe }}
-  <img src="{{ acq['acq_plot'] }}">
-{% endfor %}
-
-<h3> Events log </h3>
-
-
 <table>
-{% for event in events %}
+{% for event in cand_acqs_events %}
   <tr>
     <td> <tt> {{event['dt']}} </tt> </td>
-    <td> <tt> {{event['func']}} </tt> </td>
-    <td> <tt> {{event['descr']}} </tt> </td>
+    <td> <tt> {{event['func_disp']}} </tt> </td>
+    <td> <tt> {{event['data']}} </tt> </td>
+  </tr>
+{% endfor %}
+</table>
+
+<h2> Star details </h2>
+
+{% for acq in cand_acqs %}
+  <h3> AGASC ID {{ acq['id'] }} </h3>
+
+  {{ acq['acq_table'] | safe }}
+  <table>
+    <tr>
+      <td> <img src="{{ acq['acq_plot'] }}"> </td>
+      <td> {{ acq['imposters_table'] | safe }} </td>
+    </tr>
+  </table>
+
+{% endfor %}
+
+<h2> Optimize catalog </h2>
+
+<table>
+{% for event in optimize_events %}
+  <tr>
+    <td> <tt> {{event['dt']}} </tt> </td>
+    <td> <tt> {{event['func_disp']}} </tt> </td>
+    <td> <tt> {{event['data']}} </tt> </td>
   </tr>
 {% endfor %}
 </table>

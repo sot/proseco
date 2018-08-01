@@ -25,6 +25,28 @@ from mica.archive.aca_dark.dark_cal import get_dark_cal_image
 FILEDIR = os.path.dirname(__file__)
 
 
+def table_to_html2(tbl):
+    # return tbl._base_repr_(html=True, max_width=-1, max_lines=-1, descr_vals=[],
+    #                       tableclass='table-striped')
+    # return tbl._repr_html_()
+    from astropy.table import conf
+    print(tbl[0:2])
+    return tbl._base_repr_(html=True, max_width=-1,
+                           tableclass=conf.default_notebook_table_class)
+
+
+def table_to_html(tbl):
+        out = tbl._base_repr_(html=True, max_width=-1,
+                              show_dtype=False, descr_vals=[],
+                              max_lines=-1, tableclass='table-striped')
+        return out
+
+
+def select_events(events, funcs):
+    outs = [event for event in events if event['func'] in funcs]
+    return outs
+
+
 def make_report(obsid, rootdir='.'):
     print('Processing obsid {}'.format(obsid))
     template_file = os.path.join(FILEDIR, 'index_template.html')
@@ -39,17 +61,38 @@ def make_report(obsid, rootdir='.'):
     cand_acqs = acqs.meta['cand_acqs']
     context = copy(acqs.meta)
 
+    # Set up global events
+    events = copy(acqs.log_info['events'])
+    for event in events:
+        event['func_disp'] = event['func']
+    last = events[0]
+    for event in events[1:]:
+        if event['dt'] == last['dt'] and event['func'] == last['func']:
+            event['dt'] = ''
+            event['func_disp'] = ''
+        else:
+            last = event
+        event['data'] = '&nbsp;' * event.get('level', 0) * 4 + event['data']
+
+    context['events'] = events
+
     ######################################################
-    # Candidate acquisition stars summary section
+    # Candidate acquisition stars and initial catalog
     ######################################################
     # Start with table
     cand_acq_cols = ['idx', 'id', 'yang', 'zang',
                      'row', 'col', 'mag', 'mag_err', 'color']
-    context['cand_acqs_table'] = cand_acqs[cand_acq_cols]._repr_html_()
+    context['cand_acqs_table'] = table_to_html(cand_acqs[cand_acq_cols])
 
+    context['cand_acqs_events'] = select_events(events, ('get_acq_catalog',
+                                                         'get_stars',
+                                                         'get_acq_candidates',
+                                                         'get_initial_catalog',
+                                                         'select_best_p_acqs'))
+    
     # Get information that is not stored in the info.yaml for space reasons
-    stars = get_stars(acqs, acqs.meta['att'])
-    _, bad_stars = get_acq_candidates(acqs, stars)
+    acqs.meta['stars'] = get_stars(acqs, acqs.meta['att'])
+    _, acqs.meta['bad_stars'] = get_acq_candidates(acqs, acqs.meta['stars'])
 
     # Now plot figure
     filename = os.path.join(obsdir, 'candidate_stars.png')
@@ -63,15 +106,15 @@ def make_report(obsid, rootdir='.'):
             if acq['id'] in acqs['id']:
                 acq['type'] = 'BOT'
 
-        fig = plot_stars(acqs.meta['att'], stars=stars,
-                         catalog=acqs.meta['cand_acqs'], bad_stars=bad_stars)
+        fig = plot_stars(acqs.meta['att'], stars=acqs.meta['stars'],
+                         catalog=acqs.meta['cand_acqs'], bad_stars=acqs.meta['bad_stars'])
         fig.savefig(filename)
 
     ######################################################
     # Candidate acq star detail sections
     ######################################################
-    dark = get_dark_cal_image(date=acqs.meta['date'], select='nearest',
-                              t_ccd_ref=acqs.meta['t_ccd'])
+    acqs.meta['dark'] = get_dark_cal_image(date=acqs.meta['date'], select='nearest',
+                                           t_ccd_ref=acqs.meta['t_ccd'])
 
     context['cand_acqs'] = []
     for ii, acq in enumerate(cand_acqs):
@@ -80,35 +123,43 @@ def make_report(obsid, rootdir='.'):
         cca = {'id': acq['id']}
 
         # Make a dict copy of everything in ``acq``
-        acq_cols = ('idx', 'id', 'ra', 'dec', 'yang', 'zang', 'row', 'col',
-                    'mag', 'mag_err')
-        cca['acq_table'] = cand_acqs[acq_cols][ii:ii + 1]._repr_html_()
+        names = ('idx', 'id', 'ra', 'dec', 'yang', 'zang', 'row', 'col',
+                 'mag', 'mag_err')
+        cca['acq_table'] = table_to_html(cand_acqs[names][ii:ii + 1])
 
         # Make the acq detail plot with spoilers and imposters
         basename = 'star_{}.png'.format(acq['id'])
         filename = os.path.join(obsdir, basename)
         cca['acq_plot'] = basename
         if not os.path.exists(filename):
-            plot_acq(acq, dark, stars, filename=filename)
+            plot_acq(acq, acqs.meta['dark'], stars, filename=filename)
+
+        if len(acq['imposters']) > 0:
+            names = ('row0', 'col0', 'd_row', 'd_col', 'img_sum', 'mag', 'mag_err')
+            fmts = ('d', 'd', '.0f', '.0f', '.0f', '.2f', '.2f')
+            imposters_table = acq['imposters'][names]
+            for name, fmt in zip(names, fmts):
+                imposters_table[name].info.format = fmt
+            cca['imposters_table'] = table_to_html(imposters_table)
+        else:
+            cca['imposters_table'] = '<em> No imposters </em>'
 
         context['cand_acqs'].append(cca)
 
     ######################################################
-    # Event log
+    # Optimize catalog
     ######################################################
-    context['events'] = copy(acqs.log_info['events'])
-    last = context['events'][0]
-    for event in context['events'][1:]:
-        if event['dt'] == last['dt'] and event['func'] == last['func']:
-            event['dt'] = ''
-            event['func'] = ''
-        else:
-            last = event
+
+    context['optimize_events'] = select_events(events, ('calc_p_safe',
+                                                        'optimize_catalog',
+                                                        'optimize_acq_halfw'))
 
     out_html = template.render(context)
     out_filename = os.path.join(obsdir, 'index.html')
     with open(out_filename, 'w') as fh:
         fh.write(out_html)
+
+    return acqs
 
 
 def plot_acq(acq, dark, stars, vmin=100, vmax=2000,
