@@ -9,6 +9,7 @@ import astropy.units as u
 from Quaternion import Quat
 from Ska.quatutil import radec2yagzag
 import chandra_aca
+from . gui_char import CHAR
 
 # Ignore known numexpr.necompiler and table.conditions warning
 warnings.filterwarnings(
@@ -17,8 +18,6 @@ warnings.filterwarnings(
     category=DeprecationWarning)
 
 
-
-from gui_char import CHAR
 STAR_CHAR = CHAR["Stars"]
 # Update the characteristics to change the bright mag hard limit for guide stars to 5.9 from 5.8
 #for stage in CHAR['Guide']:
