@@ -103,20 +103,7 @@ def select_events(events, funcs):
     return outs
 
 
-def make_report(obsid, rootdir='.'):
-    print('Processing obsid {}'.format(obsid))
-    template_file = os.path.join(FILEDIR, 'index_template.html')
-    template = Template(open(template_file, 'r').read())
-
-    obsdir = os.path.join(rootdir, 'obs{:05}'.format(obsid))
-    filename = os.path.join(obsdir, 'acqs.yaml')
-    print('Reading and parsing {}'.format(filename))
-    with open(filename, 'r') as fh:
-        yaml_str = fh.read()
-    acqs = AcqTable.from_yaml(yaml_str)
-    cand_acqs = acqs.meta['cand_acqs']
-    context = copy(acqs.meta)
-
+def make_events(acqs):
     # Set up global events
     events = copy(acqs.log_info['events'])
     for event in events:
@@ -130,8 +117,14 @@ def make_report(obsid, rootdir='.'):
             last = event
         event['data'] = '&nbsp;' * event.get('level', 0) * 4 + event['data']
 
-    context['events'] = events
+    return events
 
+
+def make_p_man_errs_report(context):
+    context['p_man_errs_table'] = table_to_html(CHAR.p_man_errs)
+
+
+def make_cand_acqs_report(acqs, cand_acqs, events, context, obsdir):
     ######################################################
     # Candidate acquisition stars and initial catalog
     ######################################################
@@ -142,10 +135,8 @@ def make_report(obsid, rootdir='.'):
 
     context['cand_acqs_events'] = select_events(events, ('get_acq_catalog',
                                                          'get_stars',
-                                                         'get_acq_candidates',
-                                                         'get_initial_catalog',
-                                                         'select_best_p_acqs'))
-    
+                                                         'get_acq_candidates'))
+
     # Get information that is not stored in the info.yaml for space reasons
     acqs.meta['stars'] = get_stars(acqs, acqs.meta['att'])
     _, acqs.meta['bad_stars'] = get_acq_candidates(acqs, acqs.meta['stars'])
@@ -166,6 +157,13 @@ def make_report(obsid, rootdir='.'):
                          catalog=acqs.meta['cand_acqs'], bad_stars=acqs.meta['bad_stars'])
         fig.savefig(filename)
 
+
+def make_initial_cat_report(events, context):
+    context['initial_cat_events'] = select_events(events, ('get_initial_catalog',
+                                                           'select_best_p_acqs'))
+
+
+def make_acq_star_details_report(acqs, cand_acqs, context, obsdir):
     ######################################################
     # Candidate acq star detail sections
     ######################################################
@@ -230,14 +228,36 @@ def make_report(obsid, rootdir='.'):
 
         context['cand_acqs'].append(cca)
 
-    ######################################################
-    # Optimize catalog
-    ######################################################
 
+def make_optimize_catalog_report(events, context):
     context['optimize_events'] = select_events(events, ('calc_p_safe',
                                                         'optimize_catalog',
                                                         'optimize_acq_halfw'))
 
+
+def make_report(obsid, rootdir='.'):
+    print('Processing obsid {}'.format(obsid))
+
+    obsdir = os.path.join(rootdir, 'obs{:05}'.format(obsid))
+    filename = os.path.join(obsdir, 'acqs.yaml')
+    print('Reading and parsing {}'.format(filename))
+    with open(filename, 'r') as fh:
+        yaml_str = fh.read()
+    acqs = AcqTable.from_yaml(yaml_str)
+    cand_acqs = acqs.meta['cand_acqs']
+    context = copy(acqs.meta)
+
+    events = make_events(acqs)
+    context['events'] = events
+
+    make_p_man_errs_report(context)
+    make_cand_acqs_report(acqs, cand_acqs, events, context, obsdir)
+    make_initial_cat_report(events, context)
+    make_acq_star_details_report(acqs, cand_acqs, context, obsdir)
+    make_optimize_catalog_report(events, context)
+
+    template_file = os.path.join(FILEDIR, 'index_template.html')
+    template = Template(open(template_file, 'r').read())
     out_html = template.render(context)
     out_filename = os.path.join(obsdir, 'index.html')
     with open(out_filename, 'w') as fh:

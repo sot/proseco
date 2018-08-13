@@ -40,12 +40,19 @@ table.table-striped td {
 <h1> Obsid {{obsid}} at {{date}}</h1>
 
 <table class="table-striped">
-  <tr>  <td> <b>Att</b> </td> <td> {{ att }} </td> </tr>
-  <tr>  <td> <b>Date</b> </td> <td> {{ date }} </td> </tr>
+  <tr>  <td> <b>RA</b> </td> <td> {{ att[0] }} </td> </tr>
+  <tr>  <td> <b>Dec</b> </td> <td> {{ att[1] }} </td> </tr>
+  <tr>  <td> <b>Roll</b> </td> <td> {{ att[2] }} </td> </tr>
   <tr>  <td> <b>T_ccd</b> </td> <td> {{ t_ccd }} </td> </tr>
   <tr>  <td> <b>Man angle</b> </td> <td> {{ man_angle }} </td> </tr>
   <tr>  <td> <b>Dither</b> </td> <td> {{ dither }} </td> </tr>
 </table>
+
+<h2> Maneuver errors probability matrix </h2>
+
+Man err is in arcsec, columns are maneuver angle in degrees.  <em>TO DO: make this nicer.</em>
+
+{{ p_man_errs_table | safe }}
 
 <h2> Candidate acquisition stars summary </h2>
 
@@ -58,6 +65,17 @@ table.table-striped td {
 
 <table>
 {% for event in cand_acqs_events %}
+  <tr>
+    <td> <tt> {{event['dt']}} </tt> </td>
+    <td> <tt> {{event['func_disp']}} </tt> </td>
+    <td> <tt> {{event['data']}} </tt> </td>
+  </tr>
+{% endfor %}
+</table>
+
+<h2> Initial catalog selection </h2>
+<table>
+{% for event in initial_cat_events %}
   <tr>
     <td> <tt> {{event['dt']}} </tt> </td>
     <td> <tt> {{event['func_disp']}} </tt> </td>
