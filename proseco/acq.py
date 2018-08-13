@@ -795,6 +795,7 @@ def select_best_p_acqs(acqs, cand_acqs, min_p_acq, acq_indices, box_sizes):
             acqs.log('Star idx={:2d} id={:10d} box={:3d} mag={:5.1f} p_acq={:.3f} {}'
                      .format(acq_idx, acq['id'], box_size, acq['mag'], p_acq,
                              'ACCEPTED' if accepted else 'rejected'),
+                     id=acq['id'],
                      level=2)
 
             if accepted:
@@ -932,7 +933,7 @@ def optimize_acq_halfw(acqs, idx, p_safe, verbose=False):
     """
     acq = acqs[idx]
     orig_halfw = acq['halfw']
-    acqs.log('Optimizing halfw for idx={} id={}'.format(idx, acq['id']))
+    acqs.log('Optimizing halfw for idx={} id={}'.format(idx, acq['id']), id=acq['id'])
 
     # Compute p_safe for each possible halfw for the current star
     p_safes = []
@@ -954,15 +955,15 @@ def optimize_acq_halfw(acqs, idx, p_safe, verbose=False):
 
     p_safes_strs = ['{:.2f} ({}")'.format(np.log10(p), box_size)
                     for p, box_size in zip(p_safes, CHAR.box_sizes)]
-    acqs.log('p_safes={}'.format(', '.join(p_safes_strs)), level=1)
+    acqs.log('p_safes={}'.format(', '.join(p_safes_strs)), level=1, id=acq['id'])
     acqs.log('min_p_safe={:.2f} p_safe={:.2f} min_halfw={} orig_halfw={} improved={}'
              .format(np.log10(min_p_safe), np.log10(p_safe),
                      min_halfw, orig_halfw, improved),
-             level=1)
+             level=1, id=acq['id'])
 
     if improved:
         acqs.log('Update acq idx={} halfw from {} to {}'
-                 .format(idx, orig_halfw, min_halfw), level=1)
+                 .format(idx, orig_halfw, min_halfw), level=1, id=acq['id'])
         p_safe = min_p_safe
         acq['halfw'] = min_halfw
     else:
@@ -1013,7 +1014,7 @@ def optimize_catalog(acqs, verbose=False):
         idx = np.argsort(p_acqs)[0]
 
         acqs.log('Trying to use {} mag={:.2f} to replace idx={} with p_acq={:.3f}'
-                 .format(cand_id, cand_acq['mag'], idx, p_acqs[idx]))
+                 .format(cand_id, cand_acq['mag'], idx, p_acqs[idx]), id=cand_id)
 
         # Make a copy of the row (acq star) as a numpy void (structured array row)
         orig_acq = acqs[idx].as_void()
@@ -1030,7 +1031,7 @@ def optimize_catalog(acqs, verbose=False):
         if improved:
             p_safe, improved = optimize_acqs_halfw(acqs, verbose)
             calc_p_safe(acqs, verbose=True)
-            acqs.log('  accepted, new p_safe = {:.5f}'.format(p_safe))
+            acqs.log('  accepted, new p_safe = {:.5f}'.format(p_safe), id=cand_id)
         else:
             acqs[idx] = orig_acq
 

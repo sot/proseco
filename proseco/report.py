@@ -98,8 +98,10 @@ def get_p_acq_model_table(acq):
     return table_to_html(Table(cols, names=names))
 
 
-def select_events(events, funcs):
-    outs = [event for event in events if event['func'] in funcs]
+def select_events(events, funcs, **select):
+    outs = [event for event in events
+            if event['func'] in funcs and
+            all(event.get(key) == val for key, val in select.items())]
     return outs
 
 
@@ -163,7 +165,7 @@ def make_initial_cat_report(events, context):
                                                            'select_best_p_acqs'))
 
 
-def make_acq_star_details_report(acqs, cand_acqs, context, obsdir):
+def make_acq_star_details_report(acqs, cand_acqs, events, context, obsdir):
     ######################################################
     # Candidate acq star detail sections
     ######################################################
@@ -177,6 +179,11 @@ def make_acq_star_details_report(acqs, cand_acqs, context, obsdir):
         cca = {'id': acq['id'],
                'selected': 'SELECTED' if acq['id'] in acqs['id'] else 'not selected'}
 
+        # Events related to this ACQ ID
+        cca['initial_selection_events'] = select_events(events, 'select_best_p_acqs', id=acq['id'])
+        cca['optimize_events'] = select_events(events,
+                                               ('optimize_catalog', 'optimize_acq_halfw'),
+                                               id=acq['id'])
         # Make a dict copy of everything in ``acq``
         names = ('idx', 'id', 'ra', 'dec', 'yang', 'zang', 'row', 'col',
                  'mag', 'mag_err')
@@ -253,7 +260,7 @@ def make_report(obsid, rootdir='.'):
     make_p_man_errs_report(context)
     make_cand_acqs_report(acqs, cand_acqs, events, context, obsdir)
     make_initial_cat_report(events, context)
-    make_acq_star_details_report(acqs, cand_acqs, context, obsdir)
+    make_acq_star_details_report(acqs, cand_acqs, events, context, obsdir)
     make_optimize_catalog_report(events, context)
 
     template_file = os.path.join(FILEDIR, 'index_template.html')

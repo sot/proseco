@@ -91,6 +91,26 @@ Man err is in arcsec, columns are maneuver angle in degrees.  <em>TO DO: make th
 
   {{ acq['acq_table'] | safe }}
 
+  <h4> Initial selection </h4>
+  <table>
+  {% for event in acq['initial_selection_events'] %}
+    <tr>
+      <td> <tt> {{event['func']}} </tt> </td>
+      <td> <tt> {{event['data']}} </tt> </td>
+    </tr>
+  {% endfor %}
+  </table>
+
+  <h4> Catalog optimization </h4>
+  <table>
+  {% for event in acq['optimize_events'] %}
+    <tr>
+      <td> <tt> {{event['func']}} </tt> </td>
+      <td> <tt> {{event['data']}} </tt> </td>
+    </tr>
+  {% endfor %}
+  </table>
+
   <h4> Total probability of acquisition (product of below) </h4>
   {{ acq['p_acqs_table'] | safe }}
 
