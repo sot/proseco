@@ -17,7 +17,6 @@ warnings.filterwarnings(
     category=DeprecationWarning)
 
 
-TASK_DATA = os.path.join(os.environ['SKA'], 'data', 'aca_lts_eval')
 
 from gui_char import CHAR
 STAR_CHAR = CHAR["Stars"]
