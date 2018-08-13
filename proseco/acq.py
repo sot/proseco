@@ -3,6 +3,7 @@
 
 from __future__ import division, print_function, absolute_import  # For Py2 compatibility
 
+import os
 import inspect
 import time
 from copy import copy
@@ -79,9 +80,10 @@ class AcqTable(Table):
 
         return super(AcqTable, self[names])._base_repr_(*args, **kwargs)
 
-    def to_yaml(self):
+    def to_yaml(self, rootdir=None):
         """
-        Serialize table as YAML and return string
+        Serialize table as YAML and return string.  If ``rootdir`` is set then
+        the table YAML is output to ``<rootdir>/obs<obsid>/acqs.yaml``.
         """
         out = {}
         exclude = ('stars', 'cand_acqs', 'dark', 'bads')
@@ -92,7 +94,17 @@ class AcqTable(Table):
         out['cand_acqs'] = self.meta['cand_acqs'].to_struct()
         out['log_info'] = self.log_info
 
-        return yaml.dump(out)
+        yml = yaml.dump(out)
+
+        if rootdir is not None:
+            outdir = os.path.join(rootdir, 'obs{:05}'.format(self.meta['obsid']))
+            if not os.path.exists(outdir):
+                os.mkdir(outdir)
+            outfile = os.path.join(outdir, 'acqs.yaml')
+            with open(outfile, 'w') as fh:
+                fh.write(yml)
+
+        return yml
 
     @classmethod
     def from_yaml(cls, yaml_str):
@@ -1068,7 +1080,7 @@ def get_acq_catalog(obsid=None, att=None,
     for name, col in acqs_init.columns.items():
         acqs[name] = col
 
-    acqs.meta = {'obsid': obsid or 1,
+    acqs.meta = {'obsid': obsid or 0,
                  'att': att,
                  'date': date,
                  't_ccd': t_ccd,

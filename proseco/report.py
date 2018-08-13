@@ -25,16 +25,6 @@ from mica.archive.aca_dark.dark_cal import get_dark_cal_image
 FILEDIR = os.path.dirname(__file__)
 
 
-def table_to_html2(tbl):
-    # return tbl._base_repr_(html=True, max_width=-1, max_lines=-1, descr_vals=[],
-    #                       tableclass='table-striped')
-    # return tbl._repr_html_()
-    from astropy.table import conf
-    print(tbl[0:2])
-    return tbl._base_repr_(html=True, max_width=-1,
-                           tableclass=conf.default_notebook_table_class)
-
-
 def table_to_html(tbl):
         out = tbl._base_repr_(html=True, max_width=-1,
                               show_dtype=False, descr_vals=[],
@@ -118,8 +108,8 @@ def make_report(obsid, rootdir='.'):
     template_file = os.path.join(FILEDIR, 'index_template.html')
     template = Template(open(template_file, 'r').read())
 
-    obsdir = os.path.join(rootdir, 'obs{}'.format(obsid))
-    filename = os.path.join(obsdir, 'info.yaml')
+    obsdir = os.path.join(rootdir, 'obs{:05}'.format(obsid))
+    filename = os.path.join(obsdir, 'acqs.yaml')
     print('Reading and parsing {}'.format(filename))
     with open(filename, 'r') as fh:
         yaml_str = fh.read()
