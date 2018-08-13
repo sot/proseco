@@ -323,13 +323,13 @@ def plot_acq(acq, dark, stars, vmin=100, vmax=2000,
                 patch = patches.Circle((r + 0.5, c + 0.5), rad, edgecolor=color,
                                        facecolor="none", lw=2.5)
                 ax.add_patch(patch)
-                rads_dict[star['AGASC_ID']] = rad
+                rads_dict[star['id']] = rad
 
     # Spoiler stars
     for idx, sp in enumerate(acq['spoilers']):
         r = sp['row'] - img.row0
         c = sp['col'] - img.col0
-        rad = rads_dict[sp['AGASC_ID']] / np.sqrt(2)
+        rad = rads_dict[sp['id']] / np.sqrt(2)
         plt.text(r + rad + 1, c + rad + 1, str(idx), color='y', fontweight='bold')
 
     # Hack to fix up ticks to have proper row/col coords.  There must be a

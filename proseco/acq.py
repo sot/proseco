@@ -253,6 +253,7 @@ def get_stars(acqs, att, date=None, radius=1.2):
 
     stars.remove_columns(AGASC_COLS_DROP)
 
+    stars.rename_column('AGASC_ID', 'id')
     stars.add_column(Column(stars['RA_PMCORR'], name='ra'), index=1)
     stars.add_column(Column(stars['DEC_PMCORR'], name='dec'), index=2)
     stars.add_column(Column(yag, name='yang'), index=3)
@@ -333,12 +334,10 @@ def get_acq_candidates(acqs, stars, max_candidates=20):
     acqs.log('Selected {} candidates with no spoiler (star within 3 mag and 30 arcsec)'
              .format(len(cand_acqs)))
 
-    cand_acqs.rename_column('AGASC_ID', 'id')
     cand_acqs.rename_column('COLOR1', 'color')
     # Drop all the other AGASC columns.  No longer useful.
     names = [name for name in cand_acqs.colnames if not name.isupper()]
     cand_acqs = AcqTable(cand_acqs[names])
-    # cand_acqs['AGASC_ID'] = cand_acqs['id']
 
     # Make this suitable for plotting
     cand_acqs['idx'] = np.arange(len(cand_acqs))
@@ -392,10 +391,9 @@ def get_spoiler_stars(stars, acq, box_size):
     ok = ((np.abs(stars['yang'] - acq['yang']) < box_size) &
           (np.abs(stars['zang'] - acq['zang']) < box_size) &
           (stars['mag'] - acq['mag'] < 3 * mag_diff_err) &
-          (stars['AGASC_ID'] != acq['id'])
+          (stars['id'] != acq['id'])
           )
     spoilers = stars[ok]
-    spoilers.rename_column('AGASC_ID', 'id')
     spoilers.sort('mag')
 
     return spoilers
@@ -1055,6 +1053,7 @@ def get_acq_catalog(obsid=None, att=None,
         dither_z_amp = obso.get('dither_z_amp')
         if dither_y_amp is not None and dither_z_amp is not None:
             dither = max(dither_y_amp, dither_z_amp)
+
         if dither is None:
             dither = 20
 
@@ -1069,7 +1068,7 @@ def get_acq_catalog(obsid=None, att=None,
     for name, col in acqs_init.columns.items():
         acqs[name] = col
 
-    acqs.meta = {'obsid': obsid,
+    acqs.meta = {'obsid': obsid or 1,
                  'att': att,
                  'date': date,
                  't_ccd': t_ccd,
