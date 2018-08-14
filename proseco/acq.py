@@ -86,7 +86,7 @@ class AcqTable(Table):
         the table YAML is output to ``<rootdir>/obs<obsid>/acqs.yaml``.
         """
         out = {}
-        exclude = ('stars', 'cand_acqs', 'dark', 'bads')
+        exclude = ('stars', 'cand_acqs', 'dark', 'bad_stars')
         for par in self.meta:
             if par not in exclude:
                 out[par] = to_python(self.meta[par])
@@ -1075,7 +1075,7 @@ def get_acq_catalog(obsid=None, att=None,
     dark = get_dark_cal_image(date=date, select='nearest', t_ccd_ref=t_ccd)
 
     stars = get_stars(acqs, att)
-    cand_acqs, bads = get_acq_candidates(acqs, stars)
+    cand_acqs, bad_stars = get_acq_candidates(acqs, stars)
     acqs_init = get_initial_catalog(acqs, cand_acqs, stars=stars, dark=dark, dither=dither,
                                     t_ccd=t_ccd, date=date)
     for name, col in acqs_init.columns.items():
@@ -1090,7 +1090,7 @@ def get_acq_catalog(obsid=None, att=None,
                  'cand_acqs': cand_acqs,
                  'stars': stars,
                  'dark': dark,
-                 'bads': bads,
+                 'bad_stars': bad_stars,
                  }
 
     if optimize:

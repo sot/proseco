@@ -121,10 +121,12 @@ table.table-striped td {
   <h4> Probability star is on the usable part of the CCD </h4>
   {{ acq['p_on_ccd_table'] | safe }}
 
-  <img src="{{ acq['acq_plot'] }}">
   <h4> Spoilers (stars)</h4>
+  <img src="{{ acq['spoilers_plot'] }}">
   {{ acq['spoilers_table'] | safe }}
+
   <h4> Imposters (hot pixels)</h4>
+  <img src="{{ acq['imposters_plot'] }}">
   {{ acq['imposters_table'] | safe }}
 
 

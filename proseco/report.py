@@ -18,7 +18,7 @@ from chandra_aca.aca_image import ACAImage
 
 from . import characteristics as CHAR
 from .acq import AcqTable, get_stars, get_acq_candidates
-from chandra_aca.plot import plot_stars
+from chandra_aca import plot as plot_aca
 from mica.archive.aca_dark.dark_cal import get_dark_cal_image
 
 
@@ -170,9 +170,11 @@ def make_cand_acqs_report(acqs, cand_acqs, events, context, obsdir):
             if acq['id'] in acqs['id']:
                 acq['type'] = 'BOT'
 
-        fig = plot_stars(acqs.meta['att'], stars=acqs.meta['stars'],
-                         catalog=acqs.meta['cand_acqs'], bad_stars=acqs.meta['bad_stars'])
+        fig = plot_aca.plot_stars(acqs.meta['att'], stars=acqs.meta['stars'],
+                                  catalog=acqs.meta['cand_acqs'],
+                                  bad_stars=acqs.meta['bad_stars'])
         fig.savefig(filename)
+        plt.close(fig)
 
 
 def make_initial_cat_report(events, context):
@@ -209,12 +211,19 @@ def make_acq_star_details_report(acqs, cand_acqs, events, context, obsdir):
         cca['p_acq_model_table'] = get_p_acq_model_table(acq)
         cca['p_on_ccd_table'] = get_p_on_ccd_table(acq)
 
-        # Make the acq detail plot with spoilers and imposters
-        basename = 'star_{}.png'.format(acq['id'])
+        # Make the star detail plot
+        basename = 'spoilers_{}.png'.format(acq['id'])
         filename = os.path.join(obsdir, basename)
-        cca['acq_plot'] = basename
+        cca['spoilers_plot'] = basename
         if not os.path.exists(filename):
-            plot_acq(acq, acqs.meta['dark'], acqs.meta['stars'], filename=filename)
+            plot_spoilers(acq, acqs, filename=filename)
+
+        # Make the acq detail plot with spoilers and imposters
+        basename = 'imposters_{}.png'.format(acq['id'])
+        filename = os.path.join(obsdir, basename)
+        cca['imposters_plot'] = basename
+        if not os.path.exists(filename):
+            plot_imposters(acq, acqs.meta['dark'], acqs.meta['dither'], filename=filename)
 
         if len(acq['imposters']) > 0:
             names = ('row0', 'col0', 'd_row', 'd_col', 'img_sum', 'mag', 'mag_err')
@@ -228,7 +237,7 @@ def make_acq_star_details_report(acqs, cand_acqs, events, context, obsdir):
 
             cca['imposters_table'] = table_to_html(imposters)
         else:
-            cca['imposters_table'] = '<em> No imposters </em>'
+            cca['imposters_table'] = ''
 
         if len(acq['spoilers']) > 0:
             names = ('id', 'yang', 'zang', 'mag', 'mag_err')
@@ -244,9 +253,15 @@ def make_acq_star_details_report(acqs, cand_acqs, events, context, obsdir):
             spoilers.add_column(d_yang, index=3)
             spoilers.add_column(idx, index=0)
 
+            d_mags = spoilers['mag'] - acq['mag']
+            d_mag_errs = np.sqrt(spoilers['mag_err'] ** 2 + acq['mag_err'] ** 2)
+            d_sigmas = d_mags / d_mag_errs
+            spoilers['d_sigma'] = d_sigmas
+            spoilers['d_sigma'].info.format = '.1f'
+
             cca['spoilers_table'] = table_to_html(spoilers)
         else:
-            cca['spoilers_table'] = '<em> No spoilers </em>'
+            cca['spoilers_table'] = ''
 
         context['cand_acqs'].append(cca)
 
@@ -288,12 +303,92 @@ def make_report(obsid, rootdir='.'):
     return acqs
 
 
-def plot_acq(acq, dark, stars, vmin=100, vmax=2000,
-             figsize=(8, 8), r=None, c=None, filename=None):
+def local_symsize(mag):
+    # map mags to figsizes, defining
+    # mag 6 as 40 and mag 11 as 3
+    # interp should leave it at the bounding value outside
+    # the range
+    return np.interp(mag, [6.0, 11.0], [200.0, 20.0])
+
+
+def plot_spoilers(acq, acqs, filename=None):
+    # Clip figure to region around acq star
+    plot_hw = 360  # arcsec
+    hwp = plot_hw / 5  # Halfwidth of plot in pixels
+
+    # Get stars
+    stars = acqs.meta['stars']
+    ok = ((np.abs(stars['yang'] - acq['yang']) < plot_hw) &
+          (np.abs(stars['zang'] - acq['zang']) < plot_hw))
+    stars = stars[ok]
+    bad_stars = acqs.meta['bad_stars'][ok]
+
+    fig = plt.figure(figsize=(5, 5))
+    ax = fig.add_subplot(1, 1, 1)
+    ax.set_xlim(acq['row'] - hwp, acq['row'] + hwp)
+    ax.set_ylim(acq['col'] - hwp, acq['col'] + hwp)
+
+    # Box regions
+    for box_size in np.arange(120, 321, 40):
+        hwp = box_size / 5  # half width in pixels
+        r0 = acq['row'] - hwp
+        c0 = acq['col'] - hwp
+        patch = patches.Rectangle((r0, c0), hwp * 2, hwp * 2, edgecolor='g',
+                                  facecolor='none', lw=1, alpha=0.3)
+        ax.add_patch(patch)
+        plt.text(r0 + 1, c0 + 1, '{}"'.format(box_size), fontsize='small', color='g')
+
+    # Plot search boxes for all acq stars (most will get clipped later)
+    for acq0 in acqs:
+        hwp = acq0['halfw'] / 5
+        r0 = acq0['row'] - hwp
+        c0 = acq0['col'] - hwp
+        patch = patches.Rectangle((r0, c0), hwp * 2, hwp * 2, edgecolor='b',
+                                  facecolor='none', lw=2, alpha=0.5)
+        ax.add_patch(patch)
+
+    # Plot the CCD box and readout register indicator
+    b1hw = 512
+    box1 = plt.Rectangle((b1hw, -b1hw), -2 * b1hw, 2 * b1hw,
+                         fill=False)
+    ax.add_patch(box1)
+    b2w = 520
+    box2 = plt.Rectangle((b2w, -b1hw), -4 + -2 * b2w, 2 * b1hw,
+                         fill=False)
+    ax.add_patch(box2)
+
+    # Monkey patch the symsize function to make the stars bigger
+    orig_symsize = plot_aca.symsize
+    plot_aca.symsize = local_symsize
+    plot_aca._plot_field_stars(ax, stars=stars, attitude=acqs.meta['att'],
+                               bad_stars=bad_stars)
+    for star in stars:
+        plt.text(star['row'], star['col'] - 3,
+                 '{:.1f}±{:.1f}'.format(star['mag'], star['mag_err']),
+                 verticalalignment='top', horizontalalignment='center',
+                 fontsize='small')
+    plot_aca.symsize = orig_symsize
+
+    # Plot spoiler star indices
+    for idx, spoiler in enumerate(acq['spoilers']):
+        plt.text(spoiler['row'] + 3, spoiler['col'] + 3, str(idx))
+
+    ax.set_xlabel('Row')
+    ax.set_ylabel('Col')
+    ax.set_title('Green boxes show search box + man err')
+
+    plt.tight_layout()
+    if filename is not None:
+        plt.savefig(filename, pad_inches=0.0)
+    plt.close(fig)
+
+
+def plot_imposters(acq, dark, dither, vmin=100, vmax=2000,
+                   figsize=(5, 5), r=None, c=None, filename=None):
     """
     Plot dark current, relevant boxes, imposters and spoilers.
     """
-    drc = int(np.max(CHAR.box_sizes) / 5 * 2) + 5
+    drc = int(np.max(CHAR.box_sizes) / 5 + 5 + dither / 5)
 
     # Make an image of `dark` centered on acq row, col.  Use ACAImage
     # arithmetic to handle the corner case where row/col are near edge
@@ -307,9 +402,16 @@ def plot_acq(acq, dark, stars, vmin=100, vmax=2000,
 
     # Show the dark current image
     fig = plt.figure(figsize=figsize)
-    ax = fig.add_subplot(111)
+    ax = fig.add_subplot(1, 1, 1)
     ax.imshow(img.transpose(), interpolation='none', cmap='hot', origin='lower',
               vmin=vmin, vmax=vmax)
+
+    # CCD edge
+    r = -512.5 - img.row0
+    c = -512.5 - img.col0
+    patch = patches.Rectangle((r, c), 1025, 1025,
+                              edgecolor="g", facecolor="none", lw=2.5)
+    ax.add_patch(patch)
 
     # Imposter stars
     for idx, imp in enumerate(acq['imposters']):
@@ -323,46 +425,12 @@ def plot_acq(acq, dark, stars, vmin=100, vmax=2000,
     # Box regions
     rc = img.shape[0] // 2 + 0.5
     cc = img.shape[1] // 2 + 0.5
-    exts = np.array([0, 60, 120, 160])
-    labels = ['Search', 'Normal', 'Big', 'Anomalous']
-    for ext, label in zip(exts, labels):
-        hw = acq['halfw'] + ext
-        hwp = hw / 5
-        lw = 3 if ext == 0 else 1
+    for hw in CHAR.p_man_errs['man_err_hi']:
+        hwp = (hw + dither) / 5
         patch = patches.Rectangle((rc - hwp, cc - hwp), hwp * 2, hwp * 2, edgecolor='r',
-                                  facecolor='none', lw=lw, alpha=1)
+                                  facecolor='none', lw=1, alpha=1)
         ax.add_patch(patch)
-        plt.text(rc - hwp + 1, cc - hwp + 1, label, color='y', fontsize='large', fontweight='bold')
-
-    # Field stars
-    ok = ((stars['row'] > img.row0) & (stars['row'] < img.row0 + img.shape[0]) &
-          (stars['col'] > img.col0) & (stars['col'] < img.col0 + img.shape[1]))
-    if np.any(ok):
-        stars = stars[ok]
-        d_mags = stars['mag'] - acq['mag']
-        d_mag_errs = np.sqrt(stars['mag_err'] ** 2 + acq['mag_err'] ** 2)
-        d_sigmas = d_mags / d_mag_errs
-        rads = np.clip(2 - d_sigmas, 1, 4)
-        rads_dict = {}
-
-        for color, sig0, sig1, maxmag in (('r', -100, 0.5, 15),  # Spoiler is brighter or close
-                                          ('y', 0.5, 2, 15),  # Spoiler within 0.5 to 1.5 sigma
-                                          ('g', 2, 100, 11.5)):  # Spoiler between 1.5 to 2 sigma
-            ok = (d_sigmas > sig0) & (d_sigmas <= sig1) & (stars['mag'] < maxmag)
-            for star, rad in zip(stars[ok], rads[ok]):
-                r = star['row'] - img.row0
-                c = star['col'] - img.col0
-                patch = patches.Circle((r + 0.5, c + 0.5), rad, edgecolor=color,
-                                       facecolor="none", lw=2.5)
-                ax.add_patch(patch)
-                rads_dict[star['id']] = rad
-
-    # Spoiler stars
-    for idx, sp in enumerate(acq['spoilers']):
-        r = sp['row'] - img.row0
-        c = sp['col'] - img.col0
-        rad = rads_dict[sp['id']] / np.sqrt(2)
-        plt.text(r + rad + 1, c + rad + 1, str(idx), color='y', fontweight='bold')
+        plt.text(rc - hwp + 1, cc - hwp + 1, '{}"'.format(hw), color='y', fontweight='bold')
 
     # Hack to fix up ticks to have proper row/col coords.  There must be a
     # correct way to do this.
@@ -372,8 +440,10 @@ def plot_acq(acq, dark, stars, vmin=100, vmax=2000,
     yticks = [str(int(label) + img.col0) for label in ax.get_yticks().tolist()]
     ax.set_yticklabels(yticks)
     ax.set_ylabel('Column')
+    ax.set_title('Red boxes show search box size + dither')
 
+    plt.tight_layout()
     if filename is not None:
-        plt.savefig(filename)
+        plt.savefig(filename, pad_inches=0.0)
 
     return img, ax
