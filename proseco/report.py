@@ -26,10 +26,10 @@ FILEDIR = os.path.dirname(__file__)
 
 
 def table_to_html(tbl):
-        out = tbl._base_repr_(html=True, max_width=-1,
-                              show_dtype=False, descr_vals=[],
-                              max_lines=-1, tableclass='table-striped')
-        return out
+    out = tbl._base_repr_(html=True, max_width=-1,
+                          show_dtype=False, descr_vals=[],
+                          max_lines=-1, tableclass='table-striped')
+    return out
 
 
 def get_p_acqs_table(acq, p_name):
@@ -123,7 +123,22 @@ def make_events(acqs):
 
 
 def make_p_man_errs_report(context):
-    context['p_man_errs_table'] = table_to_html(CHAR.p_man_errs)
+    tbl = CHAR.p_man_errs.copy()
+    man_err = ['{}-{}"'.format(lo, hi)
+               for lo, hi in zip(tbl['man_err_lo'],
+                                 tbl['man_err_hi'])]
+    del tbl['man_err_lo']
+    del tbl['man_err_hi']
+
+    for name in tbl.colnames:
+        tbl.rename_column(name, name + '°')
+
+    for col in tbl.columns.values():
+        col[:] = np.round(col, 4)
+
+    tbl.add_column(Column(man_err, name='err \ angle'), 0)
+
+    context['p_man_errs_table'] = table_to_html(tbl)
 
 
 def make_cand_acqs_report(acqs, cand_acqs, events, context, obsdir):
