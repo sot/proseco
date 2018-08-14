@@ -3,6 +3,7 @@
 
 from __future__ import division, print_function, absolute_import  # For Py2 compatibility
 
+import os
 import inspect
 import time
 from copy import copy
@@ -48,16 +49,26 @@ class AcqTable(Table):
         for name in ('ra', 'dec', 'RA_PMCORR', 'DEC_PMCORR'):
             self._default_formats[name] = '.6f'
 
-    def log(self, descr, level='info'):
-        calling_func_name = inspect.currentframe().f_back.f_code.co_name
-        dt = time.time() - self.log_info['time0']
-        self.log_info['events'].append(dict(dt=round(dt, 3),
-                                            func=calling_func_name,
-                                            descr=descr,
-                                            level=level))
+    def log(self, data, **kwargs):
+        # Name of calling functions, starting from top (outermost) and
+        # ending with function that called log()
+        func = inspect.currentframe().f_back.f_code.co_name
 
-    @property
-    def _non_object_table(self):
+        # Possible extension later to include calling context, but this
+        # currently includes a whole bunch more, need to filter to just
+        # this module.
+        # framerecs = inspect.stack()[1:-1]
+        # funcs = [framerec[3] for framerec in reversed(framerecs)]
+        # func = funcs[-1]
+
+        dt = time.time() - self.log_info['time0']
+        self.log_info['events'].append(dict(dt=round(dt, 4),
+                                            func=func,
+                                            # funcs=funcs,
+                                            data=data,
+                                            **kwargs))
+
+    def _base_repr_(self, *args, **kwargs):
         names = [name for name in self.colnames
                  if self[name].dtype.kind != 'O']
 
@@ -67,26 +78,15 @@ class AcqTable(Table):
             if name in names:
                 self[name].format = self._default_formats.pop(name)
 
-        return self[names]
+        return super(AcqTable, self[names])._base_repr_(*args, **kwargs)
 
-    def _repr_html_(self):
-        return Table._repr_html_(self._non_object_table)
-
-    def __repr__(self):
-        return Table.__repr__(self._non_object_table)
-
-    def __str__(self):
-        return Table.__str__(self._non_object_table)
-
-    def __bytes__(self):
-        return Table.__bytes__(self._non_object_table)
-
-    def to_yaml(self):
+    def to_yaml(self, rootdir=None):
         """
-        Serialize table as YAML and return string
+        Serialize table as YAML and return string.  If ``rootdir`` is set then
+        the table YAML is output to ``<rootdir>/obs<obsid>/acqs.yaml``.
         """
         out = {}
-        exclude = ('stars', 'cand_acqs', 'dark', 'bads')
+        exclude = ('stars', 'cand_acqs', 'dark', 'bad_stars')
         for par in self.meta:
             if par not in exclude:
                 out[par] = to_python(self.meta[par])
@@ -94,7 +94,17 @@ class AcqTable(Table):
         out['cand_acqs'] = self.meta['cand_acqs'].to_struct()
         out['log_info'] = self.log_info
 
-        return yaml.dump(out)
+        yml = yaml.dump(out)
+
+        if rootdir is not None:
+            outdir = os.path.join(rootdir, 'obs{:05}'.format(self.meta['obsid']))
+            if not os.path.exists(outdir):
+                os.mkdir(outdir)
+            outfile = os.path.join(outdir, 'acqs.yaml')
+            with open(outfile, 'w') as fh:
+                fh.write(yml)
+
+        return yml
 
     @classmethod
     def from_yaml(cls, yaml_str):
@@ -163,7 +173,7 @@ class AcqTable(Table):
             col = out[name]
             if col.dtype.kind == 'O':
                 for idx, val in enumerate(col):
-                    if isinstance(val, dict) and sorted(val.keys()) == ['names', 'rows']:
+                    if isinstance(val, dict) and 'dtype' in val.keys():
                         col[idx] = Table(**val)
         return out
 
@@ -244,10 +254,10 @@ def get_stars(acqs, att, date=None, radius=1.2):
     candidate acq stars with large uncertainty.
     """
     q_att = Quat(att)
-    acqs.log('getting stars at ra={:.5f} dec={:.4f} ..'
+    acqs.log('Getting stars at ra={:.5f} dec={:.4f}'
              .format(q_att.ra, q_att.dec))
     stars = get_agasc_cone(q_att.ra, q_att.dec, radius=radius, date=date)
-    acqs.log(' got {} stars'.format(len(stars)))
+    acqs.log('Got {} stars'.format(len(stars)), level=1)
     yag, zag = radec2yagzag(stars['RA_PMCORR'], stars['DEC_PMCORR'], q_att)
     yag *= 3600
     zag *= 3600
@@ -255,6 +265,7 @@ def get_stars(acqs, att, date=None, radius=1.2):
 
     stars.remove_columns(AGASC_COLS_DROP)
 
+    stars.rename_column('AGASC_ID', 'id')
     stars.add_column(Column(stars['RA_PMCORR'], name='ra'), index=1)
     stars.add_column(Column(stars['DEC_PMCORR'], name='dec'), index=2)
     stars.add_column(Column(yag, name='yang'), index=3)
@@ -277,7 +288,7 @@ def get_stars(acqs, att, date=None, radius=1.2):
     ok = (row > -rcmax) & (row < rcmax) & (col > -rcmax) & (col < rcmax)
     stars = stars[ok]
 
-    acqs.log('finished star processing', level='verbose')
+    acqs.log('Finished star processing', level=1)
 
     return stars
 
@@ -312,9 +323,9 @@ def get_acq_candidates(acqs, stars, max_candidates=20):
     bads = ~ok
     cand_acqs = stars[ok]
     cand_acqs.sort('MAG_ACA')
-    acqs.log('filtering on CLASS, MAG_ACA, COLOR1, row/col, '
-             'MAG_ACA_ERR, ASPQ1/2, POS_ERR:\n'
-             'reduced star list from {} to {} candidate acq stars'
+    acqs.log('Filtering on CLASS, MAG_ACA, COLOR1, row/col, '
+             'MAG_ACA_ERR, ASPQ1/2, POS_ERR:')
+    acqs.log('Reduced star list from {} to {} candidate acq stars'
              .format(len(stars), len(cand_acqs)))
 
     # Reject any candidate with a spoiler that is within a 30" HW box
@@ -332,15 +343,13 @@ def get_acq_candidates(acqs, stars, max_candidates=20):
             break
 
     cand_acqs = cand_acqs[goods]
-    acqs.log('selected {} candidates with no spoiler (star within 3 mag and 30 arcsec)'
+    acqs.log('Selected {} candidates with no spoiler (star within 3 mag and 30 arcsec)'
              .format(len(cand_acqs)))
 
-    cand_acqs.rename_column('AGASC_ID', 'id')
     cand_acqs.rename_column('COLOR1', 'color')
     # Drop all the other AGASC columns.  No longer useful.
     names = [name for name in cand_acqs.colnames if not name.isupper()]
     cand_acqs = AcqTable(cand_acqs[names])
-    # cand_acqs['AGASC_ID'] = cand_acqs['id']
 
     # Make this suitable for plotting
     cand_acqs['idx'] = np.arange(len(cand_acqs))
@@ -394,7 +403,7 @@ def get_spoiler_stars(stars, acq, box_size):
     ok = ((np.abs(stars['yang'] - acq['yang']) < box_size) &
           (np.abs(stars['zang'] - acq['zang']) < box_size) &
           (stars['mag'] - acq['mag'] < 3 * mag_diff_err) &
-          (stars['AGASC_ID'] != acq['id'])
+          (stars['id'] != acq['id'])
           )
     spoilers = stars[ok]
     spoilers.sort('mag')
@@ -747,7 +756,7 @@ def calc_p_on_ccd(row, col, box_size):
     return p_on_ccd
 
 
-def select_best_p_acqs(acqs, p_acqs, min_p_acq, acq_indices, box_sizes):
+def select_best_p_acqs(acqs, cand_acqs, min_p_acq, acq_indices, box_sizes):
     """
     Find stars with the highest acquisition probability according to the
     algorithm below.  ``p_acqs`` is the same-named column from candidate
@@ -765,26 +774,36 @@ def select_best_p_acqs(acqs, p_acqs, min_p_acq, acq_indices, box_sizes):
     min_p_acq to fill out the catalog.  The acq_indices and box_sizes
     arrays are appended in place in this process.
     """
-    acqs.log('find stars with best acq prob for min_p_acq={}'.format(min_p_acq))
-    acqs.log('current: acq_indices={} box_sizes={}'.format(acq_indices, box_sizes),
-             level='verbose')
+    acqs.log('Find stars with best acq prob for min_p_acq={}'.format(min_p_acq))
+    acqs.log('Current catalog: acq_indices={} box_sizes={}'.format(acq_indices, box_sizes))
 
+    p_acqs = cand_acqs['p_acqs']
     for box_size in CHAR.box_sizes:
         # Get array of p_acq values corresponding to box_size and
         # man_err=box_size, for each of the candidate acq stars.
         p_acqs_for_box = np.array([p_acq[box_size, box_size] for p_acq in p_acqs])
+        acqs.log('Trying search box size {} arcsec'.format(box_size), level=1)
 
         indices = np.argsort(-p_acqs_for_box)
         for acq_idx in indices:
-            if p_acqs_for_box[acq_idx] > min_p_acq and acq_idx not in acq_indices:
-                acqs.log('  adding idx={} with box_size={} and p_acq={}'
-                         .format(acq_idx, box_size, round(p_acqs_for_box[acq_idx], 3)),
-                         level='verbose')
+            if acq_idx in acq_indices:
+                continue
+
+            acq = cand_acqs[acq_idx]
+            p_acq = p_acqs_for_box[acq_idx]
+            accepted = p_acq > min_p_acq
+            acqs.log('Star idx={:2d} id={:10d} box={:3d} mag={:5.1f} p_acq={:.3f} {}'
+                     .format(acq_idx, acq['id'], box_size, acq['mag'], p_acq,
+                             'ACCEPTED' if accepted else 'rejected'),
+                     id=acq['id'],
+                     level=2)
+
+            if accepted:
                 acq_indices.append(acq_idx)
                 box_sizes.append(box_size)
 
             if len(acq_indices) == 8:
-                acqs.log('  found 8 acq stars, exiting', level='verbose')
+                acqs.log('Found 8 acq stars, done')
                 return
 
     return
@@ -831,7 +850,7 @@ def calc_acq_p_vals(acq, box_size, man_err, dither, stars, dark, t_ccd, date):
 
         # Probability star is in acq box (function of man_err and dither only)
         p_on_ccd = calc_p_on_ccd(acq['row'], acq['col'], box_size=man_err + dither)
-        acq['p_on_ccd'][box_size] = p_on_ccd
+        acq['p_on_ccd'][man_err] = p_on_ccd
 
         # All together now!
         acq['p_acqs'][box_size, man_err] = p_brightest * p_acq_model * p_on_ccd
@@ -841,18 +860,21 @@ def get_initial_catalog(acqs, cand_acqs, stars, dark, dither=20, t_ccd=-11.0, da
     """
     Get the initial catalog of up to 8 candidate acquisition stars.
     """
-    acqs.log('calculating initial acq_p_vals for {} candidates'.format(len(cand_acqs)))
+    acqs.log('Getting initial catalog from {} candidates'.format(len(cand_acqs)))
+
     for acq in cand_acqs:
         for box_size in CHAR.box_sizes:
             # For initial catalog set man_err to box_size.  TO DO: set man_err to 160 here??
             man_err = box_size
             calc_acq_p_vals(acq, box_size, man_err, dither, stars, dark, t_ccd, date)
 
+    # Accumulate indices and box sizes of candidate acq stars that meet
+    # successively less stringent minimum p_acq.
     acq_indices = []
     box_sizes = []
     for min_p_acq in (0.75, 0.5, 0.25, 0.05):
         # Updates acq_indices, box_sizes in place
-        select_best_p_acqs(acqs, cand_acqs['p_acqs'], min_p_acq, acq_indices, box_sizes)
+        select_best_p_acqs(acqs, cand_acqs, min_p_acq, acq_indices, box_sizes)
 
         if len(acq_indices) == 8:
             break
@@ -861,6 +883,8 @@ def get_initial_catalog(acqs, cand_acqs, stars, dark, dither=20, t_ccd=-11.0, da
     acqs['halfw'] = box_sizes
     for acq, box_size in zip(acqs, box_sizes):
         acq['p_acq'] = acq['p_acqs'][box_size, box_size]
+
+    acqs.log_info['initial_catalog'] = acqs.copy()
 
     return acqs
 
@@ -889,12 +913,9 @@ def calc_p_safe(acqs, verbose=False):
 
         p_n, p_n_cum = prob_n_acq(p_acqs)
         if verbose:
-            acqs.log('man_err = {}'.format(man_err), level='verbose')
-            acqs.log('  p_acqs =' + ' '.join(['{:.3f}'.format(val) for val in p_acqs]),
-                     level='verbose')
-            acqs.log('  p N_or_fewer=' + ' '.join(['{:.3f}%'.format(val * 100)
-                                                   for val in p_n_cum[:4]]),
-                     level='verbose')
+            acqs.log('man_err = {}'.format(man_err))
+            acqs.log('p_acqs =' + ' '.join(['{:.3f}'.format(val) for val in p_acqs]))
+            acqs.log('log10(p 1_or_fewer) = {:.2f}'.format(np.log10(p_n_cum[1])))
         p_01 = p_n_cum[1]  # 1 or fewer => p_fail at this man_err
 
         p_no_safe *= (1 - p_man_err * p_01)
@@ -912,6 +933,7 @@ def optimize_acq_halfw(acqs, idx, p_safe, verbose=False):
     """
     acq = acqs[idx]
     orig_halfw = acq['halfw']
+    acqs.log('Optimizing halfw for idx={} id={}'.format(idx, acq['id']), id=acq['id'])
 
     # Compute p_safe for each possible halfw for the current star
     p_safes = []
@@ -930,19 +952,18 @@ def optimize_acq_halfw(acqs, idx, p_safe, verbose=False):
     # So avoid reducing box sizes for only small improvements in p_safe.
     improved = ((min_p_safe < p_safe) and
                 ((min_halfw > orig_halfw) or (min_p_safe / p_safe < 0.9)))
-    if verbose:
-        acqs.log('for idx={} id={}'.format(idx, acq['id']))
-        p_safes_strs = ['{:.2f}'.format(np.log10(p)) for p in p_safes]
-        acqs.log('  p_safes={}'.format(' '.join(p_safes_strs)))
-        acqs.log('  min_p_safe={:.2f} p_safe={:.2f} min_halfw={} orig_halfw={} improved={}'
-                 .format(np.log10(min_p_safe), np.log10(p_safe),
-                         min_halfw, orig_halfw, improved),
-                 level='verbose')
+
+    p_safes_strs = ['{:.2f} ({}")'.format(np.log10(p), box_size)
+                    for p, box_size in zip(p_safes, CHAR.box_sizes)]
+    acqs.log('p_safes={}'.format(', '.join(p_safes_strs)), level=1, id=acq['id'])
+    acqs.log('min_p_safe={:.2f} p_safe={:.2f} min_halfw={} orig_halfw={} improved={}'
+             .format(np.log10(min_p_safe), np.log10(p_safe),
+                     min_halfw, orig_halfw, improved),
+             level=1, id=acq['id'])
 
     if improved:
-        if verbose:
-            acqs.log('  update acq idx={} halfw from {} to {}'
-                     .format(idx, orig_halfw, min_halfw))
+        acqs.log('Update acq idx={} halfw from {} to {}'
+                 .format(idx, orig_halfw, min_halfw), level=1, id=acq['id'])
         p_safe = min_p_safe
         acq['halfw'] = min_halfw
     else:
@@ -967,7 +988,7 @@ def optimize_acqs_halfw(acqs, verbose=False):
 
 def optimize_catalog(acqs, verbose=False):
     p_safe = calc_p_safe(acqs, verbose=True)
-    acqs.log('initial p_safe={:.5f}'.format(p_safe))
+    acqs.log('initial log10(p_safe)={:.2f}'.format(np.log10(p_safe)))
 
     # Start by optimizing the half-widths of the initial catalog
     for _ in range(5):
@@ -992,8 +1013,8 @@ def optimize_catalog(acqs, verbose=False):
         p_acqs = [acq['p_acqs'][acq['halfw'], acq['halfw']] for acq in acqs]
         idx = np.argsort(p_acqs)[0]
 
-        acqs.log('trying to use {} mag={:.2f} to replace idx={} with p_acq={:.3f}'
-                 .format(cand_id, cand_acq['mag'], idx, p_acqs[idx]), level='verbose')
+        acqs.log('Trying to use {} mag={:.2f} to replace idx={} with p_acq={:.3f}'
+                 .format(cand_id, cand_acq['mag'], idx, p_acqs[idx]), id=cand_id)
 
         # Make a copy of the row (acq star) as a numpy void (structured array row)
         orig_acq = acqs[idx].as_void()
@@ -1010,7 +1031,7 @@ def optimize_catalog(acqs, verbose=False):
         if improved:
             p_safe, improved = optimize_acqs_halfw(acqs, verbose)
             calc_p_safe(acqs, verbose=True)
-            acqs.log('  accepted, new p_safe = {:.5f}'.format(p_safe))
+            acqs.log('  accepted, new p_safe = {:.5f}'.format(p_safe), id=cand_id)
         else:
             acqs[idx] = orig_acq
 
@@ -1045,6 +1066,7 @@ def get_acq_catalog(obsid=None, att=None,
         dither_z_amp = obso.get('dither_z_amp')
         if dither_y_amp is not None and dither_z_amp is not None:
             dither = max(dither_y_amp, dither_z_amp)
+
         if dither is None:
             dither = 20
 
@@ -1053,13 +1075,14 @@ def get_acq_catalog(obsid=None, att=None,
     dark = get_dark_cal_image(date=date, select='nearest', t_ccd_ref=t_ccd)
 
     stars = get_stars(acqs, att)
-    cand_acqs, bads = get_acq_candidates(acqs, stars)
+    cand_acqs, bad_stars = get_acq_candidates(acqs, stars)
     acqs_init = get_initial_catalog(acqs, cand_acqs, stars=stars, dark=dark, dither=dither,
                                     t_ccd=t_ccd, date=date)
     for name, col in acqs_init.columns.items():
         acqs[name] = col
 
-    acqs.meta = {'att': att,
+    acqs.meta = {'obsid': obsid or 0,
+                 'att': att,
                  'date': date,
                  't_ccd': t_ccd,
                  'man_angle': man_angle,
@@ -1067,7 +1090,7 @@ def get_acq_catalog(obsid=None, att=None,
                  'cand_acqs': cand_acqs,
                  'stars': stars,
                  'dark': dark,
-                 'bads': bads,
+                 'bad_stars': bad_stars,
                  }
 
     if optimize:

@@ -42,10 +42,10 @@ def add_spoiler(stars, acq, dyang, dzang, dmag, mag_err=0.05):
     and mag relative to an ``acq`` star.  Returns a new stars table.
     """
     stars = stars.copy()
-    ok = stars['AGASC_ID'] == acq['id']
+    ok = stars['id'] == acq['id']
     stars.add_row(stars[ok][0])
     star = stars[-1]
-    star['AGASC_ID'] = -star['AGASC_ID']
+    star['id'] = -star['id']
     star['yang'] = acq['yang'] + dyang
     star['zang'] = acq['zang'] + dzang
     star['mag'] = acq['mag'] + dmag
@@ -260,7 +260,7 @@ def test_get_acq_catalog():
     acqs = get_acq_catalog(21007)
     assert np.all(acqs['id'] == [189417400, 189410928, 189409160, 189417920,
                                  189406216, 189417752, 189015480, 189416328])
-    assert np.all(acqs['halfw'] == [160, 160, 160, 160, 60, 100, 60, 60])
+    assert np.all(acqs['halfw'] == [160, 160, 160, 160, 60, 80, 80, 60])
 
 
 def test_to_from_yaml():
