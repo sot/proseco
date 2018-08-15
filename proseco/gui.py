@@ -31,8 +31,7 @@ RAD_2_PIX = 180/np.pi*3600*ARC_2_PIX
 
 DITHER = 8
 MANVR_ERROR = 60
-fieldErrorPad = 0
-
+FIELD_ERROR_PAD = 0
 
 def set_dither(dither):
     global DITHER
@@ -44,17 +43,13 @@ def set_manvr_error(manvr_error):
     MANVR_ERROR = manvr_error
 
 
-def fixedErrorPad(stype):
-    return DITHER + MANVR_ERROR if stype == 'Acq' else DITHER
-
-
 def check_off_chips(cone_stars, opt):
     ypos = cone_stars['row']
     zpos = cone_stars['col']
     yPixLim = STAR_CHAR['General']['Body']['Pixels']['YPixLim']
     zPixLim = STAR_CHAR['General']['Body']['Pixels']['ZPixLim']
     edgeBuffer = STAR_CHAR['General']['Body']['Pixels']['EdgeBuffer']
-    pad = fixedErrorPad(opt['Type']) * ARC_2_PIX
+    pad = DITHER * ARC_2_PIX
     yn = (yPixLim[0] + (pad + edgeBuffer))
     yp = (yPixLim[1] - (pad + edgeBuffer))
     zn = (zPixLim[0] + (pad + edgeBuffer))
@@ -65,7 +60,7 @@ def check_off_chips(cone_stars, opt):
     offchip = chip_edge_dist < 0
     yag = cone_stars['yang']
     zag = cone_stars['zang']
-    arcsec_pad = fixedErrorPad(opt['Type'])
+    arcsec_pad = DITHER
     yArcSecLim = STAR_CHAR['General']['FOV']['YArcSecLim']
     ZArcSecLim = STAR_CHAR['General']['FOV']['ZArcSecLim']
     arcsec_yn = yArcSecLim[0] + arcsec_pad
@@ -97,7 +92,7 @@ def check_mag(cone_stars, opt, label):
 def check_mag_spoilers(cone_stars, ok, opt):
     stype = opt['Type']
     stderr2 = cone_stars['mag_one_sig_err2']
-    fidpad = fieldErrorPad * ARC_2_PIX
+    fidpad = FIELD_ERROR_PAD * ARC_2_PIX
     maxsep = STAR_CHAR['General']['Spoiler']['MaxSep'] + fidpad
     intercept = STAR_CHAR['General']['Spoiler']['Intercept'] + fidpad
     spoilslope = STAR_CHAR['General']['Spoiler']['Slope']
@@ -151,7 +146,7 @@ def check_bad_pixels(cone_stars, not_bad, opt):
     row, col = cone_stars['row'], cone_stars['col']
     bp = np.array(bp)
     # Loop over the stars to check each distance to closest bad pixel
-    pad = .5 + fixedErrorPad(opt['Type']) * ARC_2_PIX
+    pad = .5 + DITHER * ARC_2_PIX
     for i, rs, cs in zip(count(), row[not_bad], col[not_bad]):
         in_reg_r = (rs >= (bp[:,0] - pad)) & (rs <= (bp[:,1] + pad))
         in_reg_c = (cs >= (bp[:,2] - pad)) & (cs <= (bp[:,3] + pad))
@@ -176,7 +171,7 @@ def dist_to_bright_spoiler(cone_stars, ok, nSigma, opt):
     row, col = cone_stars['row'], cone_stars['col']
     mag = cone_stars['MAG_ACA']
     magerr2 = cone_stars['mag_one_sig_err2']
-    errorpad = (fieldErrorPad + fixedErrorPad(opt['Type'])) * ARC_2_PIX
+    errorpad = (FIELD_ERROR_PAD + DITHER) * ARC_2_PIX
     dist = np.ones(len(cone_stars)) * 9999
     for cand, cand_magerr, idx in zip(cone_stars[ok],
                                       magOneSigError[ok],
@@ -206,8 +201,8 @@ def check_column(cone_stars, not_bad, opt, chip_pos):
     row, col = chip_pos
     starmag = cone_stars['MAG_ACA']
     magerr2 = cone_stars['mag_one_sig_err2']
-    register_pad = fixedErrorPad(opt['Type']) * ARC_2_PIX
-    column_pad = fieldErrorPad * ARC_2_PIX
+    register_pad = DITHER * ARC_2_PIX
+    column_pad = FIELD_ERROR_PAD * ARC_2_PIX
     pass
 
 
