@@ -9,7 +9,7 @@ import astropy.units as u
 from Quaternion import Quat
 from Ska.quatutil import radec2yagzag
 import chandra_aca
-from . gui_char import CHAR
+from .gui_char import CHAR
 
 # Ignore known numexpr.necompiler and table.conditions warning
 warnings.filterwarnings(
