@@ -24,6 +24,8 @@ from mica.archive.aca_dark.dark_cal import get_dark_cal_image
 
 
 FILEDIR = os.path.dirname(__file__)
+ACQ_COLS = ['idx', 'slot', 'id', 'yang', 'zang', 'row', 'col',
+            'mag', 'mag_err', 'color', 'halfw', 'p_acq']
 
 
 def table_to_html(tbl):
@@ -152,9 +154,7 @@ def make_cand_acqs_report(acqs, cand_acqs, events, context, obsdir):
     # Candidate acquisition stars and initial catalog
     ######################################################
     # Start with table
-    cand_acq_cols = ['idx', 'id', 'yang', 'zang',
-                     'row', 'col', 'mag', 'mag_err', 'color']
-    cand_acqs_table = cand_acqs[cand_acq_cols]
+    cand_acqs_table = cand_acqs[ACQ_COLS]
     # Probably won't work in astropy 1.0
     cand_acqs_table['id'] = ['<a href=#{0}>{0}</a>'.format(cand_acq['id'])
                              for cand_acq in cand_acqs]
@@ -209,10 +209,7 @@ def make_acq_star_details_report(acqs, cand_acqs, events, context, obsdir):
                                                ('optimize_catalog', 'optimize_acq_halfw'),
                                                id=acq['id'])
         # Make a dict copy of everything in ``acq``
-        names = ('idx', 'id', 'ra', 'dec', 'yang', 'zang', 'row', 'col',
-                 'mag', 'mag_err')
-
-        acq_table = cand_acqs[names][ii:ii + 1].copy()
+        acq_table = cand_acqs[ACQ_COLS][ii:ii + 1].copy()
         acq_table['id'] = ['<a href="http://kadi.cfa.harvard.edu/star_hist/?agasc_id={0}" '
                            'target="_blank">{0}</a>'
                            .format(aq['id']) for aq in acq_table]
@@ -285,10 +282,7 @@ def make_optimize_catalog_report(events, context):
 
 
 def make_obsid_summary(acqs, events, context, obsdir):
-    cols = ['idx', 'id', 'yang', 'zang', 'row', 'col',
-            'mag', 'mag_err', 'color', 'halfw', 'p_acq']
-    acqs_table = acqs[cols]
-    acqs_table.sort('idx')
+    acqs_table = acqs[ACQ_COLS]
     acqs_table['id'] = ['<a href="#{0}">{0}</a>'.format(acq['id']) for acq in acqs_table]
     context['acqs_table'] = table_to_html(acqs_table)
 
@@ -316,6 +310,7 @@ def make_report(obsid, rootdir='.'):
         yaml_str = fh.read()
     acqs = AcqTable.from_yaml(yaml_str)
     cand_acqs = acqs.meta['cand_acqs']
+
     context = copy(acqs.meta)
 
     # Get information that is not stored in the info.yaml for space reasons

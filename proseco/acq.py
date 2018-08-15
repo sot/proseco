@@ -870,7 +870,7 @@ def calc_acq_p_vals(acqs, acq, dither, stars, dark, t_ccd, date, man_angle):
     # All together now!
     for box_size in CHAR.box_sizes:
         p_acq_marg = 0.0
-        for man_err, p_man_err in zip(CHAR.man_errs[::-1], acqs.meta['p_man_errs']):
+        for man_err, p_man_err in zip(CHAR.man_errs, acqs.meta['p_man_errs']):
             acq['p_acqs'][box_size, man_err] = (acq['p_brightest'][box_size, man_err] *
                                                 acq['p_acq_model'][box_size] *
                                                 acq['p_on_ccd'][man_err])
@@ -1015,6 +1015,7 @@ def optimize_catalog(acqs, verbose=False):
             acq_ids.add(cand_id)
 
         # Get the index of the worst p_acq in the catalog
+        # TO DO: CHANGE to use marginalized acq['p_acq_marg'][acq['halfw']]
         p_acqs = [acq['p_acqs'][acq['halfw'], acq['halfw']] for acq in acqs]
         idx = np.argsort(p_acqs)[0]
 
@@ -1112,6 +1113,15 @@ def get_acq_catalog(obsid=None, att=None,
     if optimize:
         optimize_catalog(acqs, verbose)
 
+    acqs['p_acq'] = [acq['p_acq_marg'][acq['halfw']] for acq in acqs]
+
+    acqs.sort('idx')
     acqs['slot'] = np.arange(len(acqs))
+
+    # Add slot to cand_acqs table, putting in '...' if not selected as acq
+    acqs.add_index('id')
+    slots = [str(acqs.loc[acq['id']]['slot']) if acq['id'] in acqs['id'] else '...'
+             for acq in cand_acqs]
+    cand_acqs['slot'] = slots
 
     return acqs
