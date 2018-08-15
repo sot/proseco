@@ -5,6 +5,7 @@ from __future__ import division, print_function, absolute_import  # For Py2 comp
 
 import os
 from copy import copy
+import re
 
 import matplotlib
 matplotlib.use('agg')
@@ -29,6 +30,11 @@ def table_to_html(tbl):
     out = tbl._base_repr_(html=True, max_width=-1,
                           show_dtype=False, descr_vals=[],
                           max_lines=-1, tableclass='table-striped')
+    # Undo HTML sanitizing to allow raw HTML in table elements
+    out = re.sub(r'&quot;', '"', out)
+    out = re.sub(r'&lt;', '<', out)
+    out = re.sub(r'&gt;', '>', out)
+
     return out
 
 
@@ -124,7 +130,7 @@ def make_events(acqs):
 
 def make_p_man_errs_report(context):
     tbl = CHAR.p_man_errs.copy()
-    man_err = ['{}-{}"'.format(lo, hi)
+    man_err = ['<b>{}-{}"</b>'.format(lo, hi)
                for lo, hi in zip(tbl['man_err_lo'],
                                  tbl['man_err_hi'])]
     del tbl['man_err_lo']
@@ -148,15 +154,15 @@ def make_cand_acqs_report(acqs, cand_acqs, events, context, obsdir):
     # Start with table
     cand_acq_cols = ['idx', 'id', 'yang', 'zang',
                      'row', 'col', 'mag', 'mag_err', 'color']
-    context['cand_acqs_table'] = table_to_html(cand_acqs[cand_acq_cols])
+    cand_acqs_table = cand_acqs[cand_acq_cols]
+    # Probably won't work in astropy 1.0
+    cand_acqs_table['id'] = ['<a href=#{0}>{0}</a>'.format(cand_acq['id'])
+                             for cand_acq in cand_acqs]
+    context['cand_acqs_table'] = table_to_html(cand_acqs_table)
 
     context['cand_acqs_events'] = select_events(events, ('get_acq_catalog',
                                                          'get_stars',
                                                          'get_acq_candidates'))
-
-    # Get information that is not stored in the info.yaml for space reasons
-    acqs.meta['stars'] = get_stars(acqs, acqs.meta['att'])
-    _, acqs.meta['bad_stars'] = get_acq_candidates(acqs, acqs.meta['stars'])
 
     # Now plot figure
     filename = os.path.join(obsdir, 'candidate_stars.png')
@@ -190,6 +196,7 @@ def make_acq_star_details_report(acqs, cand_acqs, events, context, obsdir):
                                            t_ccd_ref=acqs.meta['t_ccd'])
 
     context['cand_acqs'] = []
+
     for ii, acq in enumerate(cand_acqs):
         print('Doing detail for star {}'.format(acq['id']))
         # Local context dict for each cand_acq star
@@ -204,7 +211,12 @@ def make_acq_star_details_report(acqs, cand_acqs, events, context, obsdir):
         # Make a dict copy of everything in ``acq``
         names = ('idx', 'id', 'ra', 'dec', 'yang', 'zang', 'row', 'col',
                  'mag', 'mag_err')
-        cca['acq_table'] = table_to_html(cand_acqs[names][ii:ii + 1])
+
+        acq_table = cand_acqs[names][ii:ii + 1].copy()
+        acq_table['id'] = ['<a href="http://kadi.cfa.harvard.edu/star_hist/?agasc_id={0}" '
+                           'target="_blank">{0}</a>'
+                           .format(aq['id']) for aq in acq_table]
+        cca['acq_table'] = table_to_html(acq_table)
 
         cca['p_brightest_table'] = get_p_acqs_table(acq, 'p_brightest')
         cca['p_acqs_table'] = get_p_acqs_table(acq, 'p_acqs')
@@ -272,6 +284,28 @@ def make_optimize_catalog_report(events, context):
                                                         'optimize_acq_halfw'))
 
 
+def make_obsid_summary(acqs, events, context, obsdir):
+    cols = ['idx', 'id', 'yang', 'zang', 'row', 'col',
+            'mag', 'mag_err', 'color', 'halfw', 'p_acq']
+    acqs_table = acqs[cols]
+    acqs_table.sort('idx')
+    acqs_table['id'] = ['<a href="#{0}">{0}</a>'.format(acq['id']) for acq in acqs_table]
+    context['acqs_table'] = table_to_html(acqs_table)
+
+    basename = 'acq_stars.png'
+    filename = os.path.join(obsdir, basename)
+    context['acq_stars_plot'] = basename
+    if not os.path.exists(filename):
+        fig = plt.figure(figsize=(4, 4))
+        fig.subplots_adjust(top=0.95)
+        ax = fig.add_subplot(1, 1, 1)
+        plot_aca.plot_stars(acqs.meta['att'], stars=acqs.meta['stars'],
+                            catalog=acqs,
+                            bad_stars=acqs.meta['bad_stars'], ax=ax)
+        plt.savefig(filename)
+        plt.close()
+
+
 def make_report(obsid, rootdir='.'):
     print('Processing obsid {}'.format(obsid))
 
@@ -284,9 +318,14 @@ def make_report(obsid, rootdir='.'):
     cand_acqs = acqs.meta['cand_acqs']
     context = copy(acqs.meta)
 
+    # Get information that is not stored in the info.yaml for space reasons
+    acqs.meta['stars'] = get_stars(acqs, acqs.meta['att'])
+    _, acqs.meta['bad_stars'] = get_acq_candidates(acqs, acqs.meta['stars'])
+
     events = make_events(acqs)
     context['events'] = events
 
+    make_obsid_summary(acqs, events, context, obsdir)
     make_p_man_errs_report(context)
     make_cand_acqs_report(acqs, cand_acqs, events, context, obsdir)
     make_initial_cat_report(events, context)

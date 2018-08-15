@@ -48,6 +48,14 @@ table.table-striped td {
   <tr>  <td> <b>Dither</b> </td> <td> {{ dither }} </td> </tr>
 </table>
 
+<table>
+  <tr>
+    <td> <img src="{{acq_stars_plot}}"> </td>
+    <td> {{ acqs_table | safe }} </td>
+  </tr>
+</table>
+
+
 <h2> Maneuver errors probability matrix </h2>
 
 {{ p_man_errs_table | safe }}
@@ -85,7 +93,7 @@ table.table-striped td {
 <h2> Star details </h2>
 
 {% for acq in cand_acqs %}
-  <h3> AGASC ID {{ acq['id'] }} ({{acq['selected']}})</h3>
+  <h3 id="{{acq['id']}}"> AGASC ID {{ acq['id'] }} ({{acq['selected']}})</h3>
 
   {{ acq['acq_table'] | safe }}
 
