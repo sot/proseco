@@ -777,11 +777,20 @@ def select_best_p_acqs(acqs, cand_acqs, min_p_acq, acq_indices, box_sizes):
     acqs.log('Find stars with best acq prob for min_p_acq={}'.format(min_p_acq))
     acqs.log('Current catalog: acq_indices={} box_sizes={}'.format(acq_indices, box_sizes))
 
-    p_acqs = cand_acqs['p_acqs']
+    p_man_errs = np.array([get_p_man_err(man_err, acqs.meta['man_angle'])
+                           for man_err in CHAR.man_errs])
+
+    p_acqs_list = cand_acqs['p_acqs']  # list of p_acqs for each candidate
     for box_size in CHAR.box_sizes:
-        # Get array of p_acq values corresponding to box_size and
-        # man_err=box_size, for each of the candidate acq stars.
-        p_acqs_for_box = np.array([p_acq[box_size, box_size] for p_acq in p_acqs])
+        # Get array of p_acq values corresponding to box_size for each of the
+        # candidate acq stars.  This marginalizes over the possible maneuver errors.
+        p_acqs_for_box = []
+        for p_acqs in p_acqs_list:
+            p_acq = sum(p_acqs[box_size, man_err] * p_man_err
+                        for man_err, p_man_err in zip(CHAR.man_errs, p_man_errs))
+            p_acqs_for_box.append(p_acq)
+        p_acqs_for_box = np.array(p_acqs_for_box)
+
         acqs.log('Trying search box size {} arcsec'.format(box_size), level=1)
 
         indices = np.argsort(-p_acqs_for_box)
@@ -862,11 +871,12 @@ def get_initial_catalog(acqs, cand_acqs, stars, dark, dither=20, t_ccd=-11.0, da
     """
     acqs.log('Getting initial catalog from {} candidates'.format(len(cand_acqs)))
 
+    # Fill in the entire acq['p_acqs'] table (which is actual a dict of keyed by
+    # (box_size, man_err) tuples).
     for acq in cand_acqs:
         for box_size in CHAR.box_sizes:
-            # For initial catalog set man_err to box_size.  TO DO: set man_err to 160 here??
-            man_err = box_size
-            calc_acq_p_vals(acq, box_size, man_err, dither, stars, dark, t_ccd, date)
+            for man_err in CHAR.man_errs[::-1]:
+                calc_acq_p_vals(acq, box_size, man_err, dither, stars, dark, t_ccd, date)
 
     # Accumulate indices and box sizes of candidate acq stars that meet
     # successively less stringent minimum p_acq.
@@ -892,7 +902,7 @@ def get_initial_catalog(acqs, cand_acqs, stars, dark, dither=20, t_ccd=-11.0, da
 def calc_p_safe(acqs, verbose=False):
     p_no_safe = 1.0
 
-    for man_err in CHAR.p_man_errs['man_err_hi']:
+    for man_err in CHAR.man_errs:
         p_man_err = get_p_man_err(man_err, acqs.meta['man_angle'])
         p_acqs = []
         for acq in acqs:
@@ -1074,24 +1084,25 @@ def get_acq_catalog(obsid=None, att=None,
              .format(date, t_ccd))
     dark = get_dark_cal_image(date=date, select='nearest', t_ccd_ref=t_ccd)
 
-    stars = get_stars(acqs, att)
-    cand_acqs, bad_stars = get_acq_candidates(acqs, stars)
-    acqs_init = get_initial_catalog(acqs, cand_acqs, stars=stars, dark=dark, dither=dither,
-                                    t_ccd=t_ccd, date=date)
-    for name, col in acqs_init.columns.items():
-        acqs[name] = col
-
     acqs.meta = {'obsid': obsid or 0,
                  'att': att,
                  'date': date,
                  't_ccd': t_ccd,
                  'man_angle': man_angle,
-                 'dither': dither,
-                 'cand_acqs': cand_acqs,
-                 'stars': stars,
-                 'dark': dark,
-                 'bad_stars': bad_stars,
-                 }
+                 'dither': dither}
+
+    stars = get_stars(acqs, att)
+    cand_acqs, bad_stars = get_acq_candidates(acqs, stars)
+
+    acqs_init = get_initial_catalog(acqs, cand_acqs, stars=stars, dark=dark, dither=dither,
+                                    t_ccd=t_ccd, date=date)
+    for name, col in acqs_init.columns.items():
+        acqs[name] = col
+
+    acqs.meta.update({'cand_acqs': cand_acqs,
+                      'stars': stars,
+                      'dark': dark,
+                      'bad_stars': bad_stars})
 
     if optimize:
         optimize_catalog(acqs, verbose)

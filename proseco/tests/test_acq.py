@@ -260,7 +260,7 @@ def test_get_acq_catalog():
     acqs = get_acq_catalog(21007)
     assert np.all(acqs['id'] == [189417400, 189410928, 189409160, 189417920,
                                  189406216, 189417752, 189015480, 189416328])
-    assert np.all(acqs['halfw'] == [160, 160, 160, 160, 60, 80, 80, 60])
+    assert np.all(acqs['halfw'] == [160, 160, 160, 160, 60, 100, 80, 60])
 
 
 def test_to_from_yaml():
