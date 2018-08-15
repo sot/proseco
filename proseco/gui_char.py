@@ -26,7 +26,61 @@ CHAR = { "Stars": {
             "ERImageSize": 2,
             "Dark_Map": {
                 "Scale_4c": 1.5900000000000001
-                }
+                },
+            "ASPQ1Lim": [0,0],
+            "ASPQ2Lim": [0,0],
+            "ASPQ3Lim": [0,999],
+            "MagErrorTol": 100,
+            "PosErrorTol": 3000,
+            "Traps": {
+                "Column": 347,
+                "Row": -374,
+                "DeltaColumn": 3,
+                "ExclusionZone": {
+                    "Neg": [-6,-2],
+                    "Pos": [3,7]
+                    }
+                },
+            "FOV": {
+                "YArcSecLim": [-2410,2473],
+                "ZArcSecLim": [-2504,2450]
+                },
+            "Body": {
+                "Column": {
+                    "MagDiff": 5,
+                    "Separation": 4
+                    },
+                "Register": {
+                    "MagDiff": 5,
+                    "Separation": 4,
+                    "Width": 2
+                    },
+                "Pixels": {
+                    "ZPixLim": [-512.5,511.5],
+                    "YPixLim": [-512.5,511.5],
+                    "Center": [-0.5,-0.5],
+                    "EdgeBuffer": 5,
+                    }
+                },
+            "Select": {
+                "NMaxSelect": 8,
+                "MaxSearchBox": 25,
+                "MinSearchBox": 25,
+                "LeverArm": 0.017453292519943295,
+                "NDirectSearch": 792,
+                "C_10": 1444,
+                "CCDIntTime": 1.3999999999999999,
+                "Sig_P1": 16.199999999999999,
+                "Sig_P2": 0.5,
+                "nSurplus": 1
+                },
+            "Spoiler": {
+                "MinSep": 7,
+                "MaxSep": 11,
+                "Intercept": 9,
+                "Slope": 0.5,
+                "MagDiffLimit": "-_Inf_"
+                },
             },
         "Guide": [
             {
@@ -36,31 +90,13 @@ CHAR = { "Stars": {
                     },
                 "Inertial": {
                     "MagLimit": [5.7999999999999998,10.199999999999999],
-                    "MagErrorTol": 100,
-                    "PosErrorTol": 3000,
-                    "ASPQ1Lim": [0,0],
-                    "ASPQ2Lim": [0,0],
-                    "ASPQ3Lim": [0,999],
                     "VARIABLELim": -9999,
                     "MagErrRand": 0.26000000000000001,
                     "MagErrSyst": 0,
                     "MaxMagError": 1.5
                     },
                 "Body": {
-                    "Column": {
-                        "MagDiff": 5,
-                        "Separation": 4
-                        },
-                    "Register": {
-                        "MagDiff": 5,
-                        "Separation": 4,
-                        "Width": 2
-                        },
                     "Pixels": {
-                        "ZPixLim": [-512.5,511.5],
-                        "YPixLim": [-512.5,511.5],
-                        "Center": [-0.5,-0.5],
-                        "EdgeBuffer": 5,
                         "BadPixels": [
                             [-245,0,454,454],
                             [-511,-511,9,9],
@@ -313,40 +349,10 @@ CHAR = { "Stars": {
                             [508,508,349,349]
                             ]
                         },
-                    "Traps": {
-                        "Column": 347,
-                        "Row": -374,
-                        "DeltaColumn": 3,
-                        "ExclusionZone": {
-                            "Neg": [-6,-2],
-                            "Pos": [3,7]
-                            }
-                        },
-                    "FOV": {
-                        "YArcSecLim": [-2410,2473],
-                        "ZArcSecLim": [-2504,2450]
-                        }
                     },
                 "Spoiler": {
-                    "MinSep": 7,
-                    "MaxSep": 11,
-                    "Intercept": 9,
-                    "Slope": 0.5,
                     "SigErrMultiplier": 3,
-                    "MagDiffLimit": "-_Inf_"
                     },
-                "Select": {
-                    "NMaxSelect": 8,
-                    "MaxSearchBox": 25,
-                    "MinSearchBox": 25,
-                    "LeverArm": 0.017453292519943295,
-                    "NDirectSearch": 792,
-                    "C_10": 1444,
-                    "CCDIntTime": 1.3999999999999999,
-                    "Sig_P1": 16.199999999999999,
-                    "Sig_P2": 0.5,
-                    "nSurplus": 1
-                    }
                 },
             {
                 "SearchSettings": {
@@ -355,31 +361,13 @@ CHAR = { "Stars": {
                     },
                 "Inertial": {
                     "MagLimit": [5.7999999999999998,10.199999999999999],
-                    "MagErrorTol": 100,
-                    "PosErrorTol": 3000,
-                    "ASPQ1Lim": [0,0],
-                    "ASPQ2Lim": [0,0],
-                    "ASPQ3Lim": [0,999],
                     "VARIABLELim": -9999,
                     "MagErrRand": 0.14999999999999999,
                     "MagErrSyst": 0,
                     "MaxMagError": 1
                     },
                 "Body": {
-                    "Column": {
-                        "MagDiff": 5,
-                        "Separation": 4
-                        },
-                    "Register": {
-                        "MagDiff": 5,
-                        "Separation": 4,
-                        "Width": 2
-                        },
                     "Pixels": {
-                        "ZPixLim": [-512.5,511.5],
-                        "YPixLim": [-512.5,511.5],
-                        "Center": [-0.5,-0.5],
-                        "EdgeBuffer": 5,
                         "BadPixels": [
                             [-245,0,454,454],
                             [-511,-511,9,9],
@@ -632,40 +620,10 @@ CHAR = { "Stars": {
                             [508,508,349,349]
                             ]
                         },
-                    "Traps": {
-                        "Column": 347,
-                        "Row": -374,
-                        "DeltaColumn": 3,
-                        "ExclusionZone": {
-                            "Neg": [-6,-2],
-                            "Pos": [3,7]
-                            }
-                        },
-                    "FOV": {
-                        "YArcSecLim": [-2410,2473],
-                        "ZArcSecLim": [-2504,2450]
-                        }
                     },
                 "Spoiler": {
-                    "MinSep": 7,
-                    "MaxSep": 11,
-                    "Intercept": 9,
-                    "Slope": 0.5,
                     "SigErrMultiplier": 2,
-                    "MagDiffLimit": "-_Inf_"
                     },
-                "Select": {
-                    "NMaxSelect": 8,
-                    "MaxSearchBox": 25,
-                    "MinSearchBox": 25,
-                    "LeverArm": 0.017453292519943295,
-                    "NDirectSearch": 792,
-                    "C_10": 1444,
-                    "CCDIntTime": 1.3999999999999999,
-                    "Sig_P1": 16.199999999999999,
-                    "Sig_P2": 0.5,
-                    "nSurplus": 1
-                    }
                 },
             {
                 "SearchSettings": {
@@ -674,31 +632,13 @@ CHAR = { "Stars": {
                     },
                 "Inertial": {
                     "MagLimit": [5.7999999999999998,10.300000000000001],
-                    "MagErrorTol": 100,
-                    "PosErrorTol": 3000,
-                    "ASPQ1Lim": [0,0],
-                    "ASPQ2Lim": [0,0],
-                    "ASPQ3Lim": [0,999],
                     "VARIABLELim": -9999,
                     "MagErrRand": 0,
                     "MagErrSyst": 0,
                     "MaxMagError": 0.5
                     },
                 "Body": {
-                    "Column": {
-                        "MagDiff": 5,
-                        "Separation": 4
-                        },
-                    "Register": {
-                        "MagDiff": 5,
-                        "Separation": 4,
-                        "Width": 2
-                        },
                     "Pixels": {
-                        "ZPixLim": [-512.5,511.5],
-                        "YPixLim": [-512.5,511.5],
-                        "Center": [-0.5,-0.5],
-                        "EdgeBuffer": 5,
                         "BadPixels": [
                             [-245,0,454,454],
                             [-511,-511,9,9],
@@ -951,40 +891,10 @@ CHAR = { "Stars": {
                             [508,508,349,349]
                             ]
                         },
-                    "Traps": {
-                        "Column": 347,
-                        "Row": -374,
-                        "DeltaColumn": 3,
-                        "ExclusionZone": {
-                            "Neg": [-6,-2],
-                            "Pos": [3,7]
-                            }
-                        },
-                    "FOV": {
-                        "YArcSecLim": [-2410,2473],
-                        "ZArcSecLim": [-2504,2450]
-                        }
                     },
                 "Spoiler": {
-                    "MinSep": 7,
-                    "MaxSep": 11,
-                    "Intercept": 9,
-                    "Slope": 0.5,
                     "SigErrMultiplier": 1,
-                    "MagDiffLimit": "-_Inf_"
                     },
-                "Select": {
-                    "NMaxSelect": 8,
-                    "MaxSearchBox": 25,
-                    "MinSearchBox": 25,
-                    "LeverArm": 0.017453292519943295,
-                    "NDirectSearch": 792,
-                    "C_10": 1444,
-                    "CCDIntTime": 1.3999999999999999,
-                    "Sig_P1": 16.199999999999999,
-                    "Sig_P2": 0.5,
-                    "nSurplus": 1
-                    }
                 },
             {
                 "SearchSettings": {
@@ -993,31 +903,13 @@ CHAR = { "Stars": {
                     },
                 "Inertial": {
                     "MagLimit": [5.7999999999999998,10.300000000000001],
-                    "MagErrorTol": 100,
-                    "PosErrorTol": 3000,
-                    "ASPQ1Lim": [0,0],
-                    "ASPQ2Lim": [0,0],
-                    "ASPQ3Lim": [0,999],
                     "VARIABLELim": -9999,
                     "MagErrRand": 0,
                     "MagErrSyst": 0,
                     "MaxMagError": 0.5
                     },
                 "Body": {
-                    "Column": {
-                        "MagDiff": 5,
-                        "Separation": 4
-                        },
-                    "Register": {
-                        "MagDiff": 5,
-                        "Separation": 4,
-                        "Width": 2
-                        },
                     "Pixels": {
-                        "ZPixLim": [-512.5,511.5],
-                        "YPixLim": [-512.5,511.5],
-                        "Center": [-0.5,-0.5],
-                        "EdgeBuffer": 5,
                         "BadPixels": [
                             [-245,0,454,454],
                             [-511,-511,9,9],
@@ -1270,40 +1162,10 @@ CHAR = { "Stars": {
                             [508,508,349,349]
                             ]
                         },
-                    "Traps": {
-                        "Column": 347,
-                        "Row": -374,
-                        "DeltaColumn": 3,
-                        "ExclusionZone": {
-                            "Neg": [-6,-2],
-                            "Pos": [3,7]
-                            }
-                        },
-                    "FOV": {
-                        "YArcSecLim": [-2410,2473],
-                        "ZArcSecLim": [-2504,2450]
-                        }
                     },
                 "Spoiler": {
-                    "MinSep": 7,
-                    "MaxSep": 11,
-                    "Intercept": 9,
-                    "Slope": 0.5,
                     "SigErrMultiplier": 0,
-                    "MagDiffLimit": "-_Inf_"
                     },
-                "Select": {
-                    "NMaxSelect": 8,
-                    "MaxSearchBox": 25,
-                    "MinSearchBox": 25,
-                    "LeverArm": 0.017453292519943295,
-                    "NDirectSearch": 792,
-                    "C_10": 1444,
-                    "CCDIntTime": 1.3999999999999999,
-                    "Sig_P1": 16.199999999999999,
-                    "Sig_P2": 0.5,
-                    "nSurplus": 1
-                    }
                 },
             {
                 "SearchSettings": {
@@ -1312,31 +1174,13 @@ CHAR = { "Stars": {
                     },
                 "Inertial": {
                     "MagLimit": [5.7999999999999998,10.300000000000001],
-                    "MagErrorTol": 100,
-                    "PosErrorTol": 3000,
-                    "ASPQ1Lim": [0,0],
-                    "ASPQ2Lim": [0,0],
-                    "ASPQ3Lim": [0,999],
                     "VARIABLELim": -9999,
                     "MagErrRand": 0,
                     "MagErrSyst": 0,
                     "MaxMagError": 0.5
                     },
                 "Body": {
-                    "Column": {
-                        "MagDiff": 5,
-                        "Separation": 4
-                        },
-                    "Register": {
-                        "MagDiff": 5,
-                        "Separation": 4,
-                        "Width": 2
-                        },
                     "Pixels": {
-                        "ZPixLim": [-512.5,511.5],
-                        "YPixLim": [-512.5,511.5],
-                        "Center": [-0.5,-0.5],
-                        "EdgeBuffer": 5,
                         "BadPixels": [
                             [-245,0,454,454],
                             [-511,-511,9,9],
@@ -1589,40 +1433,10 @@ CHAR = { "Stars": {
                             [508,508,349,349]
                             ]
                         },
-                    "Traps": {
-                        "Column": 347,
-                        "Row": -374,
-                        "DeltaColumn": 3,
-                        "ExclusionZone": {
-                            "Neg": [-6,-2],
-                            "Pos": [3,7]
-                            }
-                        },
-                    "FOV": {
-                        "YArcSecLim": [-2410,2473],
-                        "ZArcSecLim": [-2504,2450]
-                        }
                     },
                 "Spoiler": {
-                    "MinSep": 7,
-                    "MaxSep": 11,
-                    "Intercept": 9,
-                    "Slope": 0.5,
                     "SigErrMultiplier": 0,
-                    "MagDiffLimit": "-_Inf_"
                     },
-                "Select": {
-                    "NMaxSelect": 8,
-                    "MaxSearchBox": 25,
-                    "MinSearchBox": 25,
-                    "LeverArm": 0.017453292519943295,
-                    "NDirectSearch": 792,
-                    "C_10": 1444,
-                    "CCDIntTime": 1.3999999999999999,
-                    "Sig_P1": 16.199999999999999,
-                    "Sig_P2": 0.5,
-                    "nSurplus": 1
-                    }
                 }
             ],
         },

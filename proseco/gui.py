@@ -51,9 +51,9 @@ def fixedErrorPad(stype):
 def check_off_chips(cone_stars, opt):
     ypos = cone_stars['row']
     zpos = cone_stars['col']
-    yPixLim = opt['Body']['Pixels']['YPixLim']
-    zPixLim = opt['Body']['Pixels']['ZPixLim']
-    edgeBuffer = opt['Body']['Pixels']['EdgeBuffer']
+    yPixLim = STAR_CHAR['General']['Body']['Pixels']['YPixLim']
+    zPixLim = STAR_CHAR['General']['Body']['Pixels']['ZPixLim']
+    edgeBuffer = STAR_CHAR['General']['Body']['Pixels']['EdgeBuffer']
     pad = fixedErrorPad(opt['Type']) * ARC_2_PIX
     yn = (yPixLim[0] + (pad + edgeBuffer))
     yp = (yPixLim[1] - (pad + edgeBuffer))
@@ -66,8 +66,8 @@ def check_off_chips(cone_stars, opt):
     yag = cone_stars['yang']
     zag = cone_stars['zang']
     arcsec_pad = fixedErrorPad(opt['Type'])
-    yArcSecLim = opt['Body']['FOV']['YArcSecLim']
-    ZArcSecLim = opt['Body']['FOV']['ZArcSecLim']
+    yArcSecLim = STAR_CHAR['General']['FOV']['YArcSecLim']
+    ZArcSecLim = STAR_CHAR['General']['FOV']['ZArcSecLim']
     arcsec_yn = yArcSecLim[0] + arcsec_pad
     arcsec_yp = yArcSecLim[1] - arcsec_pad
     arcsec_zn = ZArcSecLim[0] + arcsec_pad
@@ -98,11 +98,11 @@ def check_mag_spoilers(cone_stars, ok, opt):
     stype = opt['Type']
     stderr2 = cone_stars['mag_one_sig_err2']
     fidpad = fieldErrorPad * ARC_2_PIX
-    maxsep = opt['Spoiler']['MaxSep'] + fidpad
-    intercept = opt['Spoiler']['Intercept'] + fidpad
-    spoilslope = opt['Spoiler']['Slope']
+    maxsep = STAR_CHAR['General']['Spoiler']['MaxSep'] + fidpad
+    intercept = STAR_CHAR['General']['Spoiler']['Intercept'] + fidpad
+    spoilslope = STAR_CHAR['General']['Spoiler']['Slope']
     nSigma = opt['Spoiler']['SigErrMultiplier']
-    magdifflim = opt['Spoiler']['MagDiffLimit']
+    magdifflim = STAR_CHAR['General']['Spoiler']['MagDiffLimit']
     if magdifflim == '-_Inf_':
         magdifflim = -1 * np.inf
     mag_col = 'mag_spoiled_{}_{}'.format(nSigma, stype)
@@ -197,11 +197,11 @@ def dist_to_bright_spoiler(cone_stars, ok, nSigma, opt):
 
 
 def check_column(cone_stars, not_bad, opt, chip_pos):
-    zpixlim = opt['Body']['Pixels']['ZPixLim']
-    ypixlim = opt['Body']['Pixels']['YPixLim']
-    center = opt['Body']['Pixels']['Center']
-    Column = opt['Body']['Column']
-    Column = opt['Body']['Register']
+    zpixlim = STAR_CHAR['General']['Body']['Pixels']['ZPixLim']
+    ypixlim = STAR_CHAR['General']['Body']['Pixels']['YPixLim']
+    center = STAR_CHAR['General']['Body']['Pixels']['Center']
+    Column = STAR_CHAR['General']['Body']['Column']
+    Register = opt['Body']['Register']
     nSigma = opt['Spoiler']['SigErrMultiplier']
     row, col = chip_pos
     starmag = cone_stars['MAG_ACA']
@@ -238,14 +238,8 @@ def check_stage(cone_stars, not_bad, opt, label):
                 [cone_stars['star_dist_{}_{}'.format(nSigma, stype)], star_dist],
                 axis=0)
 
-    if opt['Type'] == 'Acq':
-        minBoxArc = np.ceil(fixedErrorPad(opt['Type'])/5.0)*5
-        minBoxArc = np.max([opt['Select']['MinSearchBox'], minBoxArc])
-        maxBoxArc = np.array(opt['Select']['MaxSearchBox'])
-        maxBoxArc = np.min(maxBoxArc[maxBoxArc >= minBoxArc])
-    else:
-        maxBoxArc = opt['Select']['MaxSearchBox'] # 25
-        minBoxArc = opt['Select']['MinSearchBox']
+    maxBoxArc = STAR_CHAR['General']['Select']['MaxSearchBox'] # 25
+    minBoxArc = STAR_CHAR['General']['Select']['MinSearchBox']
 
     starBox = np.min([cone_stars['star_dist_{}_{}'.format(nSigma, stype)],
                       cone_stars['bad_pix_dist_{}'.format(stype)],
@@ -300,22 +294,22 @@ def select_stage_stars(ra, dec, roll, cone_stars):
     cone_stars['chip_edge_dist_{}'.format(stype)] = chip_edge_dist
     cone_stars['fov_edge_dist_{}'.format(stype)] = fov_edge_dist
 
-    bad_mag_error = cone_stars['MAG_ACA_ERR'] > opt['Inertial']['MagErrorTol']
+    bad_mag_error = cone_stars['MAG_ACA_ERR'] > STAR_CHAR["General"]['MagErrorTol']
     #cone_stars['bad_mag_error_{}'.format(stype)] = bad_mag_error
 
-    bad_pos_error = cone_stars['POS_ERR'] > opt['Inertial']['PosErrorTol']
+    bad_pos_error = cone_stars['POS_ERR'] > STAR_CHAR['General']['PosErrorTol']
     #cone_stars['bad_pos_error_{}'.format(stype)] = bad_pos_error
 
-    bad_aspq1 = ((cone_stars['ASPQ1'] > np.max(opt['Inertial']['ASPQ1Lim']))
-                  | (cone_stars['ASPQ1'] < np.min(opt['Inertial']['ASPQ1Lim'])))
+    bad_aspq1 = ((cone_stars['ASPQ1'] > np.max(STAR_CHAR['General']['ASPQ1Lim']))
+                  | (cone_stars['ASPQ1'] < np.min(STAR_CHAR['General']['ASPQ1Lim'])))
     #cone_stars['bad_aspq1_{}'.format(stype)] = bad_aspq1
 
-    bad_aspq2 = ((cone_stars['ASPQ2'] > np.max(opt['Inertial']['ASPQ2Lim']))
-                  | (cone_stars['ASPQ2'] < np.min(opt['Inertial']['ASPQ2Lim'])))
+    bad_aspq2 = ((cone_stars['ASPQ2'] > np.max(STAR_CHAR['General']['ASPQ2Lim']))
+                  | (cone_stars['ASPQ2'] < np.min(STAR_CHAR['General']['ASPQ2Lim'])))
     #cone_stars['bad_aspq2_{}'.format(stype)] = bad_aspq2
 
-    bad_aspq3 = ((cone_stars['ASPQ3'] > np.max(opt['Inertial']['ASPQ3Lim']))
-                  | (cone_stars['ASPQ3'] < np.min(opt['Inertial']['ASPQ3Lim'])))
+    bad_aspq3 = ((cone_stars['ASPQ3'] > np.max(STAR_CHAR['General']['ASPQ3Lim']))
+                  | (cone_stars['ASPQ3'] < np.min(STAR_CHAR['General']['ASPQ3Lim'])))
     #cone_stars['bad_aspq3_{}'.format(stype)] = bad_aspq3
 
 
@@ -327,7 +321,7 @@ def select_stage_stars(ra, dec, roll, cone_stars):
 
     # Set some column defaults that will be updated in check_stage
     cone_stars['{}_stage'.format(stype)] = -1
-    ncand = opt['Select']['NMaxSelect'] + opt['Select']['nSurplus']
+    ncand = STAR_CHAR['General']['Select']['NMaxSelect'] + STAR_CHAR['General']['Select']['nSurplus']
     for idx, stage_char in enumerate(STAR_CHAR[stype], 1):
         # Save the type in the characteristics
         stage_char['Type'] = stype
