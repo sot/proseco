@@ -40,3 +40,8 @@ for ang0, ang1 in zip(p_man_errs_angles[:-1], p_man_errs_angles[1:]):
     col /= 100
     zero_row.append(1 - np.sum(col))
 p_man_errs.insert_row(0, zero_row)
+
+#
+# Possible maneuver errors in the table for use in acq.py
+#
+man_errs = p_man_errs['man_err_hi']
