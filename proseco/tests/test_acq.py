@@ -18,6 +18,7 @@ from ..acq import (get_p_man_err, bin2x2, CHAR,
 TEST_DATE = '2018:144'  # Fixed date for doing tests
 ATT = [10, 20, 3]  # Arbitrary test attitude
 CACHE = {}  # Cache stuff for speed
+TEST_COLS = ('idx', 'slot', 'id', 'yang', 'zang', 'halfw', 'mag', 'p_acq')
 
 
 def add_imposter(dark, acq, dyang, dzang, dmag):
@@ -255,12 +256,66 @@ def test_calc_p_on_ccd():
     assert np.allclose(p_in_box, 0.625)
 
 
-def test_get_acq_catalog():
-    """Put it all together.  Regression test for selected stars"""
+def test_get_acq_catalog_19387():
+    """Put it all together.  Regression test for selected stars.  This obsid
+    actually changes out one of the initial catalog candidates.
+
+    From ipython:
+    >>> from proseco import acq
+    >>> acqs = acq.get_acq_catalog(19387)
+    >>> TEST_COLS = ('idx', 'slot', 'id', 'yang', 'zang', 'halfw', 'mag', 'p_acq')
+    >>> repr(acqs.meta['cand_acqs'][TEST_COLS]).splitlines()
+    """
+    acqs = get_acq_catalog(19387)
+    # Expected
+    exp = ['<AcqTable length=11>',
+           ' idx  slot    id      yang     zang   halfw   mag    p_acq ',
+           'int64 str3  int32   float64  float64  int64 float32 float64',
+           '----- ---- -------- -------- -------- ----- ------- -------',
+           '    0    0 38280776 -2254.07 -2172.46   160    8.77   0.985',
+           '    1    1 37879960  -567.34  -632.26    80    9.20   0.984',
+           '    2    2 37882072  2197.62  1608.86   160   10.16   0.857',
+           '    3    3 37879992   318.46 -1565.89    60   10.41   0.933',
+           '    4    4 37882416   481.93  2204.45   100   10.41   0.865',
+           '    5    5 37880176   121.41 -1068.31    60   10.62   0.607',
+           '    6  ... 37881728  2046.89  1910.76   120   10.76   0.036',
+           '    7    6 37880376 -1356.67  1071.28   100   10.80   0.137',
+           '    8    7 38276824 -1822.25 -1813.62   100   10.86   0.069',
+           '    9  ... 37880152 -1542.45   970.34   120   10.88   0.009',
+           '   10  ... 37882776  1485.01   127.96   120   10.93   0.007']
+
+    assert repr(acqs.meta['cand_acqs'][TEST_COLS]).splitlines() == exp
+
+
+def test_get_acq_catalog_21007():
+    """Put it all together.  Regression test for selected stars.
+    From ipython:
+    >>> from proseco import acq
+    >>> acqs = acq.get_acq_catalog(21007)
+    >>> TEST_COLS = ('idx', 'slot', 'id', 'yang', 'zang', 'halfw', 'mag', 'p_acq')
+    >>> repr(acqs.meta['cand_acqs'][TEST_COLS]).splitlines()
+    """
     acqs = get_acq_catalog(21007)
-    assert np.all(acqs['id'] == [189417400, 189410928, 189409160, 189417920,
-                                 189015480, 189417752, 189406216, 189416328])
-    assert np.all(acqs['halfw'] == [160, 160, 160, 160, 60, 100, 60, 60])
+    exp = ['<AcqTable length=14>',
+           ' idx  slot     id      yang     zang   halfw   mag    p_acq ',
+           'int64 str3   int32   float64  float64  int64 float32 float64',
+           '----- ---- --------- -------- -------- ----- ------- -------',
+           '    0    0 189417400 -2271.86 -1634.77   160    7.71   0.985',
+           '    1    1 189410928   -62.53  1763.05   160    8.84   0.982',
+           '    2    2 189409160 -2223.75  1998.69   160    9.84   0.876',
+           '    3    3 189417920  1482.97   243.72   160    9.94   0.807',
+           '    4    4 189015480  2222.47  -580.99    60   10.01   0.538',
+           '    5    5 189417752  1994.07   699.56   100   10.24   0.503',
+           '    6    6 189406216 -2311.90  -240.17    80   10.26   0.514',
+           '    7    7 189416328  1677.89   137.11    60   10.40   0.348',
+           '    8  ... 189416496   333.12   -63.31   120   10.58   0.003',
+           '    9  ... 189410280  -495.20  1712.02   120   10.62   0.005',
+           '   10  ... 189416808  2283.32  2007.53   120   10.86   0.000',
+           '   11  ... 189417392   163.38   165.65   120   10.95   0.000',
+           '   12  ... 189017968  1612.36 -1117.77   120   10.98   0.000',
+           '   13  ... 189011576   553.50 -2473.80   120   10.99   0.000']
+
+    assert repr(acqs.meta['cand_acqs'][TEST_COLS]).splitlines() == exp
 
 
 def test_to_from_yaml():
