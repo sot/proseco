@@ -1008,8 +1008,7 @@ def optimize_catalog(acqs, verbose=False):
             acq_ids.add(cand_id)
 
         # Get the index of the worst p_acq in the catalog
-        # TO DO: CHANGE to use marginalized acq['p_acq_marg'][acq['halfw']]
-        p_acqs = [acq['p_acqs'][acq['halfw'], acq['halfw']] for acq in acqs]
+        p_acqs = [acq['p_acq_marg'][acq['halfw']] for acq in acqs]
         idx = np.argsort(p_acqs)[0]
 
         acqs.log('Trying to use {} mag={:.2f} to replace idx={} with p_acq={:.3f}'
