@@ -778,17 +778,10 @@ def select_best_p_acqs(acqs, cand_acqs, min_p_acq, acq_indices, box_sizes):
     acqs.log('Find stars with best acq prob for min_p_acq={}'.format(min_p_acq))
     acqs.log('Current catalog: acq_indices={} box_sizes={}'.format(acq_indices, box_sizes))
 
-    p_acqs_list = cand_acqs['p_acqs']  # list of p_acqs for each candidate
     for box_size in CHAR.box_sizes:
-        # Get array of p_acq values corresponding to box_size for each of the
-        # candidate acq stars.  This marginalizes over the possible maneuver errors.
-        p_acqs_for_box = []
-        for p_acqs in p_acqs_list:
-            p_acq = sum(p_acqs[box_size, man_err] * p_man_err
-                        for man_err, p_man_err in zip(CHAR.man_errs,
-                                                      acqs.meta['p_man_errs']))
-            p_acqs_for_box.append(p_acq)
-        p_acqs_for_box = np.array(p_acqs_for_box)
+        # Get array of marginalized (over man_err) p_acq values corresponding
+        # to box_size for each of the candidate acq stars.
+        p_acqs_for_box = np.array([acq['p_acq_marg'][box_size] for acq in cand_acqs])
 
         acqs.log('Trying search box size {} arcsec'.format(box_size), level=1)
 
