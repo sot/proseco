@@ -1070,7 +1070,7 @@ def get_acq_catalog(obsid=None, att=None,
 
     acqs.log('getting dark cal image at date={} t_ccd={:.1f}'
              .format(date, t_ccd))
-    dark = get_dark_cal_image(date=date, select='nearest', t_ccd_ref=t_ccd)
+    dark = get_dark_cal_image(date=date, select='before', t_ccd_ref=t_ccd)
 
     acqs.meta = {'obsid': obsid or 0,
                  'att': att,
