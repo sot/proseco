@@ -396,6 +396,7 @@ def get_spoiler_stars(stars, acq, box_size):
     TO DO: consider mag uncertainties at the faint end related to
     background subtraction and warm pixel corruption of background.
     """
+    stars = stars.as_array()
     # 1-sigma of difference of stars['MAG_ACA'] - acq['MAG_ACA']
     # TO DO: lower limit clip?
     mag_diff_err = np.sqrt(stars['mag_err'] ** 2 + acq['mag_err'] ** 2)
@@ -407,7 +408,7 @@ def get_spoiler_stars(stars, acq, box_size):
           (stars['id'] != acq['id'])
           )
     spoilers = stars[ok]
-    spoilers.sort('mag')
+    spoilers.sort(order=['mag'])
 
     return spoilers
 
@@ -589,13 +590,13 @@ def get_imposter_stars(dark, star_row, star_col, thresh=None,
                'img': img,
                'img_sum': img_sum,
                'mag': mag,
-               'mag_err': get_mag_std(mag),
+               'mag_err': get_mag_std(mag).item(),
                }
         outs.append(out)
 
     if len(outs) > 0:
-        outs = Table(outs)
-        outs.sort('mag')
+        outs = Table(outs).as_array()
+        outs.sort(order=['mag'])
 
     return outs
 
@@ -646,8 +647,8 @@ def get_intruders(acq, box_size, name, n_sigma, get_func, kwargs):
 
         if len(intruders) > 0:
             # Clip to within n_sigma.  d_mag < 0 for intruder brighter than acq
-            d_mag = intruders['mag'].data - acq['mag']
-            d_mag_err = np.sqrt(intruders['mag_err'].data ** 2 + acq['mag_err'] ** 2)
+            d_mag = intruders['mag'] - acq['mag']
+            d_mag_err = np.sqrt(intruders['mag_err'] ** 2 + acq['mag_err'] ** 2)
             ok = d_mag < n_sigma * d_mag_err
             intruders = intruders[ok]
         acq[name] = intruders
@@ -661,9 +662,9 @@ def get_intruders(acq, box_size, name, n_sigma, get_func, kwargs):
     if len(intruders) == 0:
         intruders = {name: np.array([], dtype=np.float64) for name in colnames}
     else:
-        ok = ((np.abs(intruders['yang'].data - acq['yang']) < box_size) &
-              (np.abs(intruders['zang'].data - acq['zang']) < box_size))
-        intruders = {name: intruders[name].data[ok] for name in ['mag', 'mag_err']}
+        ok = ((np.abs(intruders['yang'] - acq['yang']) < box_size) &
+              (np.abs(intruders['zang'] - acq['zang']) < box_size))
+        intruders = {name: intruders[name][ok] for name in ['mag', 'mag_err']}
 
     return intruders
 
