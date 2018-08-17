@@ -47,8 +47,8 @@ CHAR = { "Stars": {
                 },
             "Body": {
                 "Column": {
-                    "MagDiff": 5,
-                    "Separation": 4
+                    "MagDiff": 4.5,
+                    "Separation": 10,
                     },
                 "Register": {
                     "MagDiff": 5,
