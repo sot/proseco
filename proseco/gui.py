@@ -348,7 +348,7 @@ def select_stage_stars(ra, dec, roll, cone_stars):
 
 def select_guide_stars(ra, dec, roll, dither=8, n=5, cone_stars=None, date=None):
     if cone_stars is None:
-        cone_stars = agasc.get_agasc_cone(ra, dec, radius=2, date=date,
+        cone_stars = agasc.get_agasc_cone(ra, dec, radius=1.4, date=date,
                                           agasc_file='/proj/sot/ska/data/agasc/agasc1p6.h5')
     set_dither(dither)
     selected = select_stage_stars(ra, dec, roll, cone_stars)
