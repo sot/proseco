@@ -15,13 +15,12 @@ from scipy.interpolate import interp1d
 from astropy.table import Table, Column, vstack
 
 from chandra_aca.star_probs import acq_success_prob, prob_n_acq
-from mica.archive.aca_dark.dark_cal import get_dark_cal_image
-from Ska.quatutil import radec2yagzag
 from chandra_aca.transform import (yagzag_to_pixels, pixels_to_yagzag,
                                    mag_to_count_rate, count_rate_to_mag)
+from mica.archive.aca_dark.dark_cal import get_dark_cal_image
+from Ska.quatutil import radec2yagzag
 from agasc import get_agasc_cone
 from Quaternion import Quat
-from mica.cache import lru_cache
 
 from . import characteristics as CHAR
 
@@ -508,12 +507,12 @@ def get_imposter_stars(dark, star_row, star_col, thresh=None,
     #
     # TO DO: Test the clipping and shrinking code
     #
-    if ((box_r1 - box_r0) % 2 == 1):
+    if (box_r1 - box_r0) % 2 == 1:
         if box_r1 == 1024:
             box_r0 -= 1
         else:
             box_r1 += 1
-    if ((box_c1 - box_c0) % 2 == 1):
+    if (box_c1 - box_c0) % 2 == 1:
         if box_c1 == 1024:
             box_c0 -= 1
         else:
@@ -1035,7 +1034,6 @@ def optimize_catalog(acqs, verbose=False):
             acqs[idx] = orig_acq
 
 
-@lru_cache(300)
 def get_acq_catalog(obsid=None, att=None,
                     man_angle=None, t_ccd=None, date=None, dither=None,
                     optimize=True, verbose=False):
