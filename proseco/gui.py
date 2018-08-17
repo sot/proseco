@@ -9,7 +9,7 @@ import astropy.units as u
 from Quaternion import Quat
 from Ska.quatutil import radec2yagzag
 import chandra_aca
-from .gui_char import CHAR
+from .gui_char import CHAR, CCD
 
 # Ignore known numexpr.necompiler and table.conditions warning
 warnings.filterwarnings(
@@ -41,37 +41,6 @@ def set_dither(dither):
 def set_manvr_error(manvr_error):
     global MANVR_ERROR
     MANVR_ERROR = manvr_error
-
-
-def check_off_chips(cone_stars, opt):
-    ypos = cone_stars['row']
-    zpos = cone_stars['col']
-    yPixLim = STAR_CHAR['General']['Body']['Pixels']['YPixLim']
-    zPixLim = STAR_CHAR['General']['Body']['Pixels']['ZPixLim']
-    edgeBuffer = STAR_CHAR['General']['Body']['Pixels']['EdgeBuffer']
-    pad = DITHER * ARC_2_PIX
-    yn = (yPixLim[0] + (pad + edgeBuffer))
-    yp = (yPixLim[1] - (pad + edgeBuffer))
-    zn = (zPixLim[0] + (pad + edgeBuffer))
-    zp = (zPixLim[1] - (pad + edgeBuffer))
-    ydist = np.min([yp - ypos, ypos - yn], axis=0)
-    zdist = np.min([zp - zpos, zpos - zn], axis=0)
-    chip_edge_dist = np.min([ydist, zdist], axis=0)
-    offchip = chip_edge_dist < 0
-    yag = cone_stars['yang']
-    zag = cone_stars['zang']
-    arcsec_pad = DITHER
-    yArcSecLim = STAR_CHAR['General']['FOV']['YArcSecLim']
-    ZArcSecLim = STAR_CHAR['General']['FOV']['ZArcSecLim']
-    arcsec_yn = yArcSecLim[0] + arcsec_pad
-    arcsec_yp = yArcSecLim[1] - arcsec_pad
-    arcsec_zn = ZArcSecLim[0] + arcsec_pad
-    arcsec_zp = ZArcSecLim[1] - arcsec_pad
-    arcsec_ydist = np.min([arcsec_yp - yag, yag - arcsec_yn], axis=0)
-    arcsec_zdist = np.min([arcsec_zp - zag, zag - arcsec_zn], axis=0)
-    fov_edge_dist = np.min([arcsec_ydist, arcsec_zdist], axis=0)
-    outofbounds = (yag < arcsec_yn) | (yag > arcsec_yp) | (zag < arcsec_zn) | (zag > arcsec_zp)
-    return chip_edge_dist, fov_edge_dist, offchip, outofbounds
 
 
 def check_mag(cone_stars, opt, label):
@@ -163,32 +132,8 @@ def check_bad_pixels(cone_stars, not_bad, opt):
         distance[i] = maxes[idxmatch]
     full_distance = np.ones(len(cone_stars)) * 9999
     full_distance[not_bad] = distance
-    return full_distance
-
-
-def dist_to_bright_spoiler(cone_stars, ok, nSigma, opt):
-    magOneSigError = cone_stars['mag_one_sig_err']
-    row, col = cone_stars['row'], cone_stars['col']
-    mag = cone_stars['MAG_ACA']
-    magerr2 = cone_stars['mag_one_sig_err2']
-    errorpad = (FIELD_ERROR_PAD + DITHER) * ARC_2_PIX
-    dist = np.ones(len(cone_stars)) * 9999
-    for cand, cand_magerr, idx in zip(cone_stars[ok],
-                                      magOneSigError[ok],
-                                      np.flatnonzero(ok)):
-        mag_diff = (cand['MAG_ACA']
-                    - mag
-                    + nSigma * np.sqrt(cand_magerr ** 2 + magerr2))
-        brighter = mag_diff > 0
-        brighter[idx] = False
-        if not np.any(brighter):
-            continue
-        cand_row, cand_col = row[idx], col[idx]
-        rdiff = np.abs(cand_row - row[brighter])
-        cdiff = np.abs(cand_col - col[brighter])
-        match = np.argmin(np.max([rdiff, cdiff], axis=0))
-        dist[idx] = np.max([rdiff, cdiff], axis=0)[match] - errorpad
-    return dist
+    # TODO fix this hard limit
+    return full_distance < 6
 
 
 def check_column_spoilers(cone_stars, ok, opt):
@@ -199,14 +144,14 @@ def check_column_spoilers(cone_stars, ok, opt):
     column_spoiled = np.zeros_like(ok)
     # For the remaining candidates
     for cand in cone_stars[ok]:
-        dm = (cand['MAG_ACA'] - cone_stars['MAG_ACA'][~cone_stars['offchip_Guide']] +
+        dm = (cand['MAG_ACA'] - cone_stars['MAG_ACA'][~cone_stars['offchip']] +
               nSigma * np.sqrt(cand['mag_one_sig_err2']
-                               + cone_stars['mag_one_sig_err2'][~cone_stars['offchip_Guide']]))
+                               + cone_stars['mag_one_sig_err2'][~cone_stars['offchip']]))
         # if there are no stars ~ MagDiff (4.5 mags) brighter than the candidate we're done
         if not np.any(dm > Column['MagDiff']):
             continue
-        dcol = cand['col'] - cone_stars['col'][~cone_stars['offchip_Guide']]
-        direction = cone_stars['row'][~cone_stars['offchip_Guide']] / cand['row']
+        dcol = cand['col'] - cone_stars['col'][~cone_stars['offchip']]
+        direction = cone_stars['row'][~cone_stars['offchip']] / cand['row']
         spoilers = ((dm > Column['MagDiff'])
                     & (np.abs(dcol) <= (Column['Separation'] + column_pad))
                     & (direction > 1.0))
@@ -221,47 +166,32 @@ def check_stage(cone_stars, not_bad, opt, label):
     ok = mag_ok & not_bad
     if not np.any(ok):
         return ok
+    bp = check_bad_pixels(cone_stars, ok, opt)
+    ok = ok & ~bp
+
     nSigma = opt['Spoiler']['SigErrMultiplier']
     mag_spoiled = ~ok.copy()
     mag_check_col = 'mag_spoil_check_{}_{}'.format(nSigma, stype)
     if mag_check_col not in cone_stars.columns:
         cone_stars[mag_check_col] = np.zeros_like(not_bad)
         cone_stars['mag_spoiled_{}_{}'.format(nSigma, stype)] = np.zeros_like(not_bad)
-    mag_spoiled, checked= check_mag_spoilers(cone_stars, ok, opt)
+    mag_spoiled, checked = check_mag_spoilers(cone_stars, ok, opt)
     cone_stars[mag_check_col] = cone_stars[mag_check_col] | checked
     cone_stars['mag_spoiled_{}_{}'.format(nSigma, stype)] = (
         cone_stars['mag_spoiled_{}_{}'.format(nSigma, stype)] | mag_spoiled)
-    bad_pix_dist = check_bad_pixels(cone_stars, ok & ~mag_spoiled, opt)
-    cone_stars['bad_pix_dist_{}'.format(stype)] = bad_pix_dist
 
-    # these star distance checks are in pixels, so just do them for
-    # every roll
-    cone_stars['star_dist_{}_{}'.format(nSigma, stype)] = 9999
-    star_dist = dist_to_bright_spoiler(cone_stars, ok & ~mag_spoiled, nSigma, opt)
-    cone_stars['star_dist_{}_{}'.format(nSigma, stype)] = np.min(
-                [cone_stars['star_dist_{}_{}'.format(nSigma, stype)], star_dist],
-                axis=0)
+    ok = ok & ~mag_spoiled
 
-    maxBoxArc = STAR_CHAR['General']['Select']['MaxSearchBox'] # 25
-    minBoxArc = STAR_CHAR['General']['Select']['MinSearchBox']
 
-    starBox = np.min([cone_stars['star_dist_{}_{}'.format(nSigma, stype)],
-                      cone_stars['bad_pix_dist_{}'.format(stype)],
-                      cone_stars['chip_edge_dist_{}'.format(stype)],
-                      cone_stars['fov_edge_dist_{}'.format(stype)] * ARC_2_PIX], axis=0)
-    box_size_arc = ((starBox * PIX_2_ARC) // 5) * 5
-    box_size_arc[box_size_arc > maxBoxArc] = maxBoxArc
-    cone_stars['box_size_arc_{}'.format(stype)] = box_size_arc
-    bad_box = starBox < (minBoxArc * ARC_2_PIX)
     #cone_stars['bad_box_{}'.format(stype)] = bad_box
     if opt['SearchSettings']['DoColumnRegisterCheck']:
-        badcr = check_column_spoilers(cone_stars, ok & ~mag_spoiled & ~bad_box, opt)
+        badcr = check_column_spoilers(cone_stars, ok, opt)
         ok = ok & ~badcr
 #    if opt['SearchSettings']['DoBminusVCheck']:
 #        badbv = check_bv(cone_stars, ok & ~mag_spoiled & ~bad_dist)
 #        ok = ok & ~badbv
 
-    return ok & ~bad_box & ~mag_spoiled
+    return ok
 
 
 def get_mag_errs(cone_stars, opt):
@@ -286,23 +216,30 @@ def select_stage_stars(ra, dec, roll, cone_stars):
     yag_deg, zag_deg = radec2yagzag(cone_stars['RA_PMCORR'], cone_stars['DEC_PMCORR'], q)
     row, col = chandra_aca.yagzag_to_pixels(yag_deg * 3600,
                                             zag_deg * 3600, allow_bad=True)
-    cone_stars['yang'] = yag_deg * 3600
-    cone_stars['zang'] = zag_deg * 3600
     cone_stars['row'] = row
     cone_stars['col'] = col
+    # Filter in place the stars outside the FOV
+    wayoffchip = ((cone_stars['row'] > 512 + 40) | (cone_stars['row'] < -512 - 40)
+                  | (cone_stars['col'] > 512 + 40) | (cone_stars['col'] < -512 - 40))
+    cone_stars = cone_stars[~wayoffchip]
 
-    # filter the completely off-chip stars
-    offchip = ((cone_stars['row'] > 512 + 40) | (cone_stars['row'] < -512 - 40)
-               | (cone_stars['col'] > 512 + 40) | (cone_stars['col'] < -512 - 40))
-    cone_stars = cone_stars[~offchip]
+    # Mark the ones that are offchip by smaller amounts (can still be spoiler with dither)
+    offchip = ((cone_stars['row'] > CCD['row_max'])
+               | (cone_stars['row'] < CCD['row_min'])
+               | (cone_stars['col'] > CCD['col_max'])
+               | (cone_stars['col'] < CCD['col_min']))
+    cone_stars['offchip'] = offchip
 
-    # none of these appear stage dependent, but they could be type (guide/acq) dependent
-    chip_edge_dist, fov_edge_dist, offchip, outofbounds = check_off_chips(cone_stars, opt)
-
-    cone_stars['offchip_{}'.format(stype)] = offchip
-    cone_stars['outofbounds_{}'.format(stype)] = outofbounds
-    cone_stars['chip_edge_dist_{}'.format(stype)] = chip_edge_dist
-    cone_stars['fov_edge_dist_{}'.format(stype)] = fov_edge_dist
+    dither_pad = DITHER * ARC_2_PIX
+    row_min = CCD['row_min'] + (CCD['row_pad'] + CCD['window_pad'] + dither_pad)
+    row_max = CCD['row_max'] - (CCD['row_pad'] + CCD['window_pad'] + dither_pad)
+    col_min = CCD['col_min'] + (CCD['col_pad'] + CCD['window_pad'] + dither_pad)
+    col_max = CCD['col_max'] - (CCD['col_pad'] + CCD['window_pad'] + dither_pad)
+    outofbounds = ((cone_stars['row'] > row_max)
+                   | (cone_stars['row'] < row_min)
+                   | (cone_stars['col'] > col_max)
+                   | (cone_stars['col'] < col_min))
+    cone_stars['outofbounds'] = outofbounds
 
     bad_mag_error = cone_stars['MAG_ACA_ERR'] > STAR_CHAR["General"]['MagErrorTol']
     #cone_stars['bad_mag_error_{}'.format(stype)] = bad_mag_error
@@ -326,7 +263,7 @@ def select_stage_stars(ra, dec, roll, cone_stars):
     nonstellar = cone_stars['CLASS'] != 0
     #cone_stars['nonstellar'] = nonstellar
 
-    not_bad = (~offchip & ~outofbounds & ~bad_mag_error & ~bad_pos_error
+    not_bad = (~outofbounds & ~bad_mag_error & ~bad_pos_error
                 & ~nonstellar & ~bad_aspq1 & ~bad_aspq2 & ~bad_aspq3)
 
     # Set some column defaults that will be updated in check_stage

@@ -1,5 +1,13 @@
 # Star selection characteristics from MATLAB
 
+CCD = {'row_min': -512.5,
+       'row_max': 511.5,
+       'col_min': -512.5,
+       'col_max': 511.5,
+       'window_pad': 7,
+       'row_pad': 8,
+       'col_pad': 1}
+
 CHAR = { "Stars": {
            "General": {
             "Aca2Pix": [
