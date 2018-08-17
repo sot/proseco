@@ -43,3 +43,24 @@ def test_common_column_obsid_19904():
     assert 1091705224 not in selected['AGASC_ID'].tolist()
     assert selected['AGASC_ID'].tolist() == [1091702440, 1091698696, 1091704824]
 
+
+def test_avoid_trap():
+    # Set up a scenario where a star is selected fine at one roll, and then
+    # confirm that it is not selected when roll places it on the trap
+    limited_stars = [156384720, 156376184, 156381600, 156379416, 156384304]
+    date = '2018:001'
+    ra1 = 9.769
+    dec1 = 20.147
+    roll1= 295.078
+    star_recs = [agasc.get_star(s, date=date) for s in limited_stars]
+    cone_stars = Table(rows=star_recs, names=star_recs[0].colnames)
+    selected1 = select_guide_stars(ra1, dec1, roll1,
+                                  cone_stars=cone_stars)
+    assert selected1['AGASC_ID'].tolist() == limited_stars
+    # Roll so that 156381600 is on the trap
+    ra2 = 9.769
+    dec2 = 20.147
+    roll2 = 297.078
+    selected2 = select_guide_stars(ra2, dec2, roll2,
+                                   cone_stars=cone_stars)
+    assert 156381600 not in selected2['AGASC_ID'].tolist()
