@@ -314,7 +314,8 @@ def get_acq_candidates(acqs, stars, max_candidates=20):
           (stars['MAG_ACA_ERR'] < 100) &  # Mag err < 1.0 mag
           (stars['ASPQ1'] < 20) &  # Less than 1 arcsec offset from nearby spoiler
           (stars['ASPQ2'] == 0) &  # Proper motion less than 0.5 arcsec/yr
-          (stars['POS_ERR'] < 3000)  # Position error < 3.0 arcsec
+          (stars['POS_ERR'] < 3000) &  # Position error < 3.0 arcsec
+          ((stars['VAR'] == -9999) | (stars['VAR'] == 5))  # Not known to vary > 0.2 mag
           )
     # TO DO: column and row-readout spoilers (BONUS points: Mars and Jupiter)
     # Note see email with subject including "08220 (Jupiter)" about an
