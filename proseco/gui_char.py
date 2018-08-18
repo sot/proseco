@@ -223,7 +223,7 @@ CHAR = { "Stars": {
                     "SigErrMultiplier": 0,
                     },
                 "Imposter": {
-                    "Thresh": .10,
+                    "Thresh": .15,
                     },
                 }
             ],
