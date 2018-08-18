@@ -35,7 +35,7 @@ FIELD_ERROR_PAD = 0
 
 
 
-def check_mag(stars, opt, label):
+def check_mag(stars, opt):
     magOneSigError = stars['mag_one_sig_err']
     mag = stars['MAG_ACA']
     magNSig = opt['Spoiler']['SigErrMultiplier'] * magOneSigError
@@ -51,7 +51,7 @@ def check_mag(stars, opt, label):
 
 
 def check_mag_spoilers(stars, ok, opt):
-    stype = opt['Type']
+
     stderr2 = stars['mag_one_sig_err2']
     fidpad = FIELD_ERROR_PAD * ARC_2_PIX
     maxsep = STAR_CHAR['General']['Spoiler']['MaxSep'] + fidpad
@@ -61,8 +61,8 @@ def check_mag_spoilers(stars, ok, opt):
     magdifflim = STAR_CHAR['General']['Spoiler']['MagDiffLimit']
     if magdifflim == '-_Inf_':
         magdifflim = -1 * np.inf
-    mag_col = 'mag_spoiled_{}_{}'.format(nSigma, stype)
-    mag_spoil_check = 'mag_spoil_check_{}_{}'.format(nSigma, stype)
+    mag_col = 'mag_spoiled_{}'.format(nSigma)
+    mag_spoil_check = 'mag_spoil_check_{}'.format(nSigma)
     if mag_col in stars.columns:
         # if ok for stage and not previously mag spoiler checked for this
         # nsigma
@@ -175,29 +175,28 @@ def check_column_spoilers(stars, ok, opt):
     return column_spoiled
 
 
-def check_stage(stars, not_bad, dither, dark, opt, label):
-    stype = opt['Type']
-    mag_ok = check_mag(stars, opt, label)
+def check_stage(stars, not_bad, dither, dark, opt):
+    mag_ok = check_mag(stars, opt)
     ok = mag_ok & not_bad
     if not np.any(ok):
         return ok
     bp = check_bad_pixels(stars, ok, dither, opt)
-    stars['bp_spoiled'] = bp
+    #stars['bp_spoiled'] = bp
     ok = ok & ~bp
     imp = check_imposters(stars, ok, dark, dither, opt)
     ok = ok & ~imp
-    stars['imp_spoiled'] = imp
+    #stars['imp_spoiled'] = imp
 
     nSigma = opt['Spoiler']['SigErrMultiplier']
     mag_spoiled = ~ok.copy()
-    mag_check_col = 'mag_spoil_check_{}_{}'.format(nSigma, stype)
+    mag_check_col = 'mag_spoil_check_{}'.format(nSigma)
     if mag_check_col not in stars.columns:
         stars[mag_check_col] = np.zeros_like(not_bad)
-        stars['mag_spoiled_{}_{}'.format(nSigma, stype)] = np.zeros_like(not_bad)
+        stars['mag_spoiled_{}'.format(nSigma)] = np.zeros_like(not_bad)
     mag_spoiled, checked = check_mag_spoilers(stars, ok, opt)
     stars[mag_check_col] = stars[mag_check_col] | checked
-    stars['mag_spoiled_{}_{}'.format(nSigma, stype)] = (
-        stars['mag_spoiled_{}_{}'.format(nSigma, stype)] | mag_spoiled)
+    stars['mag_spoiled_{}'.format(nSigma)] = (
+        stars['mag_spoiled_{}'.format(nSigma)] | mag_spoiled)
 
     ok = ok & ~mag_spoiled
 
@@ -223,10 +222,7 @@ def get_mag_errs(stars, opt):
 
 def select_stage_stars(ra, dec, roll, dither, dark, stars):
 
-    stype = 'Guide'
-    opt = STAR_CHAR[stype][0]
-    opt['Type'] = stype
-    opt['Stage'] = 0
+    opt = STAR_CHAR['Guide'][0]
 
     if 'mag_one_sig_err' not in stars.columns:
         stars['mag_one_sig_err'], stars['mag_one_sig_err2'] = get_mag_errs(stars, opt)
@@ -287,19 +283,16 @@ def select_stage_stars(ra, dec, roll, dither, dark, stars):
                 & ~nonstellar & ~bad_aspq1 & ~bad_aspq2 & ~bad_aspq3)
 
     # Set some column defaults that will be updated in check_stage
-    stars['{}_stage'.format(stype)] = -1
+    stars['stage'] = -1
     ncand = STAR_CHAR['General']['Select']['NMaxSelect'] + STAR_CHAR['General']['Select']['nSurplus']
-    for idx, stage_char in enumerate(STAR_CHAR[stype], 1):
-        # Save the type in the characteristics
-        stage_char['Type'] = stype
-        stage_char['Stage'] = idx
-        if np.count_nonzero(stars['{}_stage'.format(stype)] != -1) < ncand:
+    for idx, stage_char in enumerate(STAR_CHAR['Guide'], 1):
+        if np.count_nonzero(stars['stage'] != -1) < ncand:
             stage  = check_stage(stars,
-                                 not_bad & ~(stars['{}_stage'.format(stype)] != -1),
+                                 not_bad & ~(stars['stage'] != -1),
                                  dither=dither, dark=dark,
-                                 opt=stage_char, label="{}_{}".format(stype, str(idx)))
-            stars['{}_stage'.format(stype)][stage] = idx
-    selected = stars[stars['{}_stage'.format(stype)] != -1]
+                                 opt=stage_char)
+            stars['stage'][stage] = idx
+    selected = stars[stars['stage'] != -1]
     return selected
 
 
@@ -315,7 +308,7 @@ def select_guide_stars(ra, dec, roll, dither=(8, 8), n=5, date=None, t_ccd=None,
     selected = select_stage_stars(ra, dec, roll, dither=dither, dark=dark, stars=stars)
     # Ignore guide star code to use ACA matrix etc to optimize selection of stars in the last
     # stage and just take these by stage and then magnitude
-    selected.sort(['Guide_stage', 'MAG_ACA'])
+    selected.sort(['stage', 'MAG_ACA'])
     #stars['Guide_selected'] = False
     #for agasc_id in selected[0:n]['AGASC_ID']:
     #    stars['Guide_selected'][stars['AGASC_ID'] == agasc_id] = True
