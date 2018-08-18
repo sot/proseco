@@ -915,11 +915,14 @@ def calc_p_safe(acqs, verbose=False):
     p_no_safe = 1.0
 
     for man_err, p_man_err in zip(CHAR.man_errs, acqs.meta['p_man_errs']):
+        if p_man_err == 0.0:
+            continue
+
         p_acqs = [acq['p_acqs'][acq['halfw'], man_err] for acq in acqs]
 
         p_n, p_n_cum = prob_n_acq(p_acqs)
         if verbose:
-            acqs.log('man_err = {}'.format(man_err))
+            acqs.log('man_err = {}, p_man_err = {}'.format(man_err, p_man_err))
             acqs.log('p_acqs =' + ' '.join(['{:.3f}'.format(val) for val in p_acqs]))
             acqs.log('log10(p 1_or_fewer) = {:.2f}'.format(np.log10(p_n_cum[1])))
         p_01 = p_n_cum[1]  # 1 or fewer => p_fail at this man_err
