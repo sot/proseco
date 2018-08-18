@@ -201,6 +201,9 @@ def check_column_spoilers(stars, ok, opt):
 
 
 def check_color(stars, ok, opt):
+    """
+    Check for COLOR1 == 0.700 stars
+    """
     badcolor = np.isclose(stars['COLOR1'], 0.7, atol=1e-6, rtol=0)
     return badcolor
 
