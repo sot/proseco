@@ -1,16 +1,13 @@
-import os
 import warnings
-from itertools import count
-
-import agasc
 import numpy as np
 from astropy.coordinates import SkyCoord, search_around_sky
 import astropy.units as u
+
+import agasc
 from Quaternion import Quat
 from Ska.quatutil import radec2yagzag
 import chandra_aca
 from mica.archive.aca_dark import get_dark_cal_image
-
 
 from .gui_char import CHAR, CCD
 
