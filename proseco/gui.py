@@ -69,14 +69,12 @@ def check_mag_spoilers(stars, ok, opt):
     if magdifflim == '-_Inf_':
         magdifflim = -1 * np.inf
 
-    # Make new columns to store the mask from this check
-    mag_col = 'mag_spoiled_{}'.format(nSigma)
-    mag_spoil_check = 'mag_spoil_check_{}'.format(nSigma)
-
     # If this check has really already been done for this nSigma, exclude the stars
     # as candidates from that previous check.  However, there could be other candidates
     # in the list that are new (relaxed constraints in stages) so continue to redo the search on
     # for mag spoiled stars on all still-valid candidates.
+    mag_col = 'mag_spoiled_{}'.format(nSigma)
+    mag_spoil_check = 'mag_spoil_check_{}'.format(nSigma)
     if mag_col in stars.columns:
         ok = ok & ~stars[mag_spoil_check]
 
