@@ -305,7 +305,7 @@ def select_stage_stars(ra, dec, roll, dither, dark, stars):
                                  opt=stage_char)
             stars['stage'][stage_ok] = idx
     selected = stars[stars['stage'] != -1]
-    return selected
+    return selected, stars
 
 
 
@@ -329,7 +329,7 @@ def select_guide_stars(ra, dec, roll, dither=(8, 8), n=5, date=None, t_ccd=None,
     if dark is None:
         dark  = get_dark_cal_image(date=date, t_ccd_ref=t_ccd, aca_image=True)
 
-    selected = select_stage_stars(ra, dec, roll, dither=dither, dark=dark, stars=stars)
+    selected, stars = select_stage_stars(ra, dec, roll, dither=dither, dark=dark, stars=stars)
     # Ignore guide star code to use ACA matrix etc to optimize selection of stars in the last
     # stage and just take these by stage and then magnitude
     selected.sort(['stage', 'MAG_ACA'])
