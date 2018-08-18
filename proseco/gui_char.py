@@ -28,21 +28,11 @@ CHAR = { "Stars": {
                     "Pos": [3,7]
                     }
                 },
-            "FOV": {
-                "YArcSecLim": [-2410,2473],
-                "ZArcSecLim": [-2504,2450]
-                },
             "Body": {
                 "Column": {
                     "MagDiff": 4.5,
                     "Separation": 10,
                     },
-                "Pixels": {
-                    "ZPixLim": [-512.5,511.5],
-                    "YPixLim": [-512.5,511.5],
-                    "Center": [-0.5,-0.5],
-                    "EdgeBuffer": 5,
-                    }
                 },
             "Select": {
                 "NMaxSelect": 8,
