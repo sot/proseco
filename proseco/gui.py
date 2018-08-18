@@ -46,9 +46,6 @@ def check_mag(stars, opt):
     too_bright = ((mag - magNSig - opt['Inertial']['MagErrSyst']) < np.min(opt['Inertial']['MagLimit']))
     too_dim = ((mag + magNSig + opt['Inertial']['MagErrSyst']) > np.max(opt['Inertial']['MagLimit']))
     nomag = mag == -9999
-    stars['too_bright_{}'.format(opt['Stage'])] = too_bright
-    stars['too_dim_{}'.format(opt['Stage'])] = too_dim
-    stars['nomag_{}'.format(opt['Stage'])] = nomag
     return too_bright | too_dim | nomag
 
 
