@@ -309,7 +309,7 @@ def select_stage_stars(ra, dec, roll, dither, dark, stars):
 
 
 
-def select_guide_stars(ra, dec, roll, dither=(8, 8), n=5, date=None, t_ccd=None,
+def select_guide_stars(ra, dec, roll, dither=(8, 8), n=5, date=None, t_ccd=-10.2,
 	                   stars=None, dark=None):
     if stars is None:
         stars = agasc.get_agasc_cone(ra, dec, radius=1.4, date=date,
