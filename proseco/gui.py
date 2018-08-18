@@ -226,14 +226,15 @@ def check_stage(stars, not_bad, dither, dark, opt):
     # Initialize these columns if they don't exist
     if mag_check_col not in stars.colnames:
         stars[mag_check_col] = np.zeros_like(not_bad)
-        stars['mag_spoiled_{}'.format(nSigma)] = np.zeros_like(not_bad)
+        stars[mag_spoil_col] = np.zeros_like(not_bad)
     # 'OR' any previous values on these checks as we go through the
     # the search stages.  A star will not 'get better' for the same
     # check (nSigma) but a star might not be checked in the first stage
     # and will then need to be checked in a later stage.
+    # This uses one column to store *if* the check has been done, and another
+    # column to store the check status (mag_check_col, mag_spoil_col).
     stars[mag_check_col] = stars[mag_check_col] | checked
-    stars['mag_spoiled_{}'.format(nSigma)] = (
-        stars['mag_spoiled_{}'.format(nSigma)] | mag_spoiled)
+    stars[mag_spoil_col] = (stars[mag_spoil_col] | mag_spoiled)
     ok = ok & ~mag_spoiled
 
     # Run some checks that are only called in certain stages
