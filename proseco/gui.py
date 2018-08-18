@@ -154,9 +154,10 @@ def check_imposters(stars, ok, dark, dither, opt):
     for each candidate and stage.
     """
     imp = np.zeros_like(ok)
+    # Define the 1/2 pixel region as half the 8x8 plus dither
+    row_extent = 4 + dither[0] * ARC_2_PIX
+    col_extent = 4 + dither[1] * ARC_2_PIX
     for cand in stars[ok]:
-        row_extent = 4 + dither[0] * ARC_2_PIX
-        col_extent = 4 + dither[1] * ARC_2_PIX
         rminus = int(np.floor(cand['row'] - row_extent))
         rplus = int(np.ceil(cand['row'] + row_extent + 1))
         cminus = int(np.floor(cand['col'] - col_extent))
