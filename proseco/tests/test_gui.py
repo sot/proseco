@@ -71,3 +71,12 @@ def test_avoid_trap():
     selected2 = select_guide_stars(ra2, dec2, roll2, date=date, t_ccd=-15,
                                    stars=stars)
     assert 156381600 not in selected2['AGASC_ID'].tolist()
+
+
+def test_big_dither():
+    # Obsid 20168
+    date = '2018:233'
+    selected = select_guide_stars(311.208763, -31.270875, 308.957038,
+                                  dither=(64, 8), date=date)
+    expected = [977409032,  977414712, 977416336, 977282416, 977405808]
+    assert selected['AGASC_ID'].tolist() == expected
