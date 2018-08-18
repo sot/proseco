@@ -259,12 +259,15 @@ def get_mag_errs(stars, opt):
     return magOneSigError, magOneSigError ** 2
 
 
-def select_guide_stars(ra, dec, roll, dither=(8, 8), n=5, date=None, t_ccd=-10.2,
-	                   stars=None, dark=None):
+def select_guide_stars(ra, dec, roll, dither=(8, 8), n=5, date=None, t_ccd=-10.2, stars=None, dark=None):
+    """
+    Select stars for the given parameters.
+    Returns a table of the selected stars sorted by stage and then magnitude.
+    """
+    # Fetch stars from the agasc
     if stars is None:
         stars = agasc.get_agasc_cone(ra, dec, radius=1.4, date=date,
                                           agasc_file='/proj/sot/ska/data/agasc/agasc1p6.h5')
-
     # Cut the columns we really won't need (eventually in proseco.utils or whatever
     cut_cols = ['RA', 'DEC', 'POS_CATID', 'EPOCH', 'PM_RA', 'PM_DEC',
                 'PM_CATID', 'PLX', 'PLX_ERR', 'PLX_CATID', 'MAG', 'MAG_ERR',
@@ -275,10 +278,6 @@ def select_guide_stars(ra, dec, roll, dither=(8, 8), n=5, date=None, t_ccd=-10.2
     for col in cut_cols:
         if col in stars.colnames:
             stars.remove_column(col)
-
-    if dark is None:
-        dark  = get_dark_cal_image(date=date, t_ccd_ref=t_ccd, aca_image=True)
-
 
     opt = STAR_CHAR['Guide'][0]
     if 'mag1serr' not in stars.columns:
@@ -303,6 +302,8 @@ def select_guide_stars(ra, dec, roll, dither=(8, 8), n=5, date=None, t_ccd=-10.2
                | (stars['col'] < CCD['col_min']))
     stars['offchip'] = offchip
 
+    # Mark the stars that are outside the "useable" area of the CCD.
+    # Includes dither, row/col pad, and window_pad
     r_dith_pad = dither[0] * ARC_2_PIX
     c_dith_pad = dither[1] * ARC_2_PIX
     row_min = CCD['row_min'] + (CCD['row_pad'] + CCD['window_pad'] + r_dith_pad)
@@ -315,57 +316,64 @@ def select_guide_stars(ra, dec, roll, dither=(8, 8), n=5, date=None, t_ccd=-10.2
                    | (stars['col'] < col_min))
     stars['outofbounds'] = outofbounds
 
+    # Mark stars that don't meet any of the fixed requirements
+    # magerr
     bad_mag_error = stars['MAG_ACA_ERR'] > STAR_CHAR["General"]['MagErrorTol']
     stars['badmagerr'] = bad_mag_error
-
+    # poserr
     bad_pos_error = stars['POS_ERR'] > STAR_CHAR['General']['PosErrorTol']
     stars['badposerr'] = bad_pos_error
-
+    # aspq1
     bad_aspq1 = ((stars['ASPQ1'] > np.max(STAR_CHAR['General']['ASPQ1Lim']))
                   | (stars['ASPQ1'] < np.min(STAR_CHAR['General']['ASPQ1Lim'])))
     stars['badaspq1'] = bad_aspq1
-
+    # asp2
     bad_aspq2 = ((stars['ASPQ2'] > np.max(STAR_CHAR['General']['ASPQ2Lim']))
                   | (stars['ASPQ2'] < np.min(STAR_CHAR['General']['ASPQ2Lim'])))
     stars['badaspq2'] = bad_aspq2
-
+    # aspq3
     bad_aspq3 = ((stars['ASPQ3'] > np.max(STAR_CHAR['General']['ASPQ3Lim']))
                   | (stars['ASPQ3'] < np.min(STAR_CHAR['General']['ASPQ3Lim'])))
     stars['badaspq3'] = bad_aspq3
-
+    # class
     nonstellar = stars['CLASS'] != 0
     stars['nonstellar'] = nonstellar
-
+    # in bad star list
     bs = np.zeros_like(nonstellar)
     for star in STAR_CHAR['General']['BadStarList']:
         bs[stars['AGASC_ID'] == star] = True
     stars['badstar'] = bs
 
-
+    # Combine all the exclusion masks
     not_bad = (~outofbounds & ~bad_mag_error & ~bad_pos_error & ~bs
                 & ~nonstellar & ~bad_aspq1 & ~bad_aspq2 & ~bad_aspq3)
 
+    # Check remaining candidates for bad pixels
     bp = check_bad_pixels(stars, not_bad, dither, opt)
     stars['bp_spoiled'] = bp
     not_bad = not_bad & ~bp
 
+    # Get a dark map for the imposter checks that are done in the search stages
+    if dark is None:
+        dark  = get_dark_cal_image(date=date, t_ccd_ref=t_ccd, aca_image=True)
+
     # Set some column defaults that will be updated in check_stage
     stars['stage'] = -1
     ncand = STAR_CHAR['General']['Select']['NMaxSelect'] + STAR_CHAR['General']['Select']['nSurplus']
+    # Run through the stage dependent checks
     for idx, stage_char in enumerate(STAR_CHAR['Guide'], 1):
         if np.count_nonzero(stars['stage'] != -1) < ncand:
-            stage_ok  = check_stage(stars,
-                                 not_bad & ~(stars['stage'] != -1),
-                                 dither=dither, dark=dark,
-                                 opt=stage_char)
+            # In each stage, check the stars that are otherwise not_bad AND not previously selected
+            stage_ok  = check_stage(stars, not_bad & ~(stars['stage'] != -1), dither=dither, dark=dark,
+                                    opt=stage_char)
             stars['stage'][stage_ok] = idx
     selected = stars[stars['stage'] != -1]
 
     # Ignore guide star code to use ACA matrix etc to optimize selection of stars in the last
     # stage and just take these by stage and then magnitude
     selected.sort(['stage', 'MAG_ACA'])
-    #stars['Guide_selected'] = False
-    #for agasc_id in selected[0:n]['AGASC_ID']:
-    #    stars['Guide_selected'][stars['AGASC_ID'] == agasc_id] = True
+    stars['selected'] = False
+    # Annotate the selected stars
+    for agasc_id in selected[0:n]['AGASC_ID']:
+        stars['selected'][stars['AGASC_ID'] == agasc_id] = True
     return selected[0:n]
-
