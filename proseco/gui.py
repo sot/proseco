@@ -299,11 +299,11 @@ def select_stage_stars(ra, dec, roll, dither, dark, stars):
     ncand = STAR_CHAR['General']['Select']['NMaxSelect'] + STAR_CHAR['General']['Select']['nSurplus']
     for idx, stage_char in enumerate(STAR_CHAR['Guide'], 1):
         if np.count_nonzero(stars['stage'] != -1) < ncand:
-            stage  = check_stage(stars,
+            stage_ok  = check_stage(stars,
                                  not_bad & ~(stars['stage'] != -1),
                                  dither=dither, dark=dark,
                                  opt=stage_char)
-            stars['stage'][stage] = idx
+            stars['stage'][stage_ok] = idx
     selected = stars[stars['stage'] != -1]
     return selected
 
