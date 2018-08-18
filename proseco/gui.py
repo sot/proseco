@@ -204,29 +204,39 @@ def check_color(stars, ok, opt):
 
 
 def check_stage(stars, not_bad, dither, dark, opt):
+    """
+    Run all of the "stage-dependent" checks to trim the current candidate list.
+    Returns a mask on stars of candidates that are 'ok' for the search stage.
+    """
+    # Exclude stars that do not meet this stage's mag limits
     badmag = check_mag(stars, opt)
     ok = ~badmag & not_bad
     if not np.any(ok):
         return ok
+
+    # Exclude stars that are spoiled by hot pixels in the dark current
     imp = check_imposters(stars, ok, dark, dither, opt)
     ok = ok & ~imp
-    # the imposter check is stage dependent
     stars['imp_spoiled_{}'.format(opt['Stage'])] = imp
 
+    mag_spoiled, checked = check_mag_spoilers(stars, ok, opt)
     nSigma = opt['Spoiler']['SigErrMultiplier']
-    mag_spoiled = ~ok.copy()
+    mag_spoil_col = 'mag_spoiled_{}'.format(nSigma)
     mag_check_col = 'mag_spoil_check_{}'.format(nSigma)
-    if mag_check_col not in stars.columns:
+    # Initialize these columns if they don't exist
+    if mag_check_col not in stars.colnames:
         stars[mag_check_col] = np.zeros_like(not_bad)
         stars['mag_spoiled_{}'.format(nSigma)] = np.zeros_like(not_bad)
-    mag_spoiled, checked = check_mag_spoilers(stars, ok, opt)
+    # 'OR' any previous values on these checks as we go through the
+    # the search stages.  A star will not 'get better' for the same
+    # check (nSigma) but a star might not be checked in the first stage
+    # and will then need to be checked in a later stage.
     stars[mag_check_col] = stars[mag_check_col] | checked
     stars['mag_spoiled_{}'.format(nSigma)] = (
         stars['mag_spoiled_{}'.format(nSigma)] | mag_spoiled)
-
     ok = ok & ~mag_spoiled
 
-    #stars['bad_box_{}'.format(stype)] = bad_box
+    # Run some checks that are only called in certain stages
     if opt['SearchSettings']['DoColumnRegisterCheck']:
         badcr = check_column_spoilers(stars, ok, opt)
         stars['col_spoiled_{}'.format(opt['Stage'])] = badcr
@@ -235,6 +245,7 @@ def check_stage(stars, not_bad, dither, dark, opt):
         badbv = check_color(stars, ok, opt)
         stars['bad_color_{}'.format(opt['Stage'])] = badbv
         ok = ok & ~badbv
+    # Return a mask that defines the candidates that are still good for this stage
     return ok
 
 
