@@ -216,7 +216,6 @@ def check_stage(stars, not_bad, dither, dark, opt):
     ok = ok & ~imp
     stars['imp_spoiled_{}'.format(opt['Stage'])] = imp
 
-    mag_spoiled, checked = check_mag_spoilers(stars, ok, opt)
     nSigma = opt['Spoiler']['SigErrMultiplier']
     mag_spoil_col = 'mag_spoiled_{}'.format(nSigma)
     mag_check_col = 'mag_spoil_check_{}'.format(nSigma)
@@ -224,6 +223,8 @@ def check_stage(stars, not_bad, dither, dark, opt):
     if mag_check_col not in stars.colnames:
         stars[mag_check_col] = np.zeros_like(not_bad)
         stars[mag_spoil_col] = np.zeros_like(not_bad)
+    # Run the check
+    mag_spoiled, checked = check_mag_spoilers(stars, ok, opt)
     # 'OR' any previous values on these checks as we go through the
     # the search stages.  A star will not 'get better' for the same
     # check (nSigma) but a star might not be checked in the first stage
