@@ -9,6 +9,9 @@ import astropy.units as u
 from Quaternion import Quat
 from Ska.quatutil import radec2yagzag
 import chandra_aca
+from mica.archive.aca_dark import get_dark_cal_image
+
+
 from .gui_char import CHAR, CCD
 
 # Ignore known numexpr.necompiler and table.conditions warning
@@ -133,6 +136,28 @@ def check_bad_pixels(cone_stars, not_bad, dither, opt):
     return full_distance < 6
 
 
+def check_imposters(cone_stars, ok, dark, dither, opt):
+    """
+    Check for any pixel with a value greater than the imposter thresh
+    for each candidate and stage.
+    """
+    imp = np.zeros_like(ok)
+    for cand in cone_stars[ok]:
+        row_extent = 4 + dither[0] * ARC_2_PIX
+        col_extent = 4 + dither[1] * ARC_2_PIX
+        rminus = int(np.floor(cand['row'] - row_extent))
+        rplus = int(np.ceil(cand['row'] + row_extent + 1))
+        cminus = int(np.floor(cand['col'] - col_extent))
+        cplus = int(np.ceil(cand['col'] + col_extent + 1))
+        pix = dark.aca[rminus:rplus, cminus:cplus]
+        cand_counts = chandra_aca.mag_to_count_rate(cand['MAG_ACA'])
+        #print("{} {} {}".format(cand['AGASC_ID'], np.max(pix) * 1.0 / cand_counts,
+        #      opt['Imposter']['Thresh']))
+        if np.max(pix) > (cand_counts * opt['Imposter']['Thresh']):
+            imp[cone_stars['AGASC_ID'] == cand['AGASC_ID']] = True
+    return imp
+
+
 def check_column_spoilers(cone_stars, ok, opt):
     Column = STAR_CHAR['General']['Body']['Column']
     nSigma = opt['Spoiler']['SigErrMultiplier']
@@ -157,14 +182,18 @@ def check_column_spoilers(cone_stars, ok, opt):
     return column_spoiled
 
 
-def check_stage(cone_stars, not_bad, dither, opt, label):
+def check_stage(cone_stars, not_bad, dither, dark, opt, label):
     stype = opt['Type']
     mag_ok = check_mag(cone_stars, opt, label)
     ok = mag_ok & not_bad
     if not np.any(ok):
         return ok
     bp = check_bad_pixels(cone_stars, ok, dither, opt)
+    cone_stars['bp_spoiled'] = bp
     ok = ok & ~bp
+    imp = check_imposters(cone_stars, ok, dark, dither, opt)
+    ok = ok & ~imp
+    cone_stars['imp_spoiled'] = imp
 
     nSigma = opt['Spoiler']['SigErrMultiplier']
     mag_spoiled = ~ok.copy()
@@ -199,7 +228,7 @@ def get_mag_errs(cone_stars, opt):
     return magOneSigError, magOneSigError**2
 
 
-def select_stage_stars(ra, dec, roll, dither, cone_stars):
+def select_stage_stars(ra, dec, roll, dither, dark, cone_stars):
 
     stype = 'Guide'
     opt = STAR_CHAR[stype][0]
@@ -274,7 +303,7 @@ def select_stage_stars(ra, dec, roll, dither, cone_stars):
         if np.count_nonzero(cone_stars['{}_stage'.format(stype)] != -1) < ncand:
             stage  = check_stage(cone_stars,
                                  not_bad & ~(cone_stars['{}_stage'.format(stype)] != -1),
-                                 dither=dither,
+                                 dither=dither, dark=dark,
                                  opt=stage_char, label="{}_{}".format(stype, str(idx)))
             cone_stars['{}_stage'.format(stype)][stage] = idx
     selected = cone_stars[cone_stars['{}_stage'.format(stype)] != -1]
@@ -282,11 +311,15 @@ def select_stage_stars(ra, dec, roll, dither, cone_stars):
 
 
 
-def select_guide_stars(ra, dec, roll, dither=(8, 8), n=5, cone_stars=None, date=None):
+def select_guide_stars(ra, dec, roll, dither=(8, 8), n=5, date=None, t_ccd=None,
+	                   cone_stars=None, dark=None):
     if cone_stars is None:
         cone_stars = agasc.get_agasc_cone(ra, dec, radius=1.4, date=date,
                                           agasc_file='/proj/sot/ska/data/agasc/agasc1p6.h5')
-    selected = select_stage_stars(ra, dec, roll, dither=dither, cone_stars=cone_stars)
+    if dark is None:
+        dark  = get_dark_cal_image(date=date, t_ccd_ref=t_ccd, aca_image=True)
+
+    selected = select_stage_stars(ra, dec, roll, dither=dither, dark=dark, cone_stars=cone_stars)
     # Ignore guide star code to use ACA matrix etc to optimize selection of stars in the last
     # stage and just take these by stage and then magnitude
     selected.sort(['Guide_stage', 'MAG_ACA'])

@@ -24,7 +24,7 @@ def test_select():
 
 def test_obsid_19461():
     # overall poor star field
-    selected = select_guide_stars(150.969600, 45.064045, 95.988189)
+    selected = select_guide_stars(150.969600, 45.064045, 95.988189, t_ccd=-20, date='2017:362')
     expected_star_ids = [450103048, 450101704, 394003312, 450109160, 450109016]
     assert selected['AGASC_ID'].tolist() == expected_star_ids
 
@@ -38,6 +38,7 @@ def test_common_column_obsid_19904():
     star_recs = [agasc.get_star(s, date=date) for s in limited_stars]
     cone_stars = Table(rows=star_recs, names=star_recs[0].colnames)
     selected = select_guide_stars(248.515786,   -47.373203,   238.665124,
+                                  date=date, t_ccd=-20,
                                   cone_stars=cone_stars)
     # Assert the column spoiled one isn't in the list
     assert 1091705224 not in selected['AGASC_ID'].tolist()
@@ -54,13 +55,13 @@ def test_avoid_trap():
     roll1= 295.078
     star_recs = [agasc.get_star(s, date=date) for s in limited_stars]
     cone_stars = Table(rows=star_recs, names=star_recs[0].colnames)
-    selected1 = select_guide_stars(ra1, dec1, roll1,
+    selected1 = select_guide_stars(ra1, dec1, roll1, date=date, t_ccd=-15,
                                   cone_stars=cone_stars)
     assert selected1['AGASC_ID'].tolist() == limited_stars
     # Roll so that 156381600 is on the trap
     ra2 = 9.769
     dec2 = 20.147
     roll2 = 297.078
-    selected2 = select_guide_stars(ra2, dec2, roll2,
+    selected2 = select_guide_stars(ra2, dec2, roll2, date=date, t_ccd=-15,
                                    cone_stars=cone_stars)
     assert 156381600 not in selected2['AGASC_ID'].tolist()

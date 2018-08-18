@@ -92,6 +92,7 @@ CHAR = { "Stars": {
             },
         "Guide": [
             {
+                "Stage": 1,
                 "SearchSettings": {
                     "DoColumnRegisterCheck": 1,
                     "DoBminusVcheck": 1
@@ -113,8 +114,12 @@ CHAR = { "Stars": {
                 "Spoiler": {
                     "SigErrMultiplier": 3,
                     },
+                "Imposter": {
+                    "Thresh": .025,
+                    },
                 },
             {
+                "Stage": 2,
                 "SearchSettings": {
                     "DoColumnRegisterCheck": 1,
                     "DoBminusVcheck": 1
@@ -136,8 +141,12 @@ CHAR = { "Stars": {
                 "Spoiler": {
                     "SigErrMultiplier": 2,
                     },
+                "Imposter": {
+                    "Thresh": .05,
+                    },
                 },
             {
+                "Stage": 3,
                 "SearchSettings": {
                     "DoColumnRegisterCheck": 1,
                     "DoBminusVcheck": 1
@@ -159,8 +168,12 @@ CHAR = { "Stars": {
                 "Spoiler": {
                     "SigErrMultiplier": 1,
                     },
+                "Imposter": {
+                    "Thresh": .05,
+                    },
                 },
             {
+                "Stage": 4,
                 "SearchSettings": {
                     "DoColumnRegisterCheck": 1,
                     "DoBminusVcheck": 1
@@ -182,8 +195,12 @@ CHAR = { "Stars": {
                 "Spoiler": {
                     "SigErrMultiplier": 0,
                     },
+                "Imposter": {
+                    "Thresh": .075,
+                    },
                 },
             {
+                "Stage": 5,
                 "SearchSettings": {
                     "DoColumnRegisterCheck": 1,
                     "DoBminusVcheck": 0
@@ -204,6 +221,9 @@ CHAR = { "Stars": {
                     },
                 "Spoiler": {
                     "SigErrMultiplier": 0,
+                    },
+                "Imposter": {
+                    "Thresh": .10,
                     },
                 }
             ],
