@@ -1,3 +1,6 @@
+# coding: utf-8
+# Licensed under a 3-clause BSD style license - see LICENSE.rst
+
 import warnings
 import numpy as np
 from astropy.coordinates import SkyCoord, search_around_sky
