@@ -250,11 +250,14 @@ def check_stage(stars, not_bad, dither, dark, opt):
 
 
 def get_mag_errs(stars, opt):
+    """
+    Calculate the 1-sigma mag error and the 1-sigms mag error squared for all the stars
+    """
     caterr = stars['MAG_ACA_ERR'] / 100.
-    caterr = np.min([np.ones(len(caterr))*opt['Inertial']['MaxMagError'], caterr], axis=0)
+    caterr = np.min([np.ones(len(caterr)) * opt['Inertial']['MaxMagError'], caterr], axis=0)
     randerr = opt['Inertial']['MagErrRand']
-    magOneSigError = np.sqrt(randerr*randerr + caterr*caterr)
-    return magOneSigError, magOneSigError**2
+    magOneSigError = np.sqrt(randerr * randerr + caterr * caterr)
+    return magOneSigError, magOneSigError ** 2
 
 
 def select_stage_stars(ra, dec, roll, dither, dark, stars):
