@@ -53,7 +53,15 @@ def check_mag(stars, opt):
 
 
 def check_mag_spoilers(stars, ok, opt):
+    """
+    Use the slope-intercept mag-spoiler relationship to exclude all
+    stars that have a "mag spoiler".  This is equivalent to the
+    "direct catalog search" for spoilers in SAUSAGE.
 
+    Parameters of the check are in the search stage info in 'opt'.
+
+    The n-sigma changes by stage for the mags/magerrs used in the check.
+    """
     stderr2 = stars['mag1serr2']
     fidpad = FIELD_ERROR_PAD * ARC_2_PIX
     maxsep = STAR_CHAR['General']['Spoiler']['MaxSep'] + fidpad
@@ -63,14 +71,23 @@ def check_mag_spoilers(stars, ok, opt):
     magdifflim = STAR_CHAR['General']['Spoiler']['MagDiffLimit']
     if magdifflim == '-_Inf_':
         magdifflim = -1 * np.inf
+
+    # Make new columns to store the mask from this check
     mag_col = 'mag_spoiled_{}'.format(nSigma)
     mag_spoil_check = 'mag_spoil_check_{}'.format(nSigma)
+
+    # If this check has really already been done for this nSigma, exclude the stars
+    # as candidates from that previous check.  However, there could be other candidates
+    # in the list that are new (relaxed constraints in stages) so continue to redo the search on
+    # for mag spoiled stars on all still-valid candidates.
     if mag_col in stars.columns:
-        # if ok for stage and not previously mag spoiler checked for this
-        # nsigma
         ok = ok & ~stars[mag_spoil_check]
+
+    # If there are already no candidates, there isn't anything to do
     if not np.any(ok):
         return np.zeros_like(ok), ok
+
+    # Search the sky around 'ok' stars to see if they are spoiled by other stars
     coords = SkyCoord(stars['RA_PMCORR'], stars['DEC_PMCORR'],
                       unit='deg')
     maxsep_arcs = maxsep * PIX_2_ARC
@@ -78,10 +95,10 @@ def check_mag_spoilers(stars, ok, opt):
         coords[ok],
         coords,
         seplimit=u.arcsec * maxsep_arcs)
-    # index the candidates back into the full list so we have one
+    # Index the candidates back into the full list so we have one
     # index to work with, shared betweek cand_idx and cat_idx
     cand_idx = np.flatnonzero(ok)[cand_idx_in_ok]
-    # and try to find the spoilers in a vectorized way
+    # Try to find the spoilers in a vectorized way
     cand_mags = stars['MAG_ACA'][cand_idx]
     spoiler_mags = stars['MAG_ACA'][cat_idx]
     itself = cand_idx == cat_idx
@@ -90,10 +107,10 @@ def check_mag_spoilers(stars, ok, opt):
               + nSigma * np.sqrt(stderr2[cand_idx] + stderr2[cat_idx]))
     thsep = intercept + delmag * spoilslope
     spoils = (spoil_dist < u.arcsec * thsep * PIX_2_ARC) & ~itself & ~too_dim
-    # this is now indexed over the cat/cand idxs so, re-index again
+    # This is now indexed over the cat/cand idxs so, re-index again
     spoiled = np.zeros_like(ok)
     spoiled[np.unique(cand_idx[spoils])] = True
-    # and include any previous spoilers
+    # Include any previous spoilers
     spoiled = spoiled | stars[mag_col]
     return spoiled, ok
 
