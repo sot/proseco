@@ -174,6 +174,11 @@ def check_column_spoilers(stars, ok, opt):
     return column_spoiled
 
 
+def check_color(stars, ok, opt):
+    badcolor = np.isclose(stars['COLOR1'], 0.7, atol=1e-6, rtol=0)
+    return badcolor
+
+
 def check_stage(stars, not_bad, dither, dark, opt):
     mag_ok = check_mag(stars, opt)
     ok = mag_ok & not_bad
@@ -202,10 +207,10 @@ def check_stage(stars, not_bad, dither, dark, opt):
         badcr = check_column_spoilers(stars, ok, opt)
         stars['col_spoiled_{}'.format(opt['Stage'])] = badcr
         ok = ok & ~badcr
-#    if opt['SearchSettings']['DoBminusVCheck']:
-#        badbv = check_bv(stars, ok & ~mag_spoiled & ~bad_dist)
-#        ok = ok & ~badbv
-
+    if opt['SearchSettings']['DoBminusVcheck']:
+        badbv = check_color(stars, ok, opt)
+        stars['bad_color_{}'.format(opt['Stage'])] = badbv
+        ok = ok & ~badbv
     return ok
 
 
