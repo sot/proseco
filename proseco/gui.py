@@ -31,15 +31,8 @@ PIX_2_ARC = STAR_CHAR["General"]["Pix2Arc"]
 ARC_2_PIX = 1.0 / PIX_2_ARC
 RAD_2_PIX = 180/np.pi*3600*ARC_2_PIX
 
-
-MANVR_ERROR = 60
 FIELD_ERROR_PAD = 0
 
-
-
-def set_manvr_error(manvr_error):
-    global MANVR_ERROR
-    MANVR_ERROR = manvr_error
 
 
 def check_mag(stars, opt, label):
