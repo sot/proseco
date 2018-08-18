@@ -45,6 +45,12 @@ def test_common_column_obsid_19904():
     assert selected['AGASC_ID'].tolist() == [1091702440, 1091698696, 1091704824]
 
 
+def test_exclude_bad_star():
+    # obsid 17896 attitude
+    selected = select_guide_stars(344.419004, -29.646455, 64.112436)
+    assert 914493824 not in selected['AGASC_ID']
+
+
 def test_avoid_trap():
     # Set up a scenario where a star is selected fine at one roll, and then
     # confirm that it is not selected when roll places it on the trap

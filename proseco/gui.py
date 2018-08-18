@@ -275,11 +275,14 @@ def select_stage_stars(ra, dec, roll, dither, dark, stars):
                   | (stars['ASPQ3'] < np.min(STAR_CHAR['General']['ASPQ3Lim'])))
     #stars['bad_aspq3_{}'.format(stype)] = bad_aspq3
 
-
     nonstellar = stars['CLASS'] != 0
     #stars['nonstellar'] = nonstellar
 
-    not_bad = (~outofbounds & ~bad_mag_error & ~bad_pos_error
+    bs = np.zeros_like(nonstellar)
+    for star in STAR_CHAR['General']['BadStarList']:
+        bs[stars['AGASC_ID'] == star] = True
+
+    not_bad = (~outofbounds & ~bad_mag_error & ~bad_pos_error & ~bs
                 & ~nonstellar & ~bad_aspq1 & ~bad_aspq2 & ~bad_aspq3)
 
     # Set some column defaults that will be updated in check_stage
