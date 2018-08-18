@@ -29,13 +29,9 @@ ARC_2_PIX = 1.0 / PIX_2_ARC
 RAD_2_PIX = 180/np.pi*3600*ARC_2_PIX
 
 
-DITHER = 8
 MANVR_ERROR = 60
 FIELD_ERROR_PAD = 0
 
-def set_dither(dither):
-    global DITHER
-    DITHER = dither
 
 
 def set_manvr_error(manvr_error):
@@ -104,7 +100,7 @@ def check_mag_spoilers(cone_stars, ok, opt):
     return spoiled, ok
 
 
-def check_bad_pixels(cone_stars, not_bad, opt):
+def check_bad_pixels(cone_stars, not_bad, dither, opt):
     bp = opt['Body']['Pixels']['BadPixels']
     # start with big distances
     distance = np.ones(len(cone_stars[not_bad])) * 9999
@@ -115,15 +111,16 @@ def check_bad_pixels(cone_stars, not_bad, opt):
     row, col = cone_stars['row'], cone_stars['col']
     bp = np.array(bp)
     # Loop over the stars to check each distance to closest bad pixel
-    pad = .5 + DITHER * ARC_2_PIX
+    rpad = .5 * dither[0] * ARC_2_PIX
+    cpad = .5 * dither[1] * ARC_2_PIX
     for i, rs, cs in zip(count(), row[not_bad], col[not_bad]):
-        in_reg_r = (rs >= (bp[:,0] - pad)) & (rs <= (bp[:,1] + pad))
-        in_reg_c = (cs >= (bp[:,2] - pad)) & (cs <= (bp[:,3] + pad))
+        in_reg_r = (rs >= (bp[:,0] - rpad)) & (rs <= (bp[:,1] + rpad))
+        in_reg_c = (cs >= (bp[:,2] - cpad)) & (cs <= (bp[:,3] + cpad))
         r_dist = np.min(np.abs(
-                [rs - (bp[:,0] - pad), rs - (bp[:,1] + pad)]), axis=0)
+                [rs - (bp[:,0] - rpad), rs - (bp[:,1] + rpad)]), axis=0)
         r_dist[in_reg_r] = 0
         c_dist = np.min(np.abs(
-                [cs - (bp[:,2] - pad), cs - (bp[:,3] + pad)]), axis=0)
+                [cs - (bp[:,2] - cpad), cs - (bp[:,3] + cpad)]), axis=0)
         c_dist[in_reg_c] = 0
         # For the nearest manhattan distance we want the max in each axis
         maxes = np.max(np.vstack([r_dist, c_dist]), axis=0)
@@ -160,13 +157,13 @@ def check_column_spoilers(cone_stars, ok, opt):
     return column_spoiled
 
 
-def check_stage(cone_stars, not_bad, opt, label):
+def check_stage(cone_stars, not_bad, dither, opt, label):
     stype = opt['Type']
     mag_ok = check_mag(cone_stars, opt, label)
     ok = mag_ok & not_bad
     if not np.any(ok):
         return ok
-    bp = check_bad_pixels(cone_stars, ok, opt)
+    bp = check_bad_pixels(cone_stars, ok, dither, opt)
     ok = ok & ~bp
 
     nSigma = opt['Spoiler']['SigErrMultiplier']
@@ -202,7 +199,7 @@ def get_mag_errs(cone_stars, opt):
     return magOneSigError, magOneSigError**2
 
 
-def select_stage_stars(ra, dec, roll, cone_stars):
+def select_stage_stars(ra, dec, roll, dither, cone_stars):
 
     stype = 'Guide'
     opt = STAR_CHAR[stype][0]
@@ -230,11 +227,12 @@ def select_stage_stars(ra, dec, roll, cone_stars):
                | (cone_stars['col'] < CCD['col_min']))
     cone_stars['offchip'] = offchip
 
-    dither_pad = DITHER * ARC_2_PIX
-    row_min = CCD['row_min'] + (CCD['row_pad'] + CCD['window_pad'] + dither_pad)
-    row_max = CCD['row_max'] - (CCD['row_pad'] + CCD['window_pad'] + dither_pad)
-    col_min = CCD['col_min'] + (CCD['col_pad'] + CCD['window_pad'] + dither_pad)
-    col_max = CCD['col_max'] - (CCD['col_pad'] + CCD['window_pad'] + dither_pad)
+    r_dith_pad = dither[0] * ARC_2_PIX
+    c_dith_pad = dither[1] * ARC_2_PIX
+    row_min = CCD['row_min'] + (CCD['row_pad'] + CCD['window_pad'] + r_dith_pad)
+    row_max = CCD['row_max'] - (CCD['row_pad'] + CCD['window_pad'] + r_dith_pad)
+    col_min = CCD['col_min'] + (CCD['col_pad'] + CCD['window_pad'] + c_dith_pad)
+    col_max = CCD['col_max'] - (CCD['col_pad'] + CCD['window_pad'] + c_dith_pad)
     outofbounds = ((cone_stars['row'] > row_max)
                    | (cone_stars['row'] < row_min)
                    | (cone_stars['col'] > col_max)
@@ -276,19 +274,19 @@ def select_stage_stars(ra, dec, roll, cone_stars):
         if np.count_nonzero(cone_stars['{}_stage'.format(stype)] != -1) < ncand:
             stage  = check_stage(cone_stars,
                                  not_bad & ~(cone_stars['{}_stage'.format(stype)] != -1),
-                                 stage_char, "{}_{}".format(stype, str(idx)))
+                                 dither=dither,
+                                 opt=stage_char, label="{}_{}".format(stype, str(idx)))
             cone_stars['{}_stage'.format(stype)][stage] = idx
     selected = cone_stars[cone_stars['{}_stage'.format(stype)] != -1]
     return selected
 
 
 
-def select_guide_stars(ra, dec, roll, dither=8, n=5, cone_stars=None, date=None):
+def select_guide_stars(ra, dec, roll, dither=(8, 8), n=5, cone_stars=None, date=None):
     if cone_stars is None:
         cone_stars = agasc.get_agasc_cone(ra, dec, radius=1.4, date=date,
                                           agasc_file='/proj/sot/ska/data/agasc/agasc1p6.h5')
-    set_dither(dither)
-    selected = select_stage_stars(ra, dec, roll, cone_stars)
+    selected = select_stage_stars(ra, dec, roll, dither=dither, cone_stars=cone_stars)
     # Ignore guide star code to use ACA matrix etc to optimize selection of stars in the last
     # stage and just take these by stage and then magnitude
     selected.sort(['Guide_stage', 'MAG_ACA'])
