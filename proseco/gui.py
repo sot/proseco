@@ -36,7 +36,7 @@ FIELD_ERROR_PAD = 0
 
 
 def check_mag(stars, opt):
-    magOneSigError = stars['mag_one_sig_err']
+    magOneSigError = stars['mag1serr']
     mag = stars['MAG_ACA']
     magNSig = opt['Spoiler']['SigErrMultiplier'] * magOneSigError
     too_bright = ((mag - magNSig - opt['Inertial']['MagErrSyst'])
@@ -52,7 +52,7 @@ def check_mag(stars, opt):
 
 def check_mag_spoilers(stars, ok, opt):
 
-    stderr2 = stars['mag_one_sig_err2']
+    stderr2 = stars['mag1serr2']
     fidpad = FIELD_ERROR_PAD * ARC_2_PIX
     maxsep = STAR_CHAR['General']['Spoiler']['MaxSep'] + fidpad
     intercept = STAR_CHAR['General']['Spoiler']['Intercept'] + fidpad
@@ -154,14 +154,13 @@ def check_imposters(stars, ok, dark, dither, opt):
 def check_column_spoilers(stars, ok, opt):
     Column = STAR_CHAR['General']['Body']['Column']
     nSigma = opt['Spoiler']['SigErrMultiplier']
-    magerr2 = stars['mag_one_sig_err2']
     column_pad = FIELD_ERROR_PAD * ARC_2_PIX
     column_spoiled = np.zeros_like(ok)
     # For the remaining candidates
     for cand in stars[ok]:
         dm = (cand['MAG_ACA'] - stars['MAG_ACA'][~stars['offchip']] +
-              nSigma * np.sqrt(cand['mag_one_sig_err2']
-                               + stars['mag_one_sig_err2'][~stars['offchip']]))
+              nSigma * np.sqrt(cand['mag1serr2']
+                               + stars['mag1serr2'][~stars['offchip']]))
         # if there are no stars ~ MagDiff (4.5 mags) brighter than the candidate we're done
         if not np.any(dm > Column['MagDiff']):
             continue
@@ -180,12 +179,10 @@ def check_stage(stars, not_bad, dither, dark, opt):
     ok = mag_ok & not_bad
     if not np.any(ok):
         return ok
-    bp = check_bad_pixels(stars, ok, dither, opt)
-    #stars['bp_spoiled'] = bp
-    ok = ok & ~bp
     imp = check_imposters(stars, ok, dark, dither, opt)
     ok = ok & ~imp
-    #stars['imp_spoiled'] = imp
+    # the imposter check is stage dependent
+    stars['imp_spoiled_{}'.format(opt['Stage'])] = imp
 
     nSigma = opt['Spoiler']['SigErrMultiplier']
     mag_spoiled = ~ok.copy()
@@ -200,10 +197,10 @@ def check_stage(stars, not_bad, dither, dark, opt):
 
     ok = ok & ~mag_spoiled
 
-
     #stars['bad_box_{}'.format(stype)] = bad_box
     if opt['SearchSettings']['DoColumnRegisterCheck']:
         badcr = check_column_spoilers(stars, ok, opt)
+        stars['col_spoiled_{}'.format(opt['Stage'])] = badcr
         ok = ok & ~badcr
 #    if opt['SearchSettings']['DoBminusVCheck']:
 #        badbv = check_bv(stars, ok & ~mag_spoiled & ~bad_dist)
@@ -224,8 +221,8 @@ def select_stage_stars(ra, dec, roll, dither, dark, stars):
 
     opt = STAR_CHAR['Guide'][0]
 
-    if 'mag_one_sig_err' not in stars.columns:
-        stars['mag_one_sig_err'], stars['mag_one_sig_err2'] = get_mag_errs(stars, opt)
+    if 'mag1serr' not in stars.columns:
+        stars['mag1serr'], stars['mag1serr2'] = get_mag_errs(stars, opt)
 
     q = Quat((ra, dec, roll))
     yag_deg, zag_deg = radec2yagzag(stars['RA_PMCORR'], stars['DEC_PMCORR'], q)
@@ -258,32 +255,38 @@ def select_stage_stars(ra, dec, roll, dither, dark, stars):
     stars['outofbounds'] = outofbounds
 
     bad_mag_error = stars['MAG_ACA_ERR'] > STAR_CHAR["General"]['MagErrorTol']
-    #stars['bad_mag_error_{}'.format(stype)] = bad_mag_error
+    stars['badmagerr'] = bad_mag_error
 
     bad_pos_error = stars['POS_ERR'] > STAR_CHAR['General']['PosErrorTol']
-    #stars['bad_pos_error_{}'.format(stype)] = bad_pos_error
+    stars['badposerr'] = bad_pos_error
 
     bad_aspq1 = ((stars['ASPQ1'] > np.max(STAR_CHAR['General']['ASPQ1Lim']))
                   | (stars['ASPQ1'] < np.min(STAR_CHAR['General']['ASPQ1Lim'])))
-    #stars['bad_aspq1_{}'.format(stype)] = bad_aspq1
+    stars['badaspq1'] = bad_aspq1
 
     bad_aspq2 = ((stars['ASPQ2'] > np.max(STAR_CHAR['General']['ASPQ2Lim']))
                   | (stars['ASPQ2'] < np.min(STAR_CHAR['General']['ASPQ2Lim'])))
-    #stars['bad_aspq2_{}'.format(stype)] = bad_aspq2
+    stars['badaspq2'] = bad_aspq2
 
     bad_aspq3 = ((stars['ASPQ3'] > np.max(STAR_CHAR['General']['ASPQ3Lim']))
                   | (stars['ASPQ3'] < np.min(STAR_CHAR['General']['ASPQ3Lim'])))
-    #stars['bad_aspq3_{}'.format(stype)] = bad_aspq3
+    stars['badaspq3'] = bad_aspq3
 
     nonstellar = stars['CLASS'] != 0
-    #stars['nonstellar'] = nonstellar
+    stars['nonstellar'] = nonstellar
 
     bs = np.zeros_like(nonstellar)
     for star in STAR_CHAR['General']['BadStarList']:
         bs[stars['AGASC_ID'] == star] = True
+    stars['badstar'] = bs
+
 
     not_bad = (~outofbounds & ~bad_mag_error & ~bad_pos_error & ~bs
                 & ~nonstellar & ~bad_aspq1 & ~bad_aspq2 & ~bad_aspq3)
+
+    bp = check_bad_pixels(stars, not_bad, dither, opt)
+    stars['bp_spoiled'] = bp
+    not_bad = not_bad & ~bp
 
     # Set some column defaults that will be updated in check_stage
     stars['stage'] = -1
