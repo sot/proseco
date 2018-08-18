@@ -259,10 +259,28 @@ def get_mag_errs(stars, opt):
     return magOneSigError, magOneSigError ** 2
 
 
-def select_stage_stars(ra, dec, roll, dither, dark, stars):
+def select_guide_stars(ra, dec, roll, dither=(8, 8), n=5, date=None, t_ccd=-10.2,
+	                   stars=None, dark=None):
+    if stars is None:
+        stars = agasc.get_agasc_cone(ra, dec, radius=1.4, date=date,
+                                          agasc_file='/proj/sot/ska/data/agasc/agasc1p6.h5')
+
+    # Cut the columns we really won't need (eventually in proseco.utils or whatever
+    cut_cols = ['RA', 'DEC', 'POS_CATID', 'EPOCH', 'PM_RA', 'PM_DEC',
+                'PM_CATID', 'PLX', 'PLX_ERR', 'PLX_CATID', 'MAG', 'MAG_ERR',
+                'MAG_BAND', 'MAG_CATID', 'C1_CATID', 'COLOR2', 'COLOR2_ERR',
+                'C2_CATID', 'RSV1', 'RSV2', 'VAR_CATID', 'ACQQ1', 'ACQQ2', 'ACQQ3',
+                'ACQQ4', 'ACQQ5', 'ACQQ6', 'XREF_ID1', 'XREF_ID2', 'XREF_ID3',
+                'XREF_ID4', 'XREF_ID5', 'RSV4', 'RSV5', 'RSV6']
+    for col in cut_cols:
+        if col in stars.colnames:
+            stars.remove_column(col)
+
+    if dark is None:
+        dark  = get_dark_cal_image(date=date, t_ccd_ref=t_ccd, aca_image=True)
+
 
     opt = STAR_CHAR['Guide'][0]
-
     if 'mag1serr' not in stars.columns:
         stars['mag1serr'], stars['mag1serr2'] = get_mag_errs(stars, opt)
 
@@ -342,31 +360,7 @@ def select_stage_stars(ra, dec, roll, dither, dark, stars):
                                  opt=stage_char)
             stars['stage'][stage_ok] = idx
     selected = stars[stars['stage'] != -1]
-    return selected, stars
 
-
-
-def select_guide_stars(ra, dec, roll, dither=(8, 8), n=5, date=None, t_ccd=-10.2,
-	                   stars=None, dark=None):
-    if stars is None:
-        stars = agasc.get_agasc_cone(ra, dec, radius=1.4, date=date,
-                                          agasc_file='/proj/sot/ska/data/agasc/agasc1p6.h5')
-
-    # Cut the columns we really won't need (eventually in proseco.utils or whatever
-    cut_cols = ['RA', 'DEC', 'POS_CATID', 'EPOCH', 'PM_RA', 'PM_DEC',
-                'PM_CATID', 'PLX', 'PLX_ERR', 'PLX_CATID', 'MAG', 'MAG_ERR',
-                'MAG_BAND', 'MAG_CATID', 'C1_CATID', 'COLOR2', 'COLOR2_ERR',
-                'C2_CATID', 'RSV1', 'RSV2', 'VAR_CATID', 'ACQQ1', 'ACQQ2', 'ACQQ3',
-                'ACQQ4', 'ACQQ5', 'ACQQ6', 'XREF_ID1', 'XREF_ID2', 'XREF_ID3',
-                'XREF_ID4', 'XREF_ID5', 'RSV4', 'RSV5', 'RSV6']
-    for col in cut_cols:
-        if col in stars.colnames:
-            stars.remove_column(col)
-
-    if dark is None:
-        dark  = get_dark_cal_image(date=date, t_ccd_ref=t_ccd, aca_image=True)
-
-    selected, stars = select_stage_stars(ra, dec, roll, dither=dither, dark=dark, stars=stars)
     # Ignore guide star code to use ACA matrix etc to optimize selection of stars in the last
     # stage and just take these by stage and then magnitude
     selected.sort(['stage', 'MAG_ACA'])
