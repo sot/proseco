@@ -172,16 +172,22 @@ def check_imposters(stars, ok, dark, dither, opt):
 
 
 def check_column_spoilers(stars, ok, opt):
+    """
+    For each candidate, check for stars 'MagDiff' brighter and within 'Separation' columns
+    between the star and the readout register, i.e. Column Spoilers.
+    """
     Column = STAR_CHAR['General']['Body']['Column']
+
+    # The search for spoilers uses the nSigma-set-by-stage to determine the
+    # magnitudes/errors used for the search for those spoiler stars.
     nSigma = opt['Spoiler']['SigErrMultiplier']
     column_pad = FIELD_ERROR_PAD * ARC_2_PIX
     column_spoiled = np.zeros_like(ok)
-    # For the remaining candidates
     for cand in stars[ok]:
         dm = (cand['MAG_ACA'] - stars['MAG_ACA'][~stars['offchip']] +
               nSigma * np.sqrt(cand['mag1serr2']
                                + stars['mag1serr2'][~stars['offchip']]))
-        # if there are no stars ~ MagDiff (4.5 mags) brighter than the candidate we're done
+        # If there are no stars ~ MagDiff (4.5 mags) brighter than the candidate we're done
         if not np.any(dm > Column['MagDiff']):
             continue
         dcol = cand['col'] - stars['col'][~stars['offchip']]
