@@ -942,13 +942,25 @@ def optimize_acq_halfw(acqs, idx, p_safe, verbose=False):
     """
     acq = acqs[idx]
     orig_halfw = acq['halfw']
+    orig_p_acq = acq['p_acq_marg'][acq['halfw']]
+
     acqs.log('Optimizing halfw for idx={} id={}'.format(idx, acq['id']), id=acq['id'])
 
     # Compute p_safe for each possible halfw for the current star
     p_safes = []
     for box_size in CHAR.box_sizes:
-        acq['halfw'] = box_size
-        p_safes.append(calc_p_safe(acqs))
+        new_p_acq = acq['p_acq_marg'][box_size]
+        # Do not reduce marginalized p_acq to below 0.1.  It can happen that p_safe
+        # goes down very slightly with an increase in box size from the original,
+        # and then the box size gets stuck there because of the deadband for later
+        # reducing box size.
+        if new_p_acq < 0.1 and new_p_acq < orig_p_acq:
+            acqs.log(f'Skipping halfw {box_size}: new marg p_acq < 0.1 and new < orig'
+                     ' ({new_p_acq:.3f} < {orig_p_acq:.3f})')
+            p_safes.append(p_safe)
+        else:
+            acq['halfw'] = box_size
+            p_safes.append(calc_p_safe(acqs))
 
     # Find best p_safe
     min_idx = np.argmin(p_safes)
