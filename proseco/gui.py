@@ -19,17 +19,10 @@ warnings.filterwarnings(
 
 
 STAR_CHAR = CHAR["Stars"]
-# Update the characteristics to change the bright mag hard limit for guide stars to 5.9 from 5.8
-#for stage in CHAR['Guide']:
-#    stage['Inertial']['MagLimit'][0] = 5.9
-
-
 PIX_2_ARC = STAR_CHAR["General"]["Pix2Arc"]
 ARC_2_PIX = 1.0 / PIX_2_ARC
 RAD_2_PIX = 180/np.pi*3600*ARC_2_PIX
-
 FIELD_ERROR_PAD = 0
-
 
 
 def check_mag(stars, opt):

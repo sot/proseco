@@ -62,7 +62,7 @@ CHAR = { "Stars": {
                     "DoBminusVcheck": 1
                     },
                 "Inertial": {
-                    "MagLimit": [5.7999999999999998,10.199999999999999],
+                    "MagLimit": [5.9,10.199999999999999],
                     "VARIABLELim": -9999,
                     "MagErrRand": 0.26000000000000001,
                     "MagErrSyst": 0,
@@ -89,7 +89,7 @@ CHAR = { "Stars": {
                     "DoBminusVcheck": 1
                     },
                 "Inertial": {
-                    "MagLimit": [5.7999999999999998,10.199999999999999],
+                    "MagLimit": [5.9,10.199999999999999],
                     "VARIABLELim": -9999,
                     "MagErrRand": 0.14999999999999999,
                     "MagErrSyst": 0,
@@ -116,7 +116,7 @@ CHAR = { "Stars": {
                     "DoBminusVcheck": 1
                     },
                 "Inertial": {
-                    "MagLimit": [5.7999999999999998,10.300000000000001],
+                    "MagLimit": [5.9,10.300000000000001],
                     "VARIABLELim": -9999,
                     "MagErrRand": 0,
                     "MagErrSyst": 0,
@@ -143,7 +143,7 @@ CHAR = { "Stars": {
                     "DoBminusVcheck": 1
                     },
                 "Inertial": {
-                    "MagLimit": [5.7999999999999998,10.300000000000001],
+                    "MagLimit": [5.9,10.300000000000001],
                     "VARIABLELim": -9999,
                     "MagErrRand": 0,
                     "MagErrSyst": 0,
@@ -170,7 +170,7 @@ CHAR = { "Stars": {
                     "DoBminusVcheck": 0
                     },
                 "Inertial": {
-                    "MagLimit": [5.7999999999999998,10.300000000000001],
+                    "MagLimit": [5.9,10.300000000000001],
                     "VARIABLELim": -9999,
                     "MagErrRand": 0,
                     "MagErrSyst": 0,
