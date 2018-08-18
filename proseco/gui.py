@@ -36,18 +36,20 @@ FIELD_ERROR_PAD = 0
 
 
 def check_mag(stars, opt):
+    """
+    Using the star mag limits defined in the per-stage opt['Inertial']
+    return a mask of the stars that are not-selectable by mag in this stage.
+    """
     magOneSigError = stars['mag1serr']
     mag = stars['MAG_ACA']
     magNSig = opt['Spoiler']['SigErrMultiplier'] * magOneSigError
-    too_bright = ((mag - magNSig - opt['Inertial']['MagErrSyst'])
-                  < np.min(opt['Inertial']['MagLimit']))
-    too_dim = ((mag + magNSig + opt['Inertial']['MagErrSyst'])
-               > np.max(opt['Inertial']['MagLimit']))
+    too_bright = ((mag - magNSig - opt['Inertial']['MagErrSyst']) < np.min(opt['Inertial']['MagLimit']))
+    too_dim = ((mag + magNSig + opt['Inertial']['MagErrSyst']) > np.max(opt['Inertial']['MagLimit']))
     nomag = mag == -9999
-    #stars['too_bright_{}'.format(label)] = too_bright
-    #stars['too_dim_{}'.format(label)] = too_dim
-    #stars['nomag_{}'.format(label)] = nomag
-    return ~too_bright & ~too_dim & ~nomag
+    stars['too_bright_{}'.format(opt['Stage'])] = too_bright
+    stars['too_dim_{}'.format(opt['Stage'])] = too_dim
+    stars['nomag_{}'.format(opt['Stage'])] = nomag
+    return too_bright | too_dim | nomag
 
 
 def check_mag_spoilers(stars, ok, opt):
@@ -180,8 +182,8 @@ def check_color(stars, ok, opt):
 
 
 def check_stage(stars, not_bad, dither, dark, opt):
-    mag_ok = check_mag(stars, opt)
-    ok = mag_ok & not_bad
+    badmag = check_mag(stars, opt)
+    ok = ~badmag & not_bad
     if not np.any(ok):
         return ok
     imp = check_imposters(stars, ok, dark, dither, opt)
