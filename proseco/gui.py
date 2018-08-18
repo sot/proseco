@@ -116,36 +116,36 @@ def check_mag_spoilers(stars, ok, opt):
 
 
 def check_bad_pixels(stars, not_bad, dither, opt):
-    bp = opt['Body']['Pixels']['BadPixels']
-    # start with big distances
-    distance = np.ones(len(stars[not_bad])) * 9999
-    if bp is None:
-        full_distance = np.ones(len(stars)) * 9999
-        full_distance[not_bad] = distance
-        return full_distance
-    row, col = stars['row'], stars['col']
-    bp = np.array(bp)
-    # Loop over the stars to check each distance to closest bad pixel
-    rpad = .5 * dither[0] * ARC_2_PIX
-    cpad = .5 * dither[1] * ARC_2_PIX
-    for i, rs, cs in zip(count(), row[not_bad], col[not_bad]):
-        in_reg_r = (rs >= (bp[:,0] - rpad)) & (rs <= (bp[:,1] + rpad))
-        in_reg_c = (cs >= (bp[:,2] - cpad)) & (cs <= (bp[:,3] + cpad))
-        r_dist = np.min(np.abs(
-                [rs - (bp[:,0] - rpad), rs - (bp[:,1] + rpad)]), axis=0)
-        r_dist[in_reg_r] = 0
-        c_dist = np.min(np.abs(
-                [cs - (bp[:,2] - cpad), cs - (bp[:,3] + cpad)]), axis=0)
-        c_dist[in_reg_c] = 0
-        # For the nearest manhattan distance we want the max in each axis
-        maxes = np.max(np.vstack([r_dist, c_dist]), axis=0)
-        # And then the minimum of the maxes
-        idxmatch = np.argmin(maxes)
-        distance[i] = maxes[idxmatch]
-    full_distance = np.ones(len(stars)) * 9999
-    full_distance[not_bad] = distance
-    # TODO fix this hard limit
-    return full_distance < 6
+    """
+    Check if any candidate is spoiled by a bad pixel.
+    """
+    raw_bp = np.array(opt['Body']['Pixels']['BadPixels'])
+    bp_row = []
+    bp_col = []
+    # Bad pixel entries are [row_min, row_max, col_min, col_max].
+    # Convert this to lists of the row and col coords of the bad pixels
+    for row in raw_bp:
+        for rr in range(row[0], row[1] + 1):
+            for cc in range(row[2], row[3] + 1):
+                bp_row.append(rr)
+                bp_col.append(cc)
+    bp_row = np.array(bp_row)
+    bp_col = np.array(bp_col)
+
+    # Then for the pixel region of each candidate, see if there is a bad
+    # pixel in the region.
+    spoiled = np.zeros_like(not_bad)
+    row_extent = 4 + dither[0] * ARC_2_PIX
+    col_extent = 4 + dither[1] * ARC_2_PIX
+    for cand in stars[not_bad]:
+        rminus = int(np.floor(cand['row'] - row_extent))
+        rplus = int(np.ceil(cand['row'] + row_extent + 1))
+        cminus = int(np.floor(cand['col'] - col_extent))
+        cplus = int(np.ceil(cand['col'] + col_extent + 1))
+        # If any bad pixel in the guide star pixel region, mark as spoiled
+        if np.any((bp_row >= rminus) & (bp_row <= rplus) & (bp_col >= cminus) & (bp_col <= cplus)):
+            spoiled[stars['AGASC_ID'] == cand['AGASC_ID']] = True
+    return spoiled
 
 
 def check_imposters(stars, ok, dark, dither, opt):
