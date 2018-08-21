@@ -78,5 +78,5 @@ def test_big_dither():
     date = '2018:233'
     selected = select_guide_stars(311.208763, -31.270875, 308.957038,
                                   dither=(64, 8), date=date)
-    expected = [977409032,  977414712, 977416336, 977282416, 977405808]
+    expected = [977409032,  977414712, 977416336, 977405808, 977410960]
     assert selected['AGASC_ID'].tolist() == expected

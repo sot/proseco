@@ -71,7 +71,7 @@ CHAR = { "Stars": {
                     "SigErrMultiplier": 3,
                     },
                 "Imposter": {
-                    "Thresh": .025,
+                    "Thresh": .05,
                     },
                 },
             {
@@ -98,7 +98,7 @@ CHAR = { "Stars": {
                     "SigErrMultiplier": 2,
                     },
                 "Imposter": {
-                    "Thresh": .05,
+                    "Thresh": .075,
                     },
                 },
             {
@@ -125,7 +125,7 @@ CHAR = { "Stars": {
                     "SigErrMultiplier": 1,
                     },
                 "Imposter": {
-                    "Thresh": .05,
+                    "Thresh": .075,
                     },
                 },
             {
@@ -152,7 +152,7 @@ CHAR = { "Stars": {
                     "SigErrMultiplier": 0,
                     },
                 "Imposter": {
-                    "Thresh": .075,
+                    "Thresh": .10,
                     },
                 },
             {
