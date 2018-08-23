@@ -361,9 +361,9 @@ def get_acq_candidates(acqs, stars, max_candidates=20):
     cand_acqs = AcqTable(cand_acqs[names])
 
     # Make this suitable for plotting
-    cand_acqs['idx'] = np.arange(len(cand_acqs))
+    cand_acqs['idx'] = np.arange(len(cand_acqs), dtype=np.int64)
     cand_acqs['type'] = 'ACQ'
-    cand_acqs['halfw'] = 120  # "Official" acq box_size for catalog
+    cand_acqs['halfw'] = np.full(len(cand_acqs), 120, dtype=np.int64)
 
     # Set up columns needed for catalog initial selection and optimization
     def empty_dicts():
