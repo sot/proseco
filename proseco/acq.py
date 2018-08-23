@@ -61,6 +61,7 @@ class AcqTable(Table):
         # func = funcs[-1]
 
         dt = time.time() - self.log_info['time0']
+        kwargs = {key: to_python(val) for key, val in kwargs.items()}
         self.log_info['events'].append(dict(dt=round(dt, 4),
                                             func=func,
                                             # funcs=funcs,
@@ -138,6 +139,9 @@ class AcqTable(Table):
             outrow = {}
             for name in colnames:
                 val = row[name]
+                if isinstance(val, np.ndarray) and val.dtype.names:
+                    val = Table(val)
+
                 if isinstance(val, Table):
                     val = AcqTable.to_struct(val)
 
