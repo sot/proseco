@@ -12,7 +12,7 @@ import numpy as np
 import yaml
 from scipy import ndimage, stats
 from scipy.interpolate import interp1d
-from astropy.table import Table, Column, vstack
+from astropy.table import Table, Column
 
 from chandra_aca.star_probs import acq_success_prob, prob_n_acq
 from chandra_aca.transform import (yagzag_to_pixels, pixels_to_yagzag,
@@ -34,11 +34,12 @@ def to_python(val):
 
 
 class AcqTable(Table):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, print_log=False, **kwargs):
         super(AcqTable, self).__init__(*args, **kwargs)
         self.log_info = {}
         self.log_info['events'] = []
         self.log_info['time0'] = time.time()
+        self.print_log = print_log
 
         # Make printed table look nicer.  This is defined in advance
         # and will be applied the first time the table is represented.
@@ -62,11 +63,15 @@ class AcqTable(Table):
 
         dt = time.time() - self.log_info['time0']
         kwargs = {key: to_python(val) for key, val in kwargs.items()}
-        self.log_info['events'].append(dict(dt=round(dt, 4),
-                                            func=func,
-                                            # funcs=funcs,
-                                            data=data,
-                                            **kwargs))
+        event = dict(dt=round(dt, 4),
+                     func=func,
+                     # funcs=funcs,
+                     data=data,
+                     **kwargs)
+        self.log_info['events'].append(event)
+        if self.print_log:
+            data_str = ' ' * event.get('level', 0) * 4 + str(event['data'])
+            print(f'{dt:7.3f} {func:20s}: {data_str}')
 
     def _base_repr_(self, *args, **kwargs):
         names = [name for name in self.colnames
@@ -920,7 +925,7 @@ def calc_p_safe(acqs, verbose=False):
 
         p_acqs = [acq['p_acqs'][acq['halfw'], man_err] for acq in acqs]
 
-        p_n, p_n_cum = prob_n_acq(p_acqs)
+        p_n_cum = prob_n_acq(p_acqs)[1]
         if verbose:
             acqs.log('man_err = {}, p_man_err = {}'.format(man_err, p_man_err))
             acqs.log('p_acqs =' + ' '.join(['{:.3f}'.format(val) for val in p_acqs]))
@@ -956,11 +961,11 @@ def optimize_acq_halfw(acqs, idx, p_safe, verbose=False):
         # reducing box size.
         if new_p_acq < 0.1 and new_p_acq < orig_p_acq:
             acqs.log(f'Skipping halfw {box_size}: new marg p_acq < 0.1 and new < orig'
-                     ' ({new_p_acq:.3f} < {orig_p_acq:.3f})')
+                     f' ({new_p_acq:.3f} < {orig_p_acq:.3f})')
             p_safes.append(p_safe)
         else:
             acq['halfw'] = box_size
-            p_safes.append(calc_p_safe(acqs))
+            p_safes.append(calc_p_safe(acqs, verbose))
 
     # Find best p_safe
     min_idx = np.argmin(p_safes)
@@ -1018,7 +1023,6 @@ def optimize_catalog(acqs, verbose=False):
             break
 
     acqs.log('After optimizing initial catalog p_safe = {:.5f}'.format(p_safe))
-    # calc_p_safe(acqs, verbose=True)  # TO DO: need to figure out what to do here
 
     # Now try to swap in a new star from the candidate list and see if
     # it can improve p_safe.
@@ -1059,11 +1063,11 @@ def optimize_catalog(acqs, verbose=False):
 
 def get_acq_catalog(obsid=None, att=None,
                     man_angle=None, t_ccd=None, date=None, dither=None,
-                    optimize=True, verbose=False):
+                    optimize=True, verbose=False, print_log=False):
 
     # Make an empty AcqTable object, mostly for logging.  It gets populated
     # after selecting initial an inital catalog of potential acq stars.
-    acqs = AcqTable()
+    acqs = AcqTable(print_log=print_log)
 
     if obsid is not None:
         from mica.starcheck import get_starcheck_catalog
