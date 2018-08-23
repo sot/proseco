@@ -61,6 +61,7 @@ class AcqTable(Table):
         # func = funcs[-1]
 
         dt = time.time() - self.log_info['time0']
+        kwargs = {key: to_python(val) for key, val in kwargs.items()}
         self.log_info['events'].append(dict(dt=round(dt, 4),
                                             func=func,
                                             # funcs=funcs,
@@ -138,6 +139,9 @@ class AcqTable(Table):
             outrow = {}
             for name in colnames:
                 val = row[name]
+                if isinstance(val, np.ndarray) and val.dtype.names:
+                    val = Table(val)
+
                 if isinstance(val, Table):
                     val = AcqTable.to_struct(val)
 
@@ -396,6 +400,7 @@ def get_spoiler_stars(stars, acq, box_size):
     TO DO: consider mag uncertainties at the faint end related to
     background subtraction and warm pixel corruption of background.
     """
+    stars = stars.as_array()
     # 1-sigma of difference of stars['MAG_ACA'] - acq['MAG_ACA']
     # TO DO: lower limit clip?
     mag_diff_err = np.sqrt(stars['mag_err'] ** 2 + acq['mag_err'] ** 2)
@@ -407,7 +412,7 @@ def get_spoiler_stars(stars, acq, box_size):
           (stars['id'] != acq['id'])
           )
     spoilers = stars[ok]
-    spoilers.sort('mag')
+    spoilers.sort(order=['mag'])
 
     return spoilers
 
@@ -589,24 +594,24 @@ def get_imposter_stars(dark, star_row, star_col, thresh=None,
                'img': img,
                'img_sum': img_sum,
                'mag': mag,
-               'mag_err': get_mag_std(mag),
+               'mag_err': get_mag_std(mag).item(),
                }
         outs.append(out)
 
     if len(outs) > 0:
-        outs = Table(outs)
-        outs.sort('mag')
+        outs = Table(outs).as_array()
+        outs.sort(order=['mag'])
 
     return outs
 
 
-def calc_p_brightest_compare(acq, intruders):
+def calc_p_brightest_compare(acq, mags, mag_errs):
     """
     For given ``acq`` star and intruders mag, mag_err,
     do the probability calculation to see if the acq star is brighter
     than all of them.
     """
-    if len(intruders) == 0:
+    if len(mags) == 0:
         return 1.0
 
     n_pts = 100
@@ -617,10 +622,10 @@ def calc_p_brightest_compare(acq, intruders):
     acq_pdf = stats.norm.pdf(x, loc=acq['mag'], scale=acq['mag_err'])
 
     sp_cdfs = []
-    for sp in intruders:
+    for mag, mag_err in zip(mags, mag_errs):
         # Compute prob intruder is fainter than acq (so sp_mag > x).
         # CDF is prob that sp_mag < x, so take 1-CDF.
-        sp_cdf = stats.norm.cdf(x, loc=sp['mag'], scale=sp['mag_err'])
+        sp_cdf = stats.norm.cdf(x, loc=mag, scale=mag_err)
         sp_cdfs.append(1 - sp_cdf)
     prod_sp_cdf = np.prod(sp_cdfs, axis=0)
 
@@ -638,30 +643,32 @@ def get_intruders(acq, box_size, name, n_sigma, get_func, kwargs):
     Returns Table with cols yang, zang, mag, mag_err.
     """
     name_box = name + '_box'
-    if acq[name] is None:
-        acq[name] = get_func(**kwargs)
+    intruders = acq[name]
+
+    if intruders is None:
+        intruders = get_func(**kwargs)
         acq[name_box] = box_size
 
-        if len(acq[name]) > 0:
+        if len(intruders) > 0:
             # Clip to within n_sigma.  d_mag < 0 for intruder brighter than acq
-            d_mag = acq[name]['mag'] - acq['mag']
-            d_mag_err = np.sqrt(acq[name]['mag_err'] ** 2 + acq['mag_err'] ** 2)
+            d_mag = intruders['mag'] - acq['mag']
+            d_mag_err = np.sqrt(intruders['mag_err'] ** 2 + acq['mag_err'] ** 2)
             ok = d_mag < n_sigma * d_mag_err
-            acq[name] = acq[name][ok]
+            intruders = intruders[ok]
+        acq[name] = intruders
 
     else:
         # Ensure cached spoilers cover the current case
         if box_size > acq[name_box]:
             raise ValueError('box_size is greater than {}'.format(name_box))
 
-    intruders = acq[name]
     colnames = ['yang', 'zang', 'mag', 'mag_err']
     if len(intruders) == 0:
-        intruders = Table(names=colnames)  # zero-length table with float cols
+        intruders = {name: np.array([], dtype=np.float64) for name in colnames}
     else:
         ok = ((np.abs(intruders['yang'] - acq['yang']) < box_size) &
               (np.abs(intruders['zang'] - acq['zang']) < box_size))
-        intruders = intruders[colnames][ok]
+        intruders = {name: intruders[name][ok] for name in ['mag', 'mag_err']}
 
     return intruders
 
@@ -695,8 +702,9 @@ def calc_p_brightest(acq, box_size, stars, dark, man_err=0,
                               n_sigma=1.0,  # TO DO: put to characteristics
                               get_func=get_imposter_stars, kwargs=kwargs)
 
-    intruders = vstack([spoilers, imposters])
-    prob = calc_p_brightest_compare(acq, intruders)
+    mags = np.concatenate([spoilers['mag'], imposters['mag']])
+    mag_errs = np.concatenate([spoilers['mag_err'], imposters['mag_err']])
+    prob = calc_p_brightest_compare(acq, mags, mag_errs)
 
     return prob
 
