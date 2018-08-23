@@ -318,6 +318,32 @@ def test_get_acq_catalog_21007():
     assert repr(acqs.meta['cand_acqs'][TEST_COLS]).splitlines() == exp
 
 
+def test_box_strategy_20603():
+    """Test for PR #32 that doesn't allow p_acq to be reduced below 0.1.
+    The idx=8 (mag=10.50) star was previously selected with 160 arsec box.
+    """
+    acqs = get_acq_catalog(20603)
+    exp = ['<AcqTable length=13>',
+           ' idx  slot     id      yang     zang   halfw   mag    p_acq ',
+           'int64 str3   int32   float64  float64  int64 float32 float64',
+           '----- ---- --------- -------- -------- ----- ------- -------',
+           '    0    0  40113544   102.76  1133.36   160    7.91   0.985',
+           '    1    1 116791824   622.00  -953.60   160    9.01   0.958',
+           '    2    2 116923496 -1337.79  1049.26   120    9.14   0.970',
+           '    3    3  40114416   394.23  1204.43   160    9.78   0.885',
+           '    4    4  40112304 -1644.34  2032.46    80    9.79   0.932',
+           '    5    5 116923528 -2418.66  1088.42   160    9.84   0.593',
+           '    6    6 116791744   985.39 -1210.18    60   10.29   0.501',
+           '    7  ...  40108048     2.21  1619.18   120   10.46   0.023',
+           '    8    7 116785920  -673.93 -1575.88    60   10.50   0.136',
+           '    9  ... 116791664  2307.25 -1504.54   120   10.74   0.000',
+           '   10  ... 116792320   941.59 -1784.09   120   10.83   0.000',
+           '   11  ... 116923744  -853.18   937.73   120   10.84   0.000',
+           '   12  ... 116918232 -2074.90 -1769.95   120   10.96   0.000']
+
+    assert repr(acqs.meta['cand_acqs'][TEST_COLS]).splitlines() == exp
+
+
 def test_to_from_yaml():
     acqs = get_acq_catalog(21007)  # Fast because of caching
 
