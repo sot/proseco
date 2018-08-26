@@ -13,7 +13,6 @@ from ..acq import (get_p_man_err, bin2x2, CHAR,
                    get_imposter_stars, get_stars, get_acq_candidates,
                    get_image_props, calc_p_brightest,
                    calc_p_on_ccd,
-                   get_acq_catalog,
                    AcqTable,
                    )
 
@@ -262,12 +261,12 @@ def test_get_acq_catalog_19387():
     actually changes out one of the initial catalog candidates.
 
     From ipython:
-    >>> from proseco import acq
-    >>> acqs = acq.get_acq_catalog(19387)
+    >>> from proseco.acq import AcqTable
+    >>> acqs = AcqTable.get_acq_catalog(19387)
     >>> TEST_COLS = ('idx', 'slot', 'id', 'yang', 'zang', 'halfw', 'mag', 'p_acq')
     >>> repr(acqs.meta['cand_acqs'][TEST_COLS]).splitlines()
     """
-    acqs = get_acq_catalog(19387)
+    acqs = AcqTable.get_acq_catalog(19387)
     # Expected
     exp = ['<AcqTable length=11>',
            ' idx  slot    id      yang     zang   halfw   mag    p_acq ',
@@ -291,12 +290,12 @@ def test_get_acq_catalog_19387():
 def test_get_acq_catalog_21007():
     """Put it all together.  Regression test for selected stars.
     From ipython:
-    >>> from proseco import acq
-    >>> acqs = acq.get_acq_catalog(21007)
+    >>> from proseco.acq import AcqTable
+    >>> acqs = AcqTable.get_acq_catalog(21007)
     >>> TEST_COLS = ('idx', 'slot', 'id', 'yang', 'zang', 'halfw', 'mag', 'p_acq')
     >>> repr(acqs.meta['cand_acqs'][TEST_COLS]).splitlines()
     """
-    acqs = get_acq_catalog(21007)
+    acqs = AcqTable.get_acq_catalog(21007)
     exp = ['<AcqTable length=14>',
            ' idx  slot     id      yang     zang   halfw   mag    p_acq ',
            'int64 str3   int32   float64  float64  int64 float32 float64',
@@ -323,7 +322,7 @@ def test_box_strategy_20603():
     """Test for PR #32 that doesn't allow p_acq to be reduced below 0.1.
     The idx=8 (mag=10.50) star was previously selected with 160 arsec box.
     """
-    acqs = get_acq_catalog(20603)
+    acqs = AcqTable.get_acq_catalog(20603)
     exp = ['<AcqTable length=13>',
            ' idx  slot     id      yang     zang   halfw   mag    p_acq ',
            'int64 str3   int32   float64  float64  int64 float32 float64',
@@ -350,7 +349,7 @@ def test_make_report(tmpdir):
     tmpdir = Path(tmpdir)
     obsdir = tmpdir / f'obs{obsid:05}'
 
-    acqs = get_acq_catalog(obsid)
+    acqs = AcqTable.get_acq_catalog(obsid)
     acqs.to_yaml(rootdir=tmpdir)
 
     acqs2 = make_report(obsid, rootdir=tmpdir)

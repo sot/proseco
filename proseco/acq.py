@@ -36,7 +36,118 @@ def get_p_man_err(man_err, man_angle):
 
 
 class AcqTable(ACACatalogTable):
-    pass
+    @classmethod
+    def get_acq_catalog(cls, obsid=0, att=None,
+                        man_angle=None, t_ccd=None, date=None, dither=None,
+                        optimize=True, verbose=False, print_log=False):
+        """
+        Get a catalog of acquisition stars using the algorithm described in
+        https://docs.google.com/presentation/d/1VtFKAW9he2vWIQAnb6unpK4u1bVAVziIdX9TnqRS3a8
+
+        If ``obsid`` corresponds to an already-scheduled obsid then the parameters
+        ``att``, ``man_angle``, ``t_ccd``, ``date``, and ``dither`` will
+        be fetched via ``mica.starcheck`` if not explicitly provided here.
+
+        :param obsid: obsid (default=0)
+        :param att: attitude (any object that can initialize Quat)
+        :param man_angle: maneuver angle (deg)
+        :param t_ccd: ACA CCD temperature (degC)
+        :param date: date of acquisition (any DateTime-compatible format)
+        :param dither: dither size (float, arcsec)
+        :param optimize: optimize star catalog after initial selection (default=True)
+        :param verbose: provide extra logging info (mostly calc_p_safe) (default=False)
+        :param print_log: print the run log to stdout (default=False)
+
+        :returns: AcqTable of acquisition stars
+        """
+
+        # Make an empty AcqTable object, mostly for logging.  It gets populated
+        # after selecting initial an inital catalog of potential acq stars.
+        acqs = cls(print_log=print_log)
+
+        # If an explicit obsid is not provided to all getting parameters via mica
+        # then all other params must be supplied.
+        all_pars = all(x is not None for x in (att, man_angle, t_ccd, date, dither))
+        if obsid == 0 and not all_pars:
+            raise ValueError('if `obsid` not supplied then all other params are required')
+
+        # If not all params supplied then get via mica for the obsid.
+        if not all_pars:
+            from mica.starcheck import get_starcheck_catalog
+            acqs.log('getting starcheck catalog for obsid {}'.format(obsid))
+
+            obs = get_starcheck_catalog(obsid)
+            obso = obs['obs']
+
+            if att is None:
+                att = [obso['point_ra'], obso['point_dec'], obso['point_roll']]
+            if date is None:
+                date = obso['mp_starcat_time']
+            if t_ccd is None:
+                t_ccd = obs['pred_temp']
+            if man_angle is None:
+                man_angle = obs['manvr']['angle_deg'][0]
+
+            # TO DO: deal with non-square dither pattern, esp. 8 x 64.
+            dither_y_amp = obso.get('dither_y_amp')
+            dither_z_amp = obso.get('dither_z_amp')
+            if dither_y_amp is not None and dither_z_amp is not None:
+                dither = max(dither_y_amp, dither_z_amp)
+
+            if dither is None:
+                dither = 20
+
+        acqs.log('getting dark cal image at date={} t_ccd={:.1f}'
+                 .format(date, t_ccd))
+        dark = get_dark_cal_image(date=date, select='before', t_ccd_ref=t_ccd)
+
+        acqs.meta = {'obsid': obsid,
+                     'att': att,
+                     'date': date,
+                     't_ccd': t_ccd,
+                     'man_angle': man_angle,
+                     'dither': dither}
+
+        # Probability of man_err for this observation with a given man_angle.  Used
+        # for marginalizing probabilities over different man_errs.
+        acqs.meta['p_man_errs'] = np.array([get_p_man_err(man_err, acqs.meta['man_angle'])
+                                            for man_err in CHAR.man_errs])
+
+        stars = get_stars(att, date=date, logger=acqs.log)
+        cand_acqs, bad_stars = get_acq_candidates(acqs, stars)
+
+        # Fill in the entire acq['p_acqs'] table (which is actual a dict of keyed by
+        # (box_size, man_err) tuples).
+        for acq in cand_acqs:
+            calc_acq_p_vals(acqs, acq, dither, stars, dark, t_ccd, date, acqs.meta['man_angle'])
+
+        get_initial_catalog(acqs, cand_acqs, stars=stars, dark=dark, dither=dither,
+                            t_ccd=t_ccd, date=date)
+
+        acqs.meta.update({'cand_acqs': cand_acqs,
+                          'stars': stars,
+                          'dark': dark,
+                          'bad_stars': bad_stars})
+
+        if optimize:
+            optimize_catalog(acqs, verbose)
+
+        # Set p_acq column to be the marginalized probabilities
+        acqs['p_acq'] = [acq['p_acq_marg'][acq['halfw']] for acq in acqs]
+
+        # Sort to make order match the original candidate list order (by
+        # increasing mag), and assign a slot.
+        acqs.sort('idx')
+        acqs['slot'] = np.arange(len(acqs))
+
+        # Add slot to cand_acqs table, putting in '...' if not selected as acq.
+        # This is for convenience in downstream reporting or introspection.
+        acqs.add_index('id')
+        slots = [str(acqs.loc[acq['id']]['slot']) if acq['id'] in acqs['id'] else '...'
+                 for acq in cand_acqs]
+        cand_acqs['slot'] = slots
+
+        return acqs
 
 
 def get_acq_candidates(acqs, stars, max_candidates=20):
@@ -720,116 +831,3 @@ def optimize_catalog(acqs, verbose=False):
             acqs.log('  accepted, new p_safe = {:.5f}'.format(p_safe), id=cand_id)
         else:
             acqs[idx] = orig_acq
-
-
-def get_acq_catalog(obsid=0, att=None,
-                    man_angle=None, t_ccd=None, date=None, dither=None,
-                    optimize=True, verbose=False, print_log=False):
-    """
-    Get a catalog of acquisition stars using the algorithm described in
-    https://docs.google.com/presentation/d/1VtFKAW9he2vWIQAnb6unpK4u1bVAVziIdX9TnqRS3a8
-
-    If ``obsid`` corresponds to an already-scheduled obsid then the parameters
-    ``att``, ``man_angle``, ``t_ccd``, ``date``, and ``dither`` will
-    be fetched via ``mica.starcheck`` if not explicitly provided here.
-
-    :param obsid: obsid (default=0)
-    :param att: attitude (any object that can initialize Quat)
-    :param man_angle: maneuver angle (deg)
-    :param t_ccd: ACA CCD temperature (degC)
-    :param date: date of acquisition (any DateTime-compatible format)
-    :param dither: dither size (float, arcsec)
-    :param optimize: optimize star catalog after initial selection (default=True)
-    :param verbose: provide extra logging info (mostly calc_p_safe) (default=False)
-    :param print_log: print the run log to stdout (default=False)
-
-    :returns: AcqTable of acquisition stars
-    """
-
-    # Make an empty AcqTable object, mostly for logging.  It gets populated
-    # after selecting initial an inital catalog of potential acq stars.
-    acqs = AcqTable(print_log=print_log)
-
-    # If an explicit obsid is not provided to all getting parameters via mica
-    # then all other params must be supplied.
-    all_pars = all(x is not None for x in (att, man_angle, t_ccd, date, dither))
-    if obsid == 0 and not all_pars:
-        raise ValueError('if `obsid` not supplied then all other params are required')
-
-    # If not all params supplied then get via mica for the obsid.
-    if not all_pars:
-        from mica.starcheck import get_starcheck_catalog
-        acqs.log('getting starcheck catalog for obsid {}'.format(obsid))
-
-        obs = get_starcheck_catalog(obsid)
-        obso = obs['obs']
-
-        if att is None:
-            att = [obso['point_ra'], obso['point_dec'], obso['point_roll']]
-        if date is None:
-            date = obso['mp_starcat_time']
-        if t_ccd is None:
-            t_ccd = obs['pred_temp']
-        if man_angle is None:
-            man_angle = obs['manvr']['angle_deg'][0]
-
-        # TO DO: deal with non-square dither pattern, esp. 8 x 64.
-        dither_y_amp = obso.get('dither_y_amp')
-        dither_z_amp = obso.get('dither_z_amp')
-        if dither_y_amp is not None and dither_z_amp is not None:
-            dither = max(dither_y_amp, dither_z_amp)
-
-        if dither is None:
-            dither = 20
-
-    acqs.log('getting dark cal image at date={} t_ccd={:.1f}'
-             .format(date, t_ccd))
-    dark = get_dark_cal_image(date=date, select='before', t_ccd_ref=t_ccd)
-
-    acqs.meta = {'obsid': obsid,
-                 'att': att,
-                 'date': date,
-                 't_ccd': t_ccd,
-                 'man_angle': man_angle,
-                 'dither': dither}
-
-    # Probability of man_err for this observation with a given man_angle.  Used
-    # for marginalizing probabilities over different man_errs.
-    acqs.meta['p_man_errs'] = np.array([get_p_man_err(man_err, acqs.meta['man_angle'])
-                                        for man_err in CHAR.man_errs])
-
-    stars = get_stars(att, date=date, logger=acqs.log)
-    cand_acqs, bad_stars = get_acq_candidates(acqs, stars)
-
-    # Fill in the entire acq['p_acqs'] table (which is actual a dict of keyed by
-    # (box_size, man_err) tuples).
-    for acq in cand_acqs:
-        calc_acq_p_vals(acqs, acq, dither, stars, dark, t_ccd, date, acqs.meta['man_angle'])
-
-    get_initial_catalog(acqs, cand_acqs, stars=stars, dark=dark, dither=dither,
-                        t_ccd=t_ccd, date=date)
-
-    acqs.meta.update({'cand_acqs': cand_acqs,
-                      'stars': stars,
-                      'dark': dark,
-                      'bad_stars': bad_stars})
-
-    if optimize:
-        optimize_catalog(acqs, verbose)
-
-    # Set p_acq column to be the marginalized probabilities
-    acqs['p_acq'] = [acq['p_acq_marg'][acq['halfw']] for acq in acqs]
-
-    # Sort to make order match the original candidate list order (by
-    # increasing mag), and assign a slot.
-    acqs.sort('idx')
-    acqs['slot'] = np.arange(len(acqs))
-
-    # Add slot to cand_acqs table, putting in '...' if not selected as acq.
-    # This is for convenience in downstream reporting or introspection.
-    acqs.add_index('id')
-    slots = [str(acqs.loc[acq['id']]['slot']) if acq['id'] in acqs['id'] else '...'
-             for acq in cand_acqs]
-    cand_acqs['slot'] = slots
-
-    return acqs
