@@ -1,7 +1,10 @@
 # coding: utf-8
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-from __future__ import division, print_function, absolute_import  # For Py2 compatibility
+"""
+Get a catalog of acquisition stars using the algorithm described in
+https://docs.google.com/presentation/d/1VtFKAW9he2vWIQAnb6unpK4u1bVAVziIdX9TnqRS3a8
+"""
 
 import os
 import inspect
@@ -1061,15 +1064,42 @@ def optimize_catalog(acqs, verbose=False):
             acqs[idx] = orig_acq
 
 
-def get_acq_catalog(obsid=None, att=None,
+def get_acq_catalog(obsid=0, att=None,
                     man_angle=None, t_ccd=None, date=None, dither=None,
                     optimize=True, verbose=False, print_log=False):
+    """
+    Get a catalog of acquisition stars using the algorithm described in
+    https://docs.google.com/presentation/d/1VtFKAW9he2vWIQAnb6unpK4u1bVAVziIdX9TnqRS3a8
+
+    If ``obsid`` corresponds to an already-scheduled obsid then the parameters
+    ``att``, ``man_angle``, ``t_ccd``, ``date``, and ``dither`` will
+    be fetched via ``mica.starcheck`` if not explicitly provided here.
+
+    :param obsid: obsid (default=0)
+    :param att: attitude (any object that can initialize Quat)
+    :param man_angle: maneuver angle (deg)
+    :param t_ccd: ACA CCD temperature (degC)
+    :param date: date of acquisition (any DateTime-compatible format)
+    :param dither: dither size (float, arcsec)
+    :param optimize: optimize star catalog after initial selection (default=True)
+    :param verbose: provide extra logging info (mostly calc_p_safe) (default=False)
+    :param print_log: print the run log to stdout (default=False)
+
+    :returns: AcqTable of acquisition stars
+    """
 
     # Make an empty AcqTable object, mostly for logging.  It gets populated
     # after selecting initial an inital catalog of potential acq stars.
     acqs = AcqTable(print_log=print_log)
 
-    if obsid is not None:
+    # If an explicit obsid is not provided to all getting parameters via mica
+    # then all other params must be supplied.
+    all_pars = all(x is not None for x in (att, man_angle, t_ccd, date, dither))
+    if obsid == 0 and not all_pars:
+        raise ValueError('if `obsid` not supplied then all other params are required')
+
+    # If not all params supplied then get via mica for the obsid.
+    if not all_pars:
         from mica.starcheck import get_starcheck_catalog
         acqs.log('getting starcheck catalog for obsid {}'.format(obsid))
 
@@ -1098,7 +1128,7 @@ def get_acq_catalog(obsid=None, att=None,
              .format(date, t_ccd))
     dark = get_dark_cal_image(date=date, select='before', t_ccd_ref=t_ccd)
 
-    acqs.meta = {'obsid': obsid or 0,
+    acqs.meta = {'obsid': obsid,
                  'att': att,
                  'date': date,
                  't_ccd': t_ccd,
