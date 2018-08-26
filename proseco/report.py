@@ -18,7 +18,7 @@ from astropy.table import Table, Column
 from chandra_aca.aca_image import ACAImage
 
 from . import characteristics as CHAR
-from .acq import AcqTable, get_stars, get_acq_candidates
+from .acq import AcqTable, get_stars
 from chandra_aca import plot as plot_aca
 from mica.archive.aca_dark.dark_cal import get_dark_cal_image
 
@@ -318,7 +318,7 @@ def make_report(obsid, rootdir='.'):
 
     # Get information that is not stored in the info.yaml for space reasons
     acqs.meta['stars'] = get_stars(acqs.meta['att'], date=acqs.meta['date'])
-    _, acqs.meta['bad_stars'] = get_acq_candidates(acqs, acqs.meta['stars'])
+    _, acqs.meta['bad_stars'] = acqs.get_acq_candidates(acqs.meta['stars'])
 
     events = make_events(acqs)
     context['events'] = events

@@ -54,7 +54,6 @@ class ACACatalogTable(Table):
         kwargs = {key: to_python(val) for key, val in kwargs.items()}
         event = dict(dt=round(dt, 4),
                      func=func,
-                     # funcs=funcs,
                      data=data,
                      **kwargs)
         self.log_info['events'].append(event)

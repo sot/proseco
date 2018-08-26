@@ -10,7 +10,7 @@ from chandra_aca.transform import mag_to_count_rate, yagzag_to_pixels
 
 from ..report import make_report
 from ..acq import (get_p_man_err, bin2x2, CHAR,
-                   get_imposter_stars, get_stars, get_acq_candidates,
+                   get_imposter_stars, get_stars,
                    get_image_props, calc_p_brightest,
                    calc_p_on_ccd,
                    AcqTable,
@@ -164,7 +164,7 @@ def get_test_cand_acqs():
     if 'cand_acqs' not in CACHE:
         acqs = AcqTable()
         stars = get_test_stars()
-        CACHE['cand_acqs'], bads = get_acq_candidates(acqs, stars)
+        CACHE['cand_acqs'], bads = acqs.get_acq_candidates(stars)
         # Don't care about bads for testing
     return CACHE['cand_acqs'].copy()
 

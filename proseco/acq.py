@@ -114,15 +114,15 @@ class AcqTable(ACACatalogTable):
                                             for man_err in CHAR.man_errs])
 
         stars = get_stars(att, date=date, logger=acqs.log)
-        cand_acqs, bad_stars = get_acq_candidates(acqs, stars)
+        cand_acqs, bad_stars = acqs.get_acq_candidates(stars)
 
         # Fill in the entire acq['p_acqs'] table (which is actual a dict of keyed by
         # (box_size, man_err) tuples).
         for acq in cand_acqs:
-            calc_acq_p_vals(acqs, acq, dither, stars, dark, t_ccd, date, acqs.meta['man_angle'])
+            acqs.calc_acq_p_vals(acq, dither, stars, dark, t_ccd, date, acqs.meta['man_angle'])
 
-        get_initial_catalog(acqs, cand_acqs, stars=stars, dark=dark, dither=dither,
-                            t_ccd=t_ccd, date=date)
+        acqs.get_initial_catalog(cand_acqs, stars=stars, dark=dark, dither=dither,
+                                 t_ccd=t_ccd, date=date)
 
         acqs.meta.update({'cand_acqs': cand_acqs,
                           'stars': stars,
@@ -130,7 +130,7 @@ class AcqTable(ACACatalogTable):
                           'bad_stars': bad_stars})
 
         if optimize:
-            optimize_catalog(acqs, verbose)
+            acqs.optimize_catalog(verbose)
 
         # Set p_acq column to be the marginalized probabilities
         acqs['p_acq'] = [acq['p_acq_marg'][acq['halfw']] for acq in acqs]
@@ -149,88 +149,370 @@ class AcqTable(ACACatalogTable):
 
         return acqs
 
+    def get_acq_candidates(self, stars, max_candidates=20):
+        """
+        Get candidates for acquisition stars from ``stars`` table.
 
-def get_acq_candidates(acqs, stars, max_candidates=20):
-    """
-    Get candidates for acquisition stars from ``stars`` table.
+        This allows for candidates right up to the useful part of the CCD.
+        The p_acq will be accordingly penalized.
 
-    This allows for candidates right up to the useful part of the CCD.
-    The p_acq will be accordingly penalized.
+        :param stars: list of stars in the field
+        :param max_candidates: maximum candidate acq stars
+        :returns: Table of candidates, indices of rejected stars
+        """
+        ok = ((stars['CLASS'] == 0) &
+              (stars['MAG_ACA'] > 5.9) &
+              (stars['MAG_ACA'] < 11.0) &
+              (~np.isclose(stars['COLOR1'], 0.7)) &
+              (np.abs(stars['row']) < CHAR.max_ccd_row) &  # Max usable row
+              (np.abs(stars['col']) < CHAR.max_ccd_col) &  # Max usable col
+              (stars['MAG_ACA_ERR'] < 100) &  # Mag err < 1.0 mag
+              (stars['ASPQ1'] < 20) &  # Less than 1 arcsec offset from nearby spoiler
+              (stars['ASPQ2'] == 0) &  # Proper motion less than 0.5 arcsec/yr
+              (stars['POS_ERR'] < 3000) &  # Position error < 3.0 arcsec
+              ((stars['VAR'] == -9999) | (stars['VAR'] == 5))  # Not known to vary > 0.2 mag
+              )
+        # TO DO: column and row-readout spoilers (BONUS points: Mars and Jupiter)
+        # Note see email with subject including "08220 (Jupiter)" about an
+        # *upstream* spoiler from Jupiter.
 
-    :param acqs: master acquisition table (used for logging here)
-    :param stars: list of stars in the field
-    :param max_candidates: maximum candidate acq stars
-    :returns: Table of candidates, indices of rejected stars
-    """
-    ok = ((stars['CLASS'] == 0) &
-          (stars['MAG_ACA'] > 5.9) &
-          (stars['MAG_ACA'] < 11.0) &
-          (~np.isclose(stars['COLOR1'], 0.7)) &
-          (np.abs(stars['row']) < CHAR.max_ccd_row) &  # Max usable row
-          (np.abs(stars['col']) < CHAR.max_ccd_col) &  # Max usable col
-          (stars['MAG_ACA_ERR'] < 100) &  # Mag err < 1.0 mag
-          (stars['ASPQ1'] < 20) &  # Less than 1 arcsec offset from nearby spoiler
-          (stars['ASPQ2'] == 0) &  # Proper motion less than 0.5 arcsec/yr
-          (stars['POS_ERR'] < 3000) &  # Position error < 3.0 arcsec
-          ((stars['VAR'] == -9999) | (stars['VAR'] == 5))  # Not known to vary > 0.2 mag
-          )
-    # TO DO: column and row-readout spoilers (BONUS points: Mars and Jupiter)
-    # Note see email with subject including "08220 (Jupiter)" about an
-    # *upstream* spoiler from Jupiter.
+        bads = ~ok
+        cand_acqs = stars[ok]
+        cand_acqs.sort('MAG_ACA')
+        self.log('Filtering on CLASS, MAG_ACA, COLOR1, row/col, '
+                 'MAG_ACA_ERR, ASPQ1/2, POS_ERR:')
+        self.log('Reduced star list from {} to {} candidate acq stars'
+                 .format(len(stars), len(cand_acqs)))
 
-    bads = ~ok
-    cand_acqs = stars[ok]
-    cand_acqs.sort('MAG_ACA')
-    acqs.log('Filtering on CLASS, MAG_ACA, COLOR1, row/col, '
-             'MAG_ACA_ERR, ASPQ1/2, POS_ERR:')
-    acqs.log('Reduced star list from {} to {} candidate acq stars'
-             .format(len(stars), len(cand_acqs)))
+        # Reject any candidate with a spoiler that is within a 30" HW box
+        # and is within 3 mag of the candidate in brightness.  Collect a
+        # list of good (not rejected) candidates and stop when there are
+        # max_candidates.
+        goods = []
+        for ii, acq in enumerate(cand_acqs):
+            bad = ((np.abs(acq['yang'] - stars['yang']) < 30) &
+                   (np.abs(acq['zang'] - stars['zang']) < 30) &
+                   (stars['MAG_ACA'] - acq['MAG_ACA'] < 3))
+            if np.count_nonzero(bad) == 1:  # Self always matches
+                goods.append(ii)
+            if len(goods) == max_candidates:
+                break
 
-    # Reject any candidate with a spoiler that is within a 30" HW box
-    # and is within 3 mag of the candidate in brightness.  Collect a
-    # list of good (not rejected) candidates and stop when there are
-    # max_candidates.
-    goods = []
-    for ii, acq in enumerate(cand_acqs):
-        bad = ((np.abs(acq['yang'] - stars['yang']) < 30) &
-               (np.abs(acq['zang'] - stars['zang']) < 30) &
-               (stars['MAG_ACA'] - acq['MAG_ACA'] < 3))
-        if np.count_nonzero(bad) == 1:  # Self always matches
-            goods.append(ii)
-        if len(goods) == max_candidates:
-            break
+        cand_acqs = cand_acqs[goods]
+        self.log('Selected {} candidates with no spoiler (star within 3 mag and 30 arcsec)'
+                 .format(len(cand_acqs)))
 
-    cand_acqs = cand_acqs[goods]
-    acqs.log('Selected {} candidates with no spoiler (star within 3 mag and 30 arcsec)'
-             .format(len(cand_acqs)))
+        cand_acqs.rename_column('COLOR1', 'color')
+        # Drop all the other AGASC columns.  No longer useful.
+        names = [name for name in cand_acqs.colnames if not name.isupper()]
+        cand_acqs = AcqTable(cand_acqs[names])
 
-    cand_acqs.rename_column('COLOR1', 'color')
-    # Drop all the other AGASC columns.  No longer useful.
-    names = [name for name in cand_acqs.colnames if not name.isupper()]
-    cand_acqs = AcqTable(cand_acqs[names])
+        # Make this suitable for plotting
+        cand_acqs['idx'] = np.arange(len(cand_acqs), dtype=np.int64)
+        cand_acqs['type'] = 'ACQ'
+        cand_acqs['halfw'] = np.full(len(cand_acqs), 120, dtype=np.int64)
 
-    # Make this suitable for plotting
-    cand_acqs['idx'] = np.arange(len(cand_acqs), dtype=np.int64)
-    cand_acqs['type'] = 'ACQ'
-    cand_acqs['halfw'] = np.full(len(cand_acqs), 120, dtype=np.int64)
+        # Set up columns needed for catalog initial selection and optimization
+        def empty_dicts():
+            return [{} for _ in range(len(cand_acqs))]
 
-    # Set up columns needed for catalog initial selection and optimization
-    def empty_dicts():
-        return [{} for _ in range(len(cand_acqs))]
+        cand_acqs['p_acq'] = -999.0  # Acq prob for box_size=halfw, marginalized over man_err
+        cand_acqs['p_acqs'] = empty_dicts()  # Dict keyed on (box_size, man_err) (mult next 3)
+        cand_acqs['p_brightest'] = empty_dicts()  # Dict keyed on (box_size, man_err)
+        cand_acqs['p_acq_model'] = empty_dicts()  # Dict keyed on box_size
+        cand_acqs['p_on_ccd'] = empty_dicts()  # Dict keyed on box_size
+        cand_acqs['p_acq_marg'] = empty_dicts()  # Dict keyed on box_size
 
-    cand_acqs['p_acq'] = -999.0  # Acq prob for star for box_size=halfw, marginalized over man_err
-    cand_acqs['p_acqs'] = empty_dicts()  # Dict keyed on (box_size, man_err) (mult next 3)
-    cand_acqs['p_brightest'] = empty_dicts()  # Dict keyed on (box_size, man_err)
-    cand_acqs['p_acq_model'] = empty_dicts()  # Dict keyed on box_size
-    cand_acqs['p_on_ccd'] = empty_dicts()  # Dict keyed on box_size
-    cand_acqs['p_acq_marg'] = empty_dicts()  # Dict keyed on box_size
+        cand_acqs['spoilers'] = None  # Filled in with Table of spoilers
+        cand_acqs['imposters'] = None  # Filled in with Table of imposters
+        cand_acqs['spoilers_box'] = -999.0  # Cached value of box_size + man_err for spoilers
+        cand_acqs['imposters_box'] = -999.0  # Cached value of box_size + dither for imposters
 
-    cand_acqs['spoilers'] = None  # Filled in with Table of spoilers
-    cand_acqs['imposters'] = None  # Filled in with Table of imposters
-    cand_acqs['spoilers_box'] = -999.0  # Cached value of box_size + man_err for spoilers
-    cand_acqs['imposters_box'] = -999.0  # Cached value of box_size + dither for imposters
+        return cand_acqs, bads
 
-    return cand_acqs, bads
+    def select_best_p_acqs(self, cand_acqs, min_p_acq, acq_indices, box_sizes):
+        """
+        Find stars with the highest acquisition probability according to the
+        algorithm below.  ``p_acqs`` is the same-named column from candidate
+        acq stars and it contains a dict keyed by (box_size, man_err).  This
+        algorithm uses the assumption of man_err=box_size.
+
+        - Loop over box sizes in descending order (160, ..., 60)
+          - Sort in descending order the p_acqs corresponding to that box size
+            (where largest p_acqs come first)
+          - Loop over the list and add any stars with p_acq > min_p_acq to the
+            list of accepted stars.
+          - If the list is 8 long (completely catalog) then stop
+
+        This function can be called multiple times with successively smaller
+        min_p_acq to fill out the catalog.  The acq_indices and box_sizes
+        arrays are appended in place in this process.
+        """
+        self.log('Find stars with best acq prob for min_p_acq={}'.format(min_p_acq))
+        self.log('Current catalog: acq_indices={} box_sizes={}'.format(acq_indices, box_sizes))
+
+        for box_size in CHAR.box_sizes:
+            # Get array of marginalized (over man_err) p_acq values corresponding
+            # to box_size for each of the candidate acq stars.
+            p_acqs_for_box = np.array([acq['p_acq_marg'][box_size] for acq in cand_acqs])
+
+            self.log('Trying search box size {} arcsec'.format(box_size), level=1)
+
+            indices = np.argsort(-p_acqs_for_box)
+            for acq_idx in indices:
+                if acq_idx in acq_indices:
+                    continue
+
+                acq = cand_acqs[acq_idx]
+                p_acq = p_acqs_for_box[acq_idx]
+                accepted = p_acq > min_p_acq
+                self.log('Star idx={:2d} id={:10d} box={:3d} mag={:5.1f} p_acq={:.3f} {}'
+                         .format(acq_idx, acq['id'], box_size, acq['mag'], p_acq,
+                                 'ACCEPTED' if accepted else 'rejected'),
+                         id=acq['id'],
+                         level=2)
+
+                if accepted:
+                    acq_indices.append(acq_idx)
+                    box_sizes.append(box_size)
+
+                if len(acq_indices) == 8:
+                    self.log('Found 8 acq stars, done')
+                    return
+
+    def calc_acq_p_vals(self, acq, dither, stars, dark, t_ccd, date, man_angle):
+        """
+        Calculate probabilities related to acquisition, in particular an element
+        in the ``p_acqs`` matrix which specifies star acquisition probability
+        for given search box size and maneuver error.
+
+        This updates the ``acq`` row in place, including these columns:
+
+        - ``p_brightest``: probability this star is the brightest in box (function
+            of ``box_size`` and ``man_err``)
+        - ``p_acq_model``: probability of acquisition from the chandra_aca model
+            (function of ``box_size``)
+        - ``p_on_ccd``: probability star is on the usable part of the CCD (function
+            of ``man_err`` and ``dither``)
+        - ``p_acqs``: product of the above three
+
+        :param acq: row in the acqs table
+        :param dither: dither (arcsec)
+        :param stars: stars table
+        :param dark: dark current map
+        :param t_ccd: CCD temperature (degC)
+        :param date: observation date
+        """
+        for box_size in CHAR.box_sizes:
+            # Need to iterate over man_errs in reverse order because calc_p_brightest
+            # caches interlopers based on first call, so that needs to have the largest
+            # box sizes.
+            for man_err in CHAR.man_errs[::-1]:
+                if man_err > box_size:
+                    p_brightest = acq['p_brightest'][box_size, man_err] = 0.0
+                else:
+                    # Prob of being brightest in box (function of box_size and
+                    # man_err, independently because imposter prob is just a
+                    # function of box_size not man_err).  Technically also a
+                    # function of dither, but that does not vary here.
+                    p_brightest = calc_p_brightest(acq, box_size=box_size, stars=stars, dark=dark,
+                                                   man_err=man_err, dither=dither)
+                    acq['p_brightest'][box_size, man_err] = p_brightest
+
+        # Acquisition probability model value (function of box_size only)
+        for box_size in CHAR.box_sizes:
+            p_acq_model = acq_success_prob(date=date, t_ccd=t_ccd,
+                                           mag=acq['mag'], color=acq['color'],
+                                           spoiler=False, halfwidth=box_size)
+            acq['p_acq_model'][box_size] = p_acq_model
+
+        # Probability star is in acq box (function of man_err and dither only)
+        for man_err in CHAR.man_errs:
+            p_on_ccd = calc_p_on_ccd(acq['row'], acq['col'], box_size=man_err + dither)
+            acq['p_on_ccd'][man_err] = p_on_ccd
+
+        # All together now!
+        for box_size in CHAR.box_sizes:
+            p_acq_marg = 0.0
+            for man_err, p_man_err in zip(CHAR.man_errs, self.meta['p_man_errs']):
+                acq['p_acqs'][box_size, man_err] = (acq['p_brightest'][box_size, man_err] *
+                                                    acq['p_acq_model'][box_size] *
+                                                    acq['p_on_ccd'][man_err])
+                p_acq_marg += acq['p_acqs'][box_size, man_err] * p_man_err
+            acq['p_acq_marg'][box_size] = p_acq_marg
+
+    def get_initial_catalog(self, cand_acqs, stars, dark, dither=20, t_ccd=-11.0, date=None):
+        """
+        Get the initial catalog of up to 8 candidate acquisition stars.
+        """
+        self.log('Getting initial catalog from {} candidates'.format(len(cand_acqs)))
+
+        # Accumulate indices and box sizes of candidate acq stars that meet
+        # successively less stringent minimum p_acq.
+        acq_indices = []
+        box_sizes = []
+        for min_p_acq in (0.75, 0.5, 0.25, 0.05):
+            # Updates acq_indices, box_sizes in place
+            self.select_best_p_acqs(cand_acqs, min_p_acq, acq_indices, box_sizes)
+
+            if len(acq_indices) == 8:
+                break
+
+        # Make all the not-accepted candidate acqs have halfw=120 as a reasonable
+        # default and then set the accepted acqs to the best box_size.  Then set
+        # p_acq to the marginalized acquisition probability.
+        cand_acqs['halfw'] = 120
+        cand_acqs['halfw'][acq_indices] = box_sizes
+        for acq in cand_acqs:
+            acq['p_acq'] = acq['p_acq_marg'][acq['halfw']]
+
+        # Finally select the initial catalog
+        acqs_init = cand_acqs[acq_indices]
+
+        # Transfer to acqs (which at this point is an empty table)
+        for name, col in acqs_init.columns.items():
+            self[name] = col
+
+    def calc_p_safe(self, verbose=False):
+        p_no_safe = 1.0
+
+        for man_err, p_man_err in zip(CHAR.man_errs, self.meta['p_man_errs']):
+            if p_man_err == 0.0:
+                continue
+
+            p_acqs = [acq['p_acqs'][acq['halfw'], man_err] for acq in self]
+
+            p_n_cum = prob_n_acq(p_acqs)[1]
+            if verbose:
+                self.log('man_err = {}, p_man_err = {}'.format(man_err, p_man_err))
+                self.log('p_acqs =' + ' '.join(['{:.3f}'.format(val) for val in p_acqs]))
+                self.log('log10(p 1_or_fewer) = {:.2f}'.format(np.log10(p_n_cum[1])))
+            p_01 = p_n_cum[1]  # 1 or fewer => p_fail at this man_err
+
+            p_no_safe *= (1 - p_man_err * p_01)
+
+        p_safe = 1 - p_no_safe
+        self.meta['p_safe'] = p_safe
+
+        return p_safe
+
+    def optimize_acq_halfw(self, idx, p_safe, verbose=False):
+        """
+        Optimize the box size (halfw) for the acq star ``idx`` in the current acqs
+        table.  Assume current ``p_safe``.
+        """
+        acq = self[idx]
+        orig_halfw = acq['halfw']
+        orig_p_acq = acq['p_acq_marg'][acq['halfw']]
+
+        self.log('Optimizing halfw for idx={} id={}'.format(idx, acq['id']), id=acq['id'])
+
+        # Compute p_safe for each possible halfw for the current star
+        p_safes = []
+        for box_size in CHAR.box_sizes:
+            new_p_acq = acq['p_acq_marg'][box_size]
+            # Do not reduce marginalized p_acq to below 0.1.  It can happen that p_safe
+            # goes down very slightly with an increase in box size from the original,
+            # and then the box size gets stuck there because of the deadband for later
+            # reducing box size.
+            if new_p_acq < 0.1 and new_p_acq < orig_p_acq:
+                self.log(f'Skipping halfw {box_size}: new marg p_acq < 0.1 and new < orig'
+                         f' ({new_p_acq:.3f} < {orig_p_acq:.3f})')
+                p_safes.append(p_safe)
+            else:
+                acq['halfw'] = box_size
+                p_safes.append(self.calc_p_safe(verbose))
+
+        # Find best p_safe
+        min_idx = np.argmin(p_safes)
+        min_p_safe = p_safes[min_idx]
+        min_halfw = CHAR.box_sizes[min_idx]
+
+        # If p_safe went down, then consider this an improvement if either:
+        #   - acq halfw is increased (bigger boxes are better)
+        #   - p_safe went down by at least 10%
+        # So avoid reducing box sizes for only small improvements in p_safe.
+        improved = ((min_p_safe < p_safe) and
+                    ((min_halfw > orig_halfw) or (min_p_safe / p_safe < 0.9)))
+
+        p_safes_strs = ['{:.2f} ({}")'.format(np.log10(p), box_size)
+                        for p, box_size in zip(p_safes, CHAR.box_sizes)]
+        self.log('p_safes={}'.format(', '.join(p_safes_strs)), level=1, id=acq['id'])
+        self.log('min_p_safe={:.2f} p_safe={:.2f} min_halfw={} orig_halfw={} improved={}'
+                 .format(np.log10(min_p_safe), np.log10(p_safe),
+                         min_halfw, orig_halfw, improved),
+                 level=1, id=acq['id'])
+
+        if improved:
+            self.log('Update acq idx={} halfw from {} to {}'
+                     .format(idx, orig_halfw, min_halfw), level=1, id=acq['id'])
+            p_safe = min_p_safe
+            acq['halfw'] = min_halfw
+        else:
+            acq['halfw'] = orig_halfw
+
+        return p_safe, improved
+
+    def optimize_acqs_halfw(self, verbose=False):
+        p_safe = self.calc_p_safe()
+        idxs = self.argsort('p_acq')
+
+        # Any updates made?
+        any_improved = False
+
+        for idx in idxs:
+            p_safe, improved = self.optimize_acq_halfw(idx, p_safe, verbose)
+            any_improved |= improved
+
+        return p_safe, any_improved
+
+    def optimize_catalog(self, verbose=False):
+        p_safe = self.calc_p_safe(verbose=True)
+        self.log('initial log10(p_safe)={:.2f}'.format(np.log10(p_safe)))
+
+        # Start by optimizing the half-widths of the initial catalog
+        for _ in range(5):
+            p_safe, improved = self.optimize_acqs_halfw(verbose)
+            if not improved:
+                break
+
+        self.log('After optimizing initial catalog p_safe = {:.5f}'.format(p_safe))
+
+        # Now try to swap in a new star from the candidate list and see if
+        # it can improve p_safe.
+        acq_ids = set(self['id'])
+        for cand_acq in self.meta['cand_acqs']:
+            cand_id = cand_acq['id']
+            if cand_id in acq_ids:
+                continue
+            else:
+                acq_ids.add(cand_id)
+
+            # Get the index of the worst p_acq in the catalog
+            p_acqs = [acq['p_acq_marg'][acq['halfw']] for acq in self]
+            idx = np.argsort(p_acqs)[0]
+
+            self.log('Trying to use {} mag={:.2f} to replace idx={} with p_acq={:.3f}'
+                     .format(cand_id, cand_acq['mag'], idx, p_acqs[idx]), id=cand_id)
+
+            # Make a copy of the row (acq star) as a numpy void (structured array row)
+            orig_acq = self[idx].as_void()
+
+            # Stub in the new candidate and get the best halfw (and corresponding new p_safe)
+            self[idx] = cand_acq
+            new_p_safe, improved = self.optimize_acq_halfw(idx, p_safe, verbose)
+
+            # If the new star is noticably better (regardless of box size), OR
+            # comparable but with a bigger box, then accept it and do one round of
+            # full catalog optimization
+            improved = ((new_p_safe / p_safe < 0.9) or
+                        (new_p_safe < p_safe and self['halfw'][idx] > orig_acq['halfw']))
+            if improved:
+                p_safe, improved = self.optimize_acqs_halfw(verbose)
+                self.calc_p_safe(verbose=True)
+                self.log('  accepted, new p_safe = {:.5f}'.format(p_safe), id=cand_id)
+            else:
+                self[idx] = orig_acq
 
 
 def get_spoiler_stars(stars, acq, box_size):
@@ -541,293 +823,3 @@ def calc_p_on_ccd(row, col, box_size):
     return p_on_ccd
 
 
-def select_best_p_acqs(acqs, cand_acqs, min_p_acq, acq_indices, box_sizes):
-    """
-    Find stars with the highest acquisition probability according to the
-    algorithm below.  ``p_acqs`` is the same-named column from candidate
-    acq stars and it contains a dict keyed by (box_size, man_err).  This
-    algorithm uses the assumption of man_err=box_size.
-
-    - Loop over box sizes in descending order (160, ..., 60)
-      - Sort in descending order the p_acqs corresponding to that box size
-        (where largest p_acqs come first)
-      - Loop over the list and add any stars with p_acq > min_p_acq to the
-        list of accepted stars.
-      - If the list is 8 long (completely catalog) then stop
-
-    This function can be called multiple times with successively smaller
-    min_p_acq to fill out the catalog.  The acq_indices and box_sizes
-    arrays are appended in place in this process.
-    """
-    acqs.log('Find stars with best acq prob for min_p_acq={}'.format(min_p_acq))
-    acqs.log('Current catalog: acq_indices={} box_sizes={}'.format(acq_indices, box_sizes))
-
-    for box_size in CHAR.box_sizes:
-        # Get array of marginalized (over man_err) p_acq values corresponding
-        # to box_size for each of the candidate acq stars.
-        p_acqs_for_box = np.array([acq['p_acq_marg'][box_size] for acq in cand_acqs])
-
-        acqs.log('Trying search box size {} arcsec'.format(box_size), level=1)
-
-        indices = np.argsort(-p_acqs_for_box)
-        for acq_idx in indices:
-            if acq_idx in acq_indices:
-                continue
-
-            acq = cand_acqs[acq_idx]
-            p_acq = p_acqs_for_box[acq_idx]
-            accepted = p_acq > min_p_acq
-            acqs.log('Star idx={:2d} id={:10d} box={:3d} mag={:5.1f} p_acq={:.3f} {}'
-                     .format(acq_idx, acq['id'], box_size, acq['mag'], p_acq,
-                             'ACCEPTED' if accepted else 'rejected'),
-                     id=acq['id'],
-                     level=2)
-
-            if accepted:
-                acq_indices.append(acq_idx)
-                box_sizes.append(box_size)
-
-            if len(acq_indices) == 8:
-                acqs.log('Found 8 acq stars, done')
-                return
-
-    return
-
-
-def calc_acq_p_vals(acqs, acq, dither, stars, dark, t_ccd, date, man_angle):
-    """
-    Calculate probabilities related to acquisition, in particular an element
-    in the ``p_acqs`` matrix which specifies star acquisition probability
-    for given search box size and maneuver error.
-
-    This updates the ``acq`` row in place, including these columns:
-
-    - ``p_brightest``: probability this star is the brightest in box (function
-        of ``box_size`` and ``man_err``)
-    - ``p_acq_model``: probability of acquisition from the chandra_aca model
-        (function of ``box_size``)
-    - ``p_on_ccd``: probability star is on the usable part of the CCD (function
-        of ``man_err`` and ``dither``)
-    - ``p_acqs``: product of the above three
-
-    :param acq: row in the acqs table
-    :param dither: dither (arcsec)
-    :param stars: stars table
-    :param dark: dark current map
-    :param t_ccd: CCD temperature (degC)
-    :param date: observation date
-    """
-    for box_size in CHAR.box_sizes:
-        # Need to iterate over man_errs in reverse order because calc_p_brightest
-        # caches interlopers based on first call, so that needs to have the largest
-        # box sizes.
-        for man_err in CHAR.man_errs[::-1]:
-            if man_err > box_size:
-                p_brightest = acq['p_brightest'][box_size, man_err] = 0.0
-            else:
-                # Prob of being brightest in box (function of box_size and man_err,
-                # independently because imposter prob is just a function of box_size not man_err).
-                # Technically also a function of dither, but that does not vary here.
-                p_brightest = calc_p_brightest(acq, box_size=box_size, stars=stars, dark=dark,
-                                               man_err=man_err, dither=dither)
-                acq['p_brightest'][box_size, man_err] = p_brightest
-
-    # Acquisition probability model value (function of box_size only)
-    for box_size in CHAR.box_sizes:
-        p_acq_model = acq_success_prob(date=date, t_ccd=t_ccd,
-                                       mag=acq['mag'], color=acq['color'],
-                                       spoiler=False, halfwidth=box_size)
-        acq['p_acq_model'][box_size] = p_acq_model
-
-    # Probability star is in acq box (function of man_err and dither only)
-    for man_err in CHAR.man_errs:
-        p_on_ccd = calc_p_on_ccd(acq['row'], acq['col'], box_size=man_err + dither)
-        acq['p_on_ccd'][man_err] = p_on_ccd
-
-    # All together now!
-    for box_size in CHAR.box_sizes:
-        p_acq_marg = 0.0
-        for man_err, p_man_err in zip(CHAR.man_errs, acqs.meta['p_man_errs']):
-            acq['p_acqs'][box_size, man_err] = (acq['p_brightest'][box_size, man_err] *
-                                                acq['p_acq_model'][box_size] *
-                                                acq['p_on_ccd'][man_err])
-            p_acq_marg += acq['p_acqs'][box_size, man_err] * p_man_err
-        acq['p_acq_marg'][box_size] = p_acq_marg
-
-
-def get_initial_catalog(acqs, cand_acqs, stars, dark, dither=20, t_ccd=-11.0, date=None):
-    """
-    Get the initial catalog of up to 8 candidate acquisition stars.
-    """
-    acqs.log('Getting initial catalog from {} candidates'.format(len(cand_acqs)))
-
-    # Accumulate indices and box sizes of candidate acq stars that meet
-    # successively less stringent minimum p_acq.
-    acq_indices = []
-    box_sizes = []
-    for min_p_acq in (0.75, 0.5, 0.25, 0.05):
-        # Updates acq_indices, box_sizes in place
-        select_best_p_acqs(acqs, cand_acqs, min_p_acq, acq_indices, box_sizes)
-
-        if len(acq_indices) == 8:
-            break
-
-    # Make all the not-accepted candidate acqs have halfw=120 as a reasonable
-    # default and then set the accepted acqs to the best box_size.  Then set
-    # p_acq to the marginalized acquisition probability.
-    cand_acqs['halfw'] = 120
-    cand_acqs['halfw'][acq_indices] = box_sizes
-    for acq in cand_acqs:
-        acq['p_acq'] = acq['p_acq_marg'][acq['halfw']]
-
-    # Finally select the initial catalog
-    acqs_init = cand_acqs[acq_indices]
-
-    # Transfer to acqs (which at this point is an empty table)
-    for name, col in acqs_init.columns.items():
-        acqs[name] = col
-
-
-def calc_p_safe(acqs, verbose=False):
-    p_no_safe = 1.0
-
-    for man_err, p_man_err in zip(CHAR.man_errs, acqs.meta['p_man_errs']):
-        if p_man_err == 0.0:
-            continue
-
-        p_acqs = [acq['p_acqs'][acq['halfw'], man_err] for acq in acqs]
-
-        p_n_cum = prob_n_acq(p_acqs)[1]
-        if verbose:
-            acqs.log('man_err = {}, p_man_err = {}'.format(man_err, p_man_err))
-            acqs.log('p_acqs =' + ' '.join(['{:.3f}'.format(val) for val in p_acqs]))
-            acqs.log('log10(p 1_or_fewer) = {:.2f}'.format(np.log10(p_n_cum[1])))
-        p_01 = p_n_cum[1]  # 1 or fewer => p_fail at this man_err
-
-        p_no_safe *= (1 - p_man_err * p_01)
-
-    p_safe = 1 - p_no_safe
-    acqs.meta['p_safe'] = p_safe
-
-    return p_safe
-
-
-def optimize_acq_halfw(acqs, idx, p_safe, verbose=False):
-    """
-    Optimize the box size (halfw) for the acq star ``idx`` in the ``acqs`` list.
-    Assume current ``p_safe``.
-    """
-    acq = acqs[idx]
-    orig_halfw = acq['halfw']
-    orig_p_acq = acq['p_acq_marg'][acq['halfw']]
-
-    acqs.log('Optimizing halfw for idx={} id={}'.format(idx, acq['id']), id=acq['id'])
-
-    # Compute p_safe for each possible halfw for the current star
-    p_safes = []
-    for box_size in CHAR.box_sizes:
-        new_p_acq = acq['p_acq_marg'][box_size]
-        # Do not reduce marginalized p_acq to below 0.1.  It can happen that p_safe
-        # goes down very slightly with an increase in box size from the original,
-        # and then the box size gets stuck there because of the deadband for later
-        # reducing box size.
-        if new_p_acq < 0.1 and new_p_acq < orig_p_acq:
-            acqs.log(f'Skipping halfw {box_size}: new marg p_acq < 0.1 and new < orig'
-                     f' ({new_p_acq:.3f} < {orig_p_acq:.3f})')
-            p_safes.append(p_safe)
-        else:
-            acq['halfw'] = box_size
-            p_safes.append(calc_p_safe(acqs, verbose))
-
-    # Find best p_safe
-    min_idx = np.argmin(p_safes)
-    min_p_safe = p_safes[min_idx]
-    min_halfw = CHAR.box_sizes[min_idx]
-
-    # If p_safe went down, then consider this an improvement if either:
-    #   - acq halfw is increased (bigger boxes are better)
-    #   - p_safe went down by at least 10%
-    # So avoid reducing box sizes for only small improvements in p_safe.
-    improved = ((min_p_safe < p_safe) and
-                ((min_halfw > orig_halfw) or (min_p_safe / p_safe < 0.9)))
-
-    p_safes_strs = ['{:.2f} ({}")'.format(np.log10(p), box_size)
-                    for p, box_size in zip(p_safes, CHAR.box_sizes)]
-    acqs.log('p_safes={}'.format(', '.join(p_safes_strs)), level=1, id=acq['id'])
-    acqs.log('min_p_safe={:.2f} p_safe={:.2f} min_halfw={} orig_halfw={} improved={}'
-             .format(np.log10(min_p_safe), np.log10(p_safe),
-                     min_halfw, orig_halfw, improved),
-             level=1, id=acq['id'])
-
-    if improved:
-        acqs.log('Update acq idx={} halfw from {} to {}'
-                 .format(idx, orig_halfw, min_halfw), level=1, id=acq['id'])
-        p_safe = min_p_safe
-        acq['halfw'] = min_halfw
-    else:
-        acq['halfw'] = orig_halfw
-
-    return p_safe, improved
-
-
-def optimize_acqs_halfw(acqs, verbose=False):
-    p_safe = calc_p_safe(acqs)
-    idxs = acqs.argsort('p_acq')
-
-    # Any updates made?
-    any_improved = False
-
-    for idx in idxs:
-        p_safe, improved = optimize_acq_halfw(acqs, idx, p_safe, verbose)
-        any_improved |= improved
-
-    return p_safe, any_improved
-
-
-def optimize_catalog(acqs, verbose=False):
-    p_safe = calc_p_safe(acqs, verbose=True)
-    acqs.log('initial log10(p_safe)={:.2f}'.format(np.log10(p_safe)))
-
-    # Start by optimizing the half-widths of the initial catalog
-    for _ in range(5):
-        p_safe, improved = optimize_acqs_halfw(acqs, verbose)
-        if not improved:
-            break
-
-    acqs.log('After optimizing initial catalog p_safe = {:.5f}'.format(p_safe))
-
-    # Now try to swap in a new star from the candidate list and see if
-    # it can improve p_safe.
-    acq_ids = set(acqs['id'])
-    for cand_acq in acqs.meta['cand_acqs']:
-        cand_id = cand_acq['id']
-        if cand_id in acq_ids:
-            continue
-        else:
-            acq_ids.add(cand_id)
-
-        # Get the index of the worst p_acq in the catalog
-        p_acqs = [acq['p_acq_marg'][acq['halfw']] for acq in acqs]
-        idx = np.argsort(p_acqs)[0]
-
-        acqs.log('Trying to use {} mag={:.2f} to replace idx={} with p_acq={:.3f}'
-                 .format(cand_id, cand_acq['mag'], idx, p_acqs[idx]), id=cand_id)
-
-        # Make a copy of the row (acq star) as a numpy void (structured array row)
-        orig_acq = acqs[idx].as_void()
-
-        # Stub in the new candidate and get the best halfw (and corresponding new p_safe)
-        acqs[idx] = cand_acq
-        new_p_safe, improved = optimize_acq_halfw(acqs, idx, p_safe, verbose)
-
-        # If the new star is noticably better (regardless of box size), OR
-        # comparable but with a bigger box, then accept it and do one round of
-        # full catalog optimization
-        improved = ((new_p_safe / p_safe < 0.9) or
-                    (new_p_safe < p_safe and acqs['halfw'][idx] > orig_acq['halfw']))
-        if improved:
-            p_safe, improved = optimize_acqs_halfw(acqs, verbose)
-            calc_p_safe(acqs, verbose=True)
-            acqs.log('  accepted, new p_safe = {:.5f}'.format(p_safe), id=cand_id)
-        else:
-            acqs[idx] = orig_acq
