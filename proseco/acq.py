@@ -912,11 +912,12 @@ def get_initial_catalog(acqs, cand_acqs, stars, dark, dither=20, t_ccd=-11.0, da
     for acq in cand_acqs:
         acq['p_acq'] = acq['p_acq_marg'][acq['halfw']]
 
-    # Finally select the initial catalog and return
-    acqs = cand_acqs[acq_indices]
-    acqs.log_info['initial_catalog'] = acqs.copy()
+    # Finally select the initial catalog
+    acqs_init = cand_acqs[acq_indices]
 
-    return acqs
+    # Transfer to acqs (which at this point is an empty table)
+    for name, col in acqs_init.columns.items():
+        acqs[name] = col
 
 
 def calc_p_safe(acqs, verbose=False):
@@ -1148,10 +1149,8 @@ def get_acq_catalog(obsid=0, att=None,
     for acq in cand_acqs:
         calc_acq_p_vals(acqs, acq, dither, stars, dark, t_ccd, date, acqs.meta['man_angle'])
 
-    acqs_init = get_initial_catalog(acqs, cand_acqs, stars=stars, dark=dark, dither=dither,
-                                    t_ccd=t_ccd, date=date)
-    for name, col in acqs_init.columns.items():
-        acqs[name] = col
+    get_initial_catalog(acqs, cand_acqs, stars=stars, dark=dark, dither=dither,
+                        t_ccd=t_ccd, date=date)
 
     acqs.meta.update({'cand_acqs': cand_acqs,
                       'stars': stars,
@@ -1161,12 +1160,16 @@ def get_acq_catalog(obsid=0, att=None,
     if optimize:
         optimize_catalog(acqs, verbose)
 
+    # Set p_acq column to be the marginalized probabilities
     acqs['p_acq'] = [acq['p_acq_marg'][acq['halfw']] for acq in acqs]
 
+    # Sort to make order match the original candidate list order (by
+    # increasing mag), and assign a slot.
     acqs.sort('idx')
     acqs['slot'] = np.arange(len(acqs))
 
-    # Add slot to cand_acqs table, putting in '...' if not selected as acq
+    # Add slot to cand_acqs table, putting in '...' if not selected as acq.
+    # This is for convenience in downstream reporting or introspection.
     acqs.add_index('id')
     slots = [str(acqs.loc[acq['id']]['slot']) if acq['id'] in acqs['id'] else '...'
              for acq in cand_acqs]
