@@ -6,6 +6,7 @@ from __future__ import division, print_function, absolute_import  # For Py2 comp
 import os
 from copy import copy, deepcopy
 import re
+from pathlib import Path
 
 import matplotlib
 matplotlib.use('agg')
@@ -304,14 +305,11 @@ def make_obsid_summary(acqs, events, context, obsdir):
 
 
 def make_report(obsid, rootdir='.'):
+    rootdir = Path(rootdir)
     print('Processing obsid {}'.format(obsid))
 
-    obsdir = os.path.join(rootdir, 'obs{:05}'.format(obsid))
-    filename = os.path.join(obsdir, 'acqs.yaml')
-    print('Reading and parsing {}'.format(filename))
-    with open(filename, 'r') as fh:
-        yaml_str = fh.read()
-    acqs = AcqTable.from_yaml(yaml_str)
+    obsdir = rootdir / f'obs{obsid:05}'
+    acqs = AcqTable.from_yaml(obsid, rootdir)
     cand_acqs = acqs.meta['cand_acqs']
 
     context = copy(acqs.meta)

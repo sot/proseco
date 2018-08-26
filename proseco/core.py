@@ -2,6 +2,7 @@ import os
 import inspect
 import time
 from copy import copy
+from pathlib import Path
 
 import numpy as np
 import yaml
@@ -23,6 +24,25 @@ def to_python(val):
 
 
 class ACACatalogTable(Table):
+    """
+    Base class for representing ACA catalogs in star selection.  This
+    can apply to acq, guide and fid entries.
+
+    Features:
+    - Inherits from astropy Table
+    - Logging
+    - Serialization to/from YAML
+    - Predefined formatting for nicer representations
+    """
+    # Elements of meta that should not be directly serialized to YAML
+    # (either too big or requires special handling).  Should be set by
+    # subclass.
+    yaml_exclude = ()
+
+    # Name of table.  Use to define default file names where applicable.
+    # Should be set by subclass, e.g. ``name = 'acqs'`` for AcqTable.
+    name = 'aca_cat'
+
     def __init__(self, *args, print_log=False, **kwargs):
         super().__init__(*args, **kwargs)
         self.log_info = {}
@@ -73,45 +93,76 @@ class ACACatalogTable(Table):
 
         return super(ACACatalogTable, self[names])._base_repr_(*args, **kwargs)
 
+    def to_yaml_custom(self, out):
+        """
+        Defined by subclass to do custom process prior to YAML serialization
+        and possible writing to file.  This method should modify the ``out``
+        dict in place.
+        """
+        pass
+
     def to_yaml(self, rootdir=None):
         """
         Serialize table as YAML and return string.  If ``rootdir`` is set then
         the table YAML is output to ``<rootdir>/obs<obsid>/acqs.yaml``.
         """
         out = {}
-        exclude = ('stars', 'cand_acqs', 'dark', 'bad_stars')
         for par in self.meta:
-            if par not in exclude:
+            if par not in self.yaml_exclude:
                 out[par] = to_python(self.meta[par])
-        out['acqs'] = self.to_struct()
-        out['cand_acqs'] = self.meta['cand_acqs'].to_struct()
+
+        # Store table itself and log info
+        out[self.name] = self.to_struct()
         out['log_info'] = self.log_info
+
+        # Custom processing
+        self.to_yaml_custom(out)
 
         yml = yaml.dump(out)
 
         if rootdir is not None:
-            outdir = os.path.join(rootdir, 'obs{:05}'.format(self.meta['obsid']))
-            if not os.path.exists(outdir):
-                os.mkdir(outdir)
-            outfile = os.path.join(outdir, 'acqs.yaml')
+            rootdir = Path(rootdir)
+            outdir = rootdir / f'obs{self.meta["obsid"]:05}'
+            if not outdir.exists():
+                outdir.mkdir()
+            outfile = outdir / f'{self.name}.yaml'
             with open(outfile, 'w') as fh:
                 fh.write(yml)
 
         return yml
 
+    def from_yaml_custom(self, obj):
+        """
+        Custom processing on the dict ``obj`` which is the raw result of
+        loading the YAML representation.  ``self`` is the ACACatalogTable
+        subclass that is receiving info from ``obj``, so this method allows
+        custom processing of that.
+        """
+        pass
+
     @classmethod
-    def from_yaml(cls, yaml_str):
+    def from_yaml(cls, obsid, rootdir='.'):
         """
         Construct table from YAML string
         """
-        obj = yaml.load(yaml_str)
-        acqs = cls.from_struct(obj.pop('acqs'))
-        acqs.meta['cand_acqs'] = cls.from_struct(obj.pop('cand_acqs'))
-        acqs.log_info.update(obj.pop('log_info'))
+        rootdir = Path(rootdir)
+        infile = rootdir / f'obs{obsid:05}' / f'{cls.name}.yaml'
+        with open(infile, 'r') as fh:
+            yaml_str = fh.read()
 
+        obj = yaml.load(yaml_str)
+
+        # Construct the table itself and log info
+        tbl = cls.from_struct(obj.pop(cls.name))
+        tbl.log_info.update(obj.pop('log_info'))
+
+        # Custom stuff
+        tbl.from_yaml_custom(obj)
+
+        # Anything else gets dumped into meta dict
         for par in obj:
-            acqs.meta[par] = copy(obj[par])
-        return acqs
+            tbl.meta[par] = copy(obj[par])
+        return tbl
 
     def to_struct(self):
         """Turn table ``tbl`` into a dict structure with keys:
