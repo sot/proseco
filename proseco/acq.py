@@ -30,12 +30,20 @@ def get_p_man_err(man_err, man_angle):
 
     man_err_idx = np.searchsorted(pme['man_err_hi'], man_err)
     if man_err_idx == len(pme):
-        raise ValueError('man_err must be <= {}'.format(pme['man_err_hi']))
+        raise ValueError(f'man_err must be <= {pme["man_err_hi"]}')
 
     return pme[name][man_err_idx]
 
 
 class AcqTable(ACACatalogTable):
+    # Elements of meta that should not be directly serialized to YAML
+    # (either too big or requires special handling).
+    yaml_exclude = ('stars', 'cand_acqs', 'dark', 'bad_stars')
+
+    # Name of table.  Use to define default file names where applicable.
+    # (e.g. `obs19387/acqs.yaml`).
+    name = 'acqs'
+
     @classmethod
     def get_acq_catalog(cls, obsid=0, att=None,
                         man_angle=None, t_ccd=None, date=None, dither=None,
@@ -74,7 +82,7 @@ class AcqTable(ACACatalogTable):
         # If not all params supplied then get via mica for the obsid.
         if not all_pars:
             from mica.starcheck import get_starcheck_catalog
-            acqs.log('getting starcheck catalog for obsid {}'.format(obsid))
+            acqs.log(f'getting starcheck catalog for obsid {obsid}')
 
             obs = get_starcheck_catalog(obsid)
             obso = obs['obs']
@@ -97,8 +105,7 @@ class AcqTable(ACACatalogTable):
             if dither is None:
                 dither = 20
 
-        acqs.log('getting dark cal image at date={} t_ccd={:.1f}'
-                 .format(date, t_ccd))
+        acqs.log(f'getting dark cal image at date={date} t_ccd={t_ccd:.1f}')
         dark = get_dark_cal_image(date=date, select='before', t_ccd_ref=t_ccd)
 
         acqs.meta = {'obsid': obsid,
@@ -181,8 +188,8 @@ class AcqTable(ACACatalogTable):
         cand_acqs.sort('MAG_ACA')
         self.log('Filtering on CLASS, MAG_ACA, COLOR1, row/col, '
                  'MAG_ACA_ERR, ASPQ1/2, POS_ERR:')
-        self.log('Reduced star list from {} to {} candidate acq stars'
-                 .format(len(stars), len(cand_acqs)))
+        self.log(f'Reduced star list from {len(stars)} to '
+                 f'{len(cand_acqs)} candidate acq stars')
 
         # Reject any candidate with a spoiler that is within a 30" HW box
         # and is within 3 mag of the candidate in brightness.  Collect a
@@ -248,15 +255,15 @@ class AcqTable(ACACatalogTable):
         min_p_acq to fill out the catalog.  The acq_indices and box_sizes
         arrays are appended in place in this process.
         """
-        self.log('Find stars with best acq prob for min_p_acq={}'.format(min_p_acq))
-        self.log('Current catalog: acq_indices={} box_sizes={}'.format(acq_indices, box_sizes))
+        self.log(f'Find stars with best acq prob for min_p_acq={min_p_acq}')
+        self.log(f'Current catalog: acq_indices={acq_indices} box_sizes={box_sizes}')
 
         for box_size in CHAR.box_sizes:
             # Get array of marginalized (over man_err) p_acq values corresponding
             # to box_size for each of the candidate acq stars.
             p_acqs_for_box = np.array([acq['p_acq_marg'][box_size] for acq in cand_acqs])
 
-            self.log('Trying search box size {} arcsec'.format(box_size), level=1)
+            self.log(f'Trying search box size {box_size} arcsec', level=1)
 
             indices = np.argsort(-p_acqs_for_box)
             for acq_idx in indices:
@@ -266,9 +273,10 @@ class AcqTable(ACACatalogTable):
                 acq = cand_acqs[acq_idx]
                 p_acq = p_acqs_for_box[acq_idx]
                 accepted = p_acq > min_p_acq
-                self.log('Star idx={:2d} id={:10d} box={:3d} mag={:5.1f} p_acq={:.3f} {}'
-                         .format(acq_idx, acq['id'], box_size, acq['mag'], p_acq,
-                                 'ACCEPTED' if accepted else 'rejected'),
+                status = 'ACCEPTED' if accepted else 'rejected'
+                self.log(f'Star idx={acq_idx:2d} id={acq["id"]:10d} '
+                         f'box={box_size:3d} mag={acq["mag"]:5.1f} p_acq={p_acq:.3f} '
+                         f'{status}',
                          id=acq['id'],
                          level=2)
 
@@ -345,7 +353,7 @@ class AcqTable(ACACatalogTable):
         """
         Get the initial catalog of up to 8 candidate acquisition stars.
         """
-        self.log('Getting initial catalog from {} candidates'.format(len(cand_acqs)))
+        self.log(f'Getting initial catalog from {len(cand_acqs)} candidates')
 
         # Accumulate indices and box sizes of candidate acq stars that meet
         # successively less stringent minimum p_acq.
@@ -384,7 +392,7 @@ class AcqTable(ACACatalogTable):
 
             p_n_cum = prob_n_acq(p_acqs)[1]
             if verbose:
-                self.log('man_err = {}, p_man_err = {}'.format(man_err, p_man_err))
+                self.log(f'man_err = {man_err}, p_man_err = {p_man_err}')
                 self.log('p_acqs =' + ' '.join(['{:.3f}'.format(val) for val in p_acqs]))
                 self.log('log10(p 1_or_fewer) = {:.2f}'.format(np.log10(p_n_cum[1])))
             p_01 = p_n_cum[1]  # 1 or fewer => p_fail at this man_err
@@ -405,7 +413,7 @@ class AcqTable(ACACatalogTable):
         orig_halfw = acq['halfw']
         orig_p_acq = acq['p_acq_marg'][acq['halfw']]
 
-        self.log('Optimizing halfw for idx={} id={}'.format(idx, acq['id']), id=acq['id'])
+        self.log(f'Optimizing halfw for idx={idx} id={acq["id"]}', id=acq['id'])
 
         # Compute p_safe for each possible halfw for the current star
         p_safes = []
@@ -435,7 +443,7 @@ class AcqTable(ACACatalogTable):
         improved = ((min_p_safe < p_safe) and
                     ((min_halfw > orig_halfw) or (min_p_safe / p_safe < 0.9)))
 
-        p_safes_strs = ['{:.2f} ({}")'.format(np.log10(p), box_size)
+        p_safes_strs = [f'{np.log10(p):.2f} ({box_size}")'
                         for p, box_size in zip(p_safes, CHAR.box_sizes)]
         self.log('p_safes={}'.format(', '.join(p_safes_strs)), level=1, id=acq['id'])
         self.log('min_p_safe={:.2f} p_safe={:.2f} min_halfw={} orig_halfw={} improved={}'
@@ -444,8 +452,8 @@ class AcqTable(ACACatalogTable):
                  level=1, id=acq['id'])
 
         if improved:
-            self.log('Update acq idx={} halfw from {} to {}'
-                     .format(idx, orig_halfw, min_halfw), level=1, id=acq['id'])
+            self.log(f'Update acq idx={idx} halfw from {orig_halfw} to {min_halfw}',
+                     level=1, id=acq['id'])
             p_safe = min_p_safe
             acq['halfw'] = min_halfw
         else:
@@ -476,7 +484,7 @@ class AcqTable(ACACatalogTable):
             if not improved:
                 break
 
-        self.log('After optimizing initial catalog p_safe = {:.5f}'.format(p_safe))
+        self.log(f'After optimizing initial catalog p_safe = {p_safe:.5f}')
 
         # Now try to swap in a new star from the candidate list and see if
         # it can improve p_safe.
@@ -510,9 +518,32 @@ class AcqTable(ACACatalogTable):
             if improved:
                 p_safe, improved = self.optimize_acqs_halfw(verbose)
                 self.calc_p_safe(verbose=True)
-                self.log('  accepted, new p_safe = {:.5f}'.format(p_safe), id=cand_id)
+                self.log(f'  accepted, new p_safe = {p_safe:.5f}', id=cand_id)
             else:
                 self[idx] = orig_acq
+
+    def to_yaml_custom(self, out):
+        """
+        Defined by subclass to do custom process prior to YAML serialization
+        and possible writing to file.  This method is called by self.to_yaml()
+        and should modify the ``out`` dict in place.
+
+        :param out: dict of pure-Python output to be serialized to YAML
+        """
+        # Convert cand_acqs table to a pure-Python structure
+        out['cand_acqs'] = self.meta['cand_acqs'].to_struct()
+
+    def from_yaml_custom(self, obj):
+        """
+        Custom processing on the dict ``obj`` which is the raw result of
+        loading the YAML representation.  This gets called from the class method
+        ``ACACatalogTable.from_yaml()``.
+
+        :param obj: dict of pure-Python input from YAML to construct AcqTable
+        """
+        # Create candidate acqs AcqTable from pure-Python structure
+        cand_acqs = obj.pop('cand_acqs')
+        self.meta['cand_acqs'] = self.__class__.from_struct(cand_acqs)
 
 
 def get_spoiler_stars(stars, acq, box_size):
@@ -727,7 +758,7 @@ def get_intruders(acq, box_size, name, n_sigma, get_func, kwargs):
     else:
         # Ensure cached spoilers cover the current case
         if box_size > acq[name_box]:
-            raise ValueError('box_size is greater than {}'.format(name_box))
+            raise ValueError(f'box_size is greater than {name_box}')
 
     colnames = ['yang', 'zang', 'mag', 'mag_err']
     if len(intruders) == 0:
