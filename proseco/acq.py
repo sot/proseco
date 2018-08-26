@@ -1110,7 +1110,7 @@ def get_acq_catalog(obsid=None, att=None,
     acqs.meta['p_man_errs'] = np.array([get_p_man_err(man_err, acqs.meta['man_angle'])
                                         for man_err in CHAR.man_errs])
 
-    stars = get_stars(acqs, att)
+    stars = get_stars(acqs, att, date=date)
     cand_acqs, bad_stars = get_acq_candidates(acqs, stars)
 
     # Fill in the entire acq['p_acqs'] table (which is actual a dict of keyed by
