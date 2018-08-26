@@ -100,7 +100,7 @@ def get_p_acq_model_table(acq):
     cols = {}
     cols['box size'] = ['']
     for box_size in box_sizes:
-        name = '{box_size}"'
+        name = f'{box_size}"'
         cols[name] = [round(acq['p_acq_model'][box_size], 3)]
 
     return table_to_html(Table(cols, names=names))
@@ -179,7 +179,8 @@ def make_cand_acqs_report(acqs, cand_acqs, events, context, obsdir):
         fig = plot_aca.plot_stars(acqs.meta['att'], stars=acqs.meta['stars'],
                                   catalog=acqs.meta['cand_acqs'],
                                   bad_stars=acqs.meta['bad_stars'])
-        fig.savefig(filename)
+        # When Ska3 has matplotlib 2.2+ then just use `filename`
+        fig.savefig(str(filename))
         plt.close(fig)
 
         # Restore original type designation
@@ -299,7 +300,8 @@ def make_obsid_summary(acqs, events, context, obsdir):
         plot_aca.plot_stars(acqs.meta['att'], stars=acqs.meta['stars'],
                             catalog=acqs,
                             bad_stars=acqs.meta['bad_stars'], ax=ax)
-        plt.savefig(filename)
+        # When Ska3 has matplotlib 2.2+ then just use `filename`
+        plt.savefig(str(filename))
         plt.close()
 
 
@@ -413,7 +415,8 @@ def plot_spoilers(acq, acqs, filename=None):
 
     plt.tight_layout()
     if filename is not None:
-        plt.savefig(filename, pad_inches=0.0)
+        # When Ska3 has matplotlib 2.2+ then just use `filename`
+        plt.savefig(str(filename), pad_inches=0.0)
     plt.close(fig)
 
 
@@ -478,6 +481,7 @@ def plot_imposters(acq, dark, dither, vmin=100, vmax=2000,
 
     plt.tight_layout()
     if filename is not None:
-        plt.savefig(filename, pad_inches=0.0)
+        # When Ska3 has matplotlib 2.2+ then just use `filename`
+        plt.savefig(str(filename), pad_inches=0.0)
 
     return img, ax

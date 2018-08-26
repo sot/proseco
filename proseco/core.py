@@ -288,9 +288,9 @@ def get_stars(att, date=None, radius=1.2, logger=None):
             return None
 
     q_att = Quat(att)
-    logger('Getting stars at ra={:.5f} dec={:.4f}'.format(q_att.ra, q_att.dec))
+    logger(f'Getting stars at ra={q_att.ra:.5f} dec={q_att.dec:.4f}')
     stars = get_agasc_cone(q_att.ra, q_att.dec, radius=radius, date=date)
-    logger('Got {} stars'.format(len(stars)), level=1)
+    logger(f'Got {len(stars)} stars', level=1)
     yag, zag = radec2yagzag(stars['RA_PMCORR'], stars['DEC_PMCORR'], q_att)
     yag *= 3600
     zag *= 3600
