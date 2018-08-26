@@ -3,15 +3,16 @@ from __future__ import division, print_function  # For Py2 compatibility
 
 import numpy as np
 import pytest
+from pathlib import Path
 
 from chandra_aca.aca_image import AcaPsfLibrary
 from chandra_aca.transform import mag_to_count_rate, yagzag_to_pixels
 
+from ..report import make_report
 from ..acq import (get_p_man_err, bin2x2, CHAR,
-                   get_imposter_stars, get_stars, get_acq_candidates,
+                   get_imposter_stars, get_stars,
                    get_image_props, calc_p_brightest,
                    calc_p_on_ccd,
-                   get_acq_catalog,
                    AcqTable,
                    )
 
@@ -155,8 +156,7 @@ def test_get_imposters_5000():
 
 def get_test_stars():
     if 'stars' not in CACHE:
-        acqs = AcqTable()
-        CACHE['stars'] = get_stars(acqs, ATT)
+        CACHE['stars'] = get_stars(ATT, date='2018:230')
     return CACHE['stars']
 
 
@@ -164,7 +164,7 @@ def get_test_cand_acqs():
     if 'cand_acqs' not in CACHE:
         acqs = AcqTable()
         stars = get_test_stars()
-        CACHE['cand_acqs'], bads = get_acq_candidates(acqs, stars)
+        CACHE['cand_acqs'], bads = acqs.get_acq_candidates(stars)
         # Don't care about bads for testing
     return CACHE['cand_acqs'].copy()
 
@@ -261,12 +261,12 @@ def test_get_acq_catalog_19387():
     actually changes out one of the initial catalog candidates.
 
     From ipython:
-    >>> from proseco import acq
-    >>> acqs = acq.get_acq_catalog(19387)
+    >>> from proseco.acq import AcqTable
+    >>> acqs = AcqTable.get_acq_catalog(19387)
     >>> TEST_COLS = ('idx', 'slot', 'id', 'yang', 'zang', 'halfw', 'mag', 'p_acq')
     >>> repr(acqs.meta['cand_acqs'][TEST_COLS]).splitlines()
     """
-    acqs = get_acq_catalog(19387)
+    acqs = AcqTable.get_acq_catalog(19387)
     # Expected
     exp = ['<AcqTable length=11>',
            ' idx  slot    id      yang     zang   halfw   mag    p_acq ',
@@ -290,12 +290,12 @@ def test_get_acq_catalog_19387():
 def test_get_acq_catalog_21007():
     """Put it all together.  Regression test for selected stars.
     From ipython:
-    >>> from proseco import acq
-    >>> acqs = acq.get_acq_catalog(21007)
+    >>> from proseco.acq import AcqTable
+    >>> acqs = AcqTable.get_acq_catalog(21007)
     >>> TEST_COLS = ('idx', 'slot', 'id', 'yang', 'zang', 'halfw', 'mag', 'p_acq')
     >>> repr(acqs.meta['cand_acqs'][TEST_COLS]).splitlines()
     """
-    acqs = get_acq_catalog(21007)
+    acqs = AcqTable.get_acq_catalog(21007)
     exp = ['<AcqTable length=14>',
            ' idx  slot     id      yang     zang   halfw   mag    p_acq ',
            'int64 str3   int32   float64  float64  int64 float32 float64',
@@ -322,7 +322,7 @@ def test_box_strategy_20603():
     """Test for PR #32 that doesn't allow p_acq to be reduced below 0.1.
     The idx=8 (mag=10.50) star was previously selected with 160 arsec box.
     """
-    acqs = get_acq_catalog(20603)
+    acqs = AcqTable.get_acq_catalog(20603)
     exp = ['<AcqTable length=13>',
            ' idx  slot     id      yang     zang   halfw   mag    p_acq ',
            'int64 str3   int32   float64  float64  int64 float32 float64',
@@ -344,15 +344,23 @@ def test_box_strategy_20603():
     assert repr(acqs.meta['cand_acqs'][TEST_COLS]).splitlines() == exp
 
 
-def test_to_from_yaml():
-    acqs = get_acq_catalog(21007)  # Fast because of caching
+def test_make_report(tmpdir):
+    obsid = 19387
+    tmpdir = Path(tmpdir)
+    obsdir = tmpdir / f'obs{obsid:05}'
 
-    yml = acqs.to_yaml()
-    acqs2 = AcqTable.from_yaml(yml)
+    acqs = AcqTable.get_acq_catalog(obsid)
+    acqs.to_yaml(rootdir=tmpdir)
+
+    acqs2 = make_report(obsid, rootdir=tmpdir)
+
+    assert (obsdir / 'index.html').exists()
+    assert len(list(obsdir.glob('*.png'))) > 0
 
     assert repr(acqs) == repr(acqs2)
     assert repr(acqs.meta['cand_acqs']) == repr(acqs2.meta['cand_acqs'])
-    assert acqs.log_info == acqs2.log_info
+    for event, event2 in zip(acqs.log_info, acqs2.log_info):
+        assert event == event2
 
     for attr in ['att', 'date', 't_ccd', 'man_angle', 'dither', 'p_safe']:
         val = acqs.meta[attr]

@@ -4,7 +4,7 @@
 from __future__ import division, print_function, absolute_import  # For Py2 compatibility
 
 import os
-from copy import copy
+from copy import copy, deepcopy
 import re
 
 import matplotlib
@@ -18,7 +18,7 @@ from astropy.table import Table, Column
 from chandra_aca.aca_image import ACAImage
 
 from . import characteristics as CHAR
-from .acq import AcqTable, get_stars, get_acq_candidates
+from .acq import AcqTable, get_stars
 from chandra_aca import plot as plot_aca
 from mica.archive.aca_dark.dark_cal import get_dark_cal_image
 
@@ -115,7 +115,7 @@ def select_events(events, funcs, **select):
 
 def make_events(acqs):
     # Set up global events
-    events = copy(acqs.log_info['events'])
+    events = deepcopy(acqs.log_info['events'])
     for event in events:
         event['func_disp'] = event['func']
     last = events[0]
@@ -181,6 +181,9 @@ def make_cand_acqs_report(acqs, cand_acqs, events, context, obsdir):
                                   bad_stars=acqs.meta['bad_stars'])
         fig.savefig(filename)
         plt.close(fig)
+
+        # Restore original type designation
+        acqs.meta['cand_acqs']['type'] = 'ACQ'
 
 
 def make_initial_cat_report(events, context):
@@ -314,8 +317,8 @@ def make_report(obsid, rootdir='.'):
     context = copy(acqs.meta)
 
     # Get information that is not stored in the info.yaml for space reasons
-    acqs.meta['stars'] = get_stars(acqs, acqs.meta['att'])
-    _, acqs.meta['bad_stars'] = get_acq_candidates(acqs, acqs.meta['stars'])
+    acqs.meta['stars'] = get_stars(acqs.meta['att'], date=acqs.meta['date'])
+    _, acqs.meta['bad_stars'] = acqs.get_acq_candidates(acqs.meta['stars'])
 
     events = make_events(acqs)
     context['events'] = events
