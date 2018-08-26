@@ -11,12 +11,12 @@ from scipy import ndimage, stats
 from astropy.table import Table
 
 from chandra_aca.star_probs import acq_success_prob, prob_n_acq
-from chandra_aca.transform import (pixels_to_yagzag,
-                                   mag_to_count_rate, count_rate_to_mag)
+from chandra_aca.transform import (pixels_to_yagzag, mag_to_count_rate)
 from mica.archive.aca_dark.dark_cal import get_dark_cal_image
 
 from . import characteristics as CHAR
-from .core import AcqTable, get_mag_std, get_stars
+from .core import (get_mag_std, get_stars, ACACatalogTable, bin2x2,
+                   get_image_props, pea_reject_image)
 
 
 def get_p_man_err(man_err, man_angle):
@@ -33,6 +33,10 @@ def get_p_man_err(man_err, man_angle):
         raise ValueError('man_err must be <= {}'.format(pme['man_err_hi']))
 
     return pme[name][man_err_idx]
+
+
+class AcqTable(ACACatalogTable):
+    pass
 
 
 def get_acq_candidates(acqs, stars, max_candidates=20):
@@ -154,75 +158,6 @@ def get_spoiler_stars(stars, acq, box_size):
     spoilers.sort(order=['mag'])
 
     return spoilers
-
-
-def bin2x2(arr):
-    """Bin 2-d ``arr`` in 2x2 blocks.  Requires that ``arr`` has even shape sizes"""
-    shape = (arr.shape[0] // 2, 2, arr.shape[1] // 2, 2)
-    return arr.reshape(shape).sum(-1).sum(1)
-
-
-RC_6x6 = np.array([10, 11, 12, 13,
-                   17, 18, 19, 20, 21, 22,
-                   25, 26, 27, 28, 29, 30,
-                   33, 34, 35, 36, 37, 38,
-                   41, 42, 43, 44, 45, 46,
-                   50, 51, 52, 53],
-                  dtype=np.int64)
-
-ROW_6x6 = np.array([1, 1, 1, 1,
-                    2, 2, 2, 2, 2, 2,
-                    3, 3, 3, 3, 3, 3,
-                    4, 4, 4, 4, 4, 4,
-                    5, 5, 5, 5, 5, 5,
-                    6, 6, 6, 6],
-                   dtype=np.float64) + 0.5
-
-COL_6x6 = np.array([2, 3, 4, 5,
-                    1, 2, 3, 4, 5, 6,
-                    1, 2, 3, 4, 5, 6,
-                    1, 2, 3, 4, 5, 6,
-                    1, 2, 3, 4, 5, 6,
-                    2, 3, 4, 5],
-                   dtype=np.float64) + 0.5
-
-
-def get_image_props(ccd_img, c_row, c_col, bgd=None):
-    """
-    Do a pseudo-read and compute the background-subtracted magnitude
-    of the image.  Returns the 8x8 image and mag.
-
-    :param ccd_image: full-frame CCD image (e.g. dark current, with or without stars).
-    :param c_row: int row at center (readout row-4 to row+4)
-    :param c_col: int col at center
-    :param bgd: background to subtract at each pixel.  If None then compute flight bgd.
-
-    :returns: 8x8 image (ndarray), image mag
-    """
-    img = ccd_img[c_row - 4:c_row + 4, c_col - 4:c_col + 4]
-
-    if bgd is None:
-        raise NotImplementedError('no calc_flight_background here')
-        # bgd = calc_flight_background(img)  # currently not defined
-
-    img = img - bgd
-    img_6x6 = img.flatten()[RC_6x6]
-    img_sum = np.sum(img_6x6)
-    r = np.sum(img_6x6 * ROW_6x6) / img_sum
-    c = np.sum(img_6x6 * COL_6x6) / img_sum
-    row = r + c_row - 4
-    col = c + c_col - 4
-    mag = count_rate_to_mag(img_sum)
-
-    return img, img_sum, mag, row, col
-
-
-def pea_reject_image(img):
-    """
-    Check if PEA would reject image (too narrow, too peaky, etc)
-    """
-    # To be implemented
-    return False
 
 
 def get_imposter_stars(dark, star_row, star_col, thresh=None,
