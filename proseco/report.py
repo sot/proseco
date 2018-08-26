@@ -3,7 +3,6 @@
 
 from __future__ import division, print_function, absolute_import  # For Py2 compatibility
 
-import os
 from copy import copy, deepcopy
 import re
 from pathlib import Path
@@ -24,7 +23,7 @@ from chandra_aca import plot as plot_aca
 from mica.archive.aca_dark.dark_cal import get_dark_cal_image
 
 
-FILEDIR = os.path.dirname(__file__)
+FILEDIR = Path(__file__).parent
 ACQ_COLS = ['idx', 'slot', 'id', 'yang', 'zang', 'row', 'col',
             'mag', 'mag_err', 'color', 'halfw', 'p_acq']
 
@@ -55,11 +54,11 @@ def get_p_acqs_table(acq, p_name):
     """
     man_errs = CHAR.p_man_errs['man_err_hi']
     box_sizes = sorted(CHAR.box_sizes)
-    names = ['box \ man_err'] + ['{}"'.format(man_err) for man_err in man_errs]
+    names = ['box \ man_err'] + [f'{man_err}"' for man_err in man_errs]
     cols = {}
-    cols['box \ man_err'] = ['{}"'.format(box_size) for box_size in box_sizes]
+    cols['box \ man_err'] = [f'{box_size}"' for box_size in box_sizes]
     for man_err in man_errs:
-        name = '{}"'.format(man_err)
+        name = f'{man_err}"'
         cols[name] = [round(acq[p_name].get((box_size, man_err), 0.0), 3)
                       for box_size in box_sizes]
 
@@ -79,11 +78,11 @@ def get_p_on_ccd_table(acq):
     - ``p_acqs``: product of the above three
     """
     man_errs = CHAR.p_man_errs['man_err_hi']
-    names = ['man_err'] + ['{}"'.format(man_err) for man_err in man_errs]
+    names = ['man_err'] + [f'{man_err}"' for man_err in man_errs]
     cols = {}
     cols['man_err'] = ['']
     for man_err in man_errs:
-        name = '{}"'.format(man_err)
+        name = f'{man_err}"'
         cols[name] = [round(acq['p_on_ccd'][man_err], 3)]
 
     return table_to_html(Table(cols, names=names))
@@ -97,11 +96,11 @@ def get_p_acq_model_table(acq):
         (function of ``box_size``)
     """
     box_sizes = sorted(CHAR.box_sizes)
-    names = ['box size'] + ['{}"'.format(box_size) for box_size in box_sizes]
+    names = ['box size'] + [f'{box_size}"' for box_size in box_sizes]
     cols = {}
     cols['box size'] = ['']
     for box_size in box_sizes:
-        name = '{}"'.format(box_size)
+        name = '{box_size}"'
         cols[name] = [round(acq['p_acq_model'][box_size], 3)]
 
     return table_to_html(Table(cols, names=names))
@@ -133,7 +132,7 @@ def make_events(acqs):
 
 def make_p_man_errs_report(context):
     tbl = CHAR.p_man_errs.copy()
-    man_err = ['<b>{}-{}"</b>'.format(lo, hi)
+    man_err = [f'<b>{lo}-{hi}"</b>'
                for lo, hi in zip(tbl['man_err_lo'],
                                  tbl['man_err_hi'])]
     del tbl['man_err_lo']
@@ -166,9 +165,9 @@ def make_cand_acqs_report(acqs, cand_acqs, events, context, obsdir):
                                                          'get_acq_candidates'))
 
     # Now plot figure
-    filename = os.path.join(obsdir, 'candidate_stars.png')
-    if not os.path.exists(filename):
-        print('Making candidate stars plot {}'.format(filename))
+    filename = obsdir / 'candidate_stars.png'
+    if not filename.exists():
+        print(f'Making candidate stars plot {filename}')
 
         # Pull a fast-one and mark the final selected ACQ stars as BOT so they
         # get a circle in the plot.  This might be confusing and need fixing
@@ -225,17 +224,17 @@ def make_acq_star_details_report(acqs, cand_acqs, events, context, obsdir):
         cca['p_on_ccd_table'] = get_p_on_ccd_table(acq)
 
         # Make the star detail plot
-        basename = 'spoilers_{}.png'.format(acq['id'])
-        filename = os.path.join(obsdir, basename)
+        basename = f'spoilers_{acq["id"]}.png'
+        filename = obsdir / basename
         cca['spoilers_plot'] = basename
-        if not os.path.exists(filename):
+        if not filename.exists():
             plot_spoilers(acq, acqs, filename=filename)
 
         # Make the acq detail plot with spoilers and imposters
-        basename = 'imposters_{}.png'.format(acq['id'])
-        filename = os.path.join(obsdir, basename)
+        basename = f'imposters_{acq["id"]}.png'
+        filename = obsdir / basename
         cca['imposters_plot'] = basename
-        if not os.path.exists(filename):
+        if not filename.exists():
             plot_imposters(acq, acqs.meta['dark'], acqs.meta['dither'], filename=filename)
 
         if len(acq['imposters']) > 0:
@@ -291,9 +290,9 @@ def make_obsid_summary(acqs, events, context, obsdir):
     context['acqs_table'] = table_to_html(acqs_table)
 
     basename = 'acq_stars.png'
-    filename = os.path.join(obsdir, basename)
+    filename = obsdir / basename
     context['acq_stars_plot'] = basename
-    if not os.path.exists(filename):
+    if not filename.exists():
         fig = plt.figure(figsize=(4, 4))
         fig.subplots_adjust(top=0.95)
         ax = fig.add_subplot(1, 1, 1)
@@ -306,7 +305,7 @@ def make_obsid_summary(acqs, events, context, obsdir):
 
 def make_report(obsid, rootdir='.'):
     rootdir = Path(rootdir)
-    print('Processing obsid {}'.format(obsid))
+    print(f'Processing obsid {obsid}')
 
     obsdir = rootdir / f'obs{obsid:05}'
     acqs = AcqTable.from_yaml(obsid, rootdir)
@@ -328,10 +327,10 @@ def make_report(obsid, rootdir='.'):
     make_acq_star_details_report(acqs, cand_acqs, events, context, obsdir)
     make_optimize_catalog_report(events, context)
 
-    template_file = os.path.join(FILEDIR, 'index_template.html')
+    template_file = FILEDIR / 'index_template.html'
     template = Template(open(template_file, 'r').read())
     out_html = template.render(context)
-    out_filename = os.path.join(obsdir, 'index.html')
+    out_filename = obsdir / 'index.html'
     with open(out_filename, 'w') as fh:
         fh.write(out_html)
 
@@ -371,7 +370,7 @@ def plot_spoilers(acq, acqs, filename=None):
         patch = patches.Rectangle((r0, c0), hwp * 2, hwp * 2, edgecolor='g',
                                   facecolor='none', lw=1, alpha=0.3)
         ax.add_patch(patch)
-        plt.text(r0 + 1, c0 + 1, '{}"'.format(box_size), fontsize='small', color='g')
+        plt.text(r0 + 1, c0 + 1, f'{box_size}"', fontsize='small', color='g')
 
     # Plot search boxes for all acq stars (most will get clipped later)
     for acq0 in acqs:
@@ -399,7 +398,7 @@ def plot_spoilers(acq, acqs, filename=None):
                                bad_stars=bad_stars)
     for star in stars:
         plt.text(star['row'], star['col'] - 3,
-                 '{:.1f}±{:.1f}'.format(star['mag'], star['mag_err']),
+                 f'{star["mag"]:.1f}±{star["mag_err"]:.1f}',
                  verticalalignment='top', horizontalalignment='center',
                  fontsize='small')
     plot_aca.symsize = orig_symsize
@@ -465,7 +464,7 @@ def plot_imposters(acq, dark, dither, vmin=100, vmax=2000,
         patch = patches.Rectangle((rc - hwp, cc - hwp), hwp * 2, hwp * 2, edgecolor='r',
                                   facecolor='none', lw=1, alpha=1)
         ax.add_patch(patch)
-        plt.text(rc - hwp + 1, cc - hwp + 1, '{}"'.format(hw), color='y', fontweight='bold')
+        plt.text(rc - hwp + 1, cc - hwp + 1, f'{hw}"', color='y', fontweight='bold')
 
     # Hack to fix up ticks to have proper row/col coords.  There must be a
     # correct way to do this.
