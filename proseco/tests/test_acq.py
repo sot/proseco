@@ -3,10 +3,12 @@ from __future__ import division, print_function  # For Py2 compatibility
 
 import numpy as np
 import pytest
+from pathlib import Path
 
 from chandra_aca.aca_image import AcaPsfLibrary
 from chandra_aca.transform import mag_to_count_rate, yagzag_to_pixels
 
+from ..report import make_report
 from ..acq import (get_p_man_err, bin2x2, CHAR,
                    get_imposter_stars, get_stars, get_acq_candidates,
                    get_image_props, calc_p_brightest,
@@ -343,15 +345,23 @@ def test_box_strategy_20603():
     assert repr(acqs.meta['cand_acqs'][TEST_COLS]).splitlines() == exp
 
 
-def test_to_from_yaml():
-    acqs = get_acq_catalog(21007)  # Fast because of caching
+def test_make_report(tmpdir):
+    obsid = 19387
+    tmpdir = Path(tmpdir)
+    obsdir = tmpdir / f'obs{obsid:05}'
 
-    yml = acqs.to_yaml()
-    acqs2 = AcqTable.from_yaml(yml)
+    acqs = get_acq_catalog(obsid)
+    acqs.to_yaml(rootdir=tmpdir)
+
+    acqs2 = make_report(obsid, rootdir=tmpdir)
+
+    assert (obsdir / 'index.html').exists()
+    assert len(list(obsdir.glob('*.png'))) > 0
 
     assert repr(acqs) == repr(acqs2)
     assert repr(acqs.meta['cand_acqs']) == repr(acqs2.meta['cand_acqs'])
-    assert acqs.log_info == acqs2.log_info
+    for event, event2 in zip(acqs.log_info, acqs2.log_info):
+        assert event == event2
 
     for attr in ['att', 'date', 't_ccd', 'man_angle', 'dither', 'p_safe']:
         val = acqs.meta[attr]
