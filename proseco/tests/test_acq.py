@@ -155,8 +155,7 @@ def test_get_imposters_5000():
 
 def get_test_stars():
     if 'stars' not in CACHE:
-        acqs = AcqTable()
-        CACHE['stars'] = get_stars(acqs, ATT)
+        CACHE['stars'] = get_stars(ATT, date='2018:230')
     return CACHE['stars']
 
 
