@@ -383,15 +383,6 @@ def calc_p_brightest(acq, box_size, stars, dark, man_err=0,
     return prob
 
 
-def broadcast_arrays(*args):
-    is_scalar = all(np.array(arg).ndim == 0 for arg in args)
-    args = np.atleast_1d(*args)
-    if not isinstance(args, list):
-        args = [args]
-    outs = [is_scalar] + np.broadcast_arrays(*args)
-    return outs
-
-
 def calc_p_on_ccd(row, col, box_size):
     """
     Calculate the probability that star and initial tracked readout box
