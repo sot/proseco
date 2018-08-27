@@ -266,7 +266,14 @@ def test_get_acq_catalog_19387():
     >>> TEST_COLS = ('idx', 'slot', 'id', 'yang', 'zang', 'halfw', 'mag', 'p_acq')
     >>> repr(acqs.meta['cand_acqs'][TEST_COLS]).splitlines()
     """
-    acqs = AcqTable.get_acq_catalog(19387)
+    obsid = 19387
+    att = [188.617671, 2.211623, 231.249803]
+    date = '2017:182:22:06:22.744'
+    t_ccd = -14.1
+    man_angle = 1.74
+    dither = 4.0
+    acqs = AcqTable.get_acq_catalog(obsid=obsid, att=att, date=date, t_ccd=t_ccd,
+                                    man_angle=man_angle, dither=dither)
     # Expected
     exp = ['<AcqTable length=11>',
            ' idx  slot    id      yang     zang   halfw   mag    p_acq ',
@@ -295,7 +302,15 @@ def test_get_acq_catalog_21007():
     >>> TEST_COLS = ('idx', 'slot', 'id', 'yang', 'zang', 'halfw', 'mag', 'p_acq')
     >>> repr(acqs.meta['cand_acqs'][TEST_COLS]).splitlines()
     """
-    acqs = AcqTable.get_acq_catalog(21007)
+    obsid = 21007
+    att = [184.371121, 17.670062, 223.997765]
+    date = '2018:159:11:20:52.162'
+    t_ccd = -11.3
+    man_angle = 60.39
+    dither = 8.0
+    acqs = AcqTable.get_acq_catalog(obsid=obsid, att=att, date=date, t_ccd=t_ccd,
+                                    man_angle=man_angle, dither=dither)
+
     exp = ['<AcqTable length=14>',
            ' idx  slot     id      yang     zang   halfw   mag    p_acq ',
            'int64 str3   int32   float64  float64  int64 float32 float64',
@@ -322,7 +337,15 @@ def test_box_strategy_20603():
     """Test for PR #32 that doesn't allow p_acq to be reduced below 0.1.
     The idx=8 (mag=10.50) star was previously selected with 160 arsec box.
     """
-    acqs = AcqTable.get_acq_catalog(20603)
+    obsid = 20603
+    att = [201.561783, 7.748784, 205.998301]
+    date = '2018:120:19:06:28.154'
+    t_ccd = -11.2
+    man_angle = 111.95
+    dither = 8.0
+    acqs = AcqTable.get_acq_catalog(obsid=obsid, att=att, date=date, t_ccd=t_ccd,
+                                    man_angle=man_angle, dither=dither)
+
     exp = ['<AcqTable length=13>',
            ' idx  slot     id      yang     zang   halfw   mag    p_acq ',
            'int64 str3   int32   float64  float64  int64 float32 float64',
@@ -346,10 +369,17 @@ def test_box_strategy_20603():
 
 def test_make_report(tmpdir):
     obsid = 19387
+    att = [188.617671, 2.211623, 231.249803]
+    date = '2017:182:22:06:22.744'
+    t_ccd = -14.1
+    man_angle = 1.74
+    dither = 4.0
+    acqs = AcqTable.get_acq_catalog(obsid=obsid, att=att, date=date, t_ccd=t_ccd,
+                                    man_angle=man_angle, dither=dither)
+
     tmpdir = Path(tmpdir)
     obsdir = tmpdir / f'obs{obsid:05}'
 
-    acqs = AcqTable.get_acq_catalog(obsid)
     acqs.to_yaml(rootdir=tmpdir)
 
     acqs2 = make_report(obsid, rootdir=tmpdir)
