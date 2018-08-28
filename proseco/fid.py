@@ -3,7 +3,7 @@ import numpy as np
 from . import characteristics_fid as FID
 
 
-def get_fid_positions(detector, focus, sim_offset):
+def get_fid_positions(detector, focus_offset, sim_offset):
     """Calculate the fid light positions for all fids for ``detector``.
 
     This is adapted from the Matlab
@@ -24,19 +24,19 @@ def get_fid_positions(detector, focus, sim_offset):
       zfid=-zshift/(SIfield.focallength-xshift);
 
     :param detector: 'ACIS-S' | 'ACIS-I' | 'HRC-S' | 'HRC-I'
-    :param focus: SIM focus [steps]
+    :param focus_offset: SIM focus offset [steps]
     :param sim_offset: SIM translation offset from nominal [steps]
 
     :returns: yang, zang where each is a np.array of angles [arcsec]
     """
-    # Table of (step, fa_pos [m]) pairs, used to interpolate from step to
-    # fa_pos [m].
-    focus_table = np.array(FID.focus_table)
-    steps = focus_table[:, 0]  # Absolute FA step position
-    fa_pos = focus_table[:, 1]  # meters
-    xshift = np.interp(focus, steps, fa_pos, left=np.nan, right=np.nan)
+    # Table of (step, fa_pos [m]) pairs, used to interpolate from FA offset
+    # in step to FA offset in meters.
+    focus_offset_table = np.array(FID.focus_table)
+    steps = focus_offset_table[:, 0]  # Absolute FA step position
+    fa_pos = focus_offset_table[:, 1]  # Focus offset in meters
+    xshift = np.interp(focus_offset, steps, fa_pos, left=np.nan, right=np.nan)
     if np.isnan(xshift):
-        raise ValueError('focus is out of range')
+        raise ValueError('focus_offset is out of range')
 
     # Y and Z position of fids on focal plane in meters.
     # Apply SIM Z translation from sim offset to the nominal Z position.
