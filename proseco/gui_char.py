@@ -71,7 +71,7 @@ CHAR = { "Stars": {
                     "SigErrMultiplier": 3,
                     },
                 "Imposter": {
-                    "Thresh": .05,
+                    "Thresh": 3.5,
                     },
                 },
             {
@@ -98,7 +98,7 @@ CHAR = { "Stars": {
                     "SigErrMultiplier": 2,
                     },
                 "Imposter": {
-                    "Thresh": .075,
+                    "Thresh": 3.0,
                     },
                 },
             {
@@ -125,7 +125,7 @@ CHAR = { "Stars": {
                     "SigErrMultiplier": 1,
                     },
                 "Imposter": {
-                    "Thresh": .075,
+                    "Thresh": 3.0,
                     },
                 },
             {
@@ -152,7 +152,7 @@ CHAR = { "Stars": {
                     "SigErrMultiplier": 0,
                     },
                 "Imposter": {
-                    "Thresh": .10,
+                    "Thresh": 2.5,
                     },
                 },
             {
@@ -179,7 +179,7 @@ CHAR = { "Stars": {
                     "SigErrMultiplier": 0,
                     },
                 "Imposter": {
-                    "Thresh": .15,
+                    "Thresh": 1.75,
                     },
                 }
             ],

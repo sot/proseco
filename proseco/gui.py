@@ -156,10 +156,14 @@ def check_imposters(stars, ok, dark, dither, opt):
         rplus = int(np.ceil(cand['row'] + row_extent + 1))
         cminus = int(np.floor(cand['col'] - col_extent))
         cplus = int(np.ceil(cand['col'] + col_extent + 1))
-        pix = dark.aca[rminus:rplus, cminus:cplus]
-        cand_counts = chandra_aca.mag_to_count_rate(cand['MAG_ACA'])
+        pix = np.array(dark.aca[rminus:rplus, cminus:cplus])
+        pixmax = max(np.max(bin2x2(pix)),
+                     np.max(bin2x2(pix[1:-1])),
+                     np.max(bin2x2(pix[:,1:-1])),
+                     np.max(bin2x2(pix[1:-1,1:-1])))
+        pixmax_mag = chandra_aca.count_rate_to_mag(pixmax)
         # Check that the max 2x2 region is less than the threshold for this stage
-        if np.max(bin2x2(pix)) > (cand_counts * opt['Imposter']['Thresh']):
+        if pixmax_mag < (cand['MAG_ACA'] + opt['Imposter']['Thresh']):
             imp[stars['AGASC_ID'] == cand['AGASC_ID']] = True
     return imp
 
