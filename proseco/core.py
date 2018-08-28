@@ -42,8 +42,8 @@ class ACACatalogTable(Table):
     # Should be set by subclass, e.g. ``name = 'acqs'`` for AcqTable.
     name = 'aca_cat'
 
-    def __init__(self, *args, print_log=False, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, data=None, print_log=False, **kwargs):
+        super().__init__(data=data, **kwargs)
         self.log_info = {}
         self.log_info['events'] = []
         self.log_info['time0'] = time.time()

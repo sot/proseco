@@ -45,3 +45,6 @@ p_man_errs.insert_row(0, zero_row)
 # Possible maneuver errors in the table for use in acq.py
 #
 man_errs = p_man_errs['man_err_hi']
+
+# Minimal set of columns to store for spoiler stars
+spoiler_star_cols = ['id', 'yang', 'zang', 'row', 'col', 'mag', 'mag_err']
