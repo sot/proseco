@@ -141,20 +141,29 @@ def check_imposters(stars, ok, dark, dither, opt):
     Check for any pixel with a value greater than the imposter thresh
     for each candidate and stage.
     """
+    # Borrow bin2x2 from proseco.acq
+    def bin2x2(arr):
+        """Bin 2-d ``arr`` in 2x2 blocks.  Requires that ``arr`` has even shape sizes"""
+        shape = (arr.shape[0] // 2, 2, arr.shape[1] // 2, 2)
+        return arr.reshape(shape).sum(-1).sum(1)
+
     imp = np.zeros_like(ok)
     # Define the 1/2 pixel region as half the 8x8 plus dither
-    row_extent = 4 + dither[0] * ARC_2_PIX
-    col_extent = 4 + dither[1] * ARC_2_PIX
+    row_extent = np.ceil(4 + dither[0] * ARC_2_PIX)
+    col_extent = np.ceil(4 + dither[1] * ARC_2_PIX)
     for cand in stars[ok]:
         rminus = int(np.floor(cand['row'] - row_extent))
         rplus = int(np.ceil(cand['row'] + row_extent + 1))
         cminus = int(np.floor(cand['col'] - col_extent))
         cplus = int(np.ceil(cand['col'] + col_extent + 1))
-        pix = dark.aca[rminus:rplus, cminus:cplus]
-        cand_counts = chandra_aca.mag_to_count_rate(cand['MAG_ACA'])
-        #print("{} {} {}".format(cand['AGASC_ID'], np.max(pix) * 1.0 / cand_counts,
-        #      opt['Imposter']['Thresh']))
-        if np.max(pix) > (cand_counts * opt['Imposter']['Thresh']):
+        pix = np.array(dark.aca[rminus:rplus, cminus:cplus])
+        pixmax = max(np.max(bin2x2(pix)),
+                     np.max(bin2x2(pix[1:-1])),
+                     np.max(bin2x2(pix[:,1:-1])),
+                     np.max(bin2x2(pix[1:-1,1:-1])))
+        pixmax_mag = chandra_aca.count_rate_to_mag(pixmax)
+        # Check that the max 2x2 region is less than the threshold for this stage
+        if pixmax_mag < (cand['MAG_ACA'] + opt['Imposter']['Thresh']):
             imp[stars['AGASC_ID'] == cand['AGASC_ID']] = True
     return imp
 
