@@ -17,6 +17,31 @@ from . import characteristics as ACQ
 from .core import ACACatalogTable
 
 
+def get_fid_catalog(*, detector=None, focus_offset=0, sim_offset=0,
+                    acqs=None, stars=None, dither=None,
+                    print_log=None):
+    """
+    :param detector: 'ACIS-S' | 'ACIS-I' | 'HRC-S' | 'HRC-I'
+    :param focus_offset: SIM focus offset [steps] (default=0)
+    :param sim_offset: SIM translation offset from nominal [steps] (default=0)
+    :param acqs: AcqTable catalog.  Optional but needed for actual fid selection.
+    :param stars: stars table.  Defaults to acqs.meta['stars'] if available.
+    :param dither: dither [arcsec].  Defaults to acqs.meta['dither'] if available.
+    :param print_log: print log to stdout (default=False)
+    """
+    fids = FidTable(detector=detector, focus_offset=focus_offset,
+                    sim_offset=sim_offset, acqs=acqs, stars=stars,
+                    dither=dither, print_log=print_log)
+
+    fids.meta['cand_fids'] = fids.get_fid_candidates()
+
+    # Get an initial fid catalog based on the rank of field stars spoiling fids
+    # and fids spoiling current acq star within current acq search box.
+    fids.get_initial_catalog()
+
+    return fids
+
+
 class FidTable(ACACatalogTable):
     # Elements of meta that should not be directly serialized to YAML
     # (either too big or requires special handling).
@@ -29,7 +54,7 @@ class FidTable(ACACatalogTable):
     def __init__(self, data=None, *,  # Keyword only from here
                  detector=None, focus_offset=0, sim_offset=0,
                  acqs=None, stars=None, dither=None,
-                 print_log=False, **kwargs):
+                 print_log=None, **kwargs):
         """
         Table of fid lights, with methods for selection.
 
@@ -42,8 +67,6 @@ class FidTable(ACACatalogTable):
         :param print_log: print log to stdout (default=False)
         :param **kwargs: any other kwargs for Table init
         """
-        super().__init__(data=data, print_log=print_log, **kwargs)
-
         # If acqs (acq catalog) supplied then make a weak reference since that
         # may have a ref to this fid catalog.
         if acqs is not None:
@@ -51,7 +74,11 @@ class FidTable(ACACatalogTable):
                 stars = acqs.meta['stars']
             if dither is None:
                 dither = acqs.meta['dither']
+            if print_log is None:
+                print_log = acqs.print_log
             acqs = weakref.ref(acqs)
+
+        super().__init__(data=data, print_log=print_log, **kwargs)
 
         self.meta.update({'detector': detector,
                           'focus_offset': focus_offset,
@@ -59,6 +86,27 @@ class FidTable(ACACatalogTable):
                           'acqs': acqs,
                           'dither': dither,
                           'stars': stars})
+
+    def get_initial_catalog(self):
+        cand_fids = self.meta['cand_fids']
+        cand_fids_set = set(cand_fids['id'])
+
+        for fid_set in self.meta['fid_sets']:
+            if fid_set <= cand_fids_set:
+                # If no acqs then just take the first allowed fid set and jump out
+                if self.acqs is None:
+                    cand_fids_ids = cand_fids['id'].tolist()
+                    idxs = [cand_fids.iloc(fid_id) for fid_id in sorted(fid_set)]
+                    # Transfer to self (which at this point is an empty table)
+                    for name, col in cand_fids.columns.items():
+                        self[name] = col[idxs]
+                    return
+
+                for fid_id in fid_set:
+                    fid = cand_fids.get_id(fid_id)
+
+
+
 
     def get_fid_candidates(self):
         """
@@ -101,7 +149,7 @@ class FidTable(ACACatalogTable):
             for fid in cand_fids:
                 fid['spoilers'] = self.get_spoiler_stars(fid)
 
-        self.meta['cand_fids'] = cand_fids
+        return cand_fids
 
     def reject_off_ccd(self, cand_fids):
         """Filter out candidates that are outside allowed CCD region"""

@@ -40,8 +40,8 @@ focal_length = {'HRC-S': 10.02773,
                 'ACIS-S': 10.037572,
                 'ACIS-I': 10.037572}
 
-# Preferred fid combinations
-fid_combos = {
+# Preferred fid combinations (note subsequent processing in next block)
+fid_sets = {
     'HRC-S': [[1, 2, 3], [1, 3, 4], [2, 3, 4], [1, 2, 4]],
     'HRC-I': [[1, 2, 3], [1, 3, 4], [2, 3, 4], [1, 2, 4]],
     'ACIS-I': [[1, 5, 6], [3, 5, 6], [1, 3, 5], [1, 3, 6], [1, 4, 5], [1, 2, 4],
@@ -52,6 +52,10 @@ fid_combos = {
                [4, 5, 6], [2, 3, 4], [1, 2, 4], [1, 2, 5], [1, 2, 6], [1, 3, 4],
                [1, 3, 5], [1, 3, 6], [1, 4, 6], [2, 3, 5], [2, 3, 6], [2, 5, 6],
                [3, 4, 6], [1, 2, 3]]}
+
+# Turn all the lists into set() objects for convenience
+for detector in fid_sets:
+    fid_sets[detector] = [set(fid_set) for fid_set in fid_sets[detector]]
 
 # Nominal magnitudes for each fid light from Matlab tools characteristics.  SAUSAGE always
 # commands 7.000, so not clear what is happening with these.
