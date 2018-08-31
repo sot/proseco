@@ -149,8 +149,7 @@ class AcqTable(ACACatalogTable):
 
         # Add slot to cand_acqs table, putting in '...' if not selected as acq.
         # This is for convenience in downstream reporting or introspection.
-        acqs.add_index('id')
-        slots = [str(acqs.loc[acq['id']]['slot']) if acq['id'] in acqs['id'] else '...'
+        slots = [str(acqs.get_id(acq['id'])['slot']) if acq['id'] in acqs['id'] else '...'
                  for acq in cand_acqs]
         cand_acqs['slot'] = slots
 

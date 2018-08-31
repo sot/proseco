@@ -1,3 +1,4 @@
+import weakref
 import inspect
 import time
 from copy import copy
@@ -49,6 +50,9 @@ class ACACatalogTable(Table):
         self.log_info['time0'] = time.time()
         self.print_log = print_log
 
+        # Low-tech index to quickly get a row or the row index by `id` column.
+        self._id_index = {}
+
         # Make printed table look nicer.  This is defined in advance
         # and will be applied the first time the table is represented.
         self._default_formats = {'p_acq': '.3f'}
@@ -56,6 +60,40 @@ class ACACatalogTable(Table):
             self._default_formats[name] = '.2f'
         for name in ('ra', 'dec', 'RA_PMCORR', 'DEC_PMCORR'):
             self._default_formats[name] = '.6f'
+
+    def make_index(self):
+        self._id_index.clear()
+        for idx, row in enumerate(self):
+            self._id_index[row['id']] = idx
+
+    def get_id(self, id):
+        """
+        Return row corresponding to ``id`` in id column.
+
+        :param id: row ``id`` column value
+        :returns: table Row
+        """
+        return self[self.get_id_idx(id)]
+
+    def get_id_idx(self, id):
+        """
+        Return row corresponding to ``id`` in id column.
+
+        :param id: row ``id`` column value
+        :returns: table row index (int)
+        """
+        if not hasattr(self, '_index'):
+            self.make_index()
+
+        try:
+            idx = self._id_index[id]
+            assert self['id'][idx] == id
+        except (KeyError, IndexError, AssertionError):
+            self.make_index()
+            idx = self._id_index[id]
+            assert self['id'][idx] == id
+
+        return idx
 
     def log(self, data, **kwargs):
         # Name of calling functions, starting from top (outermost) and
