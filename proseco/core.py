@@ -359,7 +359,7 @@ get_mag_std = interp1d(x=[-10, 6.7, 7.3, 7.8, 8.3, 8.8, 9.2, 9.7, 10.1, 11, 20],
                        kind='linear')
 
 
-def get_stars(att, date=None, radius=1.2, logger=None):
+def get_stars(att, date=None, radius=1.2, stars=None, logger=None):
     """
     Get AGASC stars in the ACA FOV.  This uses the mini-AGASC, so only stars
     within 3-sigma of 11.5 mag.  TO DO: maybe use the full AGASC, for faint
@@ -370,9 +370,12 @@ def get_stars(att, date=None, radius=1.2, logger=None):
             return None
 
     q_att = Quat(att)
-    logger(f'Getting stars at ra={q_att.ra:.5f} dec={q_att.dec:.4f}')
-    stars = get_agasc_cone(q_att.ra, q_att.dec, radius=radius, date=date)
-    logger(f'Got {len(stars)} stars', level=1)
+    if stars is None:
+        logger(f'Getting stars at ra={q_att.ra:.5f} dec={q_att.dec:.4f}')
+        stars = get_agasc_cone(q_att.ra, q_att.dec, radius=radius, date=date)
+        logger(f'Got {len(stars)} stars', level=1)
+    else:
+        logger(f'Updating supplied stars at ra={q_att.ra:.5f} dec={q_att.dec:.4f}')
     yag, zag = radec2yagzag(stars['RA_PMCORR'], stars['DEC_PMCORR'], q_att)
     yag *= 3600
     zag *= 3600
