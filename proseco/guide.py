@@ -2,10 +2,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 import numpy as np
-from scipy.stats import scoreatpercentile
-from astropy.coordinates import SkyCoord, search_around_sky
-import astropy.units as u
-
 
 import chandra_aca.aca_image
 from chandra_aca.transform import mag_to_count_rate, count_rate_to_mag
@@ -189,19 +185,20 @@ class GuideTable(ACACatalogTable):
         cand_guis[scol][imp_spoil] += GUIDE_CHAR.errs['hot pix']
         ok = ok & ~imp_spoil
 
-        # Check for star spoilers (by light) background and edge
-        bg_pix_thresh = scoreatpercentile(dark, stage['Spoiler']['BgPixThresh'])
-        reg_frac = stage['Spoiler']['RegionFrac']
-        bg_spoil, reg_spoil = check_spoil_contrib(cand_guis, ok, stars,
-                                                  reg_frac, bg_pix_thresh)
-        cand_guis[scol][bg_spoil] += GUIDE_CHAR.errs['spoiler (bgd)']
-        cand_guis[scol][reg_spoil] += GUIDE_CHAR.errs['spoiler (frac)']
-        ok = ok & ~bg_spoil & ~reg_spoil
-
         # Check for 'direct catalog search' spoilers
         mag_spoil = check_mag_spoilers(cand_guis, ok, stars, n_sigma)
         cand_guis[scol][mag_spoil] += GUIDE_CHAR.errs['spoiler (line)']
         ok = ok & ~mag_spoil
+
+        # Check for star spoilers (by light) background and edge
+        if stage['ASPQ1Lim'] > 0:
+            bg_pix_thresh = np.percentile(dark, stage['Spoiler']['BgPixThresh'])
+            reg_frac = stage['Spoiler']['RegionFrac']
+            bg_spoil, reg_spoil = check_spoil_contrib(cand_guis, ok, stars,
+                                                      reg_frac, bg_pix_thresh)
+            cand_guis[scol][bg_spoil] += GUIDE_CHAR.errs['spoiler (bgd)']
+            cand_guis[scol][reg_spoil] += GUIDE_CHAR.errs['spoiler (frac)']
+            ok = ok & ~bg_spoil & ~reg_spoil
 
         # Check for column spoiler
         col_spoil = check_column_spoilers(cand_guis, ok, stars, n_sigma)
@@ -306,9 +303,11 @@ def check_spoil_contrib(cand_stars, ok, stars, regfrac, bgthresh):
     reg_spoiled = np.zeros_like(ok)
     bgpix = CCD['bgpix']
     for cand in cand_stars[ok]:
+        if cand['ASPQ1'] == 0:
+            continue
         pix_dist = np.sqrt(((cand['row'] - stars['row']) **2) + ((cand['col'] - stars['col']) ** 2))
-        spoilers = pix_dist < 16
-
+        spoilers = ((np.abs(cand['row'] - stars['row']) < 9)
+                    & (np.abs(cand['col'] - stars['col']) < 9))
         # If there is only one match, it is the candidate so there's nothing to do
         if np.count_nonzero(spoilers) == 1:
             continue
@@ -328,6 +327,7 @@ def check_spoil_contrib(cand_stars, ok, stars, regfrac, bgthresh):
         # Consider it spoiled if the star contribution on the 8x8 is over a fraction
         if np.sum(on_region) > (cand_counts * fraction):
             reg_spoiled[cand_stars['id'] == cand['id']] = True
+            continue
         # Or consider it spoiled if the star contribution to any background pixel
         # is more than the Nth percentile of the dark current
         for pixlabel in bgpix:
@@ -364,24 +364,27 @@ def check_mag_spoilers(cand_stars, ok, stars, n_sigma):
         return np.zeros(len(ok)).astype(bool)
 
     mag_spoiled = np.zeros(len(ok)).astype(bool)
-    # Search the sky around cand stars to see if they are spoiled by other stars
-    coords = SkyCoord(stars['ra'], stars['dec'], unit='deg')
-    cand_coords = SkyCoord(cand_stars['ra'], cand_stars['dec'], unit='deg')
-    maxsep_arcs = maxsep * GUIDE_CHAR.PIX_2_ARC
-    cand_idx, cat_idx, spoil_dist, dist3d = search_around_sky(
-        cand_coords, coords, seplimit=u.arcsec * maxsep_arcs)
-    # Try to find the spoilers in a vectorized way
-    cand_mags = cand_stars['MAG_ACA'][cand_idx]
-    spoiler_mags = stars['MAG_ACA'][cat_idx]
-    itself = cand_stars['id'][cand_idx] == stars['id'][cat_idx]
-    too_dim = (cand_mags - spoiler_mags) < magdifflim
-    mag_err_sum = np.sqrt(cand_stars['mag_err'][cand_idx] ** 2 + stars['mag_err'][cat_idx] ** 2)
-    delmag = (cand_mags - spoiler_mags + n_sigma * mag_err_sum)
-    thsep = intercept + delmag * spoilslope
-    spoils = (spoil_dist < u.arcsec * thsep * GUIDE_CHAR.PIX_2_ARC) & ~itself & ~too_dim
-    # This is now indexed over the cat/cand idxs so, re-index again
-    mag_spoiled[np.unique(cand_idx[spoils])] = True
-    # Include any previous spoilers
+
+    for cand in cand_stars[ok]:
+        pix_dist = np.sqrt(((cand['row'] - stars['row']) **2) + ((cand['col'] - stars['col']) ** 2))
+        spoilers = ((np.abs(cand['row'] - stars['row']) < 10)
+                    & (np.abs(cand['col'] - stars['col']) < 10))
+        # If there is only one match, it is the candidate so there's nothing to do
+        if np.count_nonzero(spoilers) == 1:
+            continue
+
+        for spoil, dist in zip(stars[spoilers], pix_dist[spoilers]):
+            if spoil['id'] == cand['id']:
+                continue
+            if (cand['MAG_ACA'] - spoil['MAG_ACA']) < magdifflim:
+                continue
+            mag_err_sum = np.sqrt(cand['mag_err'] ** 2 + spoil['mag_err'] ** 2)
+            delmag = cand['MAG_ACA'] - spoil['MAG_ACA'] + n_sigma * mag_err_sum
+            thsep = intercept + delmag * spoilslope
+            if dist < thsep:
+                mag_spoiled[cand['id'] == cand_stars['id']] = True
+                continue
+
     return mag_spoiled
 
 
@@ -398,17 +401,18 @@ def check_column_spoilers(cand_stars, ok, stars, n_sigma):
     """
     column_spoiled = np.zeros_like(ok)
     for idx, cand in enumerate(cand_stars):
-        dm = (cand['MAG_ACA'] - stars['MAG_ACA'][~stars['offchip']] +
-              n_sigma * np.sqrt(cand['mag_err'] ** 2 + stars['mag_err'][~stars['offchip']] ** 2))
-        # If there are no stars ~ MagDiff (4.5 mags) brighter than the candidate we're done
-        if not np.any(dm > GUIDE_CHAR.col_spoiler['MagDiff']):
+        if not ok[idx]:
             continue
         dcol = cand['col'] - stars['col'][~stars['offchip']]
         direction = stars['row'][~stars['offchip']] / cand['row']
-        spoilers = ((dm > GUIDE_CHAR.col_spoiler['MagDiff'])
-                    & (np.abs(dcol) <= (GUIDE_CHAR.col_spoiler['Separation']))
-                    & (direction > 1.0))
-        if np.any(spoilers):
+        pos_spoil = ((np.abs(dcol) <= (GUIDE_CHAR.col_spoiler['Separation']))
+                     & (direction > 1.0))
+        if not np.count_nonzero(pos_spoil) >= 1:
+            continue
+        mag_errs =  (n_sigma * np.sqrt(cand['mag_err'] ** 2
+                                       + stars['mag_err'][~stars['offchip']][pos_spoil] ** 2))
+        dm = (cand['MAG_ACA'] - stars['MAG_ACA'][~stars['offchip']][pos_spoil] + mag_errs)
+        if np.any(dm > GUIDE_CHAR.col_spoiler['MagDiff']):
             column_spoiled[idx] = True
     return column_spoiled
 

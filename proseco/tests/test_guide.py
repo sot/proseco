@@ -153,14 +153,17 @@ def test_check_pixmag_offset():
 
 def test_check_spoil_contrib():
     # Construct a case where a star spoils the edge of the 8x8
-    star1 = {'row': 0, 'col': 0, 'MAG_ACA': 8.0, 'id': 1}
-    star2 = {'row': 0, 'col': -5, 'MAG_ACA': 6.0, 'id': 2}
+    # Note that for these mock stars, since we we are checking the status of
+    # the first star, ASPQ1 needs to be nonzero on that star or the
+    # check_spoil_contrib code will bail out before actually doing the check
+    star1 = {'row': 0, 'col': 0, 'MAG_ACA': 8.0, 'id': 1, 'ASPQ1': 1}
+    star2 = {'row': 0, 'col': -5, 'MAG_ACA': 6.0, 'id': 2, 'ASPQ1': 0}
     stars = Table([star1, star2])
     bg_spoil, reg_spoil = check_spoil_contrib(stars, np.array([True, True]), stars, .05, 25)
     assert reg_spoil[0]
     # Construct a case where a star spoils just a background pixel
-    star1 = {'row': 0, 'col': 0, 'MAG_ACA': 8.0, 'id': 1}
-    star2 = {'row': -5.5, 'col': -5.5, 'MAG_ACA': 9.5, 'id': 2}
+    star1 = {'row': 0, 'col': 0, 'MAG_ACA': 8.0, 'id': 1, 'ASPQ1': 1}
+    star2 = {'row': -5.5, 'col': -5.5, 'MAG_ACA': 9.5, 'id': 2, 'ASPQ1': 0}
     stars = Table([star1, star2])
     bg_spoil, reg_spoil = check_spoil_contrib(stars, np.array([True, True]), stars, .05, 25)
     assert bg_spoil[0]
