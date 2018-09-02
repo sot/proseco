@@ -8,8 +8,9 @@ from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
 from chandra_aca.transform import mag_to_count_rate, count_rate_to_mag
 import agasc
 
-from ..guide import GuideTable, check_spoil_contrib, get_pixmag_for_offset
-
+from ..guide import (GuideTable, check_spoil_contrib, get_pixmag_for_offset,
+                     check_mag_spoilers)
+from ..characteristics_guide import mag_spoiler
 
 def test_select():
     # "random" ra/dec/roll
@@ -167,3 +168,23 @@ def test_check_spoil_contrib():
     stars = Table([star1, star2])
     bg_spoil, reg_spoil = check_spoil_contrib(stars, np.array([True, True]), stars, .05, 25)
     assert bg_spoil[0]
+
+
+def test_check_mag_spoilers():
+    # Check that stars that should fail the mag/line test actually fail
+    intercept = mag_spoiler['Intercept']
+    spoilslope = mag_spoiler['Slope']
+    star1 = {'row': 0, 'col': 0, 'MAG_ACA': 9.0, 'mag_err': 0, 'id': 1}
+    # The mag spoiler check only works on stars that are within 10 pixels in row
+    # or column, so don't bother simulating stars outside that distance
+    r_dists = np.arange(-9.25, 10, 1)
+    c_dists = np.arange(-9.5, 10, 1)
+    magdiffs = np.arange(2, -5, -.5)
+    for r_dist, c_dist, magdiff in itertools.product(r_dists, c_dists, magdiffs):
+        star2 = {'row': r_dist, 'col': c_dist, 'MAG_ACA': star1['MAG_ACA'] - magdiff,
+                 'mag_err': 0, 'id': 2}
+        dist = np.sqrt(r_dist ** 2 + c_dist ** 2)
+        stars = Table([star1, star2])
+        spoiled = check_mag_spoilers(stars, np.array([True, True]), stars, 0)
+        req_sep = intercept + magdiff * spoilslope
+        assert (dist < req_sep) == spoiled[0]
