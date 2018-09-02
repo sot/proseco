@@ -1,9 +1,12 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
+import os
 import numpy as np
 import itertools
 from astropy.table import Table
+import pytest
 
+import mica.starcheck
 from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
 from chandra_aca.transform import mag_to_count_rate, count_rate_to_mag
 import agasc
@@ -11,6 +14,9 @@ import agasc
 from ..guide import (GuideTable, check_spoil_contrib, get_pixmag_for_offset,
                      check_mag_spoilers)
 from ..characteristics_guide import mag_spoiler
+
+
+HAS_SC_ARCHIVE = os.path.exists(mica.starcheck.starcheck.FILES['data_root'])
 
 def test_select():
     # "random" ra/dec/roll
@@ -20,6 +26,7 @@ def test_select():
     assert selected['id'].tolist() == expected_star_ids
 
 
+@pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
 def test_obsid_19461():
     # overall poor star field
     gui = GuideTable()
@@ -83,6 +90,7 @@ def test_region_contrib():
     assert 426255616 not in selected2['id']
 
 
+@pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
 def test_exclude_bad_star():
     # obsid 17896 attitude
     # Will need to find another bad star, as this one is now excluded via VAR
@@ -114,7 +122,7 @@ def test_avoid_trap():
                                       stars=stars)
     assert 156381600 not in selected2['id'].tolist()
 
-
+@pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
 def test_big_dither():
     # Obsid 20168
     gui = GuideTable()
