@@ -194,10 +194,11 @@ class FidTable(ACACatalogTable):
         - Dither amplitude (since OBC adjusts search box for dither)
         """
         spoiler_margin = (FID.spoiler_margin +
-                          self.acqs.meta['dither'] / 5 +
-                          acq['halfw'] / 5)
-        return (np.abs(fid['row'] - acq['row']) < spoiler_margin and
-                np.abs(fid['col'] - acq['col']) < spoiler_margin)
+                          self.acqs.meta['dither'] +
+                          acq['halfw'])
+        dy = np.abs(fid['yang'] - acq['yang'])
+        dz = np.abs(fid['zang'] - acq['zang'])
+        return (dy < spoiler_margin and dz < spoiler_margin)
 
 
     def get_fid_candidates(self):
@@ -284,7 +285,7 @@ class FidTable(ACACatalogTable):
             cand_fids.remove_rows(idx_bads)
 
     def set_spoilers_score(self, fid):
-        """Get stars within FID.spoiler_margin (10 pixels) + dither.  Starcheck uses
+        """Get stars within FID.spoiler_margin (50 arcsec) + dither.  Starcheck uses
         25" but this seems small: 20" (4 pix) positional err + 4 pixel readout
         halfw + 2 pixel PSF width of spoiler star.
 
@@ -296,11 +297,11 @@ class FidTable(ACACatalogTable):
 
         """
         stars = self.meta['stars'][ACQ.spoiler_star_cols]
-        dither_pix = self.meta['dither'] / 5
+        dither = self.meta['dither']
 
         # Potential spoiler by position
-        spoil = ((np.abs(stars['row'] - fid['row']) < FID.spoiler_margin + dither_pix) &
-                 (np.abs(stars['col'] - fid['col']) < FID.spoiler_margin + dither_pix))
+        spoil = ((np.abs(stars['yang'] - fid['yang']) < FID.spoiler_margin + dither) &
+                 (np.abs(stars['zang'] - fid['zang']) < FID.spoiler_margin + dither))
 
         if not np.any(spoil):
             # Make an empty table with same columns

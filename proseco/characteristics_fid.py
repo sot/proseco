@@ -253,9 +253,9 @@ focus_table = [[-11000, -0.01062],
 
 # Margin from useable part of CCD for fid row / col [pixels]
 # This includes 20 arcsec of position uncertainty + 5 pixels for readout HW + 2 pixels margin
-ccd_edge_margin = 11
+ccd_edge_margin = 11  # pixels
 
-# Margin from nominal fid position to possible spoiler star [pixels].
+# Margin from nominal fid position to possible spoiler star [arcsec].
 # This includes 20" (4 pix) positional err + 4 pixel readout halfw +
 # 2 pixel PSF of spoiler star = 10 pixels
-spoiler_margin = 10
+spoiler_margin = 50  # arcsec
