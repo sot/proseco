@@ -40,8 +40,8 @@ focal_length = {'HRC-S': 10.02773,
                 'ACIS-S': 10.037572,
                 'ACIS-I': 10.037572}
 
-# Preferred fid combinations
-fid_combos = {
+# Preferred fid combinations (note subsequent processing in next block)
+fid_sets = {
     'HRC-S': [[1, 2, 3], [1, 3, 4], [2, 3, 4], [1, 2, 4]],
     'HRC-I': [[1, 2, 3], [1, 3, 4], [2, 3, 4], [1, 2, 4]],
     'ACIS-I': [[1, 5, 6], [3, 5, 6], [1, 3, 5], [1, 3, 6], [1, 4, 5], [1, 2, 4],
@@ -53,12 +53,19 @@ fid_combos = {
                [1, 3, 5], [1, 3, 6], [1, 4, 6], [2, 3, 5], [2, 3, 6], [2, 5, 6],
                [3, 4, 6], [1, 2, 3]]}
 
-# Nominal magnitudes for each fid light.  SAUSAGE always
+# Turn all the lists into set() objects for convenience
+for detector in fid_sets:
+    fid_sets[detector] = [set(fid_set) for fid_set in fid_sets[detector]]
+
+# Nominal magnitudes for each fid light from Matlab tools characteristics.  SAUSAGE always
 # commands 7.000, so not clear what is happening with these.
-fid_mag = {'HRC-S': [7.1007, 7.1007, 7.0857, 7.1198],
-           'HRC-I': [7.0749, 7.0830, 7.1159, 7.0806],
-           'ACIS-S': [7.2531, 7.1778, 7.3382, 7.1966, 7.2168, 7.2696],
-           'ACIS-I': [7.2531, 7.1778, 7.3382, 7.1966, 7.2168, 7.2696]}
+fid_mags = {'HRC-S': [7.1007, 7.1007, 7.0857, 7.1198],
+            'HRC-I': [7.0749, 7.0830, 7.1159, 7.0806],
+            'ACIS-S': [7.2531, 7.1778, 7.3382, 7.1966, 7.2168, 7.2696],
+            'ACIS-I': [7.2531, 7.1778, 7.3382, 7.1966, 7.2168, 7.2696]}
+
+# Actual fid mag that is used in proseco calculations and outputs
+fid_mag = 7.0
 
 # The nominal focus position for each instrument
 focus_pos = {'HRC-S': -991,
@@ -243,3 +250,12 @@ focus_table = [[-11000, -0.01062],
                [6000, 0.010079],
                [6100, 0.010267],
                [6200, 0.010457]]
+
+# Margin from useable part of CCD for fid row / col [pixels]
+# This includes 20 arcsec of position uncertainty + 5 pixels for readout HW + 2 pixels margin
+ccd_edge_margin = 11  # pixels
+
+# Margin from nominal fid position to possible spoiler star [arcsec].
+# This includes 20" (4 pix) positional err + 4 pixel readout halfw +
+# 2 pixel PSF of spoiler star = 10 pixels
+spoiler_margin = 50  # arcsec
