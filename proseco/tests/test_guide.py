@@ -94,9 +94,8 @@ def test_region_contrib():
 def test_exclude_bad_star():
     # obsid 17896 attitude
     # Will need to find another bad star, as this one is now excluded via VAR
-    gui = GuideTable()
-    selected = gui.get_guide_catalog(obsid=17896)
-    assert 914493824 not in selected['id']
+    selected = GuideTable().get_guide_catalog(obsid=6820)
+    assert 614606480 not in selected['id']
 
 
 def test_avoid_trap():
