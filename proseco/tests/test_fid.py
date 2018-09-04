@@ -1,7 +1,7 @@
 import numpy as np
 
 from ..fid import get_fid_positions, get_fid_catalog
-from ..acq import AcqTable
+from ..acq import get_acq_catalog
 from chandra_aca.transform import yagzag_to_pixels
 
 
@@ -93,7 +93,7 @@ def test_get_initial_catalog():
     # 20" + 20" + 10" + 100" + 4" = 154".  In this test 2, 4 should be
     # excluded but 5 should be OK.
 
-    acqs = AcqTable.get_acq_catalog(19387)
+    acqs = get_acq_catalog(19387)
     for acq, fid, offset in zip(acqs[:3], fids[:3], [90, 153, 155]):
         #                                           bad, bad, OK
         acq['halfw'] = 100
