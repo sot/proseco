@@ -234,6 +234,9 @@ def make_acq_star_details_report(acqs, cand_acqs, events, context, obsdir):
             plot_imposters(acq, acqs.meta['dark'], acqs.meta['dither'], filename=filename)
 
         if len(acq['imposters']) > 0:
+            if not isinstance(acq['imposters'], Table):
+                acq['imposters'] = Table(acq['imposters'])
+
             names = ('row0', 'col0', 'd_row', 'd_col', 'img_sum', 'mag', 'mag_err')
             fmts = ('d', 'd', '.0f', '.0f', '.0f', '.2f', '.2f')
             imposters = acq['imposters'][names]
@@ -248,6 +251,9 @@ def make_acq_star_details_report(acqs, cand_acqs, events, context, obsdir):
             cca['imposters_table'] = ''
 
         if len(acq['spoilers']) > 0:
+            if not isinstance(acq['spoilers'], Table):
+                acq['spoilers'] = Table(acq['spoilers'])
+
             names = ('id', 'yang', 'zang', 'mag', 'mag_err')
             fmts = ('d', '.1f', '.1f', '.2f', '.2f')
             spoilers = acq['spoilers'][names]
@@ -305,12 +311,12 @@ def make_report(obsid, rootdir='.'):
     print(f'Processing obsid {obsid}')
 
     obsdir = rootdir / f'obs{obsid:05}'
-    acqs = AcqTable.from_yaml(obsid, rootdir)
+    acqs = AcqTable.from_pickle(obsid, rootdir)
     cand_acqs = acqs.meta['cand_acqs']
 
     context = copy(acqs.meta)
 
-    # Get information that is not stored in the info.yaml for space reasons
+    # Get information that is not stored in the acqs pickle for space reasons
     acqs.meta['stars'] = get_stars(acqs.meta['att'], date=acqs.meta['date'])
     _, acqs.meta['bad_stars'] = acqs.get_acq_candidates(acqs.meta['stars'])
 

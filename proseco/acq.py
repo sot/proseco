@@ -136,6 +136,7 @@ class AcqTable(ACACatalogTable):
     # Elements of meta that should not be directly serialized to YAML
     # (either too big or requires special handling).
     yaml_exclude = ('stars', 'cand_acqs', 'dark', 'bad_stars')
+    pickle_exclude = ('stars', 'dark', 'bad_stars')
 
     # Name of table.  Use to define default file names where applicable.
     # (e.g. `obs19387/acqs.yaml`).

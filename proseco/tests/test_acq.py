@@ -380,7 +380,7 @@ def test_make_report(tmpdir):
     tmpdir = Path(tmpdir)
     obsdir = tmpdir / f'obs{obsid:05}'
 
-    acqs.to_yaml(rootdir=tmpdir)
+    acqs.to_pickle(rootdir=tmpdir)
 
     acqs2 = make_report(obsid, rootdir=tmpdir)
 
