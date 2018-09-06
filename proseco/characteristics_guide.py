@@ -9,7 +9,7 @@ CCD = {'row_min': -512.0,
        'col_pad': 1,
        'bgpix': ['A1', 'B1', 'G1', 'H1', 'I4', 'J4', 'O4', 'P4']}
 
-PIX_2_ARC = 4.9628899999999998
+PIX_2_ARC = 4.96289
 ARC_2_PIX = 1.0 / PIX_2_ARC
 
 # Error / check labeling
