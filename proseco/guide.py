@@ -15,6 +15,21 @@ from .core import (get_stars, bin2x2, ACACatalogTable)
 
 CCD = GUIDE_CHAR.CCD
 
+def get_guide_catalog(obsid=0, att=None, date=None, t_ccd=None, dither=None, n=8,
+                      stars=None, dark=None, print_log=False):
+    guis = GuideTable(obsid=obsid, att=att, date=date, t_ccd=t_ccd, dither=dither, n=n,
+                      stars=stars, dark=dark, print_log=print_log)
+    # Do a first cut of the stars to get a set of reasonable candidates
+    cand_guis = guis.get_initial_guide_candidates()
+    guis.meta.update({'cand_guis': cand_guis})
+    # Run through search stages to select stars
+    selected = guis.run_search_stages()
+    # Transfer to table (which at this point is an empty table)
+    for name, col in selected.columns.items():
+        guis[name] = col
+    return guis
+
+
 
 class GuideTable(ACACatalogTable):
     # Elements of meta that should not be directly serialized to YAML
@@ -25,9 +40,8 @@ class GuideTable(ACACatalogTable):
     # (e.g. `obs19387/guide.yaml`).
     name = 'guide'
 
-    @classmethod
-    def get_guide_catalog(cls, obsid=0, att=None, date=None, t_ccd=None, dither=None, n=8,
-                          stars=None, dark=None, verbose=False, print_log=False):
+    def __init__(self, data=None, *, obsid=0, att=None, date=None, t_ccd=None, dither=None, n=8,
+                 stars=None, dark=None, print_log=False):
         """
         Get a catalog of guide stars
 
@@ -43,13 +57,12 @@ class GuideTable(ACACatalogTable):
         :param n: number of guide stars to attempt to get (default=8)
         :param stars: astropy.Table of AGASC stars (will be fetched from agasc if None)
         :param dark: ACAImage of dark map (fetched based on time and t_ccd if None)
-        :param verbose: provide extra logging info (mostly calc_p_safe) (default=False)
         :param print_log: print the run log to stdout (default=False)
 
         :returns: GuideTable of acquisition stars
         """
 
-        guis = cls(print_log=print_log)
+        super().__init__(data=data, print_log=print_log)
 
         # If an explicit obsid is not provided to all getting parameters via mica
         # then all other params must be supplied.
@@ -60,7 +73,7 @@ class GuideTable(ACACatalogTable):
         # If not all params supplied then get via mica for the obsid.
         if not all_pars:
             from mica.starcheck import get_starcheck_catalog
-            guis.log(f'getting starcheck catalog for obsid {obsid}')
+            self.log(f'getting starcheck catalog for obsid {obsid}')
 
             obs = get_starcheck_catalog(obsid)
             obso = obs['obs']
@@ -81,35 +94,26 @@ class GuideTable(ACACatalogTable):
 
         if dark is None:
             from mica.archive.aca_dark import get_dark_cal_image
-            guis.log(f'getting dark cal image at date={date} t_ccd={t_ccd:.1f}')
+            self.log(f'getting dark cal image at date={date} t_ccd={t_ccd:.1f}')
             dark = get_dark_cal_image(date=date, select='before', t_ccd_ref=t_ccd, aca_image=True)
         else:
-            guis.log('Using supplied dark map (ignores t_ccd)')
+            self.log('Using supplied dark map (ignores t_ccd)')
 
         if stars is None or 'row' not in stars.colnames:
-            stars = get_stars(att, date=date, stars=stars, logger=guis.log)
+            stars = get_stars(att, date=date, stars=stars, logger=self.log)
         else:
-            guis.log('Found "row" col in stars, assuming positions are correct for att')
+            self.log('Found "row" col in stars, assuming positions are correct for att')
 
         # Update the meta with all the useful parameters
-        guis.meta = {'obsid': obsid,
-                     'att': att,
-                     'date': date,
-                     't_ccd': t_ccd,
-                     'dither': dither,
-                     'stars': stars,
-                     'dark': dark,
-                     'n': n}
+        self.meta.update({'obsid': obsid,
+                          'att': att,
+                          'date': date,
+                          't_ccd': t_ccd,
+                          'dither': dither,
+                          'stars': stars,
+                          'dark': dark,
+                          'n': n})
 
-        # Do a first cut of the stars to get a set of reasonable candidates
-        cand_guis = guis.get_initial_guide_candidates()
-        guis.meta.update({'cand_guis': cand_guis})
-        # Run through search stages to select stars
-        selected = guis.run_search_stages()
-        # Transfer to table (which at this point is an empty table)
-        for name, col in selected.columns.items():
-            guis[name] = col
-        return guis
 
     def run_search_stages(self):
         """
