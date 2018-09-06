@@ -237,23 +237,15 @@ class GuideTable(ACACatalogTable):
               )
 
         # Mark stars that are off chip
-        offchip = ((stars['row'] > CCD['row_max'])
-                   | (stars['row'] < CCD['row_min'])
-                   | (stars['col'] > CCD['col_max'])
-                   | (stars['col'] < CCD['col_min']))
+        offchip = (np.abs(stars['row']) > CCD['row_max']) | (np.abs(stars['col']) > CCD['col_max'])
         stars['offchip'] = offchip
 
         # Add a filter for stars that are too close to the chip edge including dither
         r_dith_pad = self.meta['dither'][0] * GUIDE_CHAR.ARC_2_PIX
         c_dith_pad = self.meta['dither'][1] * GUIDE_CHAR.ARC_2_PIX
-        row_min = CCD['row_min'] + (CCD['row_pad'] + CCD['window_pad'] + r_dith_pad)
         row_max = CCD['row_max'] - (CCD['row_pad'] + CCD['window_pad'] + r_dith_pad)
-        col_min = CCD['col_min'] + (CCD['col_pad'] + CCD['window_pad'] + c_dith_pad)
         col_max = CCD['col_max'] - (CCD['col_pad'] + CCD['window_pad'] + c_dith_pad)
-        outofbounds = ((stars['row'] > row_max)
-                       | (stars['row'] < row_min)
-                       | (stars['col'] > col_max)
-                       | (stars['col'] < col_min))
+        outofbounds = (np.abs(stars['row']) > row_max) | (np.abs(stars['col']) > col_max)
 
         cand_guides = stars[ok & ~outofbounds]
         self.log('Filtering on CLASS, MAG_ACA, row/col, '
