@@ -115,3 +115,15 @@ def test_get_initial_catalog():
            '    5 -1826.28   160.17  372.97   36.47    7.00             0    1',
            '    6   388.59   803.75  -71.49  166.10    7.00             0    2']
     assert repr(fids5.meta['cand_fids']).splitlines() == exp
+
+
+def test_fid_mult_spoilers():
+    """
+    Test of fix for bug #54.  19605 and 20144 were previous crashing.
+    """
+    acqs = get_acq_catalog(**OBS_INFO[19605])
+    fids = get_fid_catalog(acqs=acqs)
+    cand_fids = fids.meta['cand_fids']
+    assert np.all(cand_fids['spoiler_score'] == [0, 0, 1, 4, 0, 0])
+    assert len(cand_fids['spoilers'][2]) == 1
+    assert cand_fids['spoilers'][2]['warn'][0] == 'yellow'
