@@ -155,6 +155,16 @@ class AcqTable(ACACatalogTable):
     # (e.g. `obs19387/acqs.yaml`).
     name = 'acqs'
 
+    def get_obs_info(self):
+        """
+        Convenience method to return the parts of meta that are needed
+        for test_common OBS_INFO.
+
+        """
+        keys = ('obsid', 'att', 'date', 't_ccd', 'man_angle', 'dither',
+                'detector', 'sim_offset', 'focus_offset')
+        return {key: self.meta[key] for key in keys}
+
     def get_acq_candidates(self, stars, max_candidates=20):
         """
         Get candidates for acquisition stars from ``stars`` table.

@@ -30,3 +30,13 @@ OBS_INFO[20603] = dict(obsid=20603,
                        t_ccd=-11.2,
                        man_angle=111.95,
                        dither=8.0)
+
+OBS_INFO[19605] = {'att': [350.897404, 58.836913, 75.068745],
+                   'date': '2018:135:15:52:08.898',
+                   'detector': 'ACIS-S',
+                   'dither': 8.0,
+                   'focus_offset': 0,
+                   'man_angle': 79.15,
+                   'obsid': 19605,
+                   'sim_offset': 0,
+                   't_ccd': -10.8}
