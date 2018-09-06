@@ -16,100 +16,101 @@ from .core import (get_stars, bin2x2, ACACatalogTable)
 CCD = GUIDE_CHAR.CCD
 
 
+def get_guide_catalog(obsid=0, att=None, date=None, t_ccd=None, dither=None, n=8,
+                      stars=None, dark=None, verbose=False, print_log=False):
+    """
+    Get a catalog of guide stars
+
+    If ``obsid`` corresponds to an already-scheduled obsid then the parameters
+    ``att``, ``t_ccd``, ``date``, and ``dither`` will
+    be fetched via ``mica.starcheck`` if not explicitly provided here.
+
+    :param obsid: obsid (default=0)
+    :param att: attitude (any object that can initialize Quat)
+    :param t_ccd: ACA CCD temperature (degC)
+    :param date: date of acquisition (any DateTime-compatible format)
+    :param dither: dither size (float, arcsec)
+    :param n: number of guide stars to attempt to get (default=8)
+    :param stars: astropy.Table of AGASC stars (will be fetched from agasc if None)
+    :param dark: ACAImage of dark map (fetched based on time and t_ccd if None)
+    :param verbose: provide extra logging info (mostly calc_p_safe) (default=False)
+    :param print_log: print the run log to stdout (default=False)
+
+    :returns: GuideTable of acquisition stars
+    """
+
+    guis = GuideTable(print_log=print_log)
+
+    # If an explicit obsid is not provided to all getting parameters via mica
+    # then all other params must be supplied.
+    all_pars = all(x is not None for x in (att, t_ccd, date, dither))
+    if obsid == 0 and not all_pars:
+        raise ValueError('if `obsid` not supplied then all other params are required')
+
+    # If not all params supplied then get via mica for the obsid.
+    if not all_pars:
+        from mica.starcheck import get_starcheck_catalog
+        guis.log(f'getting starcheck catalog for obsid {obsid}')
+
+        obs = get_starcheck_catalog(obsid)
+        obso = obs['obs']
+
+        if att is None:
+            att = [obso['point_ra'], obso['point_dec'], obso['point_roll']]
+        if date is None:
+            date = obso['mp_starcat_time']
+        if t_ccd is None:
+            t_ccd = obs.get('pred_temp') or -15
+
+        dither_y_amp = obso.get('dither_y_amp')
+        dither_z_amp = obso.get('dither_z_amp')
+        if dither_y_amp is not None and dither_z_amp is not None:
+            dither = (dither_y_amp, dither_z_amp)
+        if dither is None:
+            dither = (20, 20)
+
+    if dark is None:
+        from mica.archive.aca_dark import get_dark_cal_image
+        guis.log(f'getting dark cal image at date={date} t_ccd={t_ccd:.1f}')
+        dark = get_dark_cal_image(date=date, select='before', t_ccd_ref=t_ccd, aca_image=True)
+    else:
+        guis.log('Using supplied dark map (ignores t_ccd)')
+
+    if stars is None or 'row' not in stars.colnames:
+        stars = get_stars(att, date=date, stars=stars, logger=guis.log)
+    else:
+        guis.log('Found "row" col in stars, assuming positions are correct for att')
+
+    # Update the meta with all the useful parameters
+    guis.meta = {'obsid': obsid,
+                 'att': att,
+                 'date': date,
+                 't_ccd': t_ccd,
+                 'dither': dither,
+                 'stars': stars,
+                 'dark': dark,
+                 'n': n}
+
+    # Do a first cut of the stars to get a set of reasonable candidates
+    cand_guis = guis.get_initial_guide_candidates()
+    guis.meta.update({'cand_guis': cand_guis})
+    # Run through search stages to select stars
+    selected = guis.run_search_stages()
+    # Transfer to table (which at this point is an empty table)
+    for name, col in selected.columns.items():
+        guis[name] = col
+    return guis
+
+
+
 class GuideTable(ACACatalogTable):
     # Elements of meta that should not be directly serialized to YAML
     # (either too big or requires special handling).
     yaml_exclude = ('stars', 'cand_guis', 'dark')
-
+    pickle_exclude = ('stars', 'dark')
     # Name of table.  Use to define default file names where applicable.
     # (e.g. `obs19387/guide.yaml`).
     name = 'guide'
-
-    @classmethod
-    def get_guide_catalog(cls, obsid=0, att=None, date=None, t_ccd=None, dither=None, n=8,
-                          stars=None, dark=None, verbose=False, print_log=False):
-        """
-        Get a catalog of guide stars
-
-        If ``obsid`` corresponds to an already-scheduled obsid then the parameters
-        ``att``, ``t_ccd``, ``date``, and ``dither`` will
-        be fetched via ``mica.starcheck`` if not explicitly provided here.
-
-        :param obsid: obsid (default=0)
-        :param att: attitude (any object that can initialize Quat)
-        :param t_ccd: ACA CCD temperature (degC)
-        :param date: date of acquisition (any DateTime-compatible format)
-        :param dither: dither size (float, arcsec)
-        :param n: number of guide stars to attempt to get (default=8)
-        :param stars: astropy.Table of AGASC stars (will be fetched from agasc if None)
-        :param dark: ACAImage of dark map (fetched based on time and t_ccd if None)
-        :param verbose: provide extra logging info (mostly calc_p_safe) (default=False)
-        :param print_log: print the run log to stdout (default=False)
-
-        :returns: GuideTable of acquisition stars
-        """
-
-        guis = cls(print_log=print_log)
-
-        # If an explicit obsid is not provided to all getting parameters via mica
-        # then all other params must be supplied.
-        all_pars = all(x is not None for x in (att, t_ccd, date, dither))
-        if obsid == 0 and not all_pars:
-            raise ValueError('if `obsid` not supplied then all other params are required')
-
-        # If not all params supplied then get via mica for the obsid.
-        if not all_pars:
-            from mica.starcheck import get_starcheck_catalog
-            guis.log(f'getting starcheck catalog for obsid {obsid}')
-
-            obs = get_starcheck_catalog(obsid)
-            obso = obs['obs']
-
-            if att is None:
-                att = [obso['point_ra'], obso['point_dec'], obso['point_roll']]
-            if date is None:
-                date = obso['mp_starcat_time']
-            if t_ccd is None:
-                t_ccd = obs.get('pred_temp') or -15
-
-            dither_y_amp = obso.get('dither_y_amp')
-            dither_z_amp = obso.get('dither_z_amp')
-            if dither_y_amp is not None and dither_z_amp is not None:
-                dither = (dither_y_amp, dither_z_amp)
-            if dither is None:
-                dither = (20, 20)
-
-        if dark is None:
-            from mica.archive.aca_dark import get_dark_cal_image
-            guis.log(f'getting dark cal image at date={date} t_ccd={t_ccd:.1f}')
-            dark = get_dark_cal_image(date=date, select='before', t_ccd_ref=t_ccd, aca_image=True)
-        else:
-            guis.log('Using supplied dark map (ignores t_ccd)')
-
-        if stars is None or 'row' not in stars.colnames:
-            stars = get_stars(att, date=date, stars=stars, logger=guis.log)
-        else:
-            guis.log('Found "row" col in stars, assuming positions are correct for att')
-
-        # Update the meta with all the useful parameters
-        guis.meta = {'obsid': obsid,
-                     'att': att,
-                     'date': date,
-                     't_ccd': t_ccd,
-                     'dither': dither,
-                     'stars': stars,
-                     'dark': dark,
-                     'n': n}
-
-        # Do a first cut of the stars to get a set of reasonable candidates
-        cand_guis = guis.get_initial_guide_candidates()
-        guis.meta.update({'cand_guis': cand_guis})
-        # Run through search stages to select stars
-        selected = guis.run_search_stages()
-        # Transfer to table (which at this point is an empty table)
-        for name, col in selected.columns.items():
-            guis[name] = col
-        return guis
 
     def run_search_stages(self):
         """

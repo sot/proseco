@@ -11,7 +11,7 @@ from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
 from chandra_aca.transform import mag_to_count_rate, count_rate_to_mag
 import agasc
 
-from ..guide import (GuideTable, check_spoil_contrib, get_pixmag_for_offset,
+from ..guide import (get_guide_catalog, check_spoil_contrib, get_pixmag_for_offset,
                      check_mag_spoilers)
 from ..characteristics_guide import mag_spoiler
 
@@ -20,8 +20,7 @@ HAS_SC_ARCHIVE = os.path.exists(mica.starcheck.starcheck.FILES['data_root'])
 
 def test_select():
     # "random" ra/dec/roll
-    gui = GuideTable()
-    selected = gui.get_guide_catalog(att=(10, 20, 3), date='2018:001', dither=(8, 8), t_ccd=-13, n=5)
+    selected = get_guide_catalog(att=(10, 20, 3), date='2018:001', dither=(8, 8), t_ccd=-13, n=5)
     expected_star_ids = [156384720, 155980240, 156376184, 156381600, 156379416]
     assert selected['id'].tolist() == expected_star_ids
 
@@ -29,8 +28,7 @@ def test_select():
 @pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
 def test_obsid_19461():
     # overall poor star field
-    gui = GuideTable()
-    selected = gui.get_guide_catalog(obsid=19461, n=5)
+    selected = get_guide_catalog(obsid=19461, n=5)
     expected_star_ids = [450103048, 450101704, 394003312, 450109160, 450109016]
     assert selected['id'].tolist() == expected_star_ids
 
@@ -43,8 +41,7 @@ def test_common_column_obsid_19904():
     date = '2018:001'
     star_recs = [agasc.get_star(s, date=date) for s in limited_stars]
     stars = Table(rows=star_recs, names=star_recs[0].colnames)
-    gui = GuideTable()
-    selected = gui.get_guide_catalog(att=(248.515786,   -47.373203,   238.665124),
+    selected = get_guide_catalog(att=(248.515786,   -47.373203,   238.665124),
                                      date=date, t_ccd=-20, dither=(8, 8),
                                      stars=stars)
     # Assert the column spoiled one isn't in the list
@@ -58,9 +55,8 @@ def test_box_mag_spoiler():
     date = '2018:001'
     star_recs = [agasc.get_star(s, date=date) for s in limited_stars]
     stars = Table(rows=star_recs, names=star_recs[0].colnames)
-    gui = GuideTable()
     stars['MAG_ACA'][stars['AGASC_ID'] == 688522000] = 16.0
-    selected1 = gui.get_guide_catalog(att=(0, 0, 0), date=date, t_ccd=-20, dither=(8, 8),
+    selected1 = get_guide_catalog(att=(0, 0, 0), date=date, t_ccd=-20, dither=(8, 8),
                                       stars=stars)
     # Confirm the 688523960 star is selected as a nominal star in this config
     assert 688523960 in selected1['id']
@@ -68,7 +64,7 @@ def test_box_mag_spoiler():
     stars = Table(rows=star_recs, names=star_recs[0].colnames)
     stars['MAG_ACA'][stars['AGASC_ID'] == 688522000] = 10.0
     # Confirm the 688523960 star is not selected if the spoiler is brighter
-    selected2 = gui.get_guide_catalog(att=(0, 0, 0), date=date, t_ccd=-20, dither=(8, 8),
+    selected2 = get_guide_catalog(att=(0, 0, 0), date=date, t_ccd=-20, dither=(8, 8),
                                       stars=stars)
     assert 688523960 not in selected2['id']
 
@@ -79,13 +75,12 @@ def test_region_contrib():
     star_recs = [agasc.get_star(s, date=date) for s in limited_stars]
     stars = Table(rows=star_recs, names=star_recs[0].colnames)
     # Only pass the first 5 stars
-    gui = GuideTable()
-    selected1 = gui.get_guide_catalog(att=(8, 47, 0), date=date, t_ccd=-20, dither=(8, 8),
+    selected1 = get_guide_catalog(att=(8, 47, 0), date=date, t_ccd=-20, dither=(8, 8),
                                       stars=stars[0:5])
     assert 426255616 in selected1['id']
     # The last two stars spoil the 5th star via too much light contrib in the region
     # so if we include all the stars, the 5th star should *not* be selected
-    selected2 = gui.get_guide_catalog(att=(8, 47, 0), date=date, t_ccd=-20, dither=(8, 8),
+    selected2 = get_guide_catalog(att=(8, 47, 0), date=date, t_ccd=-20, dither=(8, 8),
                                       stars=stars)
     assert 426255616 not in selected2['id']
 
@@ -94,7 +89,7 @@ def test_region_contrib():
 def test_exclude_bad_star():
     # obsid 17896 attitude
     # Will need to find another bad star, as this one is now excluded via VAR
-    selected = GuideTable().get_guide_catalog(obsid=6820)
+    selected = get_guide_catalog(obsid=6820)
     assert 614606480 not in selected['id']
 
 
@@ -108,8 +103,7 @@ def test_avoid_trap():
     roll1 = 295.078
     star_recs = [agasc.get_star(s, date=date) for s in limited_stars]
     stars = Table(rows=star_recs, names=star_recs[0].colnames)
-    gui = GuideTable()
-    selected1 = gui.get_guide_catalog(att=(ra1, dec1, roll1), date=date, t_ccd=-15, dither=(8, 8),
+    selected1 = get_guide_catalog(att=(ra1, dec1, roll1), date=date, t_ccd=-15, dither=(8, 8),
                                       stars=stars)
     assert selected1['id'].tolist() == limited_stars
     # Roll so that 156381600 is on the trap
@@ -117,15 +111,14 @@ def test_avoid_trap():
     dec2 = 20.147
     roll2 = 297.078
     stars = Table(rows=star_recs, names=star_recs[0].colnames)
-    selected2 = gui.get_guide_catalog(att=(ra2, dec2, roll2), date=date, t_ccd=-15, dither=(8, 8),
+    selected2 = get_guide_catalog(att=(ra2, dec2, roll2), date=date, t_ccd=-15, dither=(8, 8),
                                       stars=stars)
     assert 156381600 not in selected2['id'].tolist()
 
 @pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
 def test_big_dither():
     # Obsid 20168
-    gui = GuideTable()
-    selected = gui.get_guide_catalog(obsid=20168, n=5)
+    selected = get_guide_catalog(obsid=20168, n=5)
     expected = [977409032,  977414712, 977416336, 977282416, 977405808]
     assert selected['id'].tolist() == expected
 
