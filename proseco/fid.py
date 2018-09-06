@@ -79,6 +79,12 @@ class FidTable(ACACatalogTable):
                 stars = acqs.meta['stars']
             if dither is None:
                 dither = acqs.meta['dither']
+            if detector is None:
+                detector = acqs.meta['detector']
+            if sim_offset is None:
+                sim_offset = acqs.meta['sim_offset']
+            if focus_offset is None:
+                focus_offset = acqs.meta['focus_offset']
             if print_log is None:
                 print_log = acqs.print_log
             self.acqs = acqs

@@ -22,6 +22,7 @@ from .core import (get_mag_std, get_stars, ACACatalogTable, bin2x2,
 
 def get_acq_catalog(obsid=0, att=None,
                     man_angle=None, t_ccd=None, date=None, dither=None,
+                    detector=None, sim_offset=None, focus_offset=None,
                     optimize=True, verbose=False, print_log=False):
     """
     Get a catalog of acquisition stars using the algorithm described in
@@ -37,6 +38,9 @@ def get_acq_catalog(obsid=0, att=None,
     :param t_ccd: ACA CCD temperature (degC)
     :param date: date of acquisition (any DateTime-compatible format)
     :param dither: dither size (float, arcsec)
+    :param detector: 'ACIS-S' | 'ACIS-I' | 'HRC-S' | 'HRC-I'
+    :param focus_offset: SIM focus offset [steps] (default=0)
+    :param sim_offset: SIM translation offset from nominal [steps] (default=0)
     :param optimize: optimize star catalog after initial selection (default=True)
     :param verbose: provide extra logging info (mostly calc_p_safe) (default=False)
     :param print_log: print the run log to stdout (default=False)
@@ -70,6 +74,12 @@ def get_acq_catalog(obsid=0, att=None,
             t_ccd = obs['pred_temp']
         if man_angle is None:
             man_angle = obs['manvr']['angle_deg'][0]
+        if detector is None:
+            detector = obso['sci_instr']
+        if sim_offset is None:
+            sim_offset = obso['sim_z_offset_steps']
+        if focus_offset is None:
+            focus_offset = 0
 
         # TO DO: deal with non-square dither pattern, esp. 8 x 64.
         dither_y_amp = obso.get('dither_y_amp')
@@ -88,7 +98,10 @@ def get_acq_catalog(obsid=0, att=None,
                  'date': date,
                  't_ccd': t_ccd,
                  'man_angle': man_angle,
-                 'dither': dither}
+                 'dither': dither,
+                 'detector': detector,
+                 'sim_offset': sim_offset,
+                 'focus_offset': focus_offset}
 
     # Probability of man_err for this observation with a given man_angle.  Used
     # for marginalizing probabilities over different man_errs.

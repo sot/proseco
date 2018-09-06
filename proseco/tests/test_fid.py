@@ -1,8 +1,10 @@
 import numpy as np
 
+from chandra_aca.transform import yagzag_to_pixels
+
 from ..fid import get_fid_positions, get_fid_catalog
 from ..acq import get_acq_catalog
-from chandra_aca.transform import yagzag_to_pixels
+from .test_common import OBS_INFO
 
 
 def test_get_fid_position():
@@ -93,7 +95,7 @@ def test_get_initial_catalog():
     # 20" + 20" + 10" + 100" + 4" = 154".  In this test 2, 4 should be
     # excluded but 5 should be OK.
 
-    acqs = get_acq_catalog(19387)
+    acqs = get_acq_catalog(**OBS_INFO[19387])
     for acq, fid, offset in zip(acqs[:3], fids[:3], [90, 153, 155]):
         #                                           bad, bad, OK
         acq['halfw'] = 100
@@ -101,7 +103,7 @@ def test_get_initial_catalog():
         acq['zang'] = fid['zang'] + offset
         acq['row'], acq['col'] = yagzag_to_pixels(acq['yang'], acq['zang'])
 
-    fids5 = get_fid_catalog(detector='ACIS-S', acqs=acqs)
+    fids5 = get_fid_catalog(acqs=acqs)
     exp = ['<FidTable length=6>',
            '  id    yang     zang     row     col     mag   spoiler_score slot',
            'int64 float64  float64  float64 float64 float64     int64     str3',
