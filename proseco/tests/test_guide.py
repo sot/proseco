@@ -43,8 +43,8 @@ def test_common_column_obsid_19904():
     star_recs = [agasc.get_star(s, date=date) for s in limited_stars]
     stars = Table(rows=star_recs, names=star_recs[0].colnames)
     selected = get_guide_catalog(att=(248.515786,   -47.373203,   238.665124),
-                                     date=date, t_ccd=-20, dither=(8, 8),
-                                     stars=stars)
+                                 date=date, t_ccd=-20, dither=(8, 8),
+                                 stars=stars)
     # Assert the column spoiled one isn't in the list
     assert 1091705224 not in selected['id'].tolist()
     assert selected['id'].tolist() == [1091702440, 1091698696, 1091704824]
@@ -58,7 +58,7 @@ def test_box_mag_spoiler():
     stars = Table(rows=star_recs, names=star_recs[0].colnames)
     stars['MAG_ACA'][stars['AGASC_ID'] == 688522000] = 16.0
     selected1 = get_guide_catalog(att=(0, 0, 0), date=date, t_ccd=-20, dither=(8, 8),
-                                      stars=stars)
+                                  stars=stars)
     # Confirm the 688523960 star is selected as a nominal star in this config
     assert 688523960 in selected1['id']
     # Set the spoiler to be 10th mag and closer to the second star
@@ -66,7 +66,7 @@ def test_box_mag_spoiler():
     stars['MAG_ACA'][stars['AGASC_ID'] == 688522000] = 10.0
     # Confirm the 688523960 star is not selected if the spoiler is brighter
     selected2 = get_guide_catalog(att=(0, 0, 0), date=date, t_ccd=-20, dither=(8, 8),
-                                      stars=stars)
+                                  stars=stars)
     assert 688523960 not in selected2['id']
 
 
@@ -77,12 +77,12 @@ def test_region_contrib():
     stars = Table(rows=star_recs, names=star_recs[0].colnames)
     # Only pass the first 5 stars
     selected1 = get_guide_catalog(att=(8, 47, 0), date=date, t_ccd=-20, dither=(8, 8),
-                                      stars=stars[0:5])
+                                  stars=stars[0:5])
     assert 426255616 in selected1['id']
     # The last two stars spoil the 5th star via too much light contrib in the region
     # so if we include all the stars, the 5th star should *not* be selected
     selected2 = get_guide_catalog(att=(8, 47, 0), date=date, t_ccd=-20, dither=(8, 8),
-                                      stars=stars)
+                                  stars=stars)
     assert 426255616 not in selected2['id']
 
 
@@ -105,7 +105,7 @@ def test_avoid_trap():
     star_recs = [agasc.get_star(s, date=date) for s in limited_stars]
     stars = Table(rows=star_recs, names=star_recs[0].colnames)
     selected1 = get_guide_catalog(att=(ra1, dec1, roll1), date=date, t_ccd=-15, dither=(8, 8),
-                                      stars=stars)
+                                  stars=stars)
     assert selected1['id'].tolist() == limited_stars
     # Roll so that 156381600 is on the trap
     ra2 = 9.769
@@ -113,8 +113,9 @@ def test_avoid_trap():
     roll2 = 297.078
     stars = Table(rows=star_recs, names=star_recs[0].colnames)
     selected2 = get_guide_catalog(att=(ra2, dec2, roll2), date=date, t_ccd=-15, dither=(8, 8),
-                                      stars=stars)
+                                  stars=stars)
     assert 156381600 not in selected2['id'].tolist()
+
 
 @pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
 def test_big_dither():
