@@ -74,7 +74,7 @@ class FidTable(ACACatalogTable):
         :param **kwargs: any other kwargs for Table init
         """
         self.n_fids = n_fids
-        self._fid_set = None
+        self._fid_set = ()
 
         # If acqs (acq catalog) supplied then make a weak reference since that
         # may have a ref to this fid catalog.
@@ -179,7 +179,8 @@ class FidTable(ACACatalogTable):
                 for fid_id in fid_set:
                     if fid_id not in spoils_any_acq:
                         fid = cand_fids.get_id(fid_id)
-                        spoils_any_acq[fid_id] = any(self.spoils(fid, acq)
+                        spoils_any_acq[fid_id] = any(self.spoils(fid, acq['yang'],
+                                                                 acq['zang'], acq['halfw'])
                                                      for acq in self.acqs)
                     if spoils_any_acq[fid_id]:
                         # Loser, don't bother with the rest.
@@ -193,17 +194,19 @@ class FidTable(ACACatalogTable):
                     break
             else:
                 # Tried every set and none were acceptable.
-                fid_set = None
+                fid_set = ()
                 self.log('No acceptable fid set found')
 
-        if fid_set is not None:
+        if fid_set:
             # Transfer fid set columns to self (which at this point is an empty
             # table)
             idxs = [cand_fids.get_id_idx(fid_id) for fid_id in sorted(fid_set)]
             for name, col in cand_fids.columns.items():
                 self[name] = col[idxs]
 
-    def spoils(self, fid, acq):
+        self.fid_set = fid_set
+
+    def spoils(self, fid, acq_yang, acq_zang, acq_halfw):
         """
         Return true if ``fid`` could be within ``acq`` search box.
 
@@ -216,9 +219,9 @@ class FidTable(ACACatalogTable):
         """
         spoiler_margin = (FID.spoiler_margin +
                           self.acqs.meta['dither'] +
-                          acq['halfw'])
-        dy = np.abs(fid['yang'] - acq['yang'])
-        dz = np.abs(fid['zang'] - acq['zang'])
+                          acq_halfw)
+        dy = np.abs(fid['yang'] - acq_yang)
+        dz = np.abs(fid['zang'] - acq_zang)
         return dy < spoiler_margin and dz < spoiler_margin
 
     def get_fid_candidates(self):

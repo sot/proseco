@@ -834,7 +834,7 @@ class AcqProbs:
         self.acqs = acqs
 
         # Convert table row to plain dict for persistence
-        self.acq = {key: acq[key] for key in acq.colnames}
+        self.acq = {key: acq[key] for key in ('yang', 'zang')}
 
         for box_size in CHAR.box_sizes:
             # Need to iterate over man_errs in reverse order because calc_p_brightest
@@ -952,7 +952,7 @@ class AcqProbs:
                 warnings.warn(f'Requested fid spoiler probability for fid '
                               f'{self.acqs.meta["detector"]}-{fid_id} but it is not a candidate')
             else:
-                if fids.spoils(fid, self.acq):
+                if fids.spoils(fid, self.acq['yang'], self.acq['zang'], box_size):
                     p_fid_id_spoiler = 0.0
 
             self._p_fid_id_spoiler[box_size, fid_id] = p_fid_id_spoiler
