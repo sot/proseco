@@ -7,7 +7,6 @@ import chandra_aca.aca_image
 from chandra_aca.transform import mag_to_count_rate, count_rate_to_mag
 from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
 
-
 from . import characteristics as CHAR
 from . import characteristics_guide as GUIDE_CHAR
 
@@ -82,31 +81,34 @@ def get_guide_catalog(obsid=0, att=None, date=None, t_ccd=None, dither=None, n=8
 
     # Update the meta with all the useful parameters
     guides.meta = {'obsid': obsid,
-                 'att': att,
-                 'date': date,
-                 't_ccd': t_ccd,
-                 'dither': dither,
-                 'stars': stars,
-                 'dark': dark,
-                 'n': n}
+                   'att': att,
+                   'date': date,
+                   't_ccd': t_ccd,
+                   'dither': dither,
+                   'stars': stars,
+                   'dark': dark,
+                   'n': n}
 
     # Do a first cut of the stars to get a set of reasonable candidates
     cand_guides = guides.get_initial_guide_candidates()
     guides.meta.update({'cand_guides': cand_guides})
+
     # Run through search stages to select stars
     selected = guides.run_search_stages()
+
     # Transfer to table (which at this point is an empty table)
     for name, col in selected.columns.items():
         guides[name] = col
     return guides
 
 
-
 class GuideTable(ACACatalogTable):
+
     # Elements of meta that should not be directly serialized to YAML
     # (either too big or requires special handling).
     yaml_exclude = ('stars', 'cand_guides', 'dark')
     pickle_exclude = ('stars', 'dark')
+
     # Name of table.  Use to define default file names where applicable.
     # (e.g. `obs19387/guide.yaml`).
     name = 'guide'
@@ -122,6 +124,7 @@ class GuideTable(ACACatalogTable):
         n_guide = self.meta['n']
         for idx, stage in enumerate(GUIDE_CHAR.stages, 1):
             already_selected = np.count_nonzero(cand_guides['stage'] != -1)
+
             # If we don't have enough stage-selected candidates, keep going
             if already_selected < n_guide:
                 stage_ok = self.search_stage(stage)
@@ -157,6 +160,7 @@ class GuideTable(ACACatalogTable):
         stars = self.meta['stars']
         dark = self.meta['dark']
         ok = np.ones(len(cand_guides)).astype(bool)
+
         # Adopt the SAUSAGE convention of a bit array for errors
         # Not all items will be checked for each star (allow short circuit)
         scol = 'stat_{}'.format(stage['Stage'])
@@ -217,6 +221,7 @@ class GuideTable(ACACatalogTable):
         """
         stars = self.meta['stars']
         dark = self.meta['dark']
+
         # Use the primary selection filter from acq, but allow bad color
         # and limit to brighter stars
         ok = ((stars['CLASS'] == 0) &
@@ -305,13 +310,15 @@ def check_spoil_contrib(cand_stars, ok, stars, regfrac, bgthresh):
     for cand in cand_stars[ok]:
         if cand['ASPQ1'] == 0:
             continue
-        pix_dist = np.sqrt(((cand['row'] - stars['row']) **2) + ((cand['col'] - stars['col']) ** 2))
+        pix_dist = np.sqrt(((cand['row'] - stars['row']) ** 2) + ((cand['col'] - stars['col']) ** 2))
         spoilers = ((np.abs(cand['row'] - stars['row']) < 9)
                     & (np.abs(cand['col'] - stars['col']) < 9))
+
         # If there is only one match, it is the candidate so there's nothing to do
         if np.count_nonzero(spoilers) == 1:
             continue
         cand_counts = mag_to_count_rate(cand['MAG_ACA'])
+
         # Get a reasonable AcaImage for the location of the 8x8 for the candidate
         cand_img_region = ACAImage(np.zeros((8, 8)),
                                    row0=int(round(cand['row'])) - 4,
@@ -328,6 +335,7 @@ def check_spoil_contrib(cand_stars, ok, stars, regfrac, bgthresh):
         if np.sum(on_region) > (cand_counts * fraction):
             reg_spoiled[cand_stars['id'] == cand['id']] = True
             continue
+
         # Or consider it spoiled if the star contribution to any background pixel
         # is more than the Nth percentile of the dark current
         for pixlabel in bgpix:
@@ -369,6 +377,7 @@ def check_mag_spoilers(cand_stars, ok, stars, n_sigma):
         pix_dist = np.sqrt(((cand['row'] - stars['row']) **2) + ((cand['col'] - stars['col']) ** 2))
         spoilers = ((np.abs(cand['row'] - stars['row']) < 10)
                     & (np.abs(cand['col'] - stars['col']) < 10))
+
         # If there is only one match, it is the candidate so there's nothing to do
         if np.count_nonzero(spoilers) == 1:
             continue
@@ -409,8 +418,8 @@ def check_column_spoilers(cand_stars, ok, stars, n_sigma):
                      & (direction > 1.0))
         if not np.count_nonzero(pos_spoil) >= 1:
             continue
-        mag_errs =  (n_sigma * np.sqrt(cand['mag_err'] ** 2
-                                       + stars['mag_err'][~stars['offchip']][pos_spoil] ** 2))
+        mag_errs = (n_sigma * np.sqrt(cand['mag_err'] ** 2
+                                      + stars['mag_err'][~stars['offchip']][pos_spoil] ** 2))
         dm = (cand['MAG_ACA'] - stars['MAG_ACA'][~stars['offchip']][pos_spoil] + mag_errs)
         if np.any(dm > GUIDE_CHAR.col_spoiler['MagDiff']):
             column_spoiled[idx] = True
@@ -427,6 +436,7 @@ def get_imposter_mags(cand_stars, dark, dither):
     :returns: array of magnitudes of length cand_stars
     """
     def get_ax_range(r, extent):
+
         # Should come back to this and do something smarter
         # but right now I just want things that bin nicely 2x2
         rminus = int(np.floor(r - row_extent))
@@ -439,6 +449,7 @@ def get_imposter_mags(cand_stars, dark, dither):
         return rminus, rplus
 
     pixmags = []
+
     # Define the 1/2 pixel region as half the 8x8 plus dither
     row_extent = np.ceil(4 + dither[0] * GUIDE_CHAR.ARC_2_PIX)
     col_extent = np.ceil(4 + dither[1] * GUIDE_CHAR.ARC_2_PIX)
@@ -448,8 +459,8 @@ def get_imposter_mags(cand_stars, dark, dither):
         pix = np.array(dark.aca[rminus:rplus, cminus:cplus])
         pixmax = max(np.max(bin2x2(pix)),
                      np.max(bin2x2(pix[1:-1])),
-                     np.max(bin2x2(pix[:,1:-1])),
-                     np.max(bin2x2(pix[1:-1,1:-1])))
+                     np.max(bin2x2(pix[:, 1:-1])),
+                     np.max(bin2x2(pix[1:-1, 1:-1])))
         pixmax_mag = count_rate_to_mag(pixmax)
         pixmags.append(pixmax_mag)
     return np.array(pixmags)
@@ -496,6 +507,7 @@ def has_spoiler_in_box(cand_guides, stars, halfbox=5, magdiff=-4):
             box_spoiled[idx] = True
     return box_spoiled
 
+
 def in_bad_star_list(cand_guides):
     """
     Mark star bad if candidate AGASC ID in bad star list.
@@ -507,6 +519,7 @@ def in_bad_star_list(cand_guides):
     for star in CHAR.bad_star_list:
         bad[cand_guides['id'] == star] = True
     return bad
+
 
 def spoiled_by_bad_pixel(cand_guides, dither):
     """
@@ -520,6 +533,7 @@ def spoiled_by_bad_pixel(cand_guides, dither):
     raw_bp = np.array(CHAR.bad_pixels)
     bp_row = []
     bp_col = []
+
     # Bad pixel entries are [row_min, row_max, col_min, col_max]
     # Convert this to lists of the row and col coords of the bad pixels
     for row in raw_bp:
@@ -540,12 +554,8 @@ def spoiled_by_bad_pixel(cand_guides, dither):
         rplus = int(np.ceil(cand['row'] + row_extent + 1))
         cminus = int(np.floor(cand['col'] - col_extent))
         cplus = int(np.ceil(cand['col'] + col_extent + 1))
+
         # If any bad pixel is in the guide star pixel region, mark as spoiled
         if np.any((bp_row >= rminus) & (bp_row <= rplus) & (bp_col >= cminus) & (bp_col <= cplus)):
             spoiled[idx] = True
     return spoiled
-
-
-
-
-
