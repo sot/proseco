@@ -17,7 +17,7 @@ CCD = GUIDE_CHAR.CCD
 
 
 def get_guide_catalog(obsid=0, att=None, date=None, t_ccd=None, dither=None, n=8,
-                      stars=None, dark=None, verbose=False, print_log=False):
+                      stars=None, dark=None, print_log=False):
     """
     Get a catalog of guide stars
 
@@ -33,7 +33,6 @@ def get_guide_catalog(obsid=0, att=None, date=None, t_ccd=None, dither=None, n=8
     :param n: number of guide stars to attempt to get (default=8)
     :param stars: astropy.Table of AGASC stars (will be fetched from agasc if None)
     :param dark: ACAImage of dark map (fetched based on time and t_ccd if None)
-    :param verbose: provide extra logging info (mostly calc_p_safe) (default=False)
     :param print_log: print the run log to stdout (default=False)
 
     :returns: GuideTable of acquisition stars
