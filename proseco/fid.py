@@ -86,6 +86,27 @@ class FidTable(ACACatalogTable):
                       'dither_acq', 'dither_guide')
 
     @property
+    def fid_set(self):
+        return self._fid_set
+
+    @fid_set.setter
+    def fid_set(self, fid_ids):
+        if fid_ids is None:
+            self._fid_set = None
+
+        if 'cand_fids' not in self.meta:
+            raise ValueError('cannot set fid_set before selecting candidate fids')
+
+        self._fid_set = ()
+        cand_fids_ids = list(self.meta['cand_fids']['id'])
+        for fid_id in sorted(fid_ids):
+            if fid_id in cand_fids_ids:
+                self._fid_set += (fid_id,)
+            else:
+                warnings.warn(f'fid {fid_id} is not in available candidate '
+                              'fid ids {cand_fids_ids}, ignoring')
+
+    @property
     def acqs(self):
         return self._acqs() if hasattr(self, '_acqs') else None
 
@@ -175,6 +196,8 @@ class FidTable(ACACatalogTable):
         idxs = [cand_fids.get_id_idx(fid_id) for fid_id in sorted(fid_set)]
         for name, col in cand_fids.columns.items():
             self[name] = col[idxs]
+
+        self.fid_set = fid_set
 
     def spoils(self, fid, acq):
         """

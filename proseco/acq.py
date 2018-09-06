@@ -80,7 +80,7 @@ def get_acq_catalog(obsid=0, **kwargs):
         acqs.optimize_catalog(acqs.verbose)
 
     # Set p_acq column to be the marginalized probabilities
-    acqs['p_acq'] = [acq['probs'].p_acq_marg[acq['halfw']] for acq in acqs]
+    acqs['p_acq'] = [acq['probs'].p_acq_marg(acq['halfw']) for acq in acqs]
 
     # Sort to make order match the original candidate list order (by
     # increasing mag), and assign a slot.
@@ -299,7 +299,7 @@ class AcqTable(ACACatalogTable):
         for box_size in CHAR.box_sizes:
             # Get array of marginalized (over man_err) p_acq values corresponding
             # to box_size for each of the candidate acq stars.
-            p_acqs_for_box = np.array([acq['probs'].p_acq_marg[box_size] for acq in cand_acqs])
+            p_acqs_for_box = np.array([acq['probs'].p_acq_marg(box_size) for acq in cand_acqs])
 
             self.log(f'Trying search box size {box_size} arcsec', level=1)
 
@@ -368,7 +368,7 @@ class AcqTable(ACACatalogTable):
         cand_acqs['halfw'] = 120
         cand_acqs['halfw'][acq_indices] = box_sizes
         for acq in cand_acqs:
-            acq['p_acq'] = acq['probs'].p_acq_marg[acq['halfw']]
+            acq['p_acq'] = acq['probs'].p_acq_marg(acq['halfw'])
 
         # Finally select the initial catalog
         acqs_init = cand_acqs[acq_indices]
@@ -391,7 +391,7 @@ class AcqTable(ACACatalogTable):
             if p_man_err == 0.0:
                 continue
 
-            p_acqs = [acq['probs'].p_acqs[acq['halfw'], man_err] for acq in self]
+            p_acqs = [acq['probs'].p_acqs(acq['halfw'], man_err) for acq in self]
 
             p_n_cum = prob_n_acq(p_acqs)[1]
             if verbose:
@@ -419,14 +419,14 @@ class AcqTable(ACACatalogTable):
         """
         acq = self[idx]
         orig_halfw = acq['halfw']
-        orig_p_acq = acq['probs'].p_acq_marg[acq['halfw']]
+        orig_p_acq = acq['probs'].p_acq_marg(acq['halfw'])
 
         self.log(f'Optimizing halfw for idx={idx} id={acq["id"]}', id=acq['id'])
 
         # Compute p_safe for each possible halfw for the current star
         p_safes = []
         for box_size in CHAR.box_sizes:
-            new_p_acq = acq['probs'].p_acq_marg[box_size]
+            new_p_acq = acq['probs'].p_acq_marg(box_size)
             # Do not reduce marginalized p_acq to below 0.1.  It can happen that p_safe
             # goes down very slightly with an increase in box size from the original,
             # and then the box size gets stuck there because of the deadband for later
@@ -962,11 +962,18 @@ class AcqProbs:
         :param date: observation date
         :param man_angle: maneuver angle (float, deg)
         """
-        self.p_brightest = {}
-        self.p_acq_model = {}
-        self.p_on_ccd = {}
-        self.p_acqs = {}
-        self.p_acq_marg = {}
+        self._p_brightest = {}
+        self._p_acq_model = {}
+        self._p_on_ccd = {}
+        self._p_acqs = {}
+        self._p_acq_marg = {}
+        self._p_fid_spoiler = {}
+        self._p_fid_id_spoiler = {}
+
+        self.acqs = acqs
+
+        # Convert table row to plain dict for persistence
+        self.acq = {key: acq[key] for key in ('yang', 'zang')}
 
         for box_size in CHAR.box_sizes:
             # Need to iterate over man_errs in reverse order because calc_p_brightest
@@ -974,7 +981,7 @@ class AcqProbs:
             # box sizes.
             for man_err in CHAR.man_errs[::-1]:
                 if man_err > box_size:
-                    p_brightest = self.p_brightest[box_size, man_err] = 0.0
+                    p_brightest = self._p_brightest[box_size, man_err] = 0.0
                 else:
                     # Prob of being brightest in box (function of box_size and
                     # man_err, independently because imposter prob is just a
@@ -982,29 +989,115 @@ class AcqProbs:
                     # function of dither, but that does not vary here.
                     p_brightest = calc_p_brightest(acq, box_size=box_size, stars=stars,
                                                    dark=dark, man_err=man_err, dither=dither)
-                    self.p_brightest[box_size, man_err] = p_brightest
+                    self._p_brightest[box_size, man_err] = p_brightest
 
         # Acquisition probability model value (function of box_size only)
         for box_size in CHAR.box_sizes:
             p_acq_model = acq_success_prob(date=date, t_ccd=t_ccd,
                                            mag=acq['mag'], color=acq['color'],
                                            spoiler=False, halfwidth=box_size)
-            self.p_acq_model[box_size] = p_acq_model
+            self._p_acq_model[box_size] = p_acq_model
 
         # Probability star is in acq box (function of man_err and dither only)
         for man_err in CHAR.man_errs:
             p_on_ccd = calc_p_on_ccd(acq['row'], acq['col'], box_size=man_err + dither)
-            self.p_on_ccd[man_err] = p_on_ccd
+            self._p_on_ccd[man_err] = p_on_ccd
 
-        # All together now!
-        for box_size in CHAR.box_sizes:
+    @property
+    def fid_set(self):
+        fids = self.acqs.fids
+        return () if (fids is None) else fids.fid_set
+
+    def p_on_ccd(self, man_err):
+        return self._p_on_ccd[man_err]
+
+    def p_brightest(self, box_size, man_err):
+        return self._p_brightest[box_size, man_err]
+
+    def p_acq_model(self, box_size):
+        return self._p_acq_model[box_size]
+
+    def p_acqs(self, box_size, man_err):
+        try:
+            return self._p_acqs[box_size, man_err, self.fid_set]
+        except KeyError:
+            p_acq = (self.p_brightest(box_size, man_err) *
+                     self.p_acq_model(box_size) *
+                     self.p_on_ccd(man_err) *
+                     self.p_fid_spoiler(box_size))
+            self._p_acqs[box_size, man_err, self.fid_set] = p_acq
+            return p_acq
+
+    def p_acq_marg(self, box_size):
+        try:
+            return self._p_acq_marg[box_size, self.fid_set]
+        except KeyError:
             p_acq_marg = 0.0
-            for man_err, p_man_err in zip(CHAR.man_errs, acqs.p_man_errs):
-                self.p_acqs[box_size, man_err] = (self.p_brightest[box_size, man_err] *
-                                                  self.p_acq_model[box_size] *
-                                                  self.p_on_ccd[man_err])
-                p_acq_marg += self.p_acqs[box_size, man_err] * p_man_err
-            self.p_acq_marg[box_size] = p_acq_marg
+            for man_err, p_man_err in zip(CHAR.man_errs, self.acqs.p_man_errs):
+                p_acq_marg += self.p_acqs(box_size, man_err) * p_man_err
+            self._p_acq_marg[box_size, self.fid_set] = p_acq_marg
+            return p_acq_marg
+
+    def p_fid_spoiler(self, box_size):
+        """
+        Return the probability multiplier based on any fid in the current fid set spoiling
+        this acq star (within ``box_size``).  The current fid set is a property of the
+        ``fids`` table.  The output value will be 1.0 for no spoilers and 0.0 for one or
+        more spoiler (normally there can be at most one fid spoiler).
+
+        This caches the values in a dict for subsequent access.
+
+        :param box_size: search box size in arcsec
+        :returns: probability multiplier (0 or 1)
+        """
+        fid_set = self.fid_set
+        try:
+            return self._p_fid_spoiler[box_size, fid_set]
+        except KeyError:
+            p_fid_spoiler = 1.0
+
+            # If there are fids then multiplier the individual fid spoiler probs
+            for fid_id in fid_set:
+                p_fid_spoiler *= self.p_fid_id_spoiler(box_size, fid_id)
+            self._p_fid_spoiler[box_size, fid_set] = p_fid_spoiler
+
+            return p_fid_spoiler
+
+    def p_fid_id_spoiler(self, box_size, fid_id):
+        """
+        Return the probability multiplier for fid ``fid_id`` spoiling this acq star (within
+        ``box_size``).  The output value will be 0.0 if this fid spoils this acq, otherwise
+        set to 1.0 (no impact).
+
+        This caches the values in a dict for subsequent access.
+
+        :param box_size: search box size in arcsec
+        :returns: probability multiplier (0 or 1)
+        """
+        try:
+            return self._p_fid_id_spoiler[box_size, fid_id]
+        except KeyError:
+            fids = self.acqs.fids
+            if fids is None:
+                warnings.warn('Requested fid spoiler probability without setting acqs.fids first')
+                return 1.0
+
+            p_fid_id_spoiler = 1.0
+            try:
+                fid = fids.meta['cand_fids'].get_id(fid_id)
+            except (KeyError, IndexError, AssertionError):
+                # This should not happen, but ignore with a warning in any case.  Non-candidate
+                # fid cannot spoil an acq star.
+                warnings.warn(f'Requested fid spoiler probability for fid '
+                              f'{self.acqs.meta["detector"]}-{fid_id} but it is not a candidate')
+            else:
+                if fids.spoils(fid, self.acq['yang'], self.acq['zang'], box_size):
+                    p_fid_id_spoiler = 0.0
+
+            self._p_fid_id_spoiler[box_size, fid_id] = p_fid_id_spoiler
+
+            return p_fid_id_spoiler
+>>>>>>> First steps including fid spoilers to acq probs
 
 
 def get_p_man_err(man_err, man_angle):
