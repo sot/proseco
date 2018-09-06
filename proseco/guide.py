@@ -119,26 +119,26 @@ class GuideTable(ACACatalogTable):
         cand_guis = self.meta['cand_guis']
         self.log("Starting search stages")
         cand_guis['stage'] = -1
-        ncand = self.meta['n']
+        n_guide = self.meta['n']
         for idx, stage in enumerate(GUIDE_CHAR.stages, 1):
             already_selected = np.count_nonzero(cand_guis['stage'] != -1)
-            if idx > 1:
-                self.log(f'{already_selected} stars selected in stage {idx - 1}')
             # If we don't have enough stage-selected candidates, keep going
-            if already_selected < ncand:
+            if already_selected < n_guide:
                 stage_ok = self.search_stage(stage)
                 sel = cand_guis['stage'] == -1
                 cand_guis['stage'][stage_ok & sel] = idx
+                stage_selected = np.count_nonzero(stage_ok & sel)
+                self.log(f'{stage_selected} stars selected in stage {idx}', level=1)
             else:
-                self.log(f'Quitting stages at {idx - 1} already have {already_selected} stars')
+                self.log(f'Quitting after stage {idx - 1} with {already_selected} stars', level=1)
                 break
         self.log('Done with search stages')
         selected = cand_guis[cand_guis['stage'] != -1]
         selected.sort(['stage', 'MAG_ACA'])
-        if len(selected) >= ncand:
-            return selected[0:ncand]
-        if len(selected) < ncand:
-            self.log(f'Could not find {ncand} candidates after all search stages')
+        if len(selected) >= n_guide:
+            return selected[0:n_guide]
+        if len(selected) < n_guide:
+            self.log(f'Could not find {n_guide} candidates after all search stages')
             return selected
 
     def search_stage(self, stage):
