@@ -1,6 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import os
+from pathlib import Path
 import numpy as np
 import itertools
 from astropy.table import Table
@@ -16,7 +16,8 @@ from ..guide import (get_guide_catalog, check_spoil_contrib, get_pixmag_for_offs
 from ..characteristics_guide import mag_spoiler
 
 
-HAS_SC_ARCHIVE = os.path.exists(mica.starcheck.starcheck.FILES['data_root'])
+HAS_SC_ARCHIVE = Path(mica.starcheck.starcheck.FILES['data_root']).exists()
+
 
 def test_select():
     # "random" ra/dec/roll
