@@ -79,6 +79,12 @@ class FidTable(ACACatalogTable):
                 stars = acqs.meta['stars']
             if dither is None:
                 dither = acqs.meta['dither']
+            if detector is None:
+                detector = acqs.meta['detector']
+            if sim_offset is None:
+                sim_offset = acqs.meta['sim_offset']
+            if focus_offset is None:
+                focus_offset = acqs.meta['focus_offset']
             if print_log is None:
                 print_log = acqs.print_log
             self.acqs = acqs
@@ -200,7 +206,6 @@ class FidTable(ACACatalogTable):
         dz = np.abs(fid['zang'] - acq['zang'])
         return (dy < spoiler_margin and dz < spoiler_margin)
 
-
     def get_fid_candidates(self):
         """
         Get all fids for this detector that are on the CCD (with margin) and are not
@@ -305,7 +310,7 @@ class FidTable(ACACatalogTable):
 
         if not np.any(spoil):
             # Make an empty table with same columns
-            fid['spoilers'] = stars[[]]
+            fid['spoilers'] = []
         else:
             stars = stars[spoil]
 
@@ -316,7 +321,7 @@ class FidTable(ACACatalogTable):
 
             spoilers = stars[red | yellow]
             spoilers.sort('mag')
-            spoilers['warn'] = np.where(red, 'red', 'yellow')
+            spoilers['warn'] = np.where(red[red | yellow], 'red', 'yellow')
             fid['spoilers'] = spoilers
 
             if np.any(red):

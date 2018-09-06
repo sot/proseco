@@ -12,9 +12,10 @@ from ..report import make_report
 from ..acq import (get_p_man_err, bin2x2, CHAR,
                    get_imposter_stars, get_stars,
                    get_image_props, calc_p_brightest,
-                   calc_p_on_ccd,
-                   AcqTable,
+                   AcqTable, calc_p_on_ccd,
+                   get_acq_catalog,
                    )
+from .test_common import OBS_INFO
 
 TEST_DATE = '2018:144'  # Fixed date for doing tests
 ATT = [10, 20, 3]  # Arbitrary test attitude
@@ -262,18 +263,11 @@ def test_get_acq_catalog_19387():
 
     From ipython:
     >>> from proseco.acq import AcqTable
-    >>> acqs = AcqTable.get_acq_catalog(19387)
+    >>> acqs = get_acq_catalog(19387)
     >>> TEST_COLS = ('idx', 'slot', 'id', 'yang', 'zang', 'halfw', 'mag', 'p_acq')
     >>> repr(acqs.meta['cand_acqs'][TEST_COLS]).splitlines()
     """
-    obsid = 19387
-    att = [188.617671, 2.211623, 231.249803]
-    date = '2017:182:22:06:22.744'
-    t_ccd = -14.1
-    man_angle = 1.74
-    dither = 4.0
-    acqs = AcqTable.get_acq_catalog(obsid=obsid, att=att, date=date, t_ccd=t_ccd,
-                                    man_angle=man_angle, dither=dither)
+    acqs = get_acq_catalog(**OBS_INFO[19387])
     # Expected
     exp = ['<AcqTable length=11>',
            ' idx  slot    id      yang     zang   halfw   mag    p_acq ',
@@ -298,18 +292,11 @@ def test_get_acq_catalog_21007():
     """Put it all together.  Regression test for selected stars.
     From ipython:
     >>> from proseco.acq import AcqTable
-    >>> acqs = AcqTable.get_acq_catalog(21007)
+    >>> acqs = get_acq_catalog(21007)
     >>> TEST_COLS = ('idx', 'slot', 'id', 'yang', 'zang', 'halfw', 'mag', 'p_acq')
     >>> repr(acqs.meta['cand_acqs'][TEST_COLS]).splitlines()
     """
-    obsid = 21007
-    att = [184.371121, 17.670062, 223.997765]
-    date = '2018:159:11:20:52.162'
-    t_ccd = -11.3
-    man_angle = 60.39
-    dither = 8.0
-    acqs = AcqTable.get_acq_catalog(obsid=obsid, att=att, date=date, t_ccd=t_ccd,
-                                    man_angle=man_angle, dither=dither)
+    acqs = get_acq_catalog(**OBS_INFO[21007])
 
     exp = ['<AcqTable length=14>',
            ' idx  slot     id      yang     zang   halfw   mag    p_acq ',
@@ -337,14 +324,7 @@ def test_box_strategy_20603():
     """Test for PR #32 that doesn't allow p_acq to be reduced below 0.1.
     The idx=8 (mag=10.50) star was previously selected with 160 arsec box.
     """
-    obsid = 20603
-    att = [201.561783, 7.748784, 205.998301]
-    date = '2018:120:19:06:28.154'
-    t_ccd = -11.2
-    man_angle = 111.95
-    dither = 8.0
-    acqs = AcqTable.get_acq_catalog(obsid=obsid, att=att, date=date, t_ccd=t_ccd,
-                                    man_angle=man_angle, dither=dither)
+    acqs = get_acq_catalog(**OBS_INFO[20603])
 
     exp = ['<AcqTable length=13>',
            ' idx  slot     id      yang     zang   halfw   mag    p_acq ',
@@ -369,18 +349,12 @@ def test_box_strategy_20603():
 
 def test_make_report(tmpdir):
     obsid = 19387
-    att = [188.617671, 2.211623, 231.249803]
-    date = '2017:182:22:06:22.744'
-    t_ccd = -14.1
-    man_angle = 1.74
-    dither = 4.0
-    acqs = AcqTable.get_acq_catalog(obsid=obsid, att=att, date=date, t_ccd=t_ccd,
-                                    man_angle=man_angle, dither=dither)
+    acqs = get_acq_catalog(**OBS_INFO[obsid])
 
     tmpdir = Path(tmpdir)
     obsdir = tmpdir / f'obs{obsid:05}'
 
-    acqs.to_yaml(rootdir=tmpdir)
+    acqs.to_pickle(rootdir=tmpdir)
 
     acqs2 = make_report(obsid, rootdir=tmpdir)
 

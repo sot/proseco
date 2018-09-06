@@ -1,4 +1,4 @@
-import weakref
+import pickle
 import inspect
 import time
 from copy import copy
@@ -34,10 +34,11 @@ class ACACatalogTable(Table):
     - Serialization to/from YAML
     - Predefined formatting for nicer representations
     """
-    # Elements of meta that should not be directly serialized to YAML
-    # (either too big or requires special handling).  Should be set by
+    # Elements of meta that should not be directly serialized to YAML (either
+    # too big or requires special handling) or pickle.  Should be set by
     # subclass.
     yaml_exclude = ()
+    pickle_exclude = ()
 
     # Name of table.  Use to define default file names where applicable.
     # Should be set by subclass, e.g. ``name = 'acqs'`` for AcqTable.
@@ -50,9 +51,6 @@ class ACACatalogTable(Table):
         self.log_info['time0'] = time.time()
         self.print_log = print_log
 
-        # Low-tech index to quickly get a row or the row index by `id` column.
-        self._id_index = {}
-
         # Make printed table look nicer.  This is defined in advance
         # and will be applied the first time the table is represented.
         self._default_formats = {'p_acq': '.3f'}
@@ -62,7 +60,9 @@ class ACACatalogTable(Table):
             self._default_formats[name] = '.6f'
 
     def make_index(self):
-        self._id_index.clear()
+        # Low-tech index to quickly get a row or the row index by `id` column.
+        self._id_index = {}
+
         for idx, row in enumerate(self):
             self._id_index[row['id']] = idx
 
@@ -129,6 +129,50 @@ class ACACatalogTable(Table):
                 self[name].format = self._default_formats.pop(name)
 
         return super(ACACatalogTable, self[names])._base_repr_(*args, **kwargs)
+
+    def __getstate__(self):
+        columns, meta = super().__getstate__()
+        meta = meta.copy()
+        meta['log_info'] = self.log_info
+        for attr in self.pickle_exclude:
+            if attr in meta:
+                del meta[attr]
+        return columns, meta
+
+    def __setstate__(self, state):
+        super().__setstate__(state)
+        self.log_info = self.meta['log_info']
+        del self.meta['log_info']
+
+    def to_pickle(self, rootdir='.'):
+        """
+        Write the catalog table as pickle to:
+          ``<rootdir>/obs<obsid>/<name>.pkl``
+
+        :param rootdir: root directory (default='.')
+        """
+        rootdir = Path(rootdir)
+        outdir = rootdir / f'obs{self.meta["obsid"]:05}'
+        if not outdir.exists():
+            outdir.mkdir()
+        outfile = outdir / f'{self.name}.pkl'
+        with open(outfile, 'wb') as fh:
+            pickle.dump(self, fh)
+
+    @classmethod
+    def from_pickle(cls, obsid, rootdir='.'):
+        """
+        Construct table from pickle file in
+          ``<rootdir>/obs<obsid>/<name>.pkl``
+
+        :param obsid: Obsid
+        :param rootdir: root directory (default='.')
+        :returns: catalog table
+        """
+        rootdir = Path(rootdir)
+        infile = rootdir / f'obs{obsid:05}' / f'{cls.name}.pkl'
+        with open(infile, 'rb') as fh:
+            return pickle.load(fh)
 
     def to_yaml_custom(self, out):
         """

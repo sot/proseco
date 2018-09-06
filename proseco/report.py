@@ -59,7 +59,7 @@ def get_p_acqs_table(acq, p_name):
     cols['box \ man_err'] = [f'{box_size}"' for box_size in box_sizes]
     for man_err in man_errs:
         name = f'{man_err}"'
-        cols[name] = [round(acq[p_name].get((box_size, man_err), 0.0), 3)
+        cols[name] = [round(getattr(acq['probs'], p_name).get((box_size, man_err), 0.0), 3)
                       for box_size in box_sizes]
 
     return table_to_html(Table(cols, names=names))
@@ -69,13 +69,8 @@ def get_p_on_ccd_table(acq):
     """
     Make HTML tables for an acq star for the following:
 
-    - ``p_brightest``: probability this star is the brightest in box (function
-        of ``box_size`` and ``man_err``)
-    - ``p_acq_model``: probability of acquisition from the chandra_aca model
-        (function of ``box_size``)
     - ``p_on_ccd``: probability star is on the usable part of the CCD (function
         of ``man_err`` and ``dither``)
-    - ``p_acqs``: product of the above three
     """
     man_errs = CHAR.p_man_errs['man_err_hi']
     names = ['man_err'] + [f'{man_err}"' for man_err in man_errs]
@@ -83,7 +78,7 @@ def get_p_on_ccd_table(acq):
     cols['man_err'] = ['']
     for man_err in man_errs:
         name = f'{man_err}"'
-        cols[name] = [round(acq['p_on_ccd'][man_err], 3)]
+        cols[name] = [round(acq['probs'].p_on_ccd[man_err], 3)]
 
     return table_to_html(Table(cols, names=names))
 
@@ -101,7 +96,7 @@ def get_p_acq_model_table(acq):
     cols['box size'] = ['']
     for box_size in box_sizes:
         name = f'{box_size}"'
-        cols[name] = [round(acq['p_acq_model'][box_size], 3)]
+        cols[name] = [round(acq['probs'].p_acq_model[box_size], 3)]
 
     return table_to_html(Table(cols, names=names))
 
@@ -239,6 +234,9 @@ def make_acq_star_details_report(acqs, cand_acqs, events, context, obsdir):
             plot_imposters(acq, acqs.meta['dark'], acqs.meta['dither'], filename=filename)
 
         if len(acq['imposters']) > 0:
+            if not isinstance(acq['imposters'], Table):
+                acq['imposters'] = Table(acq['imposters'])
+
             names = ('row0', 'col0', 'd_row', 'd_col', 'img_sum', 'mag', 'mag_err')
             fmts = ('d', 'd', '.0f', '.0f', '.0f', '.2f', '.2f')
             imposters = acq['imposters'][names]
@@ -253,6 +251,9 @@ def make_acq_star_details_report(acqs, cand_acqs, events, context, obsdir):
             cca['imposters_table'] = ''
 
         if len(acq['spoilers']) > 0:
+            if not isinstance(acq['spoilers'], Table):
+                acq['spoilers'] = Table(acq['spoilers'])
+
             names = ('id', 'yang', 'zang', 'mag', 'mag_err')
             fmts = ('d', '.1f', '.1f', '.2f', '.2f')
             spoilers = acq['spoilers'][names]
@@ -310,12 +311,12 @@ def make_report(obsid, rootdir='.'):
     print(f'Processing obsid {obsid}')
 
     obsdir = rootdir / f'obs{obsid:05}'
-    acqs = AcqTable.from_yaml(obsid, rootdir)
+    acqs = AcqTable.from_pickle(obsid, rootdir)
     cand_acqs = acqs.meta['cand_acqs']
 
     context = copy(acqs.meta)
 
-    # Get information that is not stored in the info.yaml for space reasons
+    # Get information that is not stored in the acqs pickle for space reasons
     acqs.meta['stars'] = get_stars(acqs.meta['att'], date=acqs.meta['date'])
     _, acqs.meta['bad_stars'] = acqs.get_acq_candidates(acqs.meta['stars'])
 

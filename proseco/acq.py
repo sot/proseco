@@ -5,6 +5,7 @@
 Get a catalog of acquisition stars using the algorithm described in
 https://docs.google.com/presentation/d/1VtFKAW9he2vWIQAnb6unpK4u1bVAVziIdX9TnqRS3a8
 """
+import weakref
 
 import numpy as np
 from scipy import ndimage, stats
@@ -19,141 +20,150 @@ from .core import (get_mag_std, get_stars, ACACatalogTable, bin2x2,
                    get_image_props, pea_reject_image)
 
 
-def get_p_man_err(man_err, man_angle):
+def get_acq_catalog(obsid=0, att=None,
+                    man_angle=None, t_ccd=None, date=None, dither=None,
+                    detector=None, sim_offset=None, focus_offset=None,
+                    optimize=True, verbose=False, print_log=False):
     """
-    Probability for given ``man_err`` given maneuver angle ``man_angle``.
+    Get a catalog of acquisition stars using the algorithm described in
+    https://docs.google.com/presentation/d/1VtFKAW9he2vWIQAnb6unpK4u1bVAVziIdX9TnqRS3a8
+
+    If ``obsid`` corresponds to an already-scheduled obsid then the parameters
+    ``att``, ``man_angle``, ``t_ccd``, ``date``, and ``dither`` will
+    be fetched via ``mica.starcheck`` if not explicitly provided here.
+
+    :param obsid: obsid (default=0)
+    :param att: attitude (any object that can initialize Quat)
+    :param man_angle: maneuver angle (deg)
+    :param t_ccd: ACA CCD temperature (degC)
+    :param date: date of acquisition (any DateTime-compatible format)
+    :param dither: dither size (float, arcsec)
+    :param detector: 'ACIS-S' | 'ACIS-I' | 'HRC-S' | 'HRC-I'
+    :param focus_offset: SIM focus offset [steps] (default=0)
+    :param sim_offset: SIM translation offset from nominal [steps] (default=0)
+    :param optimize: optimize star catalog after initial selection (default=True)
+    :param verbose: provide extra logging info (mostly calc_p_safe) (default=False)
+    :param print_log: print the run log to stdout (default=False)
+
+    :returns: AcqTable of acquisition stars
     """
-    pmea = CHAR.p_man_errs_angles  # [0, 5, 20, 40, 60, 80, 100, 120, 180]
-    pme = CHAR.p_man_errs
-    man_angle_idx = np.searchsorted(pmea, man_angle) if (man_angle > 0) else 1
-    name = '{}-{}'.format(pmea[man_angle_idx - 1], pmea[man_angle_idx])
 
-    man_err_idx = np.searchsorted(pme['man_err_hi'], man_err)
-    if man_err_idx == len(pme):
-        raise ValueError(f'man_err must be <= {pme["man_err_hi"]}')
+    # Make an empty AcqTable object, mostly for logging.  It gets populated
+    # after selecting initial an inital catalog of potential acq stars.
+    acqs = AcqTable(print_log=print_log)
 
-    return pme[name][man_err_idx]
+    # If an explicit obsid is not provided to all getting parameters via mica
+    # then all other params must be supplied.
+    all_pars = all(x is not None for x in (att, man_angle, t_ccd, date, dither))
+    if obsid == 0 and not all_pars:
+        raise ValueError('if `obsid` not supplied then all other params are required')
+
+    # If not all params supplied then get via mica for the obsid.
+    if not all_pars:
+        from mica.starcheck import get_starcheck_catalog
+        acqs.log(f'getting starcheck catalog for obsid {obsid}')
+
+        obs = get_starcheck_catalog(obsid)
+        obso = obs['obs']
+
+        if att is None:
+            att = [obso['point_ra'], obso['point_dec'], obso['point_roll']]
+        if date is None:
+            date = obso['mp_starcat_time']
+        if t_ccd is None:
+            t_ccd = obs['pred_temp']
+        if man_angle is None:
+            man_angle = obs['manvr']['angle_deg'][0]
+        if detector is None:
+            detector = obso['sci_instr']
+        if sim_offset is None:
+            sim_offset = obso['sim_z_offset_steps']
+        if focus_offset is None:
+            focus_offset = 0
+
+        # TO DO: deal with non-square dither pattern, esp. 8 x 64.
+        dither_y_amp = obso.get('dither_y_amp')
+        dither_z_amp = obso.get('dither_z_amp')
+        if dither_y_amp is not None and dither_z_amp is not None:
+            dither = max(dither_y_amp, dither_z_amp)
+
+        if dither is None:
+            dither = 20
+
+    acqs.log(f'getting dark cal image at date={date} t_ccd={t_ccd:.1f}')
+    dark = get_dark_cal_image(date=date, select='before', t_ccd_ref=t_ccd)
+
+    acqs.meta = {'obsid': obsid,
+                 'att': att,
+                 'date': date,
+                 't_ccd': t_ccd,
+                 'man_angle': man_angle,
+                 'dither': dither,
+                 'detector': detector,
+                 'sim_offset': sim_offset,
+                 'focus_offset': focus_offset}
+
+    # Probability of man_err for this observation with a given man_angle.  Used
+    # for marginalizing probabilities over different man_errs.
+    acqs.meta['p_man_errs'] = np.array([get_p_man_err(man_err, acqs.meta['man_angle'])
+                                        for man_err in CHAR.man_errs])
+
+    stars = get_stars(att, date=date, logger=acqs.log)
+    cand_acqs, bad_stars = acqs.get_acq_candidates(stars)
+
+    # Fill in the entire acq['probs'].p_acqs table (which is actual a dict of keyed by
+    # (box_size, man_err) tuples).
+    for acq in cand_acqs:
+        acq['probs'] = AcqProbs(acqs, acq, dither, stars, dark, t_ccd, date,
+                                acqs.meta['man_angle'])
+
+    acqs.get_initial_catalog(cand_acqs, stars=stars, dark=dark, dither=dither,
+                             t_ccd=t_ccd, date=date)
+
+    acqs.meta.update({'cand_acqs': cand_acqs,
+                      'stars': stars,
+                      'dark': dark,
+                      'bad_stars': bad_stars})
+
+    if optimize:
+        acqs.optimize_catalog(verbose)
+
+    # Set p_acq column to be the marginalized probabilities
+    acqs['p_acq'] = [acq['probs'].p_acq_marg[acq['halfw']] for acq in acqs]
+
+    # Sort to make order match the original candidate list order (by
+    # increasing mag), and assign a slot.
+    acqs.sort('idx')
+    acqs['slot'] = np.arange(len(acqs))
+
+    # Add slot to cand_acqs table, putting in '...' if not selected as acq.
+    # This is for convenience in downstream reporting or introspection.
+    slots = [str(acqs.get_id(acq['id'])['slot']) if acq['id'] in acqs['id'] else '...'
+             for acq in cand_acqs]
+    cand_acqs['slot'] = slots
+
+    return acqs
 
 
 class AcqTable(ACACatalogTable):
     # Elements of meta that should not be directly serialized to YAML
     # (either too big or requires special handling).
     yaml_exclude = ('stars', 'cand_acqs', 'dark', 'bad_stars')
+    pickle_exclude = ('stars', 'dark', 'bad_stars')
 
     # Name of table.  Use to define default file names where applicable.
     # (e.g. `obs19387/acqs.yaml`).
     name = 'acqs'
 
-    @classmethod
-    def get_acq_catalog(cls, obsid=0, att=None,
-                        man_angle=None, t_ccd=None, date=None, dither=None,
-                        optimize=True, verbose=False, print_log=False):
+    def get_obs_info(self):
         """
-        Get a catalog of acquisition stars using the algorithm described in
-        https://docs.google.com/presentation/d/1VtFKAW9he2vWIQAnb6unpK4u1bVAVziIdX9TnqRS3a8
+        Convenience method to return the parts of meta that are needed
+        for test_common OBS_INFO.
 
-        If ``obsid`` corresponds to an already-scheduled obsid then the parameters
-        ``att``, ``man_angle``, ``t_ccd``, ``date``, and ``dither`` will
-        be fetched via ``mica.starcheck`` if not explicitly provided here.
-
-        :param obsid: obsid (default=0)
-        :param att: attitude (any object that can initialize Quat)
-        :param man_angle: maneuver angle (deg)
-        :param t_ccd: ACA CCD temperature (degC)
-        :param date: date of acquisition (any DateTime-compatible format)
-        :param dither: dither size (float, arcsec)
-        :param optimize: optimize star catalog after initial selection (default=True)
-        :param verbose: provide extra logging info (mostly calc_p_safe) (default=False)
-        :param print_log: print the run log to stdout (default=False)
-
-        :returns: AcqTable of acquisition stars
         """
-
-        # Make an empty AcqTable object, mostly for logging.  It gets populated
-        # after selecting initial an inital catalog of potential acq stars.
-        acqs = cls(print_log=print_log)
-
-        # If an explicit obsid is not provided to all getting parameters via mica
-        # then all other params must be supplied.
-        all_pars = all(x is not None for x in (att, man_angle, t_ccd, date, dither))
-        if obsid == 0 and not all_pars:
-            raise ValueError('if `obsid` not supplied then all other params are required')
-
-        # If not all params supplied then get via mica for the obsid.
-        if not all_pars:
-            from mica.starcheck import get_starcheck_catalog
-            acqs.log(f'getting starcheck catalog for obsid {obsid}')
-
-            obs = get_starcheck_catalog(obsid)
-            obso = obs['obs']
-
-            if att is None:
-                att = [obso['point_ra'], obso['point_dec'], obso['point_roll']]
-            if date is None:
-                date = obso['mp_starcat_time']
-            if t_ccd is None:
-                t_ccd = obs['pred_temp']
-            if man_angle is None:
-                man_angle = obs['manvr']['angle_deg'][0]
-
-            # TO DO: deal with non-square dither pattern, esp. 8 x 64.
-            dither_y_amp = obso.get('dither_y_amp')
-            dither_z_amp = obso.get('dither_z_amp')
-            if dither_y_amp is not None and dither_z_amp is not None:
-                dither = max(dither_y_amp, dither_z_amp)
-
-            if dither is None:
-                dither = 20
-
-        acqs.log(f'getting dark cal image at date={date} t_ccd={t_ccd:.1f}')
-        dark = get_dark_cal_image(date=date, select='before', t_ccd_ref=t_ccd)
-
-        acqs.meta = {'obsid': obsid,
-                     'att': att,
-                     'date': date,
-                     't_ccd': t_ccd,
-                     'man_angle': man_angle,
-                     'dither': dither}
-
-        # Probability of man_err for this observation with a given man_angle.  Used
-        # for marginalizing probabilities over different man_errs.
-        acqs.meta['p_man_errs'] = np.array([get_p_man_err(man_err, acqs.meta['man_angle'])
-                                            for man_err in CHAR.man_errs])
-
-        stars = get_stars(att, date=date, logger=acqs.log)
-        cand_acqs, bad_stars = acqs.get_acq_candidates(stars)
-
-        # Fill in the entire acq['p_acqs'] table (which is actual a dict of keyed by
-        # (box_size, man_err) tuples).
-        for acq in cand_acqs:
-            acqs.calc_acq_p_vals(acq, dither, stars, dark, t_ccd, date, acqs.meta['man_angle'])
-
-        acqs.get_initial_catalog(cand_acqs, stars=stars, dark=dark, dither=dither,
-                                 t_ccd=t_ccd, date=date)
-
-        acqs.meta.update({'cand_acqs': cand_acqs,
-                          'stars': stars,
-                          'dark': dark,
-                          'bad_stars': bad_stars})
-
-        if optimize:
-            acqs.optimize_catalog(verbose)
-
-        # Set p_acq column to be the marginalized probabilities
-        acqs['p_acq'] = [acq['p_acq_marg'][acq['halfw']] for acq in acqs]
-
-        # Sort to make order match the original candidate list order (by
-        # increasing mag), and assign a slot.
-        acqs.sort('idx')
-        acqs['slot'] = np.arange(len(acqs))
-
-        # Add slot to cand_acqs table, putting in '...' if not selected as acq.
-        # This is for convenience in downstream reporting or introspection.
-        slots = [str(acqs.get_id(acq['id'])['slot']) if acq['id'] in acqs['id'] else '...'
-                 for acq in cand_acqs]
-        cand_acqs['slot'] = slots
-
-        return acqs
+        keys = ('obsid', 'att', 'date', 't_ccd', 'man_angle', 'dither',
+                'detector', 'sim_offset', 'focus_offset')
+        return {key: self.meta[key] for key in keys}
 
     def get_acq_candidates(self, stars, max_candidates=20):
         """
@@ -223,11 +233,7 @@ class AcqTable(ACACatalogTable):
             return [{} for _ in range(len(cand_acqs))]
 
         cand_acqs['p_acq'] = -999.0  # Acq prob for box_size=halfw, marginalized over man_err
-        cand_acqs['p_acqs'] = empty_dicts()  # Dict keyed on (box_size, man_err) (mult next 3)
-        cand_acqs['p_brightest'] = empty_dicts()  # Dict keyed on (box_size, man_err)
-        cand_acqs['p_acq_model'] = empty_dicts()  # Dict keyed on box_size
-        cand_acqs['p_on_ccd'] = empty_dicts()  # Dict keyed on box_size
-        cand_acqs['p_acq_marg'] = empty_dicts()  # Dict keyed on box_size
+        cand_acqs['probs'] = empty_dicts()  # Dict keyed on (box_size, man_err) (mult next 3)
 
         cand_acqs['spoilers'] = None  # Filled in with Table of spoilers
         cand_acqs['imposters'] = None  # Filled in with Table of imposters
@@ -260,7 +266,7 @@ class AcqTable(ACACatalogTable):
         for box_size in CHAR.box_sizes:
             # Get array of marginalized (over man_err) p_acq values corresponding
             # to box_size for each of the candidate acq stars.
-            p_acqs_for_box = np.array([acq['p_acq_marg'][box_size] for acq in cand_acqs])
+            p_acqs_for_box = np.array([acq['probs'].p_acq_marg[box_size] for acq in cand_acqs])
 
             self.log(f'Trying search box size {box_size} arcsec', level=1)
 
@@ -287,67 +293,6 @@ class AcqTable(ACACatalogTable):
                     self.log('Found 8 acq stars, done')
                     return
 
-    def calc_acq_p_vals(self, acq, dither, stars, dark, t_ccd, date, man_angle):
-        """
-        Calculate probabilities related to acquisition, in particular an element
-        in the ``p_acqs`` matrix which specifies star acquisition probability
-        for given search box size and maneuver error.
-
-        This updates the ``acq`` row in place, including these columns:
-
-        - ``p_brightest``: probability this star is the brightest in box (function
-            of ``box_size`` and ``man_err``)
-        - ``p_acq_model``: probability of acquisition from the chandra_aca model
-            (function of ``box_size``)
-        - ``p_on_ccd``: probability star is on the usable part of the CCD (function
-            of ``man_err`` and ``dither``)
-        - ``p_acqs``: product of the above three
-
-        :param acq: row in the acqs table
-        :param dither: dither (arcsec)
-        :param stars: stars table
-        :param dark: dark current map
-        :param t_ccd: CCD temperature (degC)
-        :param date: observation date
-        """
-        for box_size in CHAR.box_sizes:
-            # Need to iterate over man_errs in reverse order because calc_p_brightest
-            # caches interlopers based on first call, so that needs to have the largest
-            # box sizes.
-            for man_err in CHAR.man_errs[::-1]:
-                if man_err > box_size:
-                    p_brightest = acq['p_brightest'][box_size, man_err] = 0.0
-                else:
-                    # Prob of being brightest in box (function of box_size and
-                    # man_err, independently because imposter prob is just a
-                    # function of box_size not man_err).  Technically also a
-                    # function of dither, but that does not vary here.
-                    p_brightest = calc_p_brightest(acq, box_size=box_size, stars=stars, dark=dark,
-                                                   man_err=man_err, dither=dither)
-                    acq['p_brightest'][box_size, man_err] = p_brightest
-
-        # Acquisition probability model value (function of box_size only)
-        for box_size in CHAR.box_sizes:
-            p_acq_model = acq_success_prob(date=date, t_ccd=t_ccd,
-                                           mag=acq['mag'], color=acq['color'],
-                                           spoiler=False, halfwidth=box_size)
-            acq['p_acq_model'][box_size] = p_acq_model
-
-        # Probability star is in acq box (function of man_err and dither only)
-        for man_err in CHAR.man_errs:
-            p_on_ccd = calc_p_on_ccd(acq['row'], acq['col'], box_size=man_err + dither)
-            acq['p_on_ccd'][man_err] = p_on_ccd
-
-        # All together now!
-        for box_size in CHAR.box_sizes:
-            p_acq_marg = 0.0
-            for man_err, p_man_err in zip(CHAR.man_errs, self.meta['p_man_errs']):
-                acq['p_acqs'][box_size, man_err] = (acq['p_brightest'][box_size, man_err] *
-                                                    acq['p_acq_model'][box_size] *
-                                                    acq['p_on_ccd'][man_err])
-                p_acq_marg += acq['p_acqs'][box_size, man_err] * p_man_err
-            acq['p_acq_marg'][box_size] = p_acq_marg
-
     def get_initial_catalog(self, cand_acqs, stars, dark, dither=20, t_ccd=-11.0, date=None):
         """
         Get the initial catalog of up to 8 candidate acquisition stars.
@@ -371,7 +316,7 @@ class AcqTable(ACACatalogTable):
         cand_acqs['halfw'] = 120
         cand_acqs['halfw'][acq_indices] = box_sizes
         for acq in cand_acqs:
-            acq['p_acq'] = acq['p_acq_marg'][acq['halfw']]
+            acq['p_acq'] = acq['probs'].p_acq_marg[acq['halfw']]
 
         # Finally select the initial catalog
         acqs_init = cand_acqs[acq_indices]
@@ -387,7 +332,7 @@ class AcqTable(ACACatalogTable):
             if p_man_err == 0.0:
                 continue
 
-            p_acqs = [acq['p_acqs'][acq['halfw'], man_err] for acq in self]
+            p_acqs = [acq['probs'].p_acqs[acq['halfw'], man_err] for acq in self]
 
             p_n_cum = prob_n_acq(p_acqs)[1]
             if verbose:
@@ -410,14 +355,14 @@ class AcqTable(ACACatalogTable):
         """
         acq = self[idx]
         orig_halfw = acq['halfw']
-        orig_p_acq = acq['p_acq_marg'][acq['halfw']]
+        orig_p_acq = acq['probs'].p_acq_marg[acq['halfw']]
 
         self.log(f'Optimizing halfw for idx={idx} id={acq["id"]}', id=acq['id'])
 
         # Compute p_safe for each possible halfw for the current star
         p_safes = []
         for box_size in CHAR.box_sizes:
-            new_p_acq = acq['p_acq_marg'][box_size]
+            new_p_acq = acq['probs'].p_acq_marg[box_size]
             # Do not reduce marginalized p_acq to below 0.1.  It can happen that p_safe
             # goes down very slightly with an increase in box size from the original,
             # and then the box size gets stuck there because of the deadband for later
@@ -496,7 +441,7 @@ class AcqTable(ACACatalogTable):
                 acq_ids.add(cand_id)
 
             # Get the index of the worst p_acq in the catalog
-            p_acqs = [acq['p_acq_marg'][acq['halfw']] for acq in self]
+            p_acqs = [acq['probs'].p_acq_marg[acq['halfw']] for acq in self]
             idx = np.argsort(p_acqs)[0]
 
             self.log('Trying to use {} mag={:.2f} to replace idx={} with p_acq={:.3f}'
@@ -853,3 +798,87 @@ def calc_p_on_ccd(row, col, box_size):
     return p_on_ccd
 
 
+class AcqProbs:
+    def __init__(self, acqs, acq, dither, stars, dark, t_ccd, date, man_angle):
+        """
+        Calculate probabilities related to acquisition, in particular an element
+        in the ``p_acqs`` matrix which specifies star acquisition probability
+        for given search box size and maneuver error.
+
+        This sets these attributes:
+
+        - ``p_brightest``: probability this star is the brightest in box (function
+            of ``box_size`` and ``man_err``)
+        - ``p_acq_model``: probability of acquisition from the chandra_aca model
+            (function of ``box_size``)
+        - ``p_on_ccd``: probability star is on the usable part of the CCD (function
+            of ``man_err`` and ``dither``)
+        - ``p_acqs``: product of the above three
+
+        :param acqs: acqs table
+        :param acq: row in the candidate acqs table
+        :param dither: dither (arcsec)
+        :param stars: stars table
+        :param dark: dark current map
+        :param t_ccd: CCD temperature (degC)
+        :param date: observation date
+        """
+        self.p_brightest = {}
+        self.p_acq_model = {}
+        self.p_on_ccd = {}
+        self.p_acqs = {}
+        self.p_acq_marg = {}
+
+        for box_size in CHAR.box_sizes:
+            # Need to iterate over man_errs in reverse order because calc_p_brightest
+            # caches interlopers based on first call, so that needs to have the largest
+            # box sizes.
+            for man_err in CHAR.man_errs[::-1]:
+                if man_err > box_size:
+                    p_brightest = self.p_brightest[box_size, man_err] = 0.0
+                else:
+                    # Prob of being brightest in box (function of box_size and
+                    # man_err, independently because imposter prob is just a
+                    # function of box_size not man_err).  Technically also a
+                    # function of dither, but that does not vary here.
+                    p_brightest = calc_p_brightest(acq, box_size=box_size, stars=stars,
+                                                   dark=dark, man_err=man_err, dither=dither)
+                    self.p_brightest[box_size, man_err] = p_brightest
+
+        # Acquisition probability model value (function of box_size only)
+        for box_size in CHAR.box_sizes:
+            p_acq_model = acq_success_prob(date=date, t_ccd=t_ccd,
+                                           mag=acq['mag'], color=acq['color'],
+                                           spoiler=False, halfwidth=box_size)
+            self.p_acq_model[box_size] = p_acq_model
+
+        # Probability star is in acq box (function of man_err and dither only)
+        for man_err in CHAR.man_errs:
+            p_on_ccd = calc_p_on_ccd(acq['row'], acq['col'], box_size=man_err + dither)
+            self.p_on_ccd[man_err] = p_on_ccd
+
+        # All together now!
+        for box_size in CHAR.box_sizes:
+            p_acq_marg = 0.0
+            for man_err, p_man_err in zip(CHAR.man_errs, acqs.meta['p_man_errs']):
+                self.p_acqs[box_size, man_err] = (self.p_brightest[box_size, man_err] *
+                                                  self.p_acq_model[box_size] *
+                                                  self.p_on_ccd[man_err])
+                p_acq_marg += self.p_acqs[box_size, man_err] * p_man_err
+            self.p_acq_marg[box_size] = p_acq_marg
+
+
+def get_p_man_err(man_err, man_angle):
+    """
+    Probability for given ``man_err`` given maneuver angle ``man_angle``.
+    """
+    pmea = CHAR.p_man_errs_angles  # [0, 5, 20, 40, 60, 80, 100, 120, 180]
+    pme = CHAR.p_man_errs
+    man_angle_idx = np.searchsorted(pmea, man_angle) if (man_angle > 0) else 1
+    name = '{}-{}'.format(pmea[man_angle_idx - 1], pmea[man_angle_idx])
+
+    man_err_idx = np.searchsorted(pme['man_err_hi'], man_err)
+    if man_err_idx == len(pme):
+        raise ValueError(f'man_err must be <= {pme["man_err_hi"]}')
+
+    return pme[name][man_err_idx]
