@@ -15,7 +15,7 @@ from .core import (get_stars, bin2x2, ACACatalogTable)
 CCD = GUIDE_CHAR.CCD
 
 
-def get_guide_catalog(obsid=0, att=None, date=None, t_ccd=None, dither=None, n=8,
+def get_guide_catalog(obsid=0, att=None, date=None, t_ccd=None, dither=None, n_guide=None,
                       stars=None, dark=None, print_log=False):
     """
     Get a catalog of guide stars
@@ -29,7 +29,7 @@ def get_guide_catalog(obsid=0, att=None, date=None, t_ccd=None, dither=None, n=8
     :param t_ccd: ACA CCD temperature (degC)
     :param date: date of acquisition (any DateTime-compatible format)
     :param dither: dither size (float, arcsec)
-    :param n: number of guide stars to attempt to get (default=8)
+    :param n_guide: number of guide stars to attempt to get
     :param stars: astropy.Table of AGASC stars (will be fetched from agasc if None)
     :param dark: ACAImage of dark map (fetched based on time and t_ccd if None)
     :param print_log: print the run log to stdout (default=False)
@@ -67,6 +67,10 @@ def get_guide_catalog(obsid=0, att=None, date=None, t_ccd=None, dither=None, n=8
         if dither is None:
             dither = (20, 20)
 
+        if n_guide is None:
+            cat = obs['cat']
+            n_guide = 8 - np.count_nonzero((cat['type'] == 'FID') | (cat['type'] == 'MON'))
+
     if dark is None:
         from mica.archive.aca_dark import get_dark_cal_image
         guides.log(f'getting dark cal image at date={date} t_ccd={t_ccd:.1f}')
@@ -87,7 +91,7 @@ def get_guide_catalog(obsid=0, att=None, date=None, t_ccd=None, dither=None, n=8
                    'dither': dither,
                    'stars': stars,
                    'dark': dark,
-                   'n': n}
+                   'n_guide': n_guide}
 
     # Do a first cut of the stars to get a set of reasonable candidates
     cand_guides = guides.get_initial_guide_candidates()
@@ -121,7 +125,7 @@ class GuideTable(ACACatalogTable):
         cand_guides = self.meta['cand_guides']
         self.log("Starting search stages")
         cand_guides['stage'] = -1
-        n_guide = self.meta['n']
+        n_guide = self.meta['n_guide']
         for idx, stage in enumerate(GUIDE_CHAR.stages, 1):
             already_selected = np.count_nonzero(cand_guides['stage'] != -1)
 
