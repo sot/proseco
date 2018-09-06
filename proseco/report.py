@@ -46,20 +46,16 @@ def get_p_acqs_table(acq, p_name):
 
     - ``p_brightest``: probability this star is the brightest in box (function
         of ``box_size`` and ``man_err``)
-    - ``p_acq_model``: probability of acquisition from the chandra_aca model
-        (function of ``box_size``)
-    - ``p_on_ccd``: probability star is on the usable part of the CCD (function
-        of ``man_err`` and ``dither``)
-    - ``p_acqs``: product of the above three
+    - ``p_acqs``: total probability
     """
     man_errs = CHAR.p_man_errs['man_err_hi']
     box_sizes = sorted(CHAR.box_sizes)
-    names = ['box \ man_err'] + [f'{man_err}"' for man_err in man_errs]
+    names = [r'box \ man_err'] + [f'{man_err}"' for man_err in man_errs]
     cols = {}
-    cols['box \ man_err'] = [f'{box_size}"' for box_size in box_sizes]
+    cols[r'box \ man_err'] = [f'{box_size}"' for box_size in box_sizes]
     for man_err in man_errs:
         name = f'{man_err}"'
-        cols[name] = [round(getattr(acq['probs'], p_name).get((box_size, man_err), 0.0), 3)
+        cols[name] = [round(getattr(acq['probs'], p_name)(box_size, man_err), 3)
                       for box_size in box_sizes]
 
     return table_to_html(Table(cols, names=names))
@@ -78,7 +74,7 @@ def get_p_on_ccd_table(acq):
     cols['man_err'] = ['']
     for man_err in man_errs:
         name = f'{man_err}"'
-        cols[name] = [round(acq['probs'].p_on_ccd[man_err], 3)]
+        cols[name] = [round(acq['probs'].p_on_ccd(man_err), 3)]
 
     return table_to_html(Table(cols, names=names))
 
@@ -96,7 +92,7 @@ def get_p_acq_model_table(acq):
     cols['box size'] = ['']
     for box_size in box_sizes:
         name = f'{box_size}"'
-        cols[name] = [round(acq['probs'].p_acq_model[box_size], 3)]
+        cols[name] = [round(acq['probs'].p_acq_model(box_size), 3)]
 
     return table_to_html(Table(cols, names=names))
 
