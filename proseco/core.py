@@ -1,3 +1,4 @@
+import weakref
 import pickle
 import inspect
 import time
@@ -94,6 +95,31 @@ class ACACatalogTable(Table):
             assert self['id'][idx] == id
 
         return idx
+
+    # Allow for universal cross-references between acq, fid, and guide tables
+    @property
+    def acqs(self):
+        return self._acqs() if hasattr(self, '_acqs') else None
+
+    @acqs.setter
+    def acqs(self, val):
+        self._acqs = weakref.ref(val)
+
+    @property
+    def fids(self):
+        return self._fids() if hasattr(self, '_fids') else None
+
+    @fids.setter
+    def fids(self, val):
+        self._fids = weakref.ref(val)
+
+    @property
+    def guides(self):
+        return self._guides() if hasattr(self, '_guides') else None
+
+    @guides.setter
+    def guides(self, val):
+        self._guides = weakref.ref(val)
 
     def log(self, data, **kwargs):
         # Name of calling functions, starting from top (outermost) and

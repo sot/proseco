@@ -5,7 +5,7 @@
 Get a catalog of fid lights.
 """
 
-import weakref
+import warnings
 
 import numpy as np
 
@@ -17,7 +17,7 @@ from . import characteristics as ACQ
 from .core import ACACatalogTable
 
 
-def get_fid_catalog(*, detector=None, focus_offset=0, sim_offset=0,
+def get_fid_catalog(*, n_fids=3, detector=None, focus_offset=0, sim_offset=0,
                     acqs=None, stars=None, dither=None,
                     print_log=None):
     """
@@ -29,7 +29,7 @@ def get_fid_catalog(*, detector=None, focus_offset=0, sim_offset=0,
     :param dither: dither [arcsec].  Defaults to acqs.meta['dither'] if available.
     :param print_log: print log to stdout (default=False)
     """
-    fids = FidTable(detector=detector, focus_offset=focus_offset,
+    fids = FidTable(n_fids=n_fids, detector=detector, focus_offset=focus_offset,
                     sim_offset=sim_offset, acqs=acqs, stars=stars,
                     dither=dither, print_log=print_log)
 
@@ -57,12 +57,13 @@ class FidTable(ACACatalogTable):
     name = 'fids'
 
     def __init__(self, data=None, *,  # Keyword only from here
-                 detector=None, focus_offset=0, sim_offset=0,
+                 n_fids=3, detector=None, focus_offset=0, sim_offset=0,
                  acqs=None, stars=None, dither=None,
                  print_log=None, **kwargs):
         """
         Table of fid lights, with methods for selection.
 
+        :param n_fids: number of desired fids
         :param detector: 'ACIS-S' | 'ACIS-I' | 'HRC-S' | 'HRC-I'
         :param focus_offset: SIM focus offset [steps] (default=0)
         :param sim_offset: SIM translation offset from nominal [steps] (default=0)
@@ -72,6 +73,9 @@ class FidTable(ACACatalogTable):
         :param print_log: print log to stdout (default=False)
         :param **kwargs: any other kwargs for Table init
         """
+        self.n_fids = n_fids
+        self._fid_set = None
+
         # If acqs (acq catalog) supplied then make a weak reference since that
         # may have a ref to this fid catalog.
         if acqs is not None:
@@ -99,12 +103,25 @@ class FidTable(ACACatalogTable):
                           'stars': stars})
 
     @property
-    def acqs(self):
-        return self._acqs() if hasattr(self, '_acqs') else None
+    def fid_set(self):
+        return self._fid_set
 
-    @acqs.setter
-    def acqs(self, val):
-        self._acqs = weakref.ref(val)
+    @fid_set.setter
+    def fid_set(self, fid_ids):
+        if fid_ids is None:
+            self._fid_set = None
+
+        if 'cand_fids' not in self.meta:
+            raise ValueError('cannot set fid_set before selecting candidate fids')
+
+        self._fid_set = ()
+        cand_fids_ids = list(self.meta['cand_fids']['id'])
+        for fid_id in sorted(fid_ids):
+            if fid_id in cand_fids_ids:
+                self._fid_set += (fid_id,)
+            else:
+                warnings.warn(f'fid {fid_id} is not in available candidate '
+                              'fid ids {cand_fids_ids}, ignoring')
 
     def set_slot_column(self):
         """
@@ -121,7 +138,6 @@ class FidTable(ACACatalogTable):
             slots = [str(self.get_id(fid['id'])['slot']) if fid['id'] in self['id'] else '...'
                      for fid in cand_fids]
             cand_fids['slot'] = slots
-
 
     def set_initial_catalog(self):
         """Set initial fid catalog (fid set) if possible to the first set which is
@@ -187,7 +203,6 @@ class FidTable(ACACatalogTable):
             for name, col in cand_fids.columns.items():
                 self[name] = col[idxs]
 
-
     def spoils(self, fid, acq):
         """
         Return true if ``fid`` could be within ``acq`` search box.
@@ -204,7 +219,7 @@ class FidTable(ACACatalogTable):
                           acq['halfw'])
         dy = np.abs(fid['yang'] - acq['yang'])
         dz = np.abs(fid['zang'] - acq['zang'])
-        return (dy < spoiler_margin and dz < spoiler_margin)
+        return dy < spoiler_margin and dz < spoiler_margin
 
     def get_fid_candidates(self):
         """

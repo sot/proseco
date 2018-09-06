@@ -5,7 +5,7 @@
 Get a catalog of acquisition stars using the algorithm described in
 https://docs.google.com/presentation/d/1VtFKAW9he2vWIQAnb6unpK4u1bVAVziIdX9TnqRS3a8
 """
-import weakref
+import warnings
 
 import numpy as np
 from scipy import ndimage, stats
@@ -114,8 +114,7 @@ def get_acq_catalog(obsid=0, att=None,
     # Fill in the entire acq['probs'].p_acqs table (which is actual a dict of keyed by
     # (box_size, man_err) tuples).
     for acq in cand_acqs:
-        acq['probs'] = AcqProbs(acq, dither, stars, dark, t_ccd, date, acqs.meta['p_man_errs'],
-                                acqs.meta['man_angle'])
+        acq['probs'] = AcqProbs(acqs, acq, dither, stars, dark, t_ccd, date)
 
     acqs.get_initial_catalog(cand_acqs, stars=stars, dark=dark, dither=dither,
                              t_ccd=t_ccd, date=date)
@@ -799,7 +798,7 @@ def calc_p_on_ccd(row, col, box_size):
 
 
 class AcqProbs:
-    def __init__(self, acq, dither, stars, dark, t_ccd, date, p_man_errs, fid_set=None):
+    def __init__(self, acqs, acq, dither, stars, dark, t_ccd, date):
         """
         Calculate probabilities related to acquisition, in particular an element
         in the ``p_acqs`` matrix which specifies star acquisition probability
@@ -829,9 +828,13 @@ class AcqProbs:
         self._p_on_ccd = {}
         self._p_acqs = {}
         self._p_acq_marg = {}
+        self._p_fid_spoiler = {}
+        self._p_fid_id_spoiler = {}
 
-        self.p_man_errs = p_man_errs
-        self.fid_set = fid_set
+        self.acqs = acqs
+
+        # Convert table row to plain dict for persistence
+        self.acq = {key: acq[key] for key in acq.colnames}
 
         for box_size in CHAR.box_sizes:
             # Need to iterate over man_errs in reverse order because calc_p_brightest
@@ -861,6 +864,11 @@ class AcqProbs:
             p_on_ccd = calc_p_on_ccd(acq['row'], acq['col'], box_size=man_err + dither)
             self._p_on_ccd[man_err] = p_on_ccd
 
+    @property
+    def fid_set(self):
+        fids = self.acqs.fids
+        return () if (fids is None) else fids.fid_set
+
     def p_on_ccd(self, man_err):
         return self._p_on_ccd[man_err]
 
@@ -874,9 +882,10 @@ class AcqProbs:
         try:
             return self._p_acqs[box_size, man_err, self.fid_set]
         except KeyError:
-            p_acq = (self._p_brightest[box_size, man_err] *
-                     self._p_acq_model[box_size] *
-                     self._p_on_ccd[man_err])
+            p_acq = (self.p_brightest(box_size, man_err) *
+                     self.p_acq_model(box_size) *
+                     self.p_on_ccd(man_err) *
+                     self.p_fid_spoiler(box_size))
             self._p_acqs[box_size, man_err, self.fid_set] = p_acq
             return p_acq
 
@@ -885,10 +894,70 @@ class AcqProbs:
             return self._p_acq_marg[box_size, self.fid_set]
         except KeyError:
             p_acq_marg = 0.0
-            for man_err, p_man_err in zip(CHAR.man_errs, self.p_man_errs):
+            for man_err, p_man_err in zip(CHAR.man_errs, self.acqs.meta['p_man_errs']):
                 p_acq_marg += self.p_acqs(box_size, man_err) * p_man_err
             self._p_acq_marg[box_size, self.fid_set] = p_acq_marg
             return p_acq_marg
+
+    def p_fid_spoiler(self, box_size):
+        """
+        Return the probability multiplier based on any fid in the current fid set spoiling
+        this acq star (within ``box_size``).  The current fid set is a property of the
+        ``fids`` table.  The output value will be 1.0 for no spoilers and 0.0 for one or
+        more spoiler (normally there can be at most one fid spoiler).
+
+        This caches the values in a dict for subsequent access.
+
+        :param box_size: search box size in arcsec
+        :returns: probability multiplier (0 or 1)
+        """
+        fid_set = self.fid_set
+        try:
+            return self._p_fid_spoiler[box_size, fid_set]
+        except KeyError:
+            p_fid_spoiler = 1.0
+
+            # If there are fids then multiplier the individual fid spoiler probs
+            for fid_id in fid_set:
+                p_fid_spoiler *= self.p_fid_id_spoiler(box_size, fid_id)
+            self._p_fid_spoiler[box_size, fid_set] = p_fid_spoiler
+
+            return p_fid_spoiler
+
+    def p_fid_id_spoiler(self, box_size, fid_id):
+        """
+        Return the probability multiplier for fid ``fid_id`` spoiling this acq star (within
+        ``box_size``).  The output value will be 0.0 if this fid spoils this acq, otherwise
+        set to 1.0 (no impact).
+
+        This caches the values in a dict for subsequent access.
+
+        :param box_size: search box size in arcsec
+        :returns: probability multiplier (0 or 1)
+        """
+        try:
+            return self._p_fid_id_spoiler[box_size, fid_id]
+        except KeyError:
+            fids = self.acqs.fids
+            if fids is None:
+                warnings.warn('Requested fid spoiler probability without setting acqs.fids first')
+                return 1.0
+
+            p_fid_id_spoiler = 1.0
+            try:
+                fid = fids.meta['cand_fids'].get_id(fid_id)
+            except (KeyError, IndexError, AssertionError):
+                # This should not happen, but ignore with a warning in any case.  Non-candidate
+                # fid cannot spoil an acq star.
+                warnings.warn(f'Requested fid spoiler probability for fid '
+                              f'{self.acqs.meta["detector"]}-{fid_id} but it is not a candidate')
+            else:
+                if fids.spoils(fid, self.acq):
+                    p_fid_id_spoiler = 0.0
+
+            self._p_fid_id_spoiler[box_size, fid_id] = p_fid_id_spoiler
+
+            return p_fid_id_spoiler
 
 
 def get_p_man_err(man_err, man_angle):
