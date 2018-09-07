@@ -10,7 +10,7 @@ from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
 from . import characteristics as CHAR
 from . import characteristics_guide as GUIDE_CHAR
 
-from .core import (get_stars, bin2x2, ACACatalogTable)
+from .core import (StarsTable, bin2x2, ACACatalogTable)
 
 CCD = GUIDE_CHAR.CCD
 
@@ -78,10 +78,10 @@ def get_guide_catalog(obsid=0, att=None, date=None, t_ccd=None, dither=None, n_g
     else:
         guides.log('Using supplied dark map (ignores t_ccd)')
 
-    if stars is None or 'row' not in stars.colnames:
-        stars = get_stars(att, date=date, stars=stars, logger=guides.log)
+    if stars is None:
+        stars = StarsTable.from_agasc(att, date=date, logger=guides.log)
     else:
-        guides.log('Found "row" col in stars, assuming positions are correct for att')
+        stars = StarsTable.from_stars(att, stars, logger=guides.log)
 
     # Update the meta with all the useful parameters
     guides.meta = {'obsid': obsid,

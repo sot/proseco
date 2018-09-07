@@ -359,56 +359,84 @@ get_mag_std = interp1d(x=[-10, 6.7, 7.3, 7.8, 8.3, 8.8, 9.2, 9.7, 10.1, 11, 20],
                        kind='linear')
 
 
-def get_stars(att, date=None, radius=1.2, stars=None, logger=None):
-    """
-    Get AGASC stars in the ACA FOV.  This uses the mini-AGASC, so only stars
-    within 3-sigma of 11.5 mag.  TO DO: maybe use the full AGASC, for faint
-    candidate acq stars with large uncertainty.
-    """
-    if logger is None:
-        def logger(*args, **kwargs):
-            return None
+class StarsTable(Table):
+    @staticmethod
+    def get_logger(logger):
+        if logger is not None:
+            return logger
+        else:
+            def null_logger(*args, **kwargs):
+                pass
+            return null_logger
 
-    q_att = Quat(att)
-    if stars is None:
-        logger(f'Getting stars at ra={q_att.ra:.5f} dec={q_att.dec:.4f}')
-        stars = get_agasc_cone(q_att.ra, q_att.dec, radius=radius, date=date)
-        logger(f'Got {len(stars)} stars', level=1)
-    else:
-        logger(f'Updating supplied stars at ra={q_att.ra:.5f} dec={q_att.dec:.4f}')
-    yag, zag = radec2yagzag(stars['RA_PMCORR'], stars['DEC_PMCORR'], q_att)
-    yag *= 3600
-    zag *= 3600
-    row, col = yagzag_to_pixels(yag, zag, allow_bad=True, pix_zero_loc='edge')
+    @classmethod
+    def from_agasc(cls, att, date=None, radius=1.2, logger=None):
+        """
+        Get AGASC stars in the ACA FOV.  This uses the mini-AGASC, so only stars
+        within 3-sigma of 11.5 mag.
+        TO DO: maybe use the full AGASC, for faint candidate acq stars with
+        large uncertainty.
+        """
+        q_att = Quat(att)
+        agasc_stars = get_agasc_cone(q_att.ra, q_att.dec, radius=radius, date=date)
+        stars = StarsTable.from_stars(att, agasc_stars, copy=False)
 
-    stars.remove_columns(AGASC_COLS_DROP)
+        logger = StarsTable.get_logger(logger)
+        logger(f'Got {len(stars)} stars from AGASC at '
+               'ra={q_att.ra:.5f} dec={q_att.dec:.4f}',
+               level=1)
 
-    stars.rename_column('AGASC_ID', 'id')
-    stars.add_column(Column(stars['RA_PMCORR'], name='ra'), index=1)
-    stars.add_column(Column(stars['DEC_PMCORR'], name='dec'), index=2)
-    stars.add_column(Column(yag, name='yang'), index=3)
-    stars.add_column(Column(zag, name='zang'), index=4)
-    stars.add_column(Column(row, name='row'), index=5)
-    stars.add_column(Column(col, name='col'), index=6)
+        return stars
 
-    stars.add_column(Column(stars['MAG_ACA'], name='mag'), index=7)  # For convenience
+    @classmethod
+    def from_stars(cls, att, stars, logger=None, copy=True):
+        """
+        Return a StarsTable from an existing AGASC stars query.  This just updates
+        columns in place.
+        """
+        if isinstance(stars, StarsTable):
+            stars._logger = logger
+            stars.log('stars is a StarsTable, assuming positions are correct for att')
+            return stars
 
-    # Mag_err column is the RSS of the catalog mag err (i.e. systematic error in
-    # the true star mag) and the sample uncertainty in the ACA readout mag
-    # for a star with mag=MAG_ACA.  The latter typically dominates above 9th mag.
-    mag_aca_err = stars['MAG_ACA_ERR'] * 0.01
-    mag_std_dev = get_mag_std(stars['MAG_ACA'])
-    mag_err = np.sqrt(mag_aca_err ** 2 + mag_std_dev ** 2)
-    stars.add_column(Column(mag_err, name='mag_err'), index=8)
+        stars = cls(stars, copy=copy)
+        logger = StarsTable.get_logger(logger)
+        logger(f'Updating star columns for attitude and convenience')
 
-    # Filter stars in or near ACA FOV
-    rcmax = 512.0 + 200 / 5  # 200 arcsec padding around CCD edge
-    ok = (row > -rcmax) & (row < rcmax) & (col > -rcmax) & (col < rcmax)
-    stars = stars[ok]
+        q_att = Quat(att)
+        yag, zag = radec2yagzag(stars['RA_PMCORR'], stars['DEC_PMCORR'], q_att)
+        yag *= 3600
+        zag *= 3600
+        row, col = yagzag_to_pixels(yag, zag, allow_bad=True, pix_zero_loc='edge')
 
-    logger('Finished star processing', level=1)
+        stars.remove_columns(AGASC_COLS_DROP)
 
-    return stars
+        stars.rename_column('AGASC_ID', 'id')
+        stars.add_column(Column(stars['RA_PMCORR'], name='ra'), index=1)
+        stars.add_column(Column(stars['DEC_PMCORR'], name='dec'), index=2)
+        stars.add_column(Column(yag, name='yang'), index=3)
+        stars.add_column(Column(zag, name='zang'), index=4)
+        stars.add_column(Column(row, name='row'), index=5)
+        stars.add_column(Column(col, name='col'), index=6)
+
+        stars.add_column(Column(stars['MAG_ACA'], name='mag'), index=7)  # For convenience
+
+        # Mag_err column is the RSS of the catalog mag err (i.e. systematic error in
+        # the true star mag) and the sample uncertainty in the ACA readout mag
+        # for a star with mag=MAG_ACA.  The latter typically dominates above 9th mag.
+        mag_aca_err = stars['MAG_ACA_ERR'] * 0.01
+        mag_std_dev = get_mag_std(stars['MAG_ACA'])
+        mag_err = np.sqrt(mag_aca_err ** 2 + mag_std_dev ** 2)
+        stars.add_column(Column(mag_err, name='mag_err'), index=8)
+
+        # Filter stars in or near ACA FOV
+        rcmax = 512.0 + 200 / 5  # 200 arcsec padding around CCD edge
+        ok = (row > -rcmax) & (row < rcmax) & (col > -rcmax) & (col < rcmax)
+        stars = stars[ok]
+
+        logger('Finished star processing', level=1)
+
+        return stars
 
 
 def bin2x2(arr):

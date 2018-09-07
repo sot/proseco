@@ -16,7 +16,7 @@ from chandra_aca.transform import (pixels_to_yagzag, mag_to_count_rate)
 from mica.archive.aca_dark.dark_cal import get_dark_cal_image
 
 from . import characteristics as CHAR
-from .core import (get_mag_std, get_stars, ACACatalogTable, bin2x2,
+from .core import (get_mag_std, StarsTable, ACACatalogTable, bin2x2,
                    get_image_props, pea_reject_image)
 
 
@@ -108,7 +108,7 @@ def get_acq_catalog(obsid=0, att=None,
     acqs.meta['p_man_errs'] = np.array([get_p_man_err(man_err, acqs.meta['man_angle'])
                                         for man_err in CHAR.man_errs])
 
-    stars = get_stars(att, date=date, logger=acqs.log)
+    stars = StarsTable.from_agasc(att, date=date, logger=acqs.log)
     cand_acqs, bad_stars = acqs.get_acq_candidates(stars)
 
     # Fill in the entire acq['probs'].p_acqs table (which is actual a dict of keyed by
