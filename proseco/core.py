@@ -376,6 +376,14 @@ class StarsTable(Table):
         within 3-sigma of 11.5 mag.
         TO DO: maybe use the full AGASC, for faint candidate acq stars with
         large uncertainty.
+        TO DO: AGASC version selector?
+
+        :param att: any Quat-compatible attitude
+        :param date: DateTime compatible date for star proper motion (default=NOW)
+        :param radius: star cone radius [deg] (default=1.2)
+        :param logger: logger object (default=None)
+
+        :returns: StarsTable of stars
         """
         q_att = Quat(att)
         agasc_stars = get_agasc_cone(q_att.ra, q_att.dec, radius=radius, date=date)
@@ -393,14 +401,21 @@ class StarsTable(Table):
         """
         Return a StarsTable from an existing AGASC stars query.  This just updates
         columns in place.
+
+        :param att: any Quat-compatible attitude
+        :param stars: Table of stars
+        :param logger: logger object (default=None)
+        :param copy: copy ``stars`` table columns
+
+        :returns: StarsTable of stars
         """
+        logger = StarsTable.get_logger(logger)
+
         if isinstance(stars, StarsTable):
-            stars._logger = logger
-            stars.log('stars is a StarsTable, assuming positions are correct for att')
+            logger('stars is a StarsTable, assuming positions are correct for att')
             return stars
 
         stars = cls(stars, copy=copy)
-        logger = StarsTable.get_logger(logger)
         logger(f'Updating star columns for attitude and convenience')
 
         q_att = Quat(att)
@@ -437,6 +452,36 @@ class StarsTable(Table):
         logger('Finished star processing', level=1)
 
         return stars
+
+    @classmethod
+    def fake_stars(cls, att):
+        """
+        Return an empty StarsTable suitable for subsequently using ``add_star()``.
+
+        :param att: any Quat-compatible attitude
+        :returns: StarsTable of stars (empty)
+        """
+        return cls.from_agasc(att, radius=-1)
+
+    def add_star(self, **star):
+        """
+        Add a ``star`` (via keyword args) to the current StarsTable.
+
+        The input kwargs must have at least:
+        - id
+        - yang/zang, ra/dec, or row/col
+        - mag
+        - mag_err (defaults to 0.1)
+
+        Mag_err is set to 0.1 if not provided.  Yang/zang, ra/dec, and row/col
+        RA/DEC_PMCORR, MAG_ACA, MAG_ACA_ERR will all be set according to the
+        primary inputs unless explicitly provided.  All the rest will be set
+        to default "good"" values that will preclude initial exclusion of the star.
+
+        :param **star: keyword arg attributes corresponding to StarTable columns
+        """
+        # TO BE DONE!
+        pass
 
 
 def bin2x2(arr):
