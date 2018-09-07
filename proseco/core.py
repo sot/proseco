@@ -122,6 +122,54 @@ class ACACatalogTable(Table):
 
         return idx
 
+    @property
+    def acqs(self):
+        return self.meta.get('acqs')
+
+    @acqs.setter
+    def acqs(self, val):
+        self.meta['acqs'] = val
+
+    @property
+    def fids(self):
+        return self.meta.get('fids')
+
+    @fids.setter
+    def fids(self, val):
+        self.meta['fids'] = val
+
+    @property
+    def guides(self):
+        return self.meta.get('guides')
+
+    @guides.setter
+    def guides(self, val):
+        self.meta['guides'] = val
+
+    @property
+    def thumbs_up(self):
+        return self.meta.get('thumbs_up')
+
+    @thumbs_up.setter
+    def thumbs_up(self, val):
+        self.meta['thumbs_up'] = val
+
+    @property
+    def warnings(self):
+        return self.meta.get('warnings')
+
+    @warnings.setter
+    def warnings(self, val):
+        self.meta['warnings'] = val
+
+    @property
+    def errors(self):
+        return self.meta.get('errors')
+
+    @errors.setter
+    def errors(self, val):
+        self.meta['errors'] = val
+
     def log(self, data, **kwargs):
         # Name of calling functions, starting from top (outermost) and
         # ending with function that called log()
