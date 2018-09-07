@@ -9,10 +9,33 @@ import yaml
 from scipy.interpolate import interp1d
 from astropy.table import Table, Column
 
-from chandra_aca.transform import yagzag_to_pixels, count_rate_to_mag
-from Ska.quatutil import radec2yagzag
+from chandra_aca.transform import yagzag_to_pixels, count_rate_to_mag, pixels_to_yagzag
+from Ska.quatutil import radec2yagzag, yagzag2radec
 from agasc import get_agasc_cone
 from Quaternion import Quat
+
+
+def yagzag_to_radec(yag, zag, att):
+    """
+    Convert yag, zag [arcsec] to ra, dec [deg] for attitude ``att``.
+
+    :param yag: y-angle [arcsec]
+    :param zag: z-angle [arcsec]
+    :returns: ra, dec [deg]
+    """
+    return yagzag2radec(yag / 3600, zag / 3600, att)
+
+
+def radec_to_yagzag(ra, dec, att):
+    """
+    Convert ra, dec [deg] to yag, zag [arcsec] for attitude ``att``.
+
+    :param ra: RA [deg]
+    :param dec: Dec [deg]
+    :returns: yag, zag [arcsec]
+    """
+    yag, zag = radec2yagzag(ra, dec, att)
+    return yag * 3600, zag * 3600
 
 
 def to_python(val):
@@ -418,7 +441,7 @@ class StarsTable(Table):
         stars = cls(stars, copy=copy)
         logger(f'Updating star columns for attitude and convenience')
 
-        q_att = Quat(att)
+        q_att = stars.meta['q_att'] = Quat(att)
         yag, zag = radec2yagzag(stars['RA_PMCORR'], stars['DEC_PMCORR'], q_att)
         yag *= 3600
         zag *= 3600
@@ -449,6 +472,13 @@ class StarsTable(Table):
         ok = (row > -rcmax) & (row < rcmax) & (col > -rcmax) & (col < rcmax)
         stars = stars[ok]
 
+        # Make printed table look nicer.  This is defined in advance
+        # and will be applied the first time the table is represented.
+        for name in ('yang', 'zang', 'row', 'col', 'mag', 'mag_err', 'COLOR1'):
+            stars[name].format = '.2f'
+        for name in ('ra', 'dec', 'RA_PMCORR', 'DEC_PMCORR'):
+            stars[name].format = '.6f'
+
         logger('Finished star processing', level=1)
 
         return stars
@@ -465,11 +495,10 @@ class StarsTable(Table):
 
     def add_star(self, **star):
         """
-        Add a ``star`` (via keyword args) to the current StarsTable.
+        Add a star (via keyword args) to the current StarsTable.
 
         The input kwargs must have at least:
-        - id
-        - yang/zang, ra/dec, or row/col
+        - One of yang/zang, ra/dec, or row/col
         - mag
         - mag_err (defaults to 0.1)
 
@@ -480,8 +509,37 @@ class StarsTable(Table):
 
         :param **star: keyword arg attributes corresponding to StarTable columns
         """
-        # TO BE DONE!
-        pass
+        names = ['id', 'ra', 'dec', 'yang', 'zang', 'row', 'col', 'mag', 'mag_err',
+                 'POS_ERR', 'PM_RA', 'PM_DEC', 'MAG_ACA',
+                 'MAG_ACA_ERR', 'CLASS', 'COLOR1', 'COLOR1_ERR', 'VAR', 'ASPQ1',
+                 'ASPQ2', 'ASPQ3', 'RA_PMCORR', 'DEC_PMCORR']
+        out = {name: star.get(name, 0) for name in names}
+        out['mag_err'] = star.get('mag_err', 0.1)
+
+        q_att = self.meta['q_att']
+        if 'ra' in star and 'dec' in star:
+            out['yang'], out['zang'] = radec_to_yagzag(out['ra'], out['dec'], q_att)
+            out['row'], out['col'] = yagzag_to_pixels(out['yang'], out['zang'],
+                                                      allow_bad=True)
+
+        elif 'yang' in star and 'zang' in star:
+            out['ra'], out['dec'] = yagzag2radec(out['yang'], out['zang'], q_att)
+            out['row'], out['col'] = yagzag_to_pixels(out['yang'], out['zang'],
+                                                      allow_bad=True)
+
+        elif 'row' in star and 'col' in star:
+            out['yang'], out['zang'] = pixels_to_yagzag(out['row'], out['col'],
+                                                        allow_bad=True)
+            out['ra'], out['dec'] = yagzag_to_radec(out['yang'], out['zang'], q_att)
+
+        else:
+            raise ValueError('Input requires at least one of yang/zang, ra/dec, or row/col')
+
+        out['RA_PMCORR'] = out['ra']
+        out['DEC_PMCORR'] = out['dec']
+        out['MAG_ACA'] = out['mag']
+
+        self.add_row(out)
 
 
 def bin2x2(arr):
