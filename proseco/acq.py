@@ -5,7 +5,6 @@
 Get a catalog of acquisition stars using the algorithm described in
 https://docs.google.com/presentation/d/1VtFKAW9he2vWIQAnb6unpK4u1bVAVziIdX9TnqRS3a8
 """
-import weakref
 
 import numpy as np
 from scipy import ndimage, stats
@@ -151,6 +150,9 @@ def get_acq_catalog(obsid=0, att=None,
 
 
 class AcqTable(ACACatalogTable):
+    """
+    Catalog of acquisition stars
+    """
     # Elements of meta that should not be directly serialized to YAML
     # (either too big or requires special handling).
     yaml_exclude = ('stars', 'cand_acqs', 'dark', 'bad_stars')
