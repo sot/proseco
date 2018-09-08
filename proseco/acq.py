@@ -22,7 +22,7 @@ from .core import (get_mag_std, StarsTable, ACACatalogTable, bin2x2,
 
 def get_acq_catalog(obsid=0, att=None,
                     man_angle=None, t_ccd=None, date=None, dither=None,
-                    detector=None, sim_offset=None, focus_offset=None,
+                    detector=None, sim_offset=None, focus_offset=None, stars=None,
                     optimize=True, verbose=False, print_log=False):
     """
     Get a catalog of acquisition stars using the algorithm described in
@@ -39,8 +39,9 @@ def get_acq_catalog(obsid=0, att=None,
     :param date: date of acquisition (any DateTime-compatible format)
     :param dither: dither size (float, arcsec)
     :param detector: 'ACIS-S' | 'ACIS-I' | 'HRC-S' | 'HRC-I'
-    :param focus_offset: SIM focus offset [steps] (default=0)
     :param sim_offset: SIM translation offset from nominal [steps] (default=0)
+    :param focus_offset: SIM focus offset [steps] (default=0)
+    :param stars: table of AGASC stars (will be fetched from agasc if None)
     :param optimize: optimize star catalog after initial selection (default=True)
     :param verbose: provide extra logging info (mostly calc_p_safe) (default=False)
     :param print_log: print the run log to stdout (default=False)
@@ -108,7 +109,11 @@ def get_acq_catalog(obsid=0, att=None,
     acqs.meta['p_man_errs'] = np.array([get_p_man_err(man_err, acqs.meta['man_angle'])
                                         for man_err in CHAR.man_errs])
 
-    stars = StarsTable.from_agasc(att, date=date, logger=acqs.log)
+    if stars is None:
+        stars = StarsTable.from_agasc(att, date=date, logger=acqs.log)
+    else:
+        stars = StarsTable.from_stars(att, stars, logger=acqs.log)
+
     cand_acqs, bad_stars = acqs.get_acq_candidates(stars)
 
     # Fill in the entire acq['probs'].p_acqs table (which is actual a dict of keyed by
