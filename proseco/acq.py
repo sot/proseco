@@ -184,12 +184,12 @@ class AcqTable(ACACatalogTable):
         :returns: Table of candidates, indices of rejected stars
         """
         ok = ((stars['CLASS'] == 0) &
-              (stars['MAG_ACA'] > 5.9) &
-              (stars['MAG_ACA'] < 11.0) &
+              (stars['mag'] > 5.9) &
+              (stars['mag'] < 11.0) &
               (~np.isclose(stars['COLOR1'], 0.7)) &
               (np.abs(stars['row']) < CHAR.max_ccd_row) &  # Max usable row
               (np.abs(stars['col']) < CHAR.max_ccd_col) &  # Max usable col
-              (stars['MAG_ACA_ERR'] < 100) &  # Mag err < 1.0 mag
+              (stars['mag_err'] < 1.0) &  # Mag err < 1.0 mag
               (stars['ASPQ1'] < 20) &  # Less than 1 arcsec offset from nearby spoiler
               (stars['ASPQ2'] == 0) &  # Proper motion less than 0.5 arcsec/yr
               (stars['POS_ERR'] < 3000) &  # Position error < 3.0 arcsec
@@ -201,9 +201,9 @@ class AcqTable(ACACatalogTable):
 
         bads = ~ok
         cand_acqs = stars[ok]
-        cand_acqs.sort('MAG_ACA')
-        self.log('Filtering on CLASS, MAG_ACA, COLOR1, row/col, '
-                 'MAG_ACA_ERR, ASPQ1/2, POS_ERR:')
+        cand_acqs.sort('mag')
+        self.log('Filtering on CLASS, mag, COLOR1, row/col, '
+                 'mag_err, ASPQ1/2, POS_ERR:')
         self.log(f'Reduced star list from {len(stars)} to '
                  f'{len(cand_acqs)} candidate acq stars')
 
@@ -215,7 +215,7 @@ class AcqTable(ACACatalogTable):
         for ii, acq in enumerate(cand_acqs):
             bad = ((np.abs(acq['yang'] - stars['yang']) < 30) &
                    (np.abs(acq['zang'] - stars['zang']) < 30) &
-                   (stars['MAG_ACA'] - acq['MAG_ACA'] < 3))
+                   (stars['mag'] - acq['mag'] < 3))
             if np.count_nonzero(bad) == 1:  # Self always matches
                 goods.append(ii)
             if len(goods) == max_candidates:
@@ -519,7 +519,7 @@ def get_spoiler_stars(stars, acq, box_size):
     background subtraction and warm pixel corruption of background.
     """
     stars = stars.as_array()
-    # 1-sigma of difference of stars['MAG_ACA'] - acq['MAG_ACA']
+    # 1-sigma of difference of stars['mag'] - acq['mag']
     # TO DO: lower limit clip?
     mag_diff_err = np.sqrt(stars['mag_err'] ** 2 + acq['mag_err'] ** 2)
 
