@@ -1,3 +1,14 @@
+# Vanilla observation info
+STD_INFO = dict(obsid=1,
+                att=(0, 0, 0),
+                detector='ACIS-S',
+                sim_offset=0,
+                focus_offset=0,
+                date='2018:001',
+                t_ccd=-11,
+                man_angle=90,
+                dither=8.0)
+
 # Parameters for test cases (to avoid starcheck.db3 dependence)
 OBS_INFO = {}
 
