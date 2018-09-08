@@ -10,7 +10,7 @@ from chandra_aca.transform import mag_to_count_rate, yagzag_to_pixels
 
 from ..report import make_report
 from ..acq import (get_p_man_err, bin2x2, CHAR,
-                   get_imposter_stars, get_stars,
+                   get_imposter_stars, StarsTable,
                    get_image_props, calc_p_brightest,
                    AcqTable, calc_p_on_ccd,
                    get_acq_catalog,
@@ -157,7 +157,7 @@ def test_get_imposters_5000():
 
 def get_test_stars():
     if 'stars' not in CACHE:
-        CACHE['stars'] = get_stars(ATT, date='2018:230')
+        CACHE['stars'] = StarsTable.from_agasc(ATT, date='2018:230')
     return CACHE['stars']
 
 

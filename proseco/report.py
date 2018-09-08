@@ -18,7 +18,7 @@ from astropy.table import Table, Column
 from chandra_aca.aca_image import ACAImage
 
 from . import characteristics as CHAR
-from .acq import AcqTable, get_stars
+from .acq import AcqTable, StarsTable
 from chandra_aca import plot as plot_aca
 from mica.archive.aca_dark.dark_cal import get_dark_cal_image
 
@@ -156,7 +156,7 @@ def make_cand_acqs_report(acqs, cand_acqs, events, context, obsdir):
     context['cand_acqs_table'] = table_to_html(cand_acqs_table)
 
     context['cand_acqs_events'] = select_events(events, ('get_acq_catalog',
-                                                         'get_stars',
+                                                         'from_agasc',
                                                          'get_acq_candidates'))
 
     # Now plot figure
@@ -317,7 +317,7 @@ def make_report(obsid, rootdir='.'):
     context = copy(acqs.meta)
 
     # Get information that is not stored in the acqs pickle for space reasons
-    acqs.meta['stars'] = get_stars(acqs.meta['att'], date=acqs.meta['date'])
+    acqs.meta['stars'] = StarsTable.from_agasc(acqs.meta['att'], date=acqs.meta['date'])
     _, acqs.meta['bad_stars'] = acqs.get_acq_candidates(acqs.meta['stars'])
 
     events = make_events(acqs)

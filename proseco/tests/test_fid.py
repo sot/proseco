@@ -4,7 +4,12 @@ from chandra_aca.transform import yagzag_to_pixels
 
 from ..fid import get_fid_positions, get_fid_catalog
 from ..acq import get_acq_catalog
-from .test_common import OBS_INFO
+from ..core import StarsTable
+from .test_common import OBS_INFO, STD_INFO
+
+
+# Reference fid positions for spoiling tests
+FIDS = get_fid_catalog(detector='ACIS-S')
 
 
 def test_get_fid_position():
@@ -83,26 +88,31 @@ def test_get_initial_catalog():
     fids4 = get_fid_catalog(detector='ACIS-S', stars=stars[:4], dither=8)
     assert len(fids4) == 0
 
-    # Check fid spoiling acq:
-    # - 20" (4 pix) positional err on fid light
-    # - 4 pixel readout halfw for fid light
-    # - 2 pixel PSF of fid light that could creep into search box
-    # - Acq search box half-width
-    # - Dither amplitude (since OBC adjusts search box for dither)
-    #
-    # Fudge existing acqs so that acqs[0, 1, 2] are spoiled by fid 2, 4, 5
-    # respectively.  Set those halfw=100, so the threshold is:
-    # 20" + 20" + 10" + 100" + 4" = 154".  In this test 2, 4 should be
-    # excluded but 5 should be OK.
 
-    acqs = get_acq_catalog(**OBS_INFO[19387])
-    for acq, fid, offset in zip(acqs[:3], fids[:3], [90, 153, 155]):
-        #                                           bad, bad, OK
-        acq['halfw'] = 100
-        acq['yang'] = fid['yang'] + offset
-        acq['zang'] = fid['zang'] + offset
-        acq['row'], acq['col'] = yagzag_to_pixels(acq['yang'], acq['zang'])
+def test_fid_spoiling_acq():
+    """
+    Check fid spoiling acq:
+    - 20" (4 pix) positional err on fid light
+    - 4 pixel readout halfw for fid light
+    - 2 pixel PSF of fid light that could creep into search box
+    - Acq search box half-width
+    - Dither amplitude (since OBC adjusts search box for dither)
 
+    For this case (100" halfw and 8" dither) the threshold for spoiling
+    is 20 + 20 + 10 + 100 + 8 = 158".  So this test puts stars at the
+    positions of ACIS-S 2, 4, 5 but offset by 90, 157 and 159 arcsec.
+    Only ACIS-S-5 is allowed, so we end up with the first fid set using
+    1, 3, 5, 6, which is 1, 5, 6.
+    """
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(n_stars=5)
+
+    for fid, offset in zip(FIDS[:3], [90, 157, 159]):
+        stars.add_fake_star(yang=fid['yang'] + offset,
+                            zang=fid['zang'] + offset, mag=7.0)
+
+    acqs = get_acq_catalog(stars=stars, **STD_INFO)
+    acqs['halfw'] = 100
     fids5 = get_fid_catalog(acqs=acqs)
     exp = ['<FidTable length=6>',
            '  id    yang     zang     row     col     mag   spoiler_score slot',
@@ -114,6 +124,7 @@ def test_get_initial_catalog():
            '    4  2140.23   166.63 -424.51   39.13    7.00             0  ...',
            '    5 -1826.28   160.17  372.97   36.47    7.00             0    1',
            '    6   388.59   803.75  -71.49  166.10    7.00             0    2']
+
     assert repr(fids5.meta['cand_fids']).splitlines() == exp
 
 

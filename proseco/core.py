@@ -9,10 +9,33 @@ import yaml
 from scipy.interpolate import interp1d
 from astropy.table import Table, Column
 
-from chandra_aca.transform import yagzag_to_pixels, count_rate_to_mag
-from Ska.quatutil import radec2yagzag
-from agasc import get_agasc_cone
+from chandra_aca.transform import yagzag_to_pixels, count_rate_to_mag, pixels_to_yagzag
+from Ska.quatutil import radec2yagzag, yagzag2radec
+import agasc
 from Quaternion import Quat
+
+
+def yagzag_to_radec(yag, zag, att):
+    """
+    Convert yag, zag [arcsec] to ra, dec [deg] for attitude ``att``.
+
+    :param yag: y-angle [arcsec]
+    :param zag: z-angle [arcsec]
+    :returns: ra, dec [deg]
+    """
+    return yagzag2radec(yag / 3600, zag / 3600, att)
+
+
+def radec_to_yagzag(ra, dec, att):
+    """
+    Convert ra, dec [deg] to yag, zag [arcsec] for attitude ``att``.
+
+    :param ra: RA [deg]
+    :param dec: Dec [deg]
+    :returns: yag, zag [arcsec]
+    """
+    yag, zag = radec2yagzag(ra, dec, att)
+    return yag * 3600, zag * 3600
 
 
 def to_python(val):
@@ -359,56 +382,243 @@ get_mag_std = interp1d(x=[-10, 6.7, 7.3, 7.8, 8.3, 8.8, 9.2, 9.7, 10.1, 11, 20],
                        kind='linear')
 
 
-def get_stars(att, date=None, radius=1.2, stars=None, logger=None):
-    """
-    Get AGASC stars in the ACA FOV.  This uses the mini-AGASC, so only stars
-    within 3-sigma of 11.5 mag.  TO DO: maybe use the full AGASC, for faint
-    candidate acq stars with large uncertainty.
-    """
-    if logger is None:
-        def logger(*args, **kwargs):
-            return None
+class StarsTable(ACACatalogTable):
+    @staticmethod
+    def get_logger(logger):
+        if logger is not None:
+            return logger
+        else:
+            def null_logger(*args, **kwargs):
+                pass
+            return null_logger
 
-    q_att = Quat(att)
-    if stars is None:
-        logger(f'Getting stars at ra={q_att.ra:.5f} dec={q_att.dec:.4f}')
-        stars = get_agasc_cone(q_att.ra, q_att.dec, radius=radius, date=date)
-        logger(f'Got {len(stars)} stars', level=1)
-    else:
-        logger(f'Updating supplied stars at ra={q_att.ra:.5f} dec={q_att.dec:.4f}')
-    yag, zag = radec2yagzag(stars['RA_PMCORR'], stars['DEC_PMCORR'], q_att)
-    yag *= 3600
-    zag *= 3600
-    row, col = yagzag_to_pixels(yag, zag, allow_bad=True, pix_zero_loc='edge')
+    @classmethod
+    def from_agasc(cls, att, date=None, radius=1.2, logger=None):
+        """
+        Get AGASC stars in the ACA FOV.  This uses the mini-AGASC, so only stars
+        within 3-sigma of 11.5 mag.
+        TO DO: maybe use the full AGASC, for faint candidate acq stars with
+        large uncertainty.
+        TO DO: AGASC version selector?
 
-    stars.remove_columns(AGASC_COLS_DROP)
+        :param att: any Quat-compatible attitude
+        :param date: DateTime compatible date for star proper motion (default=NOW)
+        :param radius: star cone radius [deg] (default=1.2)
+        :param logger: logger object (default=None)
 
-    stars.rename_column('AGASC_ID', 'id')
-    stars.add_column(Column(stars['RA_PMCORR'], name='ra'), index=1)
-    stars.add_column(Column(stars['DEC_PMCORR'], name='dec'), index=2)
-    stars.add_column(Column(yag, name='yang'), index=3)
-    stars.add_column(Column(zag, name='zang'), index=4)
-    stars.add_column(Column(row, name='row'), index=5)
-    stars.add_column(Column(col, name='col'), index=6)
+        :returns: StarsTable of stars
+        """
+        q_att = Quat(att)
+        agasc_stars = agasc.get_agasc_cone(q_att.ra, q_att.dec, radius=radius, date=date)
+        stars = StarsTable.from_stars(att, agasc_stars, copy=False)
 
-    stars.add_column(Column(stars['MAG_ACA'], name='mag'), index=7)  # For convenience
+        logger = StarsTable.get_logger(logger)
+        logger(f'Got {len(stars)} stars from AGASC at '
+               'ra={q_att.ra:.5f} dec={q_att.dec:.4f}',
+               level=1)
 
-    # Mag_err column is the RSS of the catalog mag err (i.e. systematic error in
-    # the true star mag) and the sample uncertainty in the ACA readout mag
-    # for a star with mag=MAG_ACA.  The latter typically dominates above 9th mag.
-    mag_aca_err = stars['MAG_ACA_ERR'] * 0.01
-    mag_std_dev = get_mag_std(stars['MAG_ACA'])
-    mag_err = np.sqrt(mag_aca_err ** 2 + mag_std_dev ** 2)
-    stars.add_column(Column(mag_err, name='mag_err'), index=8)
+        return stars
 
-    # Filter stars in or near ACA FOV
-    rcmax = 512.0 + 200 / 5  # 200 arcsec padding around CCD edge
-    ok = (row > -rcmax) & (row < rcmax) & (col > -rcmax) & (col < rcmax)
-    stars = stars[ok]
+    @classmethod
+    def from_agasc_ids(cls, att, agasc_ids, date=None, logger=None):
+        """
+        Get AGASC stars in the ACA FOV using a list of AGASC IDs.
 
-    logger('Finished star processing', level=1)
+        :param att: any Quat-compatible attitude
+        :param agasc_ids: sequence of AGASC ID values
+        :param date: DateTime compatible date for star proper motion (default=NOW)
+        :param logger: logger object (default=None)
 
-    return stars
+        :returns: StarsTable of stars
+        """
+        agasc_stars = []
+        for agasc_id in agasc_ids:
+            star = agasc.get_star(agasc_id, date)
+            agasc_stars.append(star)
+
+        agasc_stars = Table(rows=agasc_stars, names=agasc_stars[0].colnames)
+        return StarsTable.from_stars(att, stars=agasc_stars)
+
+    @classmethod
+    def from_stars(cls, att, stars, logger=None, copy=True):
+        """
+        Return a StarsTable from an existing AGASC stars query.  This just updates
+        columns in place.
+
+        :param att: any Quat-compatible attitude
+        :param stars: Table of stars
+        :param logger: logger object (default=None)
+        :param copy: copy ``stars`` table columns
+
+        :returns: StarsTable of stars
+        """
+        logger = StarsTable.get_logger(logger)
+
+        if isinstance(stars, StarsTable):
+            logger('stars is a StarsTable, assuming positions are correct for att')
+            return stars
+
+        stars = cls(stars, copy=copy)
+        logger(f'Updating star columns for attitude and convenience')
+
+        q_att = stars.meta['q_att'] = Quat(att)
+        yag, zag = radec2yagzag(stars['RA_PMCORR'], stars['DEC_PMCORR'], q_att)
+        yag *= 3600
+        zag *= 3600
+        row, col = yagzag_to_pixels(yag, zag, allow_bad=True, pix_zero_loc='edge')
+
+        stars.remove_columns(AGASC_COLS_DROP)
+
+        stars.rename_column('AGASC_ID', 'id')
+        stars.add_column(Column(stars['RA_PMCORR'], name='ra'), index=1)
+        stars.add_column(Column(stars['DEC_PMCORR'], name='dec'), index=2)
+        stars.add_column(Column(yag, name='yang'), index=3)
+        stars.add_column(Column(zag, name='zang'), index=4)
+        stars.add_column(Column(row, name='row'), index=5)
+        stars.add_column(Column(col, name='col'), index=6)
+
+        stars.add_column(Column(stars['MAG_ACA'], name='mag'), index=7)  # For convenience
+
+        # Mag_err column is the RSS of the catalog mag err (i.e. systematic error in
+        # the true star mag) and the sample uncertainty in the ACA readout mag
+        # for a star with mag=MAG_ACA.  The latter typically dominates above 9th mag.
+        mag_aca_err = stars['MAG_ACA_ERR'] * 0.01
+        mag_std_dev = get_mag_std(stars['MAG_ACA'])
+        mag_err = np.sqrt(mag_aca_err ** 2 + mag_std_dev ** 2)
+        stars.add_column(Column(mag_err, name='mag_err'), index=8)
+
+        # Filter stars in or near ACA FOV
+        rcmax = 512.0 + 200 / 5  # 200 arcsec padding around CCD edge
+        ok = (row > -rcmax) & (row < rcmax) & (col > -rcmax) & (col < rcmax)
+        stars = stars[ok]
+
+        logger('Finished star processing', level=1)
+
+        return stars
+
+    @classmethod
+    def empty(cls, att=(0, 0, 0)):
+        """
+        Return an empty StarsTable suitable for generating synthetic tables.
+
+        :param att: any Quat-compatible attitude
+        :returns: StarsTable of stars (empty)
+        """
+        return cls.from_agasc(att, radius=-1)
+
+    def add_agasc_id(self, agasc_id):
+        """
+        Add a AGASC star to the current StarsTable.
+
+        :param agasc_id: AGASC ID of the star to add
+        """
+        stars = StarsTable.from_agasc_ids(self.meta['q_att'], [agasc_id])
+        self.add_row(stars[0])
+
+    def add_fake_constellation(self, n_stars=8, size=1500, mag=7.0, **attrs):
+        """
+        Add a fake constellation of up to 8 stars consisting of a cross and square
+
+                *
+              *   *
+            *       *
+              *   *
+                *
+
+        yangs = [1,  0, -1,  0, 0.5,  0.5, -0.5, -0.5] * size
+        zangs = [0,  1,  0, -1, 0.5, -0.5,  0.5, -0.5] * size
+
+        Additional star table attributes can be specified as keyword args.  All
+        attributes are broadcast as needed.
+
+        Example::
+
+          >>> stars = StarsTable.empty()
+          >>> stars.add_fake_constellation(n_stars=4, size=1000, mag=7.5, ASPQ1=[0, 1, 0, 20])
+          >>> stars['id', 'yang', 'zang', 'mag', 'ASPQ1']
+          <StarsTable length=4>
+            id    yang     zang     mag   ASPQ1
+          int32 float64  float64  float32 int16
+          ----- -------- -------- ------- -----
+            100  1000.00     0.00    7.50     0
+            101     0.00  1000.00    7.50     1
+            102 -1000.00     0.00    7.50     0
+            103     0.00 -1000.00    7.50    20
+
+        :param n_stars: number of stars (default=8, max=8)
+        :param size: size of constellation [arcsec] (default=2000)
+        :param mag: star magnitudes (default=7.0)
+        :param **attrs: other star table attributes
+        """
+        if n_stars > 8:
+            raise ValueError('max value of n_stars is 8')
+
+        ids = len(self) + 100 + np.arange(n_stars)
+        yangs = np.array([1, 0, -1, 0, 0.5, 0.5, -0.5, -0.5][:n_stars]) * size
+        zangs = np.array([0, 1, 0, -1, 0.5, -0.5, 0.5, -0.5][:n_stars]) * size
+
+        arrays = [ids, yangs, zangs, mag]
+        names = ['id', 'yang', 'zang', 'mag']
+        for name, array in attrs.items():
+            names.append(name)
+            arrays.append(array)
+
+        arrays = np.broadcast_arrays(*arrays)
+        for vals in zip(*arrays):
+            self.add_fake_star(**{name: val for name, val in zip(names, vals)})
+
+    def add_fake_star(self, **star):
+        """
+        Add a star to the current StarsTable.
+
+        The input kwargs must have at least:
+        - One of yang/zang, ra/dec, or row/col
+        - mag
+        - mag_err (defaults to 0.1)
+
+        Mag_err is set to 0.1 if not provided.  Yang/zang, ra/dec, and row/col
+        RA/DEC_PMCORR, MAG_ACA, MAG_ACA_ERR will all be set according to the
+        primary inputs unless explicitly provided.  All the rest will be set
+        to default "good"" values that will preclude initial exclusion of the star.
+
+        :param **star: keyword arg attributes corresponding to StarTable columns
+        """
+        names = ['id', 'ra', 'dec', 'yang', 'zang', 'row', 'col', 'mag', 'mag_err',
+                 'POS_ERR', 'PM_RA', 'PM_DEC', 'MAG_ACA',
+                 'MAG_ACA_ERR', 'CLASS', 'COLOR1', 'COLOR1_ERR', 'VAR', 'ASPQ1',
+                 'ASPQ2', 'ASPQ3', 'RA_PMCORR', 'DEC_PMCORR']
+
+        defaults = {'id': len(self) + 100,
+                    'mag_err': 0.1,
+                    'VAR': -9999}
+        out = {name: star.get(name, defaults.get(name, 0)) for name in names}
+
+        q_att = self.meta['q_att']
+        if 'ra' in star and 'dec' in star:
+            out['yang'], out['zang'] = radec_to_yagzag(out['ra'], out['dec'], q_att)
+            out['row'], out['col'] = yagzag_to_pixels(out['yang'], out['zang'],
+                                                      allow_bad=True)
+
+        elif 'yang' in star and 'zang' in star:
+            out['ra'], out['dec'] = yagzag_to_radec(out['yang'], out['zang'], q_att)
+            out['row'], out['col'] = yagzag_to_pixels(out['yang'], out['zang'],
+                                                      allow_bad=True)
+
+        elif 'row' in star and 'col' in star:
+            out['yang'], out['zang'] = pixels_to_yagzag(out['row'], out['col'],
+                                                        allow_bad=True)
+            out['ra'], out['dec'] = yagzag_to_radec(out['yang'], out['zang'], q_att)
+
+        reqd_names = ('ra', 'dec', 'row', 'col', 'yang', 'zang', 'mag', 'mag_err')
+        for name in reqd_names:
+            if name not in out:
+                raise ValueError(f'incomplete star data did not get {name} data')
+
+        out['RA_PMCORR'] = out['ra']
+        out['DEC_PMCORR'] = out['dec']
+        out['MAG_ACA'] = out['mag']
+
+        self.add_row(out)
 
 
 def bin2x2(arr):
