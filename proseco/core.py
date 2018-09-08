@@ -588,8 +588,10 @@ class StarsTable(ACACatalogTable):
                  'MAG_ACA_ERR', 'CLASS', 'COLOR1', 'COLOR1_ERR', 'VAR', 'ASPQ1',
                  'ASPQ2', 'ASPQ3', 'RA_PMCORR', 'DEC_PMCORR']
 
-        out = {name: star.get(name, 0) for name in names}
-        out['mag_err'] = star.get('mag_err', 0.1)
+        defaults = {'id': len(self) + 100,
+                    'mag_err': 0.1,
+                    'VAR': -9999}
+        out = {name: star.get(name, defaults.get(name, 0)) for name in names}
 
         q_att = self.meta['q_att']
         if 'ra' in star and 'dec' in star:
@@ -598,7 +600,7 @@ class StarsTable(ACACatalogTable):
                                                       allow_bad=True)
 
         elif 'yang' in star and 'zang' in star:
-            out['ra'], out['dec'] = yagzag2radec(out['yang'], out['zang'], q_att)
+            out['ra'], out['dec'] = yagzag_to_radec(out['yang'], out['zang'], q_att)
             out['row'], out['col'] = yagzag_to_pixels(out['yang'], out['zang'],
                                                       allow_bad=True)
 
