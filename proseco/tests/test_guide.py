@@ -58,7 +58,7 @@ def test_box_mag_spoiler():
     date = '2018:001'
     stars = StarsTable.from_agasc_ids(att, agasc_ids)
 
-    stars['MAG_ACA'][stars['id'] == 688522000] = 16.0
+    stars.get_id(688522000)['MAG_ACA'] = 16.0
     selected1 = get_guide_catalog(att=att, date=date, t_ccd=-20, dither=(8, 8), n_guide=5,
                                   stars=stars)
 
@@ -66,7 +66,7 @@ def test_box_mag_spoiler():
     assert 688523960 in selected1['id']
 
     # Set the spoiler to be 10th mag and closer to the second star
-    stars['MAG_ACA'][stars['id'] == 688522000] = 10.0
+    stars.get_id(688522000)['MAG_ACA'] = 10.0
 
     # Confirm the 688523960 star is not selected if the spoiler is brighter
     selected2 = get_guide_catalog(att=att, date=date, t_ccd=-20, dither=(8, 8), n_guide=5,

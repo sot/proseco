@@ -382,7 +382,7 @@ get_mag_std = interp1d(x=[-10, 6.7, 7.3, 7.8, 8.3, 8.8, 9.2, 9.7, 10.1, 11, 20],
                        kind='linear')
 
 
-class StarsTable(Table):
+class StarsTable(ACACatalogTable):
     @staticmethod
     def get_logger(logger):
         if logger is not None:
@@ -491,13 +491,6 @@ class StarsTable(Table):
         rcmax = 512.0 + 200 / 5  # 200 arcsec padding around CCD edge
         ok = (row > -rcmax) & (row < rcmax) & (col > -rcmax) & (col < rcmax)
         stars = stars[ok]
-
-        # Make printed table look nicer.  This is defined in advance
-        # and will be applied the first time the table is represented.
-        for name in ('yang', 'zang', 'row', 'col', 'mag', 'mag_err', 'COLOR1'):
-            stars[name].format = '.2f'
-        for name in ('ra', 'dec', 'RA_PMCORR', 'DEC_PMCORR'):
-            stars[name].format = '.6f'
 
         logger('Finished star processing', level=1)
 
