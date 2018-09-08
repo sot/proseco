@@ -75,17 +75,19 @@ def test_box_mag_spoiler():
 
 
 def test_region_contrib():
+    att = (8, 47, 0)
     date = '2018:001'
-    limited_stars = [425740488, 425864552, 426263240, 425736928, 426255616, 426253528, 426253768]
-    star_recs = [agasc.get_star(s, date=date) for s in limited_stars]
-    stars = Table(rows=star_recs, names=star_recs[0].colnames)
+    agasc_ids = [425740488, 425864552, 426263240, 425736928, 426255616, 426253528, 426253768]
+    stars = StarsTable.from_agasc_ids(att, agasc_ids)
+
     # Only pass the first 5 stars
-    selected1 = get_guide_catalog(att=(8, 47, 0), date=date, t_ccd=-20, dither=(8, 8), n_guide=5,
+    selected1 = get_guide_catalog(att=att, date=date, t_ccd=-20, dither=(8, 8), n_guide=5,
                                   stars=stars[0:5])
     assert 426255616 in selected1['id']
+
     # The last two stars spoil the 5th star via too much light contrib in the region
     # so if we include all the stars, the 5th star should *not* be selected
-    selected2 = get_guide_catalog(att=(8, 47, 0), date=date, t_ccd=-20, dither=(8, 8), n_guide=5,
+    selected2 = get_guide_catalog(att=att, date=date, t_ccd=-20, dither=(8, 8), n_guide=5,
                                   stars=stars)
     assert 426255616 not in selected2['id']
 
@@ -101,22 +103,24 @@ def test_exclude_bad_star():
 def test_avoid_trap():
     # Set up a scenario where a star is selected fine at one roll, and then
     # confirm that it is not selected when roll places it on the trap
-    limited_stars = [156384720, 156376184, 156381600, 156379416, 156384304]
+    agasc_ids = [156384720, 156376184, 156381600, 156379416, 156384304]
     date = '2018:001'
-    ra1 = 9.769
-    dec1 = 20.147
+    ra = 9.769
+    dec = 20.147
     roll1 = 295.078
-    star_recs = [agasc.get_star(s, date=date) for s in limited_stars]
-    stars = Table(rows=star_recs, names=star_recs[0].colnames)
-    selected1 = get_guide_catalog(att=(ra1, dec1, roll1), date=date, t_ccd=-15, dither=(8, 8),
+    att = (ra, dec, roll1)
+
+    stars = StarsTable.from_agasc_ids(att, agasc_ids)
+    selected1 = get_guide_catalog(att=att, date=date, t_ccd=-15, dither=(8, 8),
                                   n_guide=5, stars=stars)
-    assert selected1['id'].tolist() == limited_stars
+    assert selected1['id'].tolist() == agasc_ids
+
     # Roll so that 156381600 is on the trap
-    ra2 = 9.769
-    dec2 = 20.147
     roll2 = 297.078
-    stars = Table(rows=star_recs, names=star_recs[0].colnames)
-    selected2 = get_guide_catalog(att=(ra2, dec2, roll2), date=date, t_ccd=-15, dither=(8, 8),
+    att = (ra, dec, roll2)
+
+    stars = StarsTable.from_agasc_ids(att, agasc_ids)
+    selected2 = get_guide_catalog(att=att, date=date, t_ccd=-15, dither=(8, 8),
                                   n_guide=5, stars=stars)
     assert 156381600 not in selected2['id'].tolist()
 
@@ -125,7 +129,7 @@ def test_avoid_trap():
 def test_big_dither():
     # Obsid 20168
     selected = get_guide_catalog(obsid=20168, n_guide=5)
-    expected = [977409032,  977414712, 977416336, 977282416, 977405808]
+    expected = [977409032, 977414712, 977416336, 977282416, 977405808]
     assert selected['id'].tolist() == expected
 
 
@@ -163,15 +167,17 @@ def test_check_spoil_contrib():
     # Note that for these mock stars, since we we are checking the status of
     # the first star, ASPQ1 needs to be nonzero on that star or the
     # check_spoil_contrib code will bail out before actually doing the check
-    star1 = {'row': 0, 'col': 0, 'MAG_ACA': 8.0, 'id': 1, 'ASPQ1': 1}
-    star2 = {'row': 0, 'col': -5, 'MAG_ACA': 6.0, 'id': 2, 'ASPQ1': 0}
-    stars = Table([star1, star2])
+    stars = StarsTable.empty()
+    stars.add_fake_star(row=0, col=0, mag=8.0, id=1, ASPQ1=1)
+    stars.add_fake_star(row=0, col=-5, mag=6.0, id=2, ASPQ1=0)
     bg_spoil, reg_spoil = check_spoil_contrib(stars, np.array([True, True]), stars, .05, 25)
     assert reg_spoil[0]
+
     # Construct a case where a star spoils just a background pixel
-    star1 = {'row': 0, 'col': 0, 'MAG_ACA': 8.0, 'id': 1, 'ASPQ1': 1}
-    star2 = {'row': -5.5, 'col': -5.5, 'MAG_ACA': 9.5, 'id': 2, 'ASPQ1': 0}
-    stars = Table([star1, star2])
+    stars = StarsTable.empty()
+    stars.add_fake_star(row=0, col=0, mag=8.0, id=1, ASPQ1=1)
+    stars.add_fake_star(row=-5.5, col=-5.5, mag=9.5, id=2, ASPQ1=0)
+
     bg_spoil, reg_spoil = check_spoil_contrib(stars, np.array([True, True]), stars, .05, 25)
     assert bg_spoil[0]
 

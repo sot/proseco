@@ -497,7 +497,7 @@ class StarsTable(ACACatalogTable):
         return stars
 
     @classmethod
-    def empty(cls, att):
+    def empty(cls, att=(0, 0, 0)):
         """
         Return an empty StarsTable suitable for generating synthetic tables.
 
