@@ -14,6 +14,7 @@ import agasc
 from ..guide import (get_guide_catalog, check_spoil_contrib, get_pixmag_for_offset,
                      check_mag_spoilers)
 from ..characteristics_guide import mag_spoiler
+from ..core import StarsTable
 
 
 HAS_SC_ARCHIVE = Path(mica.starcheck.starcheck.FILES['data_root']).exists()
@@ -38,11 +39,11 @@ def test_common_column_obsid_19904():
     # Should not select 1091705224 which has a column spoiler
     # Limit the star field to just a handful of stars including the star
     # and the column spoiler
-    limited_stars = [1091709256, 1091698696, 1091705224, 1091702440, 1091704824]
+    att = (248.515786, -47.373203, 238.665124)
+    agasc_ids = [1091709256, 1091698696, 1091705224, 1091702440, 1091704824]
     date = '2018:001'
-    star_recs = [agasc.get_star(s, date=date) for s in limited_stars]
-    stars = Table(rows=star_recs, names=star_recs[0].colnames)
-    selected = get_guide_catalog(att=(248.515786,   -47.373203,   238.665124),
+    stars = StarsTable.from_agasc_ids(att, agasc_ids)
+    selected = get_guide_catalog(att=att,
                                  date=date, t_ccd=-20, dither=(8, 8), n_guide=5,
                                  stars=stars)
     # Assert the column spoiled one isn't in the list
@@ -52,20 +53,23 @@ def test_common_column_obsid_19904():
 
 def test_box_mag_spoiler():
     # Manipulate a spoiler star in this test to first not be a spoiler
-    limited_stars = [688522000, 688523960, 611190016, 139192, 688522008]
+    att = (0, 0, 0)
+    agasc_ids = [688522000, 688523960, 611190016, 139192, 688522008]
     date = '2018:001'
-    star_recs = [agasc.get_star(s, date=date) for s in limited_stars]
-    stars = Table(rows=star_recs, names=star_recs[0].colnames)
-    stars['MAG_ACA'][stars['AGASC_ID'] == 688522000] = 16.0
-    selected1 = get_guide_catalog(att=(0, 0, 0), date=date, t_ccd=-20, dither=(8, 8), n_guide=5,
+    stars = StarsTable.from_agasc_ids(att, agasc_ids)
+
+    stars['MAG_ACA'][stars['id'] == 688522000] = 16.0
+    selected1 = get_guide_catalog(att=att, date=date, t_ccd=-20, dither=(8, 8), n_guide=5,
                                   stars=stars)
+
     # Confirm the 688523960 star is selected as a nominal star in this config
     assert 688523960 in selected1['id']
+
     # Set the spoiler to be 10th mag and closer to the second star
-    stars = Table(rows=star_recs, names=star_recs[0].colnames)
-    stars['MAG_ACA'][stars['AGASC_ID'] == 688522000] = 10.0
+    stars['MAG_ACA'][stars['id'] == 688522000] = 10.0
+
     # Confirm the 688523960 star is not selected if the spoiler is brighter
-    selected2 = get_guide_catalog(att=(0, 0, 0), date=date, t_ccd=-20, dither=(8, 8), n_guide=5,
+    selected2 = get_guide_catalog(att=att, date=date, t_ccd=-20, dither=(8, 8), n_guide=5,
                                   stars=stars)
     assert 688523960 not in selected2['id']
 

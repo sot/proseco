@@ -11,7 +11,7 @@ from astropy.table import Table, Column
 
 from chandra_aca.transform import yagzag_to_pixels, count_rate_to_mag, pixels_to_yagzag
 from Ska.quatutil import radec2yagzag, yagzag2radec
-from agasc import get_agasc_cone
+import agasc
 from Quaternion import Quat
 
 
@@ -409,7 +409,7 @@ class StarsTable(Table):
         :returns: StarsTable of stars
         """
         q_att = Quat(att)
-        agasc_stars = get_agasc_cone(q_att.ra, q_att.dec, radius=radius, date=date)
+        agasc_stars = agasc.get_agasc_cone(q_att.ra, q_att.dec, radius=radius, date=date)
         stars = StarsTable.from_stars(att, agasc_stars, copy=False)
 
         logger = StarsTable.get_logger(logger)
@@ -418,6 +418,26 @@ class StarsTable(Table):
                level=1)
 
         return stars
+
+    @classmethod
+    def from_agasc_ids(cls, att, agasc_ids, date=None, logger=None):
+        """
+        Get AGASC stars in the ACA FOV using a list of AGASC IDs.
+
+        :param att: any Quat-compatible attitude
+        :param agasc_ids: sequence of AGASC ID values
+        :param date: DateTime compatible date for star proper motion (default=NOW)
+        :param logger: logger object (default=None)
+
+        :returns: StarsTable of stars
+        """
+        agasc_stars = []
+        for agasc_id in agasc_ids:
+            star = agasc.get_star(agasc_id, date)
+            agasc_stars.append(star)
+
+        agasc_stars = Table(rows=agasc_stars, names=agasc_stars[0].colnames)
+        return StarsTable.from_stars(att, stars=agasc_stars)
 
     @classmethod
     def from_stars(cls, att, stars, logger=None, copy=True):
@@ -484,18 +504,27 @@ class StarsTable(Table):
         return stars
 
     @classmethod
-    def fake_stars(cls, att):
+    def empty(cls, att):
         """
-        Return an empty StarsTable suitable for subsequently using ``add_star()``.
+        Return an empty StarsTable suitable for generating synthetic tables.
 
         :param att: any Quat-compatible attitude
         :returns: StarsTable of stars (empty)
         """
         return cls.from_agasc(att, radius=-1)
 
-    def add_star(self, **star):
+    def add_agasc_id(self, agasc_id):
         """
-        Add a star (via keyword args) to the current StarsTable.
+        Add a AGASC star to the current StarsTable.
+
+        :param agasc_id: AGASC ID of the star to add
+        """
+        stars = StarsTable.from_agasc_ids(self.meta['q_att'], [agasc_id])
+        self.add_row(stars[0])
+
+    def add_fake_star(self, **star):
+        """
+        Add a star to the current StarsTable.
 
         The input kwargs must have at least:
         - One of yang/zang, ra/dec, or row/col
@@ -513,6 +542,7 @@ class StarsTable(Table):
                  'POS_ERR', 'PM_RA', 'PM_DEC', 'MAG_ACA',
                  'MAG_ACA_ERR', 'CLASS', 'COLOR1', 'COLOR1_ERR', 'VAR', 'ASPQ1',
                  'ASPQ2', 'ASPQ3', 'RA_PMCORR', 'DEC_PMCORR']
+
         out = {name: star.get(name, 0) for name in names}
         out['mag_err'] = star.get('mag_err', 0.1)
 
@@ -532,8 +562,10 @@ class StarsTable(Table):
                                                         allow_bad=True)
             out['ra'], out['dec'] = yagzag_to_radec(out['yang'], out['zang'], q_att)
 
-        else:
-            raise ValueError('Input requires at least one of yang/zang, ra/dec, or row/col')
+        reqd_names = ('ra', 'dec', 'row', 'col', 'yang', 'zang', 'mag', 'mag_err')
+        for name in reqd_names:
+            if name not in out:
+                raise ValueError(f'incomplete star data did not get {name} data')
 
         out['RA_PMCORR'] = out['ra']
         out['DEC_PMCORR'] = out['dec']
