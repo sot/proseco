@@ -515,6 +515,58 @@ class StarsTable(ACACatalogTable):
         stars = StarsTable.from_agasc_ids(self.meta['q_att'], [agasc_id])
         self.add_row(stars[0])
 
+    def add_fake_constellation(self, n_stars=8, size=1500, mag=7.0, **attrs):
+        """
+        Add a fake constellation of up to 8 stars consisting of a cross and square
+
+                *
+              *   *
+            *       *
+              *   *
+                *
+
+        yangs = [1,  0, -1,  0, 0.5,  0.5, -0.5, -0.5] * size
+        zangs = [0,  1,  0, -1, 0.5, -0.5,  0.5, -0.5] * size
+
+        Additional star table attributes can be specified as keyword args.  All
+        attributes are broadcast as needed.
+
+        Example::
+
+          >>> stars = StarsTable.empty()
+          >>> stars.add_fake_constellation(n_stars=4, size=1000, mag=7.5, ASPQ1=[0, 1, 0, 20])
+          >>> stars['id', 'yang', 'zang', 'mag', 'ASPQ1']
+          <StarsTable length=4>
+            id    yang     zang     mag   ASPQ1
+          int32 float64  float64  float32 int16
+          ----- -------- -------- ------- -----
+            100  1000.00     0.00    7.50     0
+            101     0.00  1000.00    7.50     1
+            102 -1000.00     0.00    7.50     0
+            103     0.00 -1000.00    7.50    20
+
+        :param n_stars: number of stars (default=8, max=8)
+        :param size: size of constellation [arcsec] (default=2000)
+        :param mag: star magnitudes (default=7.0)
+        :param **attrs: other star table attributes
+        """
+        if n_stars > 8:
+            raise ValueError('max value of n_stars is 8')
+
+        ids = len(self) + 100 + np.arange(n_stars)
+        yangs = np.array([1, 0, -1, 0, 0.5, 0.5, -0.5, -0.5][:n_stars]) * size
+        zangs = np.array([0, 1, 0, -1, 0.5, -0.5, 0.5, -0.5][:n_stars]) * size
+
+        arrays = [ids, yangs, zangs, mag]
+        names = ['id', 'yang', 'zang', 'mag']
+        for name, array in attrs.items():
+            names.append(name)
+            arrays.append(array)
+
+        arrays = np.broadcast_arrays(*arrays)
+        for vals in zip(*arrays):
+            self.add_fake_star(**{name: val for name, val in zip(names, vals)})
+
     def add_fake_star(self, **star):
         """
         Add a star to the current StarsTable.
