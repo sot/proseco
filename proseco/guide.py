@@ -141,7 +141,7 @@ class GuideTable(ACACatalogTable):
                 break
         self.log('Done with search stages')
         selected = cand_guides[cand_guides['stage'] != -1]
-        selected.sort(['stage', 'MAG_ACA'])
+        selected.sort(['stage', 'mag'])
         if len(selected) >= n_guide:
             return selected[0:n_guide]
         if len(selected) < n_guide:
@@ -175,8 +175,8 @@ class GuideTable(ACACatalogTable):
         # Check reasonable mag
         bright_lim = stage['MagLimit'][0]
         faint_lim = stage['MagLimit'][1]
-        bad_mag = (((cand_guides['MAG_ACA'] - n_sigma * cand_guides['mag_err']) < bright_lim) |
-                   ((cand_guides['MAG_ACA'] + n_sigma * cand_guides['mag_err']) > faint_lim))
+        bad_mag = (((cand_guides['mag'] - n_sigma * cand_guides['mag_err']) < bright_lim) |
+                   ((cand_guides['mag'] + n_sigma * cand_guides['mag_err']) > faint_lim))
         cand_guides[scol][bad_mag] += GUIDE_CHAR.errs['mag range']
         ok = ok & ~bad_mag
 
@@ -186,7 +186,7 @@ class GuideTable(ACACatalogTable):
         ok = ok & ~bad_aspq1
 
         # Check for bright pixels
-        pixmag_lims = get_pixmag_for_offset(cand_guides['MAG_ACA'],
+        pixmag_lims = get_pixmag_for_offset(cand_guides['mag'],
                                             stage['Imposter']['CentroidOffsetLim'])
         # Which candidates have an 'imposter' brighter than the limit for this stage
         imp_spoil = cand_guides['imp_mag'] < pixmag_lims
@@ -229,11 +229,11 @@ class GuideTable(ACACatalogTable):
         # Use the primary selection filter from acq, but allow bad color
         # and limit to brighter stars
         ok = ((stars['CLASS'] == 0) &
-              (stars['MAG_ACA'] > 5.9) &
-              (stars['MAG_ACA'] < 10.3) &
+              (stars['mag'] > 5.9) &
+              (stars['mag'] < 10.3) &
               (np.abs(stars['row']) < CHAR.max_ccd_row) &  # Max usable row
               (np.abs(stars['col']) < CHAR.max_ccd_col) &  # Max usable col
-              (stars['MAG_ACA_ERR'] < 100) &  # Mag err < 1.0 mag
+              (stars['mag_err'] < 1.0) &  # Mag err < 1.0 mag
               (stars['ASPQ1'] < 20) &  # Less than 1 arcsec offset from nearby spoiler
               (stars['ASPQ2'] == 0) &  # Proper motion less than 0.5 arcsec/yr
               (stars['POS_ERR'] < 3000) &  # Position error < 3.0 arcsec
@@ -252,8 +252,8 @@ class GuideTable(ACACatalogTable):
         outofbounds = (np.abs(stars['row']) > row_max) | (np.abs(stars['col']) > col_max)
 
         cand_guides = stars[ok & ~outofbounds]
-        self.log('Filtering on CLASS, MAG_ACA, row/col, '
-                 'MAG_ACA_ERR, ASPQ1/2, POS_ERR:')
+        self.log('Filtering on CLASS, mag, row/col, '
+                 'mag_err, ASPQ1/2, POS_ERR:')
         self.log(f'Reduced star list from {len(stars)} to '
                  f'{len(cand_guides)} candidate guide stars')
 
@@ -313,7 +313,7 @@ def check_spoil_contrib(cand_stars, ok, stars, regfrac, bgthresh):
         # If there is only one match, it is the candidate so there's nothing to do
         if np.count_nonzero(spoilers) == 1:
             continue
-        cand_counts = mag_to_count_rate(cand['MAG_ACA'])
+        cand_counts = mag_to_count_rate(cand['mag'])
 
         # Get a reasonable AcaImage for the location of the 8x8 for the candidate
         cand_img_region = ACAImage(np.zeros((8, 8)),
@@ -324,7 +324,7 @@ def check_spoil_contrib(cand_stars, ok, stars, regfrac, bgthresh):
             if spoil['id'] == cand['id']:
                 continue
             spoil_img = APL.get_psf_image(row=spoil['row'], col=spoil['col'], pix_zero_loc='edge',
-                                          norm=mag_to_count_rate(spoil['MAG_ACA']))
+                                          norm=mag_to_count_rate(spoil['mag']))
             on_region = on_region + spoil_img.aca
 
         # Consider it spoiled if the star contribution on the 8x8 is over a fraction
@@ -381,10 +381,10 @@ def check_mag_spoilers(cand_stars, ok, stars, n_sigma):
         for spoil, dist in zip(stars[spoilers], pix_dist[spoilers]):
             if spoil['id'] == cand['id']:
                 continue
-            if (cand['MAG_ACA'] - spoil['MAG_ACA']) < magdifflim:
+            if (cand['mag'] - spoil['mag']) < magdifflim:
                 continue
             mag_err_sum = np.sqrt(cand['mag_err'] ** 2 + spoil['mag_err'] ** 2)
-            delmag = cand['MAG_ACA'] - spoil['MAG_ACA'] + n_sigma * mag_err_sum
+            delmag = cand['mag'] - spoil['mag'] + n_sigma * mag_err_sum
             thsep = intercept + delmag * spoilslope
             if dist < thsep:
                 mag_spoiled[cand['id'] == cand_stars['id']] = True
@@ -416,7 +416,7 @@ def check_column_spoilers(cand_stars, ok, stars, n_sigma):
             continue
         mag_errs = (n_sigma * np.sqrt(cand['mag_err'] ** 2
                                       + stars['mag_err'][~stars['offchip']][pos_spoil] ** 2))
-        dm = (cand['MAG_ACA'] - stars['MAG_ACA'][~stars['offchip']][pos_spoil] + mag_errs)
+        dm = (cand['mag'] - stars['mag'][~stars['offchip']][pos_spoil] + mag_errs)
         if np.any(dm > GUIDE_CHAR.col_spoiler['MagDiff']):
             column_spoiled[idx] = True
     return column_spoiled
@@ -498,7 +498,7 @@ def has_spoiler_in_box(cand_guides, stars, halfbox=5, magdiff=-4):
         dc = np.abs(cand['col'] - stars['col'])
         inbox = (dr <= halfbox) & (dc <= halfbox)
         itself = stars['id'] == cand['id']
-        box_spoilers = ~itself & inbox & (cand['MAG_ACA'] - stars['MAG_ACA'] > magdiff)
+        box_spoilers = ~itself & inbox & (cand['mag'] - stars['mag'] > magdiff)
         if np.any(box_spoilers):
             box_spoiled[idx] = True
     return box_spoiled

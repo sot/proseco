@@ -64,7 +64,7 @@ def test_box_mag_spoiler():
     date = '2018:001'
     stars = StarsTable.from_agasc_ids(att, agasc_ids)
 
-    stars.get_id(688522000)['MAG_ACA'] = 16.0
+    stars.get_id(688522000)['mag'] = 16.0
     selected1 = get_guide_catalog(att=att, date=date, t_ccd=-20, dither=(8, 8), n_guide=5,
                                   stars=stars)
 
@@ -72,7 +72,7 @@ def test_box_mag_spoiler():
     assert 688523960 in selected1['id']
 
     # Set the spoiler to be 10th mag and closer to the second star
-    stars.get_id(688522000)['MAG_ACA'] = 10.0
+    stars.get_id(688522000)['mag'] = 10.0
 
     # Confirm the 688523960 star is not selected if the spoiler is brighter
     selected2 = get_guide_catalog(att=att, date=date, t_ccd=-20, dither=(8, 8), n_guide=5,
@@ -147,7 +147,7 @@ def test_check_pixmag_offset():
     APL = AcaPsfLibrary()
 
     # Then use one star and test with various pixels
-    star = {'row': -.5, 'col': .5, 'MAG_ACA': 9.0, 'id': 1}
+    star = {'row': -.5, 'col': .5, 'mag': 9.0, 'id': 1}
 
     # Confirm that when the bad pixel is bright enough to shift the centroid
     # by N arcsecs that the mag/offset code agrees
@@ -159,7 +159,7 @@ def test_check_pixmag_offset():
     for r_dist, c_dist, lim, pixval in itertools.product(rs, cs, lims, pixvals):
         # Get a new star image every time because centroid_fm messes with it in-place
         star_img = APL.get_psf_image(star['row'], star['col'],
-                                     norm=mag_to_count_rate(star['MAG_ACA']))
+                                     norm=mag_to_count_rate(star['mag']))
         pix = ACAImage(np.zeros((8, 8)), row0=-4, col0=-4)
 
         # Get the the non-spoiled centroid
@@ -174,7 +174,7 @@ def test_check_pixmag_offset():
         dr = np.sqrt(((cr1 - cr2) ** 2) + ((cc1 - cc2) ** 2))
 
         # Check that if it is spoiled, it would have been spoiled with the tool
-        pmag = get_pixmag_for_offset(star['MAG_ACA'], lim)
+        pmag = get_pixmag_for_offset(star['mag'], lim)
         if dr > lim:
             assert count_rate_to_mag(pixval) < pmag
 
@@ -207,7 +207,7 @@ def test_check_mag_spoilers():
     """
     intercept = mag_spoiler['Intercept']
     spoilslope = mag_spoiler['Slope']
-    star1 = {'row': 0, 'col': 0, 'MAG_ACA': 9.0, 'mag_err': 0, 'id': 1}
+    star1 = {'row': 0, 'col': 0, 'mag': 9.0, 'mag_err': 0, 'id': 1}
 
     # The mag spoiler check only works on stars that are within 10 pixels in row
     # or column, so don't bother simulating stars outside that distance
@@ -216,7 +216,7 @@ def test_check_mag_spoilers():
     magdiffs = np.arange(2, -5, -.5)
 
     for r_dist, c_dist, magdiff in itertools.product(r_dists, c_dists, magdiffs):
-        star2 = {'row': r_dist, 'col': c_dist, 'MAG_ACA': star1['MAG_ACA'] - magdiff,
+        star2 = {'row': r_dist, 'col': c_dist, 'mag': star1['mag'] - magdiff,
                  'mag_err': 0, 'id': 2}
         dist = np.sqrt(r_dist ** 2 + c_dist ** 2)
         stars = Table([star1, star2])
