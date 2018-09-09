@@ -373,3 +373,15 @@ def test_make_report(tmpdir):
             assert np.isclose(val, val2)
         else:
             assert val == val2
+
+
+def test_cand_acqs_include_exclude():
+    obsid = 19387
+    # First is in nominal cand_acqs but not in acqs
+    include_ids = [37882776, 38276824, 37881560]
+    exclude_ids = [38280776]
+    acqs = get_acq_catalog(**OBS_INFO[obsid], optimize=False,
+                           include_ids=include_ids, exclude_ids=exclude_ids)
+    assert acqs.meta['include_ids'] == include_ids
+    assert acqs.meta['exclude_ids'] == exclude_ids
+    assert all(id_ in acqs.meta['cand_acqs']['id'] for id_ in include_ids)

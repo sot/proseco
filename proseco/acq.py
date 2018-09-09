@@ -5,6 +5,7 @@
 Get a catalog of acquisition stars using the algorithm described in
 https://docs.google.com/presentation/d/1VtFKAW9he2vWIQAnb6unpK4u1bVAVziIdX9TnqRS3a8
 """
+import warnings
 
 import numpy as np
 from scipy import ndimage, stats
@@ -22,6 +23,7 @@ from .core import (get_mag_std, StarsTable, ACACatalogTable, bin2x2,
 def get_acq_catalog(obsid=0, att=None,
                     man_angle=None, t_ccd=None, date=None, dither=None,
                     detector=None, sim_offset=None, focus_offset=None, stars=None,
+                    include_ids=None, include_halfws=None, exclude_ids=None,
                     optimize=True, verbose=False, print_log=False):
     """
     Get a catalog of acquisition stars using the algorithm described in
@@ -41,6 +43,9 @@ def get_acq_catalog(obsid=0, att=None,
     :param sim_offset: SIM translation offset from nominal [steps] (default=0)
     :param focus_offset: SIM focus offset [steps] (default=0)
     :param stars: table of AGASC stars (will be fetched from agasc if None)
+    :param include_ids: list of AGASC IDs of stars to include in selected catalog
+    :param include_halfws: list of acq halfwidths corresponding to ``include_ids``
+    :param exclude_ids: list of AGASC IDs of stars to exclude from selected catalog
     :param optimize: optimize star catalog after initial selection (default=True)
     :param verbose: provide extra logging info (mostly calc_p_safe) (default=False)
     :param print_log: print the run log to stdout (default=False)
@@ -101,7 +106,10 @@ def get_acq_catalog(obsid=0, att=None,
                  'dither': dither,
                  'detector': detector,
                  'sim_offset': sim_offset,
-                 'focus_offset': focus_offset}
+                 'focus_offset': focus_offset,
+                 'include_ids': include_ids or [],
+                 'include_halfws': include_halfws or [],
+                 'exclude_ids': exclude_ids or []}
 
     # Probability of man_err for this observation with a given man_angle.  Used
     # for marginalizing probabilities over different man_errs.
@@ -201,6 +209,12 @@ class AcqTable(ACACatalogTable):
 
         bads = ~ok
         cand_acqs = stars[ok]
+
+        # If any include_ids (stars forced to be in catalog) ensure that the
+        # star is in the cand_acqs table
+        if self.meta.get('include_ids'):
+            self.add_include_ids(cand_acqs, stars)
+
         cand_acqs.sort('mag')
         self.log('Filtering on CLASS, mag, COLOR1, row/col, '
                  'mag_err, ASPQ1/2, POS_ERR:')
@@ -248,6 +262,23 @@ class AcqTable(ACACatalogTable):
         cand_acqs['imposters_box'] = -999.0  # Cached value of box_size + dither for imposters
 
         return cand_acqs, bads
+
+    def add_include_ids(self, cand_acqs, stars):
+        """Ensure that the cand_acqs table has stars that were forced to be included.
+
+        :param cand_acqs: candidate acquisition stars table
+        :param stars: stars table
+
+        """
+        for include_id in self.meta['include_ids']:
+            if include_id not in cand_acqs['id']:
+                try:
+                    star = stars.get_id(include_id)
+                except KeyError:
+                    warnings.warn(f'Tried including star id={include_id} but this is not '
+                                  f'a valid star on the ACA field of view')
+                else:
+                    cand_acqs.add_row(star)
 
     def select_best_p_acqs(self, cand_acqs, min_p_acq, acq_indices, box_sizes):
         """
