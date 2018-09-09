@@ -113,8 +113,11 @@ class ACACatalogTable(Table):
             assert self['id'][idx] == id
         except (KeyError, IndexError, AssertionError):
             self.make_index()
-            idx = self._id_index[id]
-            assert self['id'][idx] == id
+            try:
+                idx = self._id_index[id]
+                assert self['id'][idx] == id
+            except (KeyError, IndexError, AssertionError):
+                raise KeyError(f'{id} is not in table')
 
         return idx
 
