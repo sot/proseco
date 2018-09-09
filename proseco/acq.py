@@ -275,10 +275,12 @@ class AcqTable(ACACatalogTable):
                 try:
                     star = stars.get_id(include_id)
                 except KeyError:
-                    warnings.warn(f'Tried including star id={include_id} but this is not '
+                    warnings.warn(f'Including star id={include_id} that is not '
                                   f'a valid star on the ACA field of view')
-                else:
-                    cand_acqs.add_row(star)
+                    star = StarsTable.from_agasc_ids(self.meta['att'],
+                                                     agasc_ids=[include_id],
+                                                     date=self.meta['date'])[0]
+                cand_acqs.add_row(star)
 
     def select_best_p_acqs(self, cand_acqs, min_p_acq, acq_indices, box_sizes):
         """
@@ -314,6 +316,11 @@ class AcqTable(ACACatalogTable):
                     continue
 
                 acq = cand_acqs[acq_idx]
+
+                # Don't consider any stars in the exclude list
+                if acq['id'] in self.meta['exclude_ids']:
+                    continue
+
                 p_acq = p_acqs_for_box[acq_idx]
                 accepted = p_acq > min_p_acq
                 status = 'ACCEPTED' if accepted else 'rejected'
@@ -337,10 +344,13 @@ class AcqTable(ACACatalogTable):
         """
         self.log(f'Getting initial catalog from {len(cand_acqs)} candidates')
 
+        # Start the lists of acq indices and box sizes with the values from
+        # the include lists.  Usually these will be empty.
+        acq_indices = [cand_acqs.get_id_idx(id) for id in self.meta['include_ids']]
+        box_sizes = self.meta['include_halfws'][:]  # make a copy
+
         # Accumulate indices and box sizes of candidate acq stars that meet
         # successively less stringent minimum p_acq.
-        acq_indices = []
-        box_sizes = []
         for min_p_acq in (0.75, 0.5, 0.25, 0.05):
             # Updates acq_indices, box_sizes in place
             self.select_best_p_acqs(cand_acqs, min_p_acq, acq_indices, box_sizes)

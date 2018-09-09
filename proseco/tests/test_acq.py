@@ -15,7 +15,7 @@ from ..acq import (get_p_man_err, bin2x2, CHAR,
                    AcqTable, calc_p_on_ccd,
                    get_acq_catalog,
                    )
-from .test_common import OBS_INFO
+from .test_common import OBS_INFO, STD_INFO
 
 TEST_DATE = '2018:144'  # Fixed date for doing tests
 ATT = [10, 20, 3]  # Arbitrary test attitude
@@ -376,12 +376,38 @@ def test_make_report(tmpdir):
 
 
 def test_cand_acqs_include_exclude():
-    obsid = 19387
+    """
+    Test include and exclude stars.
+    """
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(mag=[7.0, 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7],
+                                 id=[1, 2, 3, 4, 5, 6, 7, 8],
+                                 size=2000, n_stars=8)
+    stars.add_fake_constellation(mag=[10.0, 10.1, 12.0],
+                                 id=[9, 10, 11],
+                                 size=1500, n_stars=3)
+
+    # Make sure baseline catalog is working like expected
+    acqs = get_acq_catalog(**STD_INFO, optimize=False, stars=stars)
+    assert np.all(acqs['id'] == np.arange(1, 9))
+    assert np.all(acqs.meta['cand_acqs']['id'] == np.arange(1, 11))
+
     # First is in nominal cand_acqs but not in acqs
-    include_ids = [37882776, 38276824, 37881560]
-    exclude_ids = [38280776]
-    acqs = get_acq_catalog(**OBS_INFO[obsid], optimize=False,
-                           include_ids=include_ids, exclude_ids=exclude_ids)
+    include_ids = [9, 11]
+    include_halfws = [60, 80]
+    exclude_ids = [1]
+    acqs = get_acq_catalog(**STD_INFO, optimize=False, stars=stars,
+                           include_ids=include_ids, include_halfws=include_halfws,
+                           exclude_ids=exclude_ids)
+
     assert acqs.meta['include_ids'] == include_ids
+    assert acqs.meta['include_halfws'] == include_halfws
     assert acqs.meta['exclude_ids'] == exclude_ids
     assert all(id_ in acqs.meta['cand_acqs']['id'] for id_ in include_ids)
+
+    assert all(id_ in acqs['id'] for id_ in include_ids)
+    assert all(id_ not in acqs['id'] for id_ in exclude_ids)
+
+    assert np.all(acqs['id'] == [2, 3, 4, 5, 6, 7, 9, 11])
+    assert np.all(acqs['halfw'] == [160, 160, 160, 160, 160, 160, 60, 80])
+    assert np.allclose(acqs['mag'], [7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 10.0, 12.0])
