@@ -275,12 +275,17 @@ class AcqTable(ACACatalogTable):
                 try:
                     star = stars.get_id(include_id)
                 except KeyError:
+                    try:
+                        star = StarsTable.from_agasc_ids(self.meta['att'],
+                                                         agasc_ids=[include_id],
+                                                         date=self.meta['date'])[0]
+                    except ValueError:
+                        warnings.warn(f'AGASC ID={include_id} not found in catalog, skipping')
+                        raise Exception
+                else:
                     warnings.warn(f'Including star id={include_id} that is not '
-                                  f'a valid star on the ACA field of view')
-                    star = StarsTable.from_agasc_ids(self.meta['att'],
-                                                     agasc_ids=[include_id],
-                                                     date=self.meta['date'])[0]
-                cand_acqs.add_row(star)
+                                  f'a valid star in the ACA field of view')
+                    cand_acqs.add_row(star)
 
     def select_best_p_acqs(self, cand_acqs, min_p_acq, acq_indices, box_sizes):
         """
@@ -461,12 +466,20 @@ class AcqTable(ACACatalogTable):
         any_improved = False
 
         for idx in idxs:
+            # Don't optimize halfw for a star that is specified for inclusion
+            if self['id'][idx] in self.meta['include_ids']:
+                continue
+
             p_safe, improved = self.optimize_acq_halfw(idx, p_safe, verbose)
             any_improved |= improved
 
         return p_safe, any_improved
 
     def optimize_catalog(self, verbose=False):
+        # If every acq star is specified as included, then no
+        if all(acq['id'] in self.meta['include_ids'] for acq in self):
+            return
+
         p_safe = self.calc_p_safe(verbose=True)
         self.log('initial log10(p_safe)={:.2f}'.format(np.log10(p_safe)))
 
@@ -479,21 +492,27 @@ class AcqTable(ACACatalogTable):
         self.log(f'After optimizing initial catalog p_safe = {p_safe:.5f}')
 
         # Now try to swap in a new star from the candidate list and see if
-        # it can improve p_safe.
-        acq_ids = set(self['id'])
+        # it can improve p_safe.  Skips candidates already in the catalog
+        # or specifically excluded.
+        skip_acq_ids = set(self['id']) | set(self.meta['exclude_ids'])
         for cand_acq in self.meta['cand_acqs']:
             cand_id = cand_acq['id']
-            if cand_id in acq_ids:
+            if cand_id in skip_acq_ids:
                 continue
-            else:
-                acq_ids.add(cand_id)
 
-            # Get the index of the worst p_acq in the catalog
-            p_acqs = [acq['probs'].p_acq_marg[acq['halfw']] for acq in self]
-            idx = np.argsort(p_acqs)[0]
+            # Get the index of the worst p_acq in the catalog, excluding acq stars
+            # that are in include_ids (since they are not to be replaced).
+            ok = [acq['id'] not in self.meta['include_ids'] for acq in self]
+            acqs = self[ok]
+
+            # Sort by the marginalized acq probability for the current box size
+            p_acqs = [acq['probs'].p_acq_marg[acq['halfw']] for acq in acqs]
+            idx_worst = np.argsort(p_acqs)[0]
+
+            idx = self.get_id_idx(acqs[idx_worst]['id'])
 
             self.log('Trying to use {} mag={:.2f} to replace idx={} with p_acq={:.3f}'
-                     .format(cand_id, cand_acq['mag'], idx, p_acqs[idx]), id=cand_id)
+                     .format(cand_id, cand_acq['mag'], idx, p_acqs[idx_worst], id=cand_id))
 
             # Make a copy of the row (acq star) as a numpy void (structured array row)
             orig_acq = self[idx].as_void()
@@ -504,7 +523,7 @@ class AcqTable(ACACatalogTable):
 
             # If the new star is noticably better (regardless of box size), OR
             # comparable but with a bigger box, then accept it and do one round of
-            # full catalog optimization
+            # full catalog box-size optimization.
             improved = ((new_p_safe / p_safe < 0.9) or
                         (new_p_safe < p_safe and self['halfw'][idx] > orig_acq['halfw']))
             if improved:

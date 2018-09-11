@@ -377,9 +377,21 @@ def test_make_report(tmpdir):
 
 def test_cand_acqs_include_exclude():
     """
-    Test include and exclude stars.
+    Test include and exclude stars.  This uses a catalog with 11 stars:
+    - 8 bright stars from 7.0 to 7.7 mag, where the 7.0 is EXCLUDED
+    - 2 faint (but OK) stars 10.0, 10.1 where the 10.0 is INCLUDED
+    - 1 very faint (bad) stars 12.0 mag is INCLUDED
+
+    Both the 7.0 and 10.1 would normally get picked either initially
+    or swapped in during optimization, and 12.0 would never get picked.
+    Check that the final catalog is [7.1 .. 7.7, 10.0, 12.0]
+
+    Finally, starting from the catalog chosen with the include/exclude
+    constraints applied, remove those constraints and re-optimize.
+    This must come back to the original catalog of the 8 bright stars.
     """
     stars = StarsTable.empty()
+
     stars.add_fake_constellation(mag=[7.0, 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7],
                                  id=[1, 2, 3, 4, 5, 6, 7, 8],
                                  size=2000, n_stars=8)
@@ -390,24 +402,42 @@ def test_cand_acqs_include_exclude():
     # Make sure baseline catalog is working like expected
     acqs = get_acq_catalog(**STD_INFO, optimize=False, stars=stars)
     assert np.all(acqs['id'] == np.arange(1, 9))
+    assert np.all(acqs['halfw'] == 160)
     assert np.all(acqs.meta['cand_acqs']['id'] == np.arange(1, 11))
 
-    # First is in nominal cand_acqs but not in acqs
+    # Define includes and excludes. id=9 is in nominal cand_acqs but not in acqs.
     include_ids = [9, 11]
     include_halfws = [60, 80]
     exclude_ids = [1]
-    acqs = get_acq_catalog(**STD_INFO, optimize=False, stars=stars,
-                           include_ids=include_ids, include_halfws=include_halfws,
-                           exclude_ids=exclude_ids)
 
-    assert acqs.meta['include_ids'] == include_ids
-    assert acqs.meta['include_halfws'] == include_halfws
-    assert acqs.meta['exclude_ids'] == exclude_ids
-    assert all(id_ in acqs.meta['cand_acqs']['id'] for id_ in include_ids)
+    for optimize in False, True:
+        acqs = get_acq_catalog(**STD_INFO, optimize=optimize, stars=stars,
+                               include_ids=include_ids, include_halfws=include_halfws,
+                               exclude_ids=exclude_ids)
 
-    assert all(id_ in acqs['id'] for id_ in include_ids)
-    assert all(id_ not in acqs['id'] for id_ in exclude_ids)
+        assert acqs.meta['include_ids'] == include_ids
+        assert acqs.meta['include_halfws'] == include_halfws
+        assert acqs.meta['exclude_ids'] == exclude_ids
+        assert all(id_ in acqs.meta['cand_acqs']['id'] for id_ in include_ids)
 
-    assert np.all(acqs['id'] == [2, 3, 4, 5, 6, 7, 9, 11])
-    assert np.all(acqs['halfw'] == [160, 160, 160, 160, 160, 160, 60, 80])
-    assert np.allclose(acqs['mag'], [7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 10.0, 12.0])
+        assert all(id_ in acqs['id'] for id_ in include_ids)
+        assert all(id_ not in acqs['id'] for id_ in exclude_ids)
+
+        assert np.all(acqs['id'] == [2, 3, 4, 5, 6, 7, 9, 11])
+        assert np.all(acqs['halfw'] == [160, 160, 160, 160, 160, 160, 60, 80])
+        assert np.allclose(acqs['mag'], [7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 10.0, 12.0])
+
+    # Re-optimize catalog now after removing include and exclude
+    acqs.meta['exclude_ids'] = []
+    acqs.meta['include_ids'] = []
+    acqs.meta['include_halfws'] = []
+
+    # Finally, starting from the catalog chosen with the include/exclude
+    # constraints applied, remove those constraints and re-optimize.
+    # This must come back to the original catalog of the 8 bright stars.
+    del acqs['slot']
+    del acqs.meta['cand_acqs']['slot']
+    acqs.optimize_catalog()
+    acqs.sort('idx')
+    assert np.all(acqs['id'] == np.arange(1, 9))
+    assert np.all(acqs['halfw'] == 160)
