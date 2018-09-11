@@ -1,3 +1,4 @@
+import warnings
 import pickle
 import inspect
 import time
@@ -113,8 +114,11 @@ class ACACatalogTable(Table):
             assert self['id'][idx] == id
         except (KeyError, IndexError, AssertionError):
             self.make_index()
-            idx = self._id_index[id]
-            assert self['id'][idx] == id
+            try:
+                idx = self._id_index[id]
+                assert self['id'][idx] == id
+            except (KeyError, IndexError, AssertionError):
+                raise KeyError(f'{id} is not in table')
 
         return idx
 
@@ -433,9 +437,12 @@ class StarsTable(ACACatalogTable):
         """
         agasc_stars = []
         for agasc_id in agasc_ids:
-            star = agasc.get_star(agasc_id, date)
-            agasc_stars.append(star)
-
+            try:
+                star = agasc.get_star(agasc_id, date=date)
+            except Exception:
+                raise ValueError(f'failed to get AGASC ID={agasc_id}')
+            else:
+                agasc_stars.append(star)
         agasc_stars = Table(rows=agasc_stars, names=agasc_stars[0].colnames)
         return StarsTable.from_stars(att, stars=agasc_stars)
 

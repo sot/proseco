@@ -5,6 +5,7 @@
 Get a catalog of acquisition stars using the algorithm described in
 https://docs.google.com/presentation/d/1VtFKAW9he2vWIQAnb6unpK4u1bVAVziIdX9TnqRS3a8
 """
+import warnings
 
 import numpy as np
 from scipy import ndimage, stats
@@ -22,6 +23,7 @@ from .core import (get_mag_std, StarsTable, ACACatalogTable, bin2x2,
 def get_acq_catalog(obsid=0, att=None,
                     man_angle=None, t_ccd=None, date=None, dither=None,
                     detector=None, sim_offset=None, focus_offset=None, stars=None,
+                    include_ids=None, include_halfws=None, exclude_ids=None,
                     optimize=True, verbose=False, print_log=False):
     """
     Get a catalog of acquisition stars using the algorithm described in
@@ -41,6 +43,9 @@ def get_acq_catalog(obsid=0, att=None,
     :param sim_offset: SIM translation offset from nominal [steps] (default=0)
     :param focus_offset: SIM focus offset [steps] (default=0)
     :param stars: table of AGASC stars (will be fetched from agasc if None)
+    :param include_ids: list of AGASC IDs of stars to include in selected catalog
+    :param include_halfws: list of acq halfwidths corresponding to ``include_ids``
+    :param exclude_ids: list of AGASC IDs of stars to exclude from selected catalog
     :param optimize: optimize star catalog after initial selection (default=True)
     :param verbose: provide extra logging info (mostly calc_p_safe) (default=False)
     :param print_log: print the run log to stdout (default=False)
@@ -101,7 +106,10 @@ def get_acq_catalog(obsid=0, att=None,
                  'dither': dither,
                  'detector': detector,
                  'sim_offset': sim_offset,
-                 'focus_offset': focus_offset}
+                 'focus_offset': focus_offset,
+                 'include_ids': include_ids or [],
+                 'include_halfws': include_halfws or [],
+                 'exclude_ids': exclude_ids or []}
 
     # Probability of man_err for this observation with a given man_angle.  Used
     # for marginalizing probabilities over different man_errs.
@@ -201,6 +209,12 @@ class AcqTable(ACACatalogTable):
 
         bads = ~ok
         cand_acqs = stars[ok]
+
+        # If any include_ids (stars forced to be in catalog) ensure that the
+        # star is in the cand_acqs table
+        if self.meta.get('include_ids'):
+            self.add_include_ids(cand_acqs, stars)
+
         cand_acqs.sort('mag')
         self.log('Filtering on CLASS, mag, COLOR1, row/col, '
                  'mag_err, ASPQ1/2, POS_ERR:')
@@ -249,6 +263,30 @@ class AcqTable(ACACatalogTable):
 
         return cand_acqs, bads
 
+    def add_include_ids(self, cand_acqs, stars):
+        """Ensure that the cand_acqs table has stars that were forced to be included.
+
+        :param cand_acqs: candidate acquisition stars table
+        :param stars: stars table
+
+        """
+        for include_id in self.meta['include_ids']:
+            if include_id not in cand_acqs['id']:
+                try:
+                    star = stars.get_id(include_id)
+                except KeyError:
+                    try:
+                        star = StarsTable.from_agasc_ids(self.meta['att'],
+                                                         agasc_ids=[include_id],
+                                                         date=self.meta['date'])[0]
+                    except ValueError:
+                        warnings.warn(f'AGASC ID={include_id} not found in catalog, skipping')
+                        raise Exception
+                else:
+                    warnings.warn(f'Including star id={include_id} that is not '
+                                  f'a valid star in the ACA field of view')
+                    cand_acqs.add_row(star)
+
     def select_best_p_acqs(self, cand_acqs, min_p_acq, acq_indices, box_sizes):
         """
         Find stars with the highest acquisition probability according to the
@@ -283,6 +321,11 @@ class AcqTable(ACACatalogTable):
                     continue
 
                 acq = cand_acqs[acq_idx]
+
+                # Don't consider any stars in the exclude list
+                if acq['id'] in self.meta['exclude_ids']:
+                    continue
+
                 p_acq = p_acqs_for_box[acq_idx]
                 accepted = p_acq > min_p_acq
                 status = 'ACCEPTED' if accepted else 'rejected'
@@ -306,13 +349,17 @@ class AcqTable(ACACatalogTable):
         """
         self.log(f'Getting initial catalog from {len(cand_acqs)} candidates')
 
+        # Start the lists of acq indices and box sizes with the values from
+        # the include lists.  Usually these will be empty.
+        acq_indices = [cand_acqs.get_id_idx(id) for id in self.meta['include_ids']]
+        box_sizes = self.meta['include_halfws'][:]  # make a copy
+
         # Accumulate indices and box sizes of candidate acq stars that meet
         # successively less stringent minimum p_acq.
-        acq_indices = []
-        box_sizes = []
         for min_p_acq in (0.75, 0.5, 0.25, 0.05):
-            # Updates acq_indices, box_sizes in place
-            self.select_best_p_acqs(cand_acqs, min_p_acq, acq_indices, box_sizes)
+            if len(acq_indices) < 8:
+                # Updates acq_indices, box_sizes in place
+                self.select_best_p_acqs(cand_acqs, min_p_acq, acq_indices, box_sizes)
 
             if len(acq_indices) == 8:
                 break
@@ -420,12 +467,20 @@ class AcqTable(ACACatalogTable):
         any_improved = False
 
         for idx in idxs:
+            # Don't optimize halfw for a star that is specified for inclusion
+            if self['id'][idx] in self.meta['include_ids']:
+                continue
+
             p_safe, improved = self.optimize_acq_halfw(idx, p_safe, verbose)
             any_improved |= improved
 
         return p_safe, any_improved
 
     def optimize_catalog(self, verbose=False):
+        # If every acq star is specified as included, then no optimization
+        if all(acq['id'] in self.meta['include_ids'] for acq in self):
+            return
+
         p_safe = self.calc_p_safe(verbose=True)
         self.log('initial log10(p_safe)={:.2f}'.format(np.log10(p_safe)))
 
@@ -438,21 +493,27 @@ class AcqTable(ACACatalogTable):
         self.log(f'After optimizing initial catalog p_safe = {p_safe:.5f}')
 
         # Now try to swap in a new star from the candidate list and see if
-        # it can improve p_safe.
-        acq_ids = set(self['id'])
+        # it can improve p_safe.  Skips candidates already in the catalog
+        # or specifically excluded.
+        skip_acq_ids = set(self['id']) | set(self.meta['exclude_ids'])
         for cand_acq in self.meta['cand_acqs']:
             cand_id = cand_acq['id']
-            if cand_id in acq_ids:
+            if cand_id in skip_acq_ids:
                 continue
-            else:
-                acq_ids.add(cand_id)
 
-            # Get the index of the worst p_acq in the catalog
-            p_acqs = [acq['probs'].p_acq_marg[acq['halfw']] for acq in self]
-            idx = np.argsort(p_acqs)[0]
+            # Get the index of the worst p_acq in the catalog, excluding acq stars
+            # that are in include_ids (since they are not to be replaced).
+            ok = [acq['id'] not in self.meta['include_ids'] for acq in self]
+            acqs = self[ok]
+
+            # Sort by the marginalized acq probability for the current box size
+            p_acqs = [acq['probs'].p_acq_marg[acq['halfw']] for acq in acqs]
+            idx_worst = np.argsort(p_acqs)[0]
+
+            idx = self.get_id_idx(acqs[idx_worst]['id'])
 
             self.log('Trying to use {} mag={:.2f} to replace idx={} with p_acq={:.3f}'
-                     .format(cand_id, cand_acq['mag'], idx, p_acqs[idx]), id=cand_id)
+                     .format(cand_id, cand_acq['mag'], idx, p_acqs[idx_worst]), id=cand_id)
 
             # Make a copy of the row (acq star) as a numpy void (structured array row)
             orig_acq = self[idx].as_void()
@@ -463,7 +524,7 @@ class AcqTable(ACACatalogTable):
 
             # If the new star is noticably better (regardless of box size), OR
             # comparable but with a bigger box, then accept it and do one round of
-            # full catalog optimization
+            # full catalog box-size optimization.
             improved = ((new_p_safe / p_safe < 0.9) or
                         (new_p_safe < p_safe and self['halfw'][idx] > orig_acq['halfw']))
             if improved:
