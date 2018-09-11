@@ -432,7 +432,7 @@ def test_cand_acqs_include_exclude():
     acqs.meta['include_ids'] = []
     acqs.meta['include_halfws'] = []
 
-    # Finally, starting from the catalog chosen with the include/exclude
+    # Now starting from the catalog chosen with the include/exclude
     # constraints applied, remove those constraints and re-optimize.
     # This must come back to the original catalog of the 8 bright stars.
     del acqs['slot']
@@ -441,3 +441,13 @@ def test_cand_acqs_include_exclude():
     acqs.sort('idx')
     assert np.all(acqs['id'] == np.arange(1, 9))
     assert np.all(acqs['halfw'] == 160)
+
+    # Finally include all 8 stars
+    include_ids = [1, 3, 4, 5, 6, 7, 9, 11]
+    include_halfws = [60, 80, 100, 120, 140, 60, 80, 100]
+
+    acqs = get_acq_catalog(**STD_INFO, optimize=True, stars=stars,
+                           include_ids=include_ids, include_halfws=include_halfws)
+
+    assert acqs['id'].tolist() == include_ids
+    assert acqs['halfw'].tolist() == include_halfws

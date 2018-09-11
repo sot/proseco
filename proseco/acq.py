@@ -357,8 +357,9 @@ class AcqTable(ACACatalogTable):
         # Accumulate indices and box sizes of candidate acq stars that meet
         # successively less stringent minimum p_acq.
         for min_p_acq in (0.75, 0.5, 0.25, 0.05):
-            # Updates acq_indices, box_sizes in place
-            self.select_best_p_acqs(cand_acqs, min_p_acq, acq_indices, box_sizes)
+            if len(acq_indices) < 8:
+                # Updates acq_indices, box_sizes in place
+                self.select_best_p_acqs(cand_acqs, min_p_acq, acq_indices, box_sizes)
 
             if len(acq_indices) == 8:
                 break
