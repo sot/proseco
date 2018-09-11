@@ -477,7 +477,7 @@ class AcqTable(ACACatalogTable):
         return p_safe, any_improved
 
     def optimize_catalog(self, verbose=False):
-        # If every acq star is specified as included, then no
+        # If every acq star is specified as included, then no optimization
         if all(acq['id'] in self.meta['include_ids'] for acq in self):
             return
 
@@ -513,7 +513,7 @@ class AcqTable(ACACatalogTable):
             idx = self.get_id_idx(acqs[idx_worst]['id'])
 
             self.log('Trying to use {} mag={:.2f} to replace idx={} with p_acq={:.3f}'
-                     .format(cand_id, cand_acq['mag'], idx, p_acqs[idx_worst], id=cand_id))
+                     .format(cand_id, cand_acq['mag'], idx, p_acqs[idx_worst]), id=cand_id)
 
             # Make a copy of the row (acq star) as a numpy void (structured array row)
             orig_acq = self[idx].as_void()
