@@ -1,17 +1,22 @@
 import traceback
 import numpy as np
 
+from astropy.table import Column
+
 from .core import ACACatalogTable
 from .guide import get_guide_catalog, GuideTable
 from .acq import get_acq_catalog, AcqTable
 from .fid import get_fid_catalog, FidTable
 
 
-def get_aca_catalog(obsid=0, **kwargs):
+def get_aca_catalog(obsid=0, *, raise_exc=False, **kwargs):
     try:
         aca = _get_aca_catalog(obsid, **kwargs)
 
     except Exception:
+        if raise_exc:
+            raise
+
         aca = ACACatalogTable.empty()  # Makes zero-length table with correct columns
         aca.meta['exception'] = traceback.format_exc()
 
@@ -31,7 +36,7 @@ def _get_aca_catalog(obsid=0, att=None, man_angle=None, date=None,
                      detector=None, sim_offset=None, focus_offset=None,
                      n_guide=None, n_fid=None, n_acq=None,
                      include_ids=None, include_halfws=None,
-                     print_log=False):
+                     print_log=False, raise_exc=False):
 
     aca = ACACatalogTable()
 
@@ -57,6 +62,8 @@ def _get_aca_catalog(obsid=0, att=None, man_angle=None, date=None,
         for name in merge_cat.colnames:
             aca[name] = merge_cat[name]
     except Exception:
+        if raise_exc:
+            raise
         aca['id'] = []  # Equivalent to ACACatalogTable.empty()
         aca.meta['exception'] = traceback.format_exc()
 
@@ -69,7 +76,8 @@ def merge_cats(fids=None, guides=None, acqs=None):
     guides = [] if guides is None else guides
     acqs = [] if acqs is None else acqs
 
-    colnames = ['id', 'type', 'sz', 'p_acq', 'mag', 'maxmag', 'yang', 'zang', 'dim', 'res', 'halfw']
+    colnames = ['slot', 'id', 'type', 'sz', 'p_acq', 'mag', 'maxmag',
+                'yang', 'zang', 'dim', 'res', 'halfw']
 
     if len(fids) > 0:
         fids['type'] = 'FID'
@@ -83,6 +91,7 @@ def merge_cats(fids=None, guides=None, acqs=None):
 
     guide_size = '8x8' if len(fids) == 0 else '6x6'
     if len(guides) > 0:
+        guides['slot'] = 0  # Filled in later
         guides['type'] = 'GUI'
         guides['maxmag'] = guides['mag'] + 1.5
         guides['p_acq'] = 0
@@ -98,41 +107,39 @@ def merge_cats(fids=None, guides=None, acqs=None):
         acqs['sz'] = guide_size
         acqs['res'] = 1
 
-    # Start with just a list of dicts because all fancy table manip is breaking for me
-    entries = []
+    # Accumulate a list of table Row objects to be assembled into the final table.
+    # This has the desired side effect of back-populating 'slot' and 'type' columns
+    # in the original acqs, guides, fids tables.
+    rows = []
+    slot = 0
+
     for fid in fids:
-        fid = fid[colnames]
-        entries.append(dict(zip(fid.colnames, fid.as_void())))
+        fid['slot'] = slot
+        slot = (slot + 1) % 8
+        rows.append(fid[colnames])
 
     for bot_id in set(acqs['id']) & set(guides['id']):
-        bot = acqs[colnames][acqs['id'] == bot_id][0]
+        bot = acqs.get_id(bot_id)
+        bot['slot'] = slot
         bot['type'] = 'BOT'
-        entries.append(dict(zip(bot.colnames, bot.as_void())))
+        slot = (slot + 1) % 8
+        rows.append(bot[colnames])
 
     for gui_id in set(guides['id']) - set(acqs['id']):
-        guide = guides[colnames][guides['id'] == gui_id][0]
-        entries.append(dict(zip(guide.colnames, guide.as_void())))
+        guide = guides.get_id(gui_id)
+        guide['slot'] = slot
+        slot = (slot + 1) % 8
+        rows.append(guide[colnames])
 
     for acq_id in set(acqs['id']) - set(guides['id']):
-        acq = acqs[colnames][acqs['id'] == acq_id][0]
-        entries.append(dict(zip(acq.colnames, acq.as_void())))
+        acq = acqs.get_id(acq_id)
+        acq['slot'] = slot
+        slot = (slot + 1) % 8
+        rows.append(acq[colnames])
 
-    # Initialize table and assign idx
-    table = ACACatalogTable(entries)
-    table['idx'] = np.arange(1, len(entries) + 1)
+    # Create final table and assign idx
+    aca = ACACatalogTable(rows=rows, names=colnames)
+    idx = Column(np.arange(1, len(aca) + 1), name='idx')
+    aca.add_column(idx, index=1)
 
-    # Assign slots
-    n_fid = len(fids)
-    n_bot = np.count_nonzero(table['type'] == 'BOT')
-    n_gui = np.count_nonzero(table['type'] == 'GUI')
-    n_acq = np.count_nonzero(table['type'] == 'ACQ')
-
-    fidnums = np.arange(0, n_fid)
-    botnums = np.arange(0, n_bot) + n_fid
-    acqnums = np.arange(0, n_acq) + n_fid + n_bot
-    guinums = np.arange(0, n_gui) + n_fid + n_bot
-    nums = np.concatenate([fidnums, botnums, guinums, acqnums])
-
-    table['slot'] = nums % 8
-
-    return table[['idx', 'slot'] + colnames]
+    return aca
