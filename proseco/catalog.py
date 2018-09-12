@@ -1,20 +1,40 @@
+import traceback
 import numpy as np
 
 from .core import ACACatalogTable
-from .guide import get_guide_catalog
-from .acq import get_acq_catalog
-from .fid import get_fid_catalog
+from .guide import get_guide_catalog, GuideTable
+from .acq import get_acq_catalog, AcqTable
+from .fid import get_fid_catalog, FidTable
 
 
-def get_aca_catalog(obsid=0, att=None, man_angle=None, date=None,
-                    dither_acq=None, dither_guide=None,
-                    t_ccd_acq=None, t_ccd_guide=None,
-                    detector=None, sim_offset=None, focus_offset=None,
-                    n_guide=None, n_fid=None, n_acq=None, monitor_windows=None,
-                    include_ids=None, include_halfws=None,
-                    print_log=False):
+def get_aca_catalog(**kwargs):
+    try:
+        aca = _get_aca_catalog(**kwargs)
+    except Exception:
+        #aca = ACACatalogTable.empty()  # TBD Makes zero-length table with correct columns
+        aca = ACACatalogTable()
+        aca.meta['exception'] = traceback.format_exc()
+
+        if aca.acqs is None:
+            #aca.acqs = AcqTable.empty()
+            aca.acqs = []
+        if aca.fids is None:
+            #aca.fids = FidTable.empty()
+            aca.fids = []
+        if aca.guides is None:
+            #aca.guides = GuideTable.empty()
+            aca.guides = []
+    return aca
+
+def _get_aca_catalog(obsid=0, att=None, man_angle=None, date=None,
+                     dither_acq=None, dither_guide=None,
+                     t_ccd_acq=None, t_ccd_guide=None,
+                     detector=None, sim_offset=None, focus_offset=None,
+                     n_guide=None, n_fid=None, n_acq=None, monitor_windows=None,
+                     include_ids=None, include_halfws=None,
+                     print_log=False):
+
     catalog = ACACatalogTable(print_log=print_log)
-
     # Put at least the obsid in top level meta for now
     catalog.meta['obsid'] = obsid
 
