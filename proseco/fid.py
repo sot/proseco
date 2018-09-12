@@ -26,7 +26,8 @@ def get_fid_catalog(*, detector=None, focus_offset=0, sim_offset=0,
     :param sim_offset: SIM translation offset from nominal [steps] (default=0)
     :param acqs: AcqTable catalog.  Optional but needed for actual fid selection.
     :param stars: stars table.  Defaults to acqs.meta['stars'] if available.
-    :param dither: dither [arcsec].  Defaults to acqs.meta['dither'] if available.
+    :param dither: dither (float or 2-element sequence (dither_y, dither_z), [arcsec]
+                   Defaults to acqs.meta['dither'] if available.
     :param print_log: print log to stdout (default=False)
     """
     fids = FidTable(detector=detector, focus_offset=focus_offset,
@@ -68,7 +69,8 @@ class FidTable(ACACatalogTable):
         :param sim_offset: SIM translation offset from nominal [steps] (default=0)
         :param acqs: AcqTable catalog.  Optional but needed for actual fid selection.
         :param stars: stars table.  Defaults to acqs.meta['stars'] if available.
-        :param dither: dither [arcsec].  Defaults to acqs.meta['dither'] if available.
+        :param dither: dither (float or 2-element sequence (dither_y, dither_z), [arcsec]
+                       Defaults to acqs.meta['dither'] if available.
         :param print_log: print log to stdout (default=False)
         :param **kwargs: any other kwargs for Table init
         """
@@ -88,6 +90,16 @@ class FidTable(ACACatalogTable):
             if print_log is None:
                 print_log = acqs.print_log
             self.acqs = acqs
+
+        # TO DO: fix this temporary stub put in for the 1.0 release.  This converts
+        # a 2-element dither (y, z) to a single value which is currently needed for acq
+        # selection.
+        try:
+            dither = max(dither[0], dither[1])
+        except TypeError:
+            # Catches only the case where dither is not subscriptable.  Anything else
+            # should raise.
+            pass
 
         super().__init__(data=data, print_log=print_log, **kwargs)
 

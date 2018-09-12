@@ -451,3 +451,19 @@ def test_cand_acqs_include_exclude():
 
     assert acqs['id'].tolist() == include_ids
     assert acqs['halfw'].tolist() == include_halfws
+
+
+def test_dither_as_sequence():
+    """
+    Test that calling get_acq_catalog with a 2-element sequence (dither_y, dither_z)
+    gives the expected response.  (Basically that it still returns a catalog).
+    """
+
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(size=1500, n_stars=8)
+    kwargs = STD_INFO.copy()
+    kwargs['dither'] = (8, 22)
+
+    acqs = get_acq_catalog(**kwargs, stars=stars)
+    assert len(acqs) == 8
+    assert acqs.meta['dither'] == 22  # Will be (8, 22) for 4.0
