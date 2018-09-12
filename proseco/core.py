@@ -154,22 +154,6 @@ class ACACatalogTable(Table):
     def thumbs_up(self, val):
         self.meta['thumbs_up'] = val
 
-    @property
-    def warnings(self):
-        return self.meta.get('warnings')
-
-    @warnings.setter
-    def warnings(self, val):
-        self.meta['warnings'] = val
-
-    @property
-    def errors(self):
-        return self.meta.get('errors')
-
-    @errors.setter
-    def errors(self, val):
-        self.meta['errors'] = val
-
     def log(self, data, **kwargs):
         # Name of calling functions, starting from top (outermost) and
         # ending with function that called log()
