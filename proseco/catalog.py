@@ -29,7 +29,7 @@ def _get_aca_catalog(obsid=0, att=None, man_angle=None, date=None,
                      dither_acq=None, dither_guide=None,
                      t_ccd_acq=None, t_ccd_guide=None,
                      detector=None, sim_offset=None, focus_offset=None,
-                     n_guide=None, n_fid=None, n_acq=None, monitor_windows=None,
+                     n_guide=None, n_fid=None, n_acq=None,
                      include_ids=None, include_halfws=None,
                      print_log=False):
 
@@ -53,8 +53,7 @@ def _get_aca_catalog(obsid=0, att=None, man_angle=None, date=None,
     # Make a merged starcheck-like catalog.  Catch any errors at this point to avoid
     # impacting operational work (call from Matlab).
     try:
-        merge_cat = merge_cats(fids=aca.fids, guides=aca.guides, acqs=aca.acqs,
-                               mons=monitor_windows)
+        merge_cat = merge_cats(fids=aca.fids, guides=aca.guides, acqs=aca.acqs)
         for name in merge_cat.colnames:
             aca[name] = merge_cat[name]
     except Exception:
@@ -64,12 +63,11 @@ def _get_aca_catalog(obsid=0, att=None, man_angle=None, date=None,
     return aca
 
 
-def merge_cats(fids=None, guides=None, acqs=None, mons=None):
+def merge_cats(fids=None, guides=None, acqs=None):
 
     fids = [] if fids is None else fids
     guides = [] if guides is None else guides
     acqs = [] if acqs is None else acqs
-    mons = [] if mons is None else mons
 
     colnames = ['id', 'type', 'sz', 'p_acq', 'mag', 'maxmag', 'yang', 'zang', 'dim', 'res', 'halfw']
 
@@ -115,13 +113,6 @@ def merge_cats(fids=None, guides=None, acqs=None, mons=None):
         guide = guides[colnames][guides['id'] == gui_id][0]
         entries.append(dict(zip(guide.colnames, guide.as_void())))
 
-    for mon in mons:
-        # Haven't really decided on MON input syntax (table or list of dicts or tuples)
-        # if we even want mons in here. So putting these at 0, 0 to start
-        entries.append({'type': 'MON', 'id': '', 'sz': '8x8', 'mag': 0, 'maxmag': 0,
-                        'p_acq': 0, 'yang': 0, 'zang': 0, 'dim': -1,
-                        'res': 0, 'halfw': 20})
-
     for acq_id in set(acqs['id']) - set(guides['id']):
         acq = acqs[colnames][acqs['id'] == acq_id][0]
         entries.append(dict(zip(acq.colnames, acq.as_void())))
@@ -135,14 +126,12 @@ def merge_cats(fids=None, guides=None, acqs=None, mons=None):
     n_bot = np.count_nonzero(table['type'] == 'BOT')
     n_gui = np.count_nonzero(table['type'] == 'GUI')
     n_acq = np.count_nonzero(table['type'] == 'ACQ')
-    n_mon = np.count_nonzero(table['type'] == 'MON')
 
     fidnums = np.arange(0, n_fid)
     botnums = np.arange(0, n_bot) + n_fid
     acqnums = np.arange(0, n_acq) + n_fid + n_bot
     guinums = np.arange(0, n_gui) + n_fid + n_bot
-    monnums = np.arange(0, n_mon) + n_fid + n_bot + n_gui
-    nums = np.concatenate([fidnums, botnums, guinums, monnums, acqnums])
+    nums = np.concatenate([fidnums, botnums, guinums, acqnums])
 
     table['slot'] = nums % 8
 
