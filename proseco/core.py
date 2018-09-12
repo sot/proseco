@@ -83,6 +83,18 @@ class ACACatalogTable(Table):
         for name in ('ra', 'dec', 'RA_PMCORR', 'DEC_PMCORR'):
             self._default_formats[name] = '.6f'
 
+    @classmethod
+    def empty(cls):
+        """
+        Return a minimal ACACatalogTable which satisfies API requirements.  Currently
+        this means that it has an 'id' column which can be examined for length.
+
+        :returns: StarsTable of stars (empty)
+        """
+        out = cls()
+        out['id'] = []
+        return out
+
     def make_index(self):
         # Low-tech index to quickly get a row or the row index by `id` column.
         self._id_index = {}

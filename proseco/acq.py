@@ -181,6 +181,19 @@ class AcqTable(ACACatalogTable):
     # (e.g. `obs19387/acqs.yaml`).
     name = 'acqs'
 
+    @classmethod
+    def empty(cls):
+        """
+        Return a minimal ACACatalogTable which satisfies API requirements.  For AcqTable
+        it should have 'id' and 'halfw' columns.
+
+        :returns: StarsTable of stars (empty)
+        """
+        out = cls()
+        out['id'] = []
+        out['halfw'] = []
+        return out
+
     def get_obs_info(self):
         """
         Convenience method to return the parts of meta that are needed
