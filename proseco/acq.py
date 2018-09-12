@@ -86,14 +86,23 @@ def get_acq_catalog(obsid=0, att=None,
         if focus_offset is None:
             focus_offset = 0
 
-        # TO DO: deal with non-square dither pattern, esp. 8 x 64.
         dither_y_amp = obso.get('dither_y_amp')
         dither_z_amp = obso.get('dither_z_amp')
         if dither_y_amp is not None and dither_z_amp is not None:
-            dither = max(dither_y_amp, dither_z_amp)
+            dither = (dither_y_amp, dither_z_amp)
 
         if dither is None:
             dither = 20
+
+    # TO DO: fix this temporary stub put in for the 1.0 release.  This converts
+    # a 2-element dither (y, z) to a single value which is currently needed for acq
+    # selection.
+    try:
+        dither = max(dither[0], dither[1])
+    except TypeError:
+        # Catches only the case where dither is not subscriptable.  Anything else
+        # should raise.
+        pass
 
     acqs.log(f'getting dark cal image at date={date} t_ccd={t_ccd:.1f}')
     dark = get_dark_cal_image(date=date, select='before', t_ccd_ref=t_ccd)

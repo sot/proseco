@@ -89,6 +89,16 @@ class FidTable(ACACatalogTable):
                 print_log = acqs.print_log
             self.acqs = acqs
 
+        # TO DO: fix this temporary stub put in for the 1.0 release.  This converts
+        # a 2-element dither (y, z) to a single value which is currently needed for acq
+        # selection.
+        try:
+            dither = max(dither[0], dither[1])
+        except TypeError:
+            # Catches only the case where dither is not subscriptable.  Anything else
+            # should raise.
+            pass
+
         super().__init__(data=data, print_log=print_log, **kwargs)
 
         self.meta.update({'detector': detector,

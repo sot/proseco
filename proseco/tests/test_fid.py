@@ -138,3 +138,13 @@ def test_fid_mult_spoilers():
     assert np.all(cand_fids['spoiler_score'] == [0, 0, 1, 4, 0, 0])
     assert len(cand_fids['spoilers'][2]) == 1
     assert cand_fids['spoilers'][2]['warn'][0] == 'yellow'
+
+
+def test_dither_as_sequence():
+    """
+    Test that calling get_acq_catalog with a 2-element sequence (dither_y, dither_z)
+    gives the expected response.  (Basically that it still returns a catalog).
+    """
+    fids = get_fid_catalog(detector='ACIS-S', dither=(8, 22))
+    assert len(fids) == 3
+    assert fids.meta['dither'] == 22  # Will be (8, 22) for release 4.0
