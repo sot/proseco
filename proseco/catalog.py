@@ -119,11 +119,12 @@ def merge_cats(fids=None, guides=None, acqs=None):
         rows.append(fid[colnames])
 
     for bot_id in set(acqs['id']) & set(guides['id']):
-        bot = acqs.get_id(bot_id)
-        bot['slot'] = slot
-        bot['type'] = 'BOT'
+        acq = acqs.get_id(bot_id)
+        guide = guides.get_id(bot_id)
+        guide['slot'] = acq['slot'] = slot
+        guide['type'] = acq['type'] = 'BOT'
         slot = (slot + 1) % 8
-        rows.append(bot[colnames])
+        rows.append(acq[colnames])
 
     for gui_id in set(guides['id']) - set(acqs['id']):
         guide = guides.get_id(gui_id)
