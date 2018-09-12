@@ -26,7 +26,8 @@ def get_fid_catalog(*, detector=None, focus_offset=0, sim_offset=0,
     :param sim_offset: SIM translation offset from nominal [steps] (default=0)
     :param acqs: AcqTable catalog.  Optional but needed for actual fid selection.
     :param stars: stars table.  Defaults to acqs.meta['stars'] if available.
-    :param dither: dither [arcsec].  Defaults to acqs.meta['dither'] if available.
+    :param dither: dither (float or 2-element sequence (dither_y, dither_z), [arcsec]
+                   Defaults to acqs.meta['dither'] if available.
     :param print_log: print log to stdout (default=False)
     """
     fids = FidTable(detector=detector, focus_offset=focus_offset,
@@ -68,7 +69,8 @@ class FidTable(ACACatalogTable):
         :param sim_offset: SIM translation offset from nominal [steps] (default=0)
         :param acqs: AcqTable catalog.  Optional but needed for actual fid selection.
         :param stars: stars table.  Defaults to acqs.meta['stars'] if available.
-        :param dither: dither [arcsec].  Defaults to acqs.meta['dither'] if available.
+        :param dither: dither (float or 2-element sequence (dither_y, dither_z), [arcsec]
+                       Defaults to acqs.meta['dither'] if available.
         :param print_log: print log to stdout (default=False)
         :param **kwargs: any other kwargs for Table init
         """

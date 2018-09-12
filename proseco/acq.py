@@ -38,7 +38,7 @@ def get_acq_catalog(obsid=0, att=None,
     :param man_angle: maneuver angle (deg)
     :param t_ccd: ACA CCD temperature (degC)
     :param date: date of acquisition (any DateTime-compatible format)
-    :param dither: dither size (float, arcsec)
+    :param dither: dither size (float or 2-element sequence (dither_y, dither_z), arcsec)
     :param detector: 'ACIS-S' | 'ACIS-I' | 'HRC-S' | 'HRC-I'
     :param sim_offset: SIM translation offset from nominal [steps] (default=0)
     :param focus_offset: SIM focus offset [steps] (default=0)
