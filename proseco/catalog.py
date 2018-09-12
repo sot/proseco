@@ -26,6 +26,7 @@ def get_aca_catalog(**kwargs):
             aca.guides = []
     return aca
 
+
 def _get_aca_catalog(obsid=0, att=None, man_angle=None, date=None,
                      dither_acq=None, dither_guide=None,
                      t_ccd_acq=None, t_ccd_guide=None,
@@ -48,30 +49,75 @@ def _get_aca_catalog(obsid=0, att=None, man_angle=None, date=None,
                                        n_guide=n_guide, dither=dither_guide,
                                        stars=catalog.acqs.meta['stars'], print_log=print_log)
 
-    merge_cat = merge_cats(fids=catalog.fids, guides=catalog.guides, acqs=catalog.acqs,
-                           mons=monitor_windows)
-    for col in merge_cat.colnames:
-        catalog[col] = merge_cat[col]
+    # I don't want an issue just with making the pretty catalog to be a possible problem
+    # for operational work, so catching any errors on this separately
+    try:
+        merge_cat = merge_cats(fids=catalog.fids, guides=catalog.guides, acqs=catalog.acqs,
+                               mons=monitor_windows)
+        for col in merge_cat.colnames:
+            catalog[col] = merge_cat[col]
+    except:
+        catalog['dummy_col'] = [0]
 
     return catalog
 
 
-def merge_cats(fids=[], guides=[], acqs=[], mons=[]):
+def merge_cats(fids=None, guides=None, acqs=None, mons=None):
 
-    # Start with just a list of entries and ids
+    fids = [] if fids is None else fids
+    guides = [] if guides is None else guides
+    acqs = [] if acqs is None else acqs
+    mons = [] if mons is None else mons
+
+    wantcols = ['id', 'type', 'sz', 'p_acq', 'mag', 'maxmag', 'yang', 'zang', 'dim', 'res', 'halfw']
+    if len(fids) > 0:
+        fids['type'] = 'FID'
+        fids['mag'] = 7.0
+        fids['maxmag'] = 8.0
+        fids['dim'] = 1
+        fids['res'] = 1
+        fids['halfw'] = 25
+        fids['p_acq'] = 0
+        fids['sz'] = '8x8'
+    guide_size = '8x8' if len(fids) == 0 else '6x6'
+    if len(guides) > 0:
+        guides['type'] = 'GUI'
+        guides['maxmag'] = guides['mag'] + 1.5
+        guides['p_acq'] = 0
+        guides['dim'] = 1
+        guides['res'] = 1
+        guides['halfw'] = 25
+        guides['sz'] = guide_size
+    if len(acqs) > 0:
+        acqs['type'] = 'ACQ'
+        acqs['maxmag'] = acqs['mag'] + 1.5
+        acqs['dim'] = 20
+        acqs['sz'] = guide_size
+        acqs['res'] = 1
+
+    # Start with just a list of dicts because all fancy table manip is breaking for me
     entries = []
     for fid in fids:
-        entries.append({'type': 'FID', 'id': fid['id']})
-    for bot_id in set(acqs['id']).intersection(guides['id']):
-        entries.append({'type': 'BOT', 'id': bot_id})
+        fid = fid[wantcols]
+        entries.append(dict(zip(fid.colnames, fid.as_void())))
+    for bot_id in set(acqs['id']) & set(guides['id']):
+        bot = acqs[wantcols][acqs['id'] == bot_id][0]
+        bot['type'] = 'BOT'
+        entries.append(dict(zip(bot.colnames, bot.as_void())))
     for gui_id in set(guides['id']) - set(acqs['id']):
-        entries.append({'type': 'GUI', 'id': gui_id})
+        guide = guides[wantcols][guides['id'] == gui_id][0]
+        entries.append(dict(zip(guide.colnames, guide.as_void())))
     for mon in mons:
-        entries.append({'type': 'MON', 'id': ''})
-    for acq_id in set(acqs['id']) - set(guides['id']):
-        entries.append({'type': 'ACQ', 'id': acq_id})
+        # Haven't really decided on MON input syntax (table or list of dicts or tuples)
+        # if we even want mons in here. So putting these at 0, 0 to start
+        entries.append({'type': 'MON', 'id': '', 'sz': '8x8', 'mag': 0, 'maxmag': 0,
+                        'p_acq': 0, 'yang': 0, 'zang': 0, 'dim': -1,
+                        'res': 0, 'halfw': 20})
+    for acq_id in (set(acqs['id']) - set(guides['id'])):
+        acq = acqs[wantcols][acqs['id'] == acq_id][0]
+        entries.append(dict(zip(acq.colnames, acq.as_void())))
 
-    # Assign index
+    # Initialize table and assign idx
     table = ACACatalogTable(entries)
     table['idx'] = np.arange(1, len(entries) + 1)
 
@@ -90,5 +136,5 @@ def merge_cats(fids=[], guides=[], acqs=[], mons=[]):
     nums = np.concatenate([fidnums, botnums, guinums, monnums, acqnums])
 
     table['slot'] = nums % 8
-
-    return table
+    return_cols = ['idx', 'slot'] + wantcols
+    return table[return_cols]
