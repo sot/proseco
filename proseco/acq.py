@@ -20,7 +20,7 @@ from .core import (get_mag_std, StarsTable, ACACatalogTable, bin2x2,
                    get_image_props, pea_reject_image)
 
 
-def get_acq_catalog(obsid=0, att=None,
+def get_acq_catalog(obsid=0, *, att=None, n_acq=8,
                     man_angle=None, t_ccd=None, date=None, dither=None,
                     detector=None, sim_offset=None, focus_offset=None, stars=None,
                     include_ids=None, include_halfws=None, exclude_ids=None,
@@ -35,6 +35,7 @@ def get_acq_catalog(obsid=0, att=None,
 
     :param obsid: obsid (default=0)
     :param att: attitude (any object that can initialize Quat)
+    :param n_acq: desired number of acquisition stars (default=8)
     :param man_angle: maneuver angle (deg)
     :param t_ccd: ACA CCD temperature (degC)
     :param date: date of acquisition (any DateTime-compatible format)
@@ -109,6 +110,7 @@ def get_acq_catalog(obsid=0, att=None,
 
     acqs.meta = {'obsid': obsid,
                  'att': att,
+                 'n_acq': n_acq,
                  'date': date,
                  't_ccd': t_ccd,
                  'man_angle': man_angle,
@@ -308,7 +310,7 @@ class AcqTable(ACACatalogTable):
             (where largest p_acqs come first)
           - Loop over the list and add any stars with p_acq > min_p_acq to the
             list of accepted stars.
-          - If the list is 8 long (completely catalog) then stop
+          - If the list is ``n_acq`` long (completely catalog) then stop
 
         This function can be called multiple times with successively smaller
         min_p_acq to fill out the catalog.  The acq_indices and box_sizes
@@ -348,13 +350,13 @@ class AcqTable(ACACatalogTable):
                     acq_indices.append(acq_idx)
                     box_sizes.append(box_size)
 
-                if len(acq_indices) == 8:
-                    self.log('Found 8 acq stars, done')
+                if len(acq_indices) == self.meta['n_acq']:
+                    self.log(f'Found {self.meta["n_acq"]} acq stars, done')
                     return
 
     def get_initial_catalog(self, cand_acqs, stars, dark, dither=20, t_ccd=-11.0, date=None):
         """
-        Get the initial catalog of up to 8 candidate acquisition stars.
+        Get the initial catalog of up to ``n_acq`` candidate acquisition stars.
         """
         self.log(f'Getting initial catalog from {len(cand_acqs)} candidates')
 
@@ -366,11 +368,11 @@ class AcqTable(ACACatalogTable):
         # Accumulate indices and box sizes of candidate acq stars that meet
         # successively less stringent minimum p_acq.
         for min_p_acq in (0.75, 0.5, 0.25, 0.05):
-            if len(acq_indices) < 8:
+            if len(acq_indices) < self.meta['n_acq']:
                 # Updates acq_indices, box_sizes in place
                 self.select_best_p_acqs(cand_acqs, min_p_acq, acq_indices, box_sizes)
 
-            if len(acq_indices) == 8:
+            if len(acq_indices) == self.meta['n_acq']:
                 break
 
         # Make all the not-accepted candidate acqs have halfw=120 as a reasonable

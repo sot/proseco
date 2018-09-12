@@ -467,3 +467,34 @@ def test_dither_as_sequence():
     acqs = get_acq_catalog(**kwargs, stars=stars)
     assert len(acqs) == 8
     assert acqs.meta['dither'] == 22  # Will be (8, 22) for 4.0
+
+
+def test_n_acq():
+    """
+    Test that specifying n_acq with a value less than 8 gives the expected result.
+    This test ensures that the optimization code that is testing against n_acq is
+    also getting exercised by selecting a catalog where at least one candidate swap
+    occurs.
+    """
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(mag=np.linspace(10.0, 10.07, 8), size=2000)
+    stars.add_fake_constellation(mag=np.linspace(10.005, 10.035, 4), size=1500, n_stars=4)
+    acqs = get_acq_catalog(**STD_INFO, stars=stars, n_acq=6)
+    exp = ['<AcqTable length=12>',
+           ' idx  slot   id    yang     zang   halfw   mag    p_acq ',
+           'int64 str3 int32 float64  float64  int64 float32 float64',
+           '----- ---- ----- -------- -------- ----- ------- -------',
+           '    0    0   100  2000.00     0.00   160   10.00   0.777',
+           '    1    1   108  1500.00     0.00   160   10.01   0.773',
+           '    2    2   101     0.00  2000.00   160   10.01   0.768',
+           '    3    3   109     0.00  1500.00   160   10.02   0.763',
+           '    4    4   102 -2000.00     0.00   160   10.02   0.758',
+           '    5  ...   110 -1500.00     0.00   120   10.02   0.634',
+           '    6    5   103     0.00 -2000.00   140   10.03   0.787',
+           '    7  ...   111     0.00 -1500.00   120   10.03   0.821',
+           '    8  ...   104  1000.00  1000.00   120   10.04   0.285',
+           '    9  ...   105  1000.00 -1000.00   120   10.05   0.807',
+           '   10  ...   106 -1000.00  1000.00   120   10.06   0.797',
+           '   11  ...   107 -1000.00 -1000.00   120   10.07   0.787']
+
+    assert repr(acqs.meta['cand_acqs'][TEST_COLS]).splitlines() == exp
