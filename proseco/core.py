@@ -78,7 +78,7 @@ class ACACatalogTable(Table):
         # Make printed table look nicer.  This is defined in advance
         # and will be applied the first time the table is represented.
         self._default_formats = {'p_acq': '.3f'}
-        for name in ('yang', 'zang', 'row', 'col', 'mag', 'mag_err', 'color'):
+        for name in ('yang', 'zang', 'row', 'col', 'mag', 'maxmag', 'mag_err', 'color'):
             self._default_formats[name] = '.2f'
         for name in ('ra', 'dec', 'RA_PMCORR', 'DEC_PMCORR'):
             self._default_formats[name] = '.6f'
