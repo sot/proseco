@@ -71,7 +71,7 @@ class ACACatalogTable(Table):
         super().__init__(data=data, **kwargs)
         self.log_info = {}
         self.log_info['events'] = []
-        self.meta['unix_run_time'] = time.time()
+        self.log_info['unix_run_time'] = time.time()
         self.print_log = print_log
 
         # Make printed table look nicer.  This is defined in advance
@@ -181,7 +181,7 @@ class ACACatalogTable(Table):
         # funcs = [framerec[3] for framerec in reversed(framerecs)]
         # func = funcs[-1]
 
-        dt = time.time() - self.meta['unix_run_time']
+        dt = time.time() - self.log_info['unix_run_time']
         kwargs = {key: to_python(val) for key, val in kwargs.items()}
         event = dict(dt=round(dt, 4),
                      func=func,
