@@ -223,3 +223,15 @@ def test_check_mag_spoilers():
         spoiled = check_mag_spoilers(stars, np.array([True, True]), stars, 0)
         req_sep = intercept + magdiff * spoilslope
         assert (dist < req_sep) == spoiled[0]
+
+
+def test_warnings():
+    """
+    Test that the ACACatalogTable warnings infrastructure works via a
+    specific expected warning in get_guide_catalog (too few stars selected).
+    """
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(n_stars=6)
+    guides = get_guide_catalog(att=(0, 0, 0), date='2018:001', t_ccd=-10, dither=(8, 8),
+                               stars=stars, n_guide=8)
+    assert guides.warnings == ['WARNING: Selected only 6 guide stars versus requested 8']

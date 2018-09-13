@@ -1,5 +1,4 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-from __future__ import division, print_function  # For Py2 compatibility
 
 import numpy as np
 import pytest
@@ -498,3 +497,14 @@ def test_n_acq():
            '   11  ...   107 -1000.00 -1000.00   120   10.07   0.787']
 
     assert repr(acqs.meta['cand_acqs'][TEST_COLS]).splitlines() == exp
+
+
+def test_warnings():
+    """
+    Test that the ACACatalogTable warnings infrastructure works via a
+    specific expected warning in get_acq_catalog (too few stars selected).
+    """
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(n_stars=6)
+    acqs = get_acq_catalog(**STD_INFO, stars=stars, n_acq=8, optimize=False)
+    assert acqs.warnings == ['WARNING: Selected only 6 acq stars versus requested 8']
