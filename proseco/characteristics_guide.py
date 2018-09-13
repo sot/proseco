@@ -1,5 +1,8 @@
 import numpy as np
 
+# Minimum scaled guide count for thumbs_up
+min_guide_count = 4.0
+
 CCD = {'row_min': -512.0,
        'row_max': 512.0,
        'col_min': -512.0,

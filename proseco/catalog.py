@@ -102,6 +102,9 @@ def _get_aca_catalog(**kwargs):
     aca.fids = get_fid_catalog(acqs=aca.acqs, **fid_kwargs)
     aca.guides = get_guide_catalog(stars=aca.acqs.meta['stars'], **guide_kwargs)
 
+    # Get overall catalog thumbs_up
+    aca.thumbs_up = aca.acqs.thumbs_up & aca.fids.thumbs_up & aca.guides.thumbs_up
+
     # Make a merged starcheck-like catalog.  Catch any errors at this point to avoid
     # impacting operational work (call from Matlab).
     try:
