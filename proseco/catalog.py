@@ -1,5 +1,6 @@
 import traceback
 import numpy as np
+from itertools import count
 
 from astropy.table import Column
 
@@ -35,7 +36,7 @@ def _get_aca_catalog(obsid=0, att=None, man_angle=None, date=None,
                      t_ccd_acq=None, t_ccd_guide=None,
                      detector=None, sim_offset=None, focus_offset=None,
                      n_guide=None, n_fid=None, n_acq=None,
-                     include_ids=None, include_halfws=None,
+                     include_ids=None, include_halfws=None, exclude_ids=None,
                      print_log=False, raise_exc=False):
 
     aca = ACACatalogTable()
@@ -45,6 +46,8 @@ def _get_aca_catalog(obsid=0, att=None, man_angle=None, date=None,
 
     aca.acqs = get_acq_catalog(obsid=obsid, att=att, date=date, t_ccd=t_ccd_acq,
                                dither=np.max(dither_acq), man_angle=man_angle,
+                               include_ids=include_ids, include_halfws=include_halfws,
+                               exclude_ids=exclude_ids,
                                print_log=print_log)
 
     aca.fids = get_fid_catalog(detector=detector, sim_offset=sim_offset,
@@ -111,31 +114,43 @@ def merge_cats(fids=None, guides=None, acqs=None):
     # This has the desired side effect of back-populating 'slot' and 'type' columns
     # in the original acqs, guides, fids tables.
     rows = []
-    slot = 0
 
-    for fid in fids:
+    # Generate a list of AGASC IDs for the BOT, GUI, and ACQ stars
+    # in the merged catalog.  Use filt() function below to maintain
+    # the original order (instead of undefined order of set).
+    def filt(tbl, id_set):
+        return [row['id'] for row in tbl if row['id'] in id_set]
+
+    bot_ids = filt(guides, set(guides['id']) & set(acqs['id']))
+    gui_ids = filt(guides, set(guides['id']) - set(acqs['id']))
+    acq_ids = filt(acqs, set(acqs['id']) - set(guides['id']))
+
+    n_fid = len(fids)
+    n_bot = len(bot_ids)
+
+    # FIDs.  Slot starts at 0.
+    for slot, fid in zip(count(0), fids):
         fid['slot'] = slot
-        slot = (slot + 1) % 8
         rows.append(fid[colnames])
 
-    for bot_id in set(acqs['id']) & set(guides['id']):
+    # BOT stars.  Slot starts after fid slots.
+    for slot, bot_id in zip(count(n_fid), bot_ids):
         acq = acqs.get_id(bot_id)
         guide = guides.get_id(bot_id)
         guide['slot'] = acq['slot'] = slot
         guide['type'] = acq['type'] = 'BOT'
-        slot = (slot + 1) % 8
         rows.append(acq[colnames])
 
-    for gui_id in set(guides['id']) - set(acqs['id']):
+    # GUI-only stars. Slot stars after fid and BOT slots.
+    for slot, gui_id in zip(count(n_fid + n_bot), gui_ids):
         guide = guides.get_id(gui_id)
         guide['slot'] = slot
-        slot = (slot + 1) % 8
         rows.append(guide[colnames])
 
-    for acq_id in set(acqs['id']) - set(guides['id']):
+    # ACQ-only stars. Slot stars after fid and BOT slots.
+    for slot, acq_id in zip(count(n_fid + n_bot), acq_ids):
         acq = acqs.get_id(acq_id)
-        acq['slot'] = slot
-        slot = (slot + 1) % 8
+        acq['slot'] = slot % 8
         rows.append(acq[colnames])
 
     # Create final table and assign idx
