@@ -17,7 +17,7 @@ from . import characteristics as ACQ
 from .core import ACACatalogTable
 
 
-def get_fid_catalog(*, n_fids=3, detector=None, focus_offset=0, sim_offset=0,
+def get_fid_catalog(*, n_fid=3, detector=None, focus_offset=0, sim_offset=0,
                     acqs=None, stars=None, dither=None,
                     print_log=None):
     """
@@ -29,7 +29,7 @@ def get_fid_catalog(*, n_fids=3, detector=None, focus_offset=0, sim_offset=0,
     :param dither: dither [arcsec].  Defaults to acqs.meta['dither'] if available.
     :param print_log: print log to stdout (default=False)
     """
-    fids = FidTable(n_fids=n_fids, detector=detector, focus_offset=focus_offset,
+    fids = FidTable(n_fid=n_fid, detector=detector, focus_offset=focus_offset,
                     sim_offset=sim_offset, acqs=acqs, stars=stars,
                     dither=dither, print_log=print_log)
 
@@ -57,13 +57,13 @@ class FidTable(ACACatalogTable):
     name = 'fids'
 
     def __init__(self, data=None, *,  # Keyword only from here
-                 n_fids=3, detector=None, focus_offset=0, sim_offset=0,
+                 n_fid=3, detector=None, focus_offset=0, sim_offset=0,
                  acqs=None, stars=None, dither=None,
                  print_log=None, **kwargs):
         """
         Table of fid lights, with methods for selection.
 
-        :param n_fids: number of desired fids
+        :param n_fid: number of desired fids
         :param detector: 'ACIS-S' | 'ACIS-I' | 'HRC-S' | 'HRC-I'
         :param focus_offset: SIM focus offset [steps] (default=0)
         :param sim_offset: SIM translation offset from nominal [steps] (default=0)
@@ -73,7 +73,7 @@ class FidTable(ACACatalogTable):
         :param print_log: print log to stdout (default=False)
         :param **kwargs: any other kwargs for Table init
         """
-        self.n_fids = n_fids
+        self.n_fid = n_fid
         self._fid_set = ()
 
         # If acqs (acq catalog) supplied then make a weak reference since that
