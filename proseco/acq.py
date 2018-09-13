@@ -165,7 +165,7 @@ def get_acq_catalog(obsid=0, *, att=None, n_acq=8,
     cand_acqs['slot'] = slots
 
     if len(acqs) < n_acq:
-        self.log(f'Selected only {len(acqs)} acq stars versus requested {n_acq}',
+        acqs.log(f'Selected only {len(acqs)} acq stars versus requested {n_acq}',
                  warning=True)
 
     return acqs
@@ -302,17 +302,9 @@ class AcqTable(ACACatalogTable):
                 try:
                     star = stars.get_id(include_id)
                 except KeyError:
-                    try:
-                        star = StarsTable.from_agasc_ids(self.meta['att'],
-                                                         agasc_ids=[include_id],
-                                                         date=self.meta['date'])[0]
-                    except ValueError:
-                        self.log(f'AGASC ID={include_id} not found in catalog, skipping',
-                                 warning=True)
-                        raise Exception
+                    raise ValueError(f'cannot including star id={include_id} that is not '
+                                     f'a valid star in the ACA field of view')
                 else:
-                    self.log(f'Including star id={include_id} that is not '
-                             f'a valid star in the ACA field of view', warning=True)
                     cand_acqs.add_row(star)
 
     def select_best_p_acqs(self, cand_acqs, min_p_acq, acq_indices, box_sizes):
