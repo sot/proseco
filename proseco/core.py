@@ -205,6 +205,19 @@ class ACACatalogTable(Table):
                  if event.get('warning')]
         return warns
 
+    @property
+    def exception(self):
+        """
+        Return string traceback of a top-level caught exception, or "" (empty
+        string) if no exception has been caught.  Mostly for use in Matlab
+        interface.
+        """
+        return self.meta.get('exception', '')
+
+    @exception.setter
+    def exception(self, val):
+        self.meta['exception'] = val
+
     def _base_repr_(self, *args, **kwargs):
         names = [name for name in self.colnames
                  if self[name].dtype.kind != 'O']

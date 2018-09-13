@@ -99,9 +99,10 @@ def get_acq_catalog(obsid=0, *, att=None, n_acq=8,
     # selection.
     try:
         dither = max(dither[0], dither[1])
-    except TypeError:
-        # Catches only the case where dither is not subscriptable.  Anything else
-        # should raise.
+    except (TypeError, IndexError):
+        # Catches only the case where dither is not subscriptable.  Sadly, np.int64
+        # raises IndexError, not TypeError (like Python int), so this test is a bit
+        # weak (would crash later for an input of a 1-element list).
         pass
 
     acqs.log(f'getting dark cal image at date={date} t_ccd={t_ccd:.1f}')
@@ -302,7 +303,7 @@ class AcqTable(ACACatalogTable):
                 try:
                     star = stars.get_id(include_id)
                 except KeyError:
-                    raise ValueError(f'cannot including star id={include_id} that is not '
+                    raise ValueError(f'cannot include star id={include_id} that is not '
                                      f'a valid star in the ACA field of view')
                 else:
                     cand_acqs.add_row(star)

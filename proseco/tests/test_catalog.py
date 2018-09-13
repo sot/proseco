@@ -34,3 +34,16 @@ def test_get_aca_catalog_19387():
            '   2  12 116785920  ACQ 6x6 0.136 10.50  12.00  -673.94 -1575.87  20   1    60']
     repr(aca)  # Apply default formats
     assert aca.pformat(max_width=-1) == exp
+
+
+def test_exception_handling():
+    """
+    Test top-level exception catching.
+    """
+    aca = get_aca_catalog(att=(0, 0, 0), man_angle=10, date='2018:001',
+                          dither_acq=(8, 8), dither_guide=(8, 8),
+                          t_ccd_acq=-10, t_ccd_guide=-10,
+                          detector='ACIS-S', sim_offset=0, focus_offset=0,
+                          n_guide=8, n_fid=3, n_acq=8,
+                          include_ids=[1])  # Fail
+    assert 'ValueError: cannot include star id=1' in aca.exception

@@ -16,10 +16,11 @@ def get_aca_catalog(obsid=0, *, raise_exc=False, **kwargs):
 
     except Exception:
         if raise_exc:
+            # This is for debugging
             raise
 
         aca = ACACatalogTable.empty()  # Makes zero-length table with correct columns
-        aca.meta['exception'] = traceback.format_exc()
+        aca.exception = traceback.format_exc()
 
         if aca.acqs is None:
             aca.acqs = AcqTable.empty()
@@ -45,7 +46,7 @@ def _get_aca_catalog(obsid=0, att=None, man_angle=None, date=None,
     aca.meta['obsid'] = obsid
 
     aca.acqs = get_acq_catalog(obsid=obsid, att=att, date=date, t_ccd=t_ccd_acq,
-                               dither=np.max(dither_acq), man_angle=man_angle,
+                               dither=dither_acq, man_angle=man_angle,
                                include_ids=include_ids, include_halfws=include_halfws,
                                exclude_ids=exclude_ids,
                                print_log=print_log)
@@ -68,7 +69,7 @@ def _get_aca_catalog(obsid=0, att=None, man_angle=None, date=None,
         if raise_exc:
             raise
         aca['id'] = []  # Equivalent to ACACatalogTable.empty()
-        aca.meta['exception'] = traceback.format_exc()
+        aca.exception = traceback.format_exc()
 
     return aca
 
