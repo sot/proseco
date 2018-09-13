@@ -1,4 +1,3 @@
-import warnings
 import pickle
 import inspect
 import time
@@ -72,7 +71,7 @@ class ACACatalogTable(Table):
         super().__init__(data=data, **kwargs)
         self.log_info = {}
         self.log_info['events'] = []
-        self.log_info['time0'] = time.time()
+        self.meta['unix_run_time'] = time.time()
         self.print_log = print_log
 
         # Make printed table look nicer.  This is defined in advance
@@ -167,6 +166,10 @@ class ACACatalogTable(Table):
         self.meta['thumbs_up'] = val
 
     def log(self, data, **kwargs):
+        """
+        Add a log event to self.log_info['events'] include ``data`` (which
+        is typically, but not required to be, a string).
+        """
         # Name of calling functions, starting from top (outermost) and
         # ending with function that called log()
         func = inspect.currentframe().f_back.f_code.co_name
@@ -178,16 +181,29 @@ class ACACatalogTable(Table):
         # funcs = [framerec[3] for framerec in reversed(framerecs)]
         # func = funcs[-1]
 
-        dt = time.time() - self.log_info['time0']
+        dt = time.time() - self.meta['unix_run_time']
         kwargs = {key: to_python(val) for key, val in kwargs.items()}
         event = dict(dt=round(dt, 4),
                      func=func,
                      data=data,
                      **kwargs)
+        if event.get('warning') and isinstance(data, str):
+            event['data'] = 'WARNING: ' + event['data']
+
         self.log_info['events'].append(event)
         if self.print_log:
             data_str = ' ' * event.get('level', 0) * 4 + str(event['data'])
             print(f'{dt:7.3f} {func:20s}: {data_str}')
+
+    @property
+    def warnings(self):
+        """
+        Return list of warnings in the event log.  This returns just the
+        string message without context.
+        """
+        warns = [event['data'] for event in self.log_info['events']
+                 if event.get('warning')]
+        return warns
 
     def _base_repr_(self, *args, **kwargs):
         names = [name for name in self.colnames
