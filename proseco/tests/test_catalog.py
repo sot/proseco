@@ -12,11 +12,11 @@ HAS_SC_ARCHIVE = Path(mica.starcheck.starcheck.FILES['data_root']).exists()
 
 
 @pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
-def test_get_aca_catalog_19387():
+def test_get_aca_catalog_20603():
     """Put it all together.  Regression test for selected stars.
     """
     # Force not using a bright star so there is a GUI-only (not BOT) star
-    aca = get_aca_catalog(20603, exclude_ids=[40113544])
+    aca = get_aca_catalog(20603, exclude_ids=[40113544], raise_exc=True)
     # Expected
     exp = ['slot idx     id    type  sz p_acq  mag  maxmag   yang     zang   dim res halfw',
            '---- --- --------- ---- --- ----- ----- ------ -------- -------- --- --- -----',

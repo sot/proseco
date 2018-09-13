@@ -10,12 +10,38 @@ from .acq import get_acq_catalog, AcqTable
 from .fid import get_fid_catalog, FidTable
 
 
-def get_aca_catalog(obsid=0, *, raise_exc=False, **kwargs):
+def get_aca_catalog(obsid=0, **kwargs):
+    """
+    Get a catalog of guide stars, acquisition stars and fid lights.
+
+    :param obsid: obsid (default=0)
+    :param att: attitude (any object that can initialize Quat)
+    :param n_acq: desired number of acquisition stars (default=8)
+    :param man_angle: maneuver angle (deg)
+    :param t_ccd_acq: ACA CCD temperature for acquisition (degC)
+    :param t_ccd_guide: ACA CCD temperature for guide (degC)
+    :param date: date of acquisition (any DateTime-compatible format)
+    :param dither_acq: acq dither size (2-element sequence (y, z), arcsec)
+    :param dither_guide: guide dither size (2-element sequence (y, z), arcsec)
+    :param detector: 'ACIS-S' | 'ACIS-I' | 'HRC-S' | 'HRC-I'
+    :param sim_offset: SIM translation offset from nominal [steps] (default=0)
+    :param focus_offset: SIM focus offset [steps] (default=0)
+    :param stars: table of AGASC stars (will be fetched from agasc if None)
+    :param include_ids: list of AGASC IDs of stars to include in selected catalog
+    :param include_halfws: list of acq halfwidths corresponding to ``include_ids``
+    :param exclude_ids: list of AGASC IDs of stars to exclude from selected catalog
+    :param optimize: optimize star catalog after initial selection (default=True)
+    :param verbose: provide extra logging info (mostly calc_p_safe) (default=False)
+    :param print_log: print the run log to stdout (default=False)
+
+    :returns: AcaCatalogTable of stars and fids
+
+    """
     try:
-        aca = _get_aca_catalog(obsid, **kwargs)
+        aca = _get_aca_catalog(obsid=obsid, **kwargs)
 
     except Exception:
-        if raise_exc:
+        if kwargs.get('raise_exc'):
             # This is for debugging
             raise
 
@@ -32,32 +58,36 @@ def get_aca_catalog(obsid=0, *, raise_exc=False, **kwargs):
     return aca
 
 
-def _get_aca_catalog(obsid=0, att=None, man_angle=None, date=None,
-                     dither_acq=None, dither_guide=None,
-                     t_ccd_acq=None, t_ccd_guide=None,
-                     detector=None, sim_offset=None, focus_offset=None,
-                     n_guide=None, n_fid=None, n_acq=None,
-                     include_ids=None, include_halfws=None, exclude_ids=None,
-                     print_log=False, raise_exc=False):
+def get_kwargs(name, args, kwargs):
+    out_kwargs = {key: kwargs[key] for key in args if key in kwargs}
+    for key in 'dither', 't_ccd':
+        key_name = key + '_' + name
+        if key_name in kwargs:
+            out_kwargs[key] = kwargs[key_name]
+    return out_kwargs
+
+
+def _get_aca_catalog(**kwargs):
+    raise_exc = kwargs.get('raise_exc')
+
+    # Pluck off the kwargs that are relevant for get_acq_catalog
+    args = ('obsid', 'att', 'date', 'man_angle', 'include_ids',
+            'detector', 'sim_offset', 'sim_focus',
+            'include_halfws', 'exclude_ids', 'print_log', 'n_acq')
+    acq_kwargs = get_kwargs('acq', args, kwargs)
+
+    # Pluck off the kwargs that are relevant for get_guide_catalog
+    args = ('obsid', 'att', 'date', 'print_log', 'n_guide')
+    guide_kwargs = get_kwargs('guide', args, kwargs)
 
     aca = ACACatalogTable()
 
     # Put at least the obsid in top level meta for now
-    aca.meta['obsid'] = obsid
+    aca.meta['obsid'] = kwargs.get('obsid')
 
-    aca.acqs = get_acq_catalog(obsid=obsid, att=att, date=date, t_ccd=t_ccd_acq,
-                               dither=dither_acq, man_angle=man_angle,
-                               include_ids=include_ids, include_halfws=include_halfws,
-                               exclude_ids=exclude_ids,
-                               print_log=print_log)
-
-    aca.fids = get_fid_catalog(detector=detector, sim_offset=sim_offset,
-                               focus_offset=focus_offset, acqs=aca.acqs,
-                               stars=aca.acqs.meta['stars'], print_log=print_log)
-
-    aca.guides = get_guide_catalog(obsid=obsid, att=att, date=date, t_ccd=t_ccd_guide,
-                                   n_guide=n_guide, dither=dither_guide,
-                                   stars=aca.acqs.meta['stars'], print_log=print_log)
+    aca.acqs = get_acq_catalog(**acq_kwargs)
+    aca.fids = get_fid_catalog(acqs=aca.acqs)  # FidTable grabs relevant kwargs from ``acqs.meta``
+    aca.guides = get_guide_catalog(stars=aca.acqs.meta['stars'], **guide_kwargs)
 
     # Make a merged starcheck-like catalog.  Catch any errors at this point to avoid
     # impacting operational work (call from Matlab).
