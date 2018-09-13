@@ -28,7 +28,7 @@ def get_guide_catalog(obsid=0, att=None, date=None, t_ccd=None, dither=None, n_g
     :param att: attitude (any object that can initialize Quat)
     :param t_ccd: ACA CCD temperature (degC)
     :param date: date of acquisition (any DateTime-compatible format)
-    :param dither: dither size (float, arcsec)
+    :param dither: dither size 2-element tuple: (dither_y, dither_z) (float, arcsec)
     :param n_guide: number of guide stars to attempt to get
     :param stars: astropy.Table of AGASC stars (will be fetched from agasc if None)
     :param dark: ACAImage of dark map (fetched based on time and t_ccd if None)
@@ -103,6 +103,11 @@ def get_guide_catalog(obsid=0, att=None, date=None, t_ccd=None, dither=None, n_g
     # Transfer to table (which at this point is an empty table)
     for name, col in selected.columns.items():
         guides[name] = col
+
+    if len(guides) < n_guide:
+        guides.log(f'Selected only {len(guides)} guide stars versus requested {n_guide}',
+                   warning=True)
+
     return guides
 
 
