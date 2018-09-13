@@ -11,10 +11,10 @@ Welcome to proseco's documentation!
    :caption: Contents:
 
 
+API docs
+--------
 
-Indices and tables
-==================
+.. toctree::
+   :maxdepth: 3
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   api

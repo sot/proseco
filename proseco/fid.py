@@ -356,7 +356,7 @@ def get_fid_positions(detector, focus_offset, sim_offset):
     """Calculate the fid light positions for all fids for ``detector``.
 
     This is adapted from the Matlab
-    MissionScheduling/stars/StarSelector/@StarSelector/private/fidPositions.m
+    MissionScheduling/stars/StarSelector/@StarSelector/private/fidPositions.m::
 
       %Convert focus steps to meters
       table = characteristics.Science.Sim.focus_table;

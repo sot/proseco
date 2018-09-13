@@ -320,11 +320,11 @@ class AcqTable(ACACatalogTable):
         algorithm uses the assumption of man_err=box_size.
 
         - Loop over box sizes in descending order (160, ..., 60)
-          - Sort in descending order the p_acqs corresponding to that box size
-            (where largest p_acqs come first)
-          - Loop over the list and add any stars with p_acq > min_p_acq to the
-            list of accepted stars.
-          - If the list is ``n_acq`` long (completely catalog) then stop
+        - Sort in descending order the p_acqs corresponding to that box size
+          (where largest p_acqs come first)
+        - Loop over the list and add any stars with p_acq > min_p_acq to the
+          list of accepted stars.
+        - If the list is ``n_acq`` long (completely catalog) then stop
 
         This function can be called multiple times with successively smaller
         min_p_acq to fill out the catalog.  The acq_indices and box_sizes
@@ -597,7 +597,8 @@ def get_spoiler_stars(stars, acq, box_size):
 
     See this ref for information on how well the catalog mag errors correlate
     with observed.  Answer: not exactly, but probably good enough.  Plots all
-    the way at the bottom are key.
+    the way at the bottom are key::
+
       http://nbviewer.jupyter.org/url/cxc.harvard.edu/mta/ASPECT/
              ipynb/ssawg/2018x03x21/star-mag-uncertainties.ipynb
 
@@ -772,8 +773,8 @@ def calc_p_brightest_compare(acq, mags, mag_errs):
 
 def get_intruders(acq, box_size, name, n_sigma, get_func, kwargs):
     """
-    Get intruders table for name='spoilers' or 'imposters') from ``acq``.
-    If not already in acq then call get_func(**kwargs) to get it.
+    Get intruders table for name='spoilers' or 'imposters' from ``acq``.
+    If not already in acq then call ``get_func(**kwargs)`` to get it.
 
     Returns Table with cols yang, zang, mag, mag_err.
     """
