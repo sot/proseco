@@ -163,7 +163,7 @@ class ACACatalogTable(Table):
 
     @thumbs_up.setter
     def thumbs_up(self, val):
-        self.meta['thumbs_up'] = val
+        self.meta['thumbs_up'] = int(val)
 
     def log(self, data, **kwargs):
         """
