@@ -74,6 +74,10 @@ class ACACatalogTable(Table):
         self.log_info['unix_run_time'] = time.time()
         self.print_log = print_log
 
+        # Set default "ok" status for a catalog to be false.  The idea is that it
+        # needs to justify it is good by passing tests later.
+        self.thumbs_up = False
+
         # Make printed table look nicer.  This is defined in advance
         # and will be applied the first time the table is represented.
         self._default_formats = {'p_acq': '.3f'}
@@ -81,7 +85,6 @@ class ACACatalogTable(Table):
             self._default_formats[name] = '.2f'
         for name in ('ra', 'dec', 'RA_PMCORR', 'DEC_PMCORR'):
             self._default_formats[name] = '.6f'
-        self.thumbs_up = False
 
     @classmethod
     def empty(cls):
