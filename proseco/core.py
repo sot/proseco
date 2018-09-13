@@ -1,4 +1,3 @@
-import warnings
 import pickle
 import inspect
 import time
@@ -72,16 +71,32 @@ class ACACatalogTable(Table):
         super().__init__(data=data, **kwargs)
         self.log_info = {}
         self.log_info['events'] = []
-        self.log_info['time0'] = time.time()
+        self.log_info['unix_run_time'] = time.time()
         self.print_log = print_log
+
+        # Set default "ok" status for a catalog to be false.  The idea is that it
+        # needs to justify it is good by passing tests later.
+        self.thumbs_up = False
 
         # Make printed table look nicer.  This is defined in advance
         # and will be applied the first time the table is represented.
         self._default_formats = {'p_acq': '.3f'}
-        for name in ('yang', 'zang', 'row', 'col', 'mag', 'mag_err', 'color'):
+        for name in ('yang', 'zang', 'row', 'col', 'mag', 'maxmag', 'mag_err', 'color'):
             self._default_formats[name] = '.2f'
         for name in ('ra', 'dec', 'RA_PMCORR', 'DEC_PMCORR'):
             self._default_formats[name] = '.6f'
+
+    @classmethod
+    def empty(cls):
+        """
+        Return a minimal ACACatalogTable which satisfies API requirements.  Currently
+        this means that it has an 'id' column which can be examined for length.
+
+        :returns: StarsTable of stars (empty)
+        """
+        out = cls()
+        out['id'] = []
+        return out
 
     def make_index(self):
         # Low-tech index to quickly get a row or the row index by `id` column.
@@ -122,7 +137,43 @@ class ACACatalogTable(Table):
 
         return idx
 
+    @property
+    def acqs(self):
+        return self.meta.get('acqs')
+
+    @acqs.setter
+    def acqs(self, val):
+        self.meta['acqs'] = val
+
+    @property
+    def fids(self):
+        return self.meta.get('fids')
+
+    @fids.setter
+    def fids(self, val):
+        self.meta['fids'] = val
+
+    @property
+    def guides(self):
+        return self.meta.get('guides')
+
+    @guides.setter
+    def guides(self, val):
+        self.meta['guides'] = val
+
+    @property
+    def thumbs_up(self):
+        return self.meta.get('thumbs_up')
+
+    @thumbs_up.setter
+    def thumbs_up(self, val):
+        self.meta['thumbs_up'] = int(val)
+
     def log(self, data, **kwargs):
+        """
+        Add a log event to self.log_info['events'] include ``data`` (which
+        is typically, but not required to be, a string).
+        """
         # Name of calling functions, starting from top (outermost) and
         # ending with function that called log()
         func = inspect.currentframe().f_back.f_code.co_name
@@ -134,16 +185,42 @@ class ACACatalogTable(Table):
         # funcs = [framerec[3] for framerec in reversed(framerecs)]
         # func = funcs[-1]
 
-        dt = time.time() - self.log_info['time0']
+        dt = time.time() - self.log_info['unix_run_time']
         kwargs = {key: to_python(val) for key, val in kwargs.items()}
         event = dict(dt=round(dt, 4),
                      func=func,
                      data=data,
                      **kwargs)
+        if event.get('warning') and isinstance(data, str):
+            event['data'] = 'WARNING: ' + event['data']
+
         self.log_info['events'].append(event)
         if self.print_log:
             data_str = ' ' * event.get('level', 0) * 4 + str(event['data'])
             print(f'{dt:7.3f} {func:20s}: {data_str}')
+
+    @property
+    def warnings(self):
+        """
+        Return list of warnings in the event log.  This returns just the
+        string message without context.
+        """
+        warns = [event['data'] for event in self.log_info['events']
+                 if event.get('warning')]
+        return warns
+
+    @property
+    def exception(self):
+        """
+        Return string traceback of a top-level caught exception, or "" (empty
+        string) if no exception has been caught.  Mostly for use in Matlab
+        interface.
+        """
+        return self.meta.get('exception', '')
+
+    @exception.setter
+    def exception(self, val):
+        self.meta['exception'] = val
 
     def _base_repr_(self, *args, **kwargs):
         names = [name for name in self.colnames

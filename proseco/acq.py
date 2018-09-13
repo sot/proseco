@@ -5,7 +5,6 @@
 Get a catalog of acquisition stars using the algorithm described in
 https://docs.google.com/presentation/d/1VtFKAW9he2vWIQAnb6unpK4u1bVAVziIdX9TnqRS3a8
 """
-import warnings
 
 import numpy as np
 from scipy import ndimage, stats
@@ -100,9 +99,10 @@ def get_acq_catalog(obsid=0, *, att=None, n_acq=8,
     # selection.
     try:
         dither = max(dither[0], dither[1])
-    except TypeError:
-        # Catches only the case where dither is not subscriptable.  Anything else
-        # should raise.
+    except (TypeError, IndexError):
+        # Catches only the case where dither is not subscriptable.  Sadly, np.int64
+        # raises IndexError, not TypeError (like Python int), so this test is a bit
+        # weak (would crash later for an input of a 1-element list).
         pass
 
     acqs.log(f'getting dark cal image at date={date} t_ccd={t_ccd:.1f}')
@@ -165,6 +165,14 @@ def get_acq_catalog(obsid=0, *, att=None, n_acq=8,
              for acq in cand_acqs]
     cand_acqs['slot'] = slots
 
+    if len(acqs) < n_acq:
+        acqs.log(f'Selected only {len(acqs)} acq stars versus requested {n_acq}',
+                 warning=True)
+
+    # Evaluate catalog for thumbs_up status
+    n_acq_probs, n_or_fewer_probs = prob_n_acq(acqs['p_acq'])
+    acqs.thumbs_up = n_or_fewer_probs[CHAR.acq_prob_n] <= CHAR.acq_prob
+
     return acqs
 
 
@@ -180,6 +188,19 @@ class AcqTable(ACACatalogTable):
     # Name of table.  Use to define default file names where applicable.
     # (e.g. `obs19387/acqs.yaml`).
     name = 'acqs'
+
+    @classmethod
+    def empty(cls):
+        """
+        Return a minimal ACACatalogTable which satisfies API requirements.  For AcqTable
+        it should have 'id' and 'halfw' columns.
+
+        :returns: StarsTable of stars (empty)
+        """
+        out = cls()
+        out['id'] = []
+        out['halfw'] = []
+        return out
 
     def get_obs_info(self):
         """
@@ -286,16 +307,9 @@ class AcqTable(ACACatalogTable):
                 try:
                     star = stars.get_id(include_id)
                 except KeyError:
-                    try:
-                        star = StarsTable.from_agasc_ids(self.meta['att'],
-                                                         agasc_ids=[include_id],
-                                                         date=self.meta['date'])[0]
-                    except ValueError:
-                        warnings.warn(f'AGASC ID={include_id} not found in catalog, skipping')
-                        raise Exception
+                    raise ValueError(f'cannot include star id={include_id} that is not '
+                                     f'a valid star in the ACA field of view')
                 else:
-                    warnings.warn(f'Including star id={include_id} that is not '
-                                  f'a valid star in the ACA field of view')
                     cand_acqs.add_row(star)
 
     def select_best_p_acqs(self, cand_acqs, min_p_acq, acq_indices, box_sizes):

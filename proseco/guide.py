@@ -6,6 +6,7 @@ import numpy as np
 import chandra_aca.aca_image
 from chandra_aca.transform import mag_to_count_rate, count_rate_to_mag
 from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
+from chandra_aca.star_probs import guide_count
 
 from . import characteristics as CHAR
 from . import characteristics_guide as GUIDE_CHAR
@@ -28,7 +29,7 @@ def get_guide_catalog(obsid=0, att=None, date=None, t_ccd=None, dither=None, n_g
     :param att: attitude (any object that can initialize Quat)
     :param t_ccd: ACA CCD temperature (degC)
     :param date: date of acquisition (any DateTime-compatible format)
-    :param dither: dither size (float, arcsec)
+    :param dither: dither size 2-element tuple: (dither_y, dither_z) (float, arcsec)
     :param n_guide: number of guide stars to attempt to get
     :param stars: astropy.Table of AGASC stars (will be fetched from agasc if None)
     :param dark: ACAImage of dark map (fetched based on time and t_ccd if None)
@@ -103,6 +104,15 @@ def get_guide_catalog(obsid=0, att=None, date=None, t_ccd=None, dither=None, n_g
     # Transfer to table (which at this point is an empty table)
     for name, col in selected.columns.items():
         guides[name] = col
+
+    if len(guides) < n_guide:
+        guides.log(f'Selected only {len(guides)} guide stars versus requested {n_guide}',
+                   warning=True)
+
+    # Evaluate guide catalog quality for thumbs_up
+    count = guide_count(guides['mag'], t_ccd)
+    guides.thumbs_up = count >= GUIDE_CHAR.min_guide_count
+
     return guides
 
 
