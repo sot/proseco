@@ -5,7 +5,6 @@
 Get a catalog of acquisition stars using the algorithm described in
 https://docs.google.com/presentation/d/1VtFKAW9he2vWIQAnb6unpK4u1bVAVziIdX9TnqRS3a8
 """
-import warnings
 
 import numpy as np
 from scipy import ndimage, stats
@@ -165,6 +164,10 @@ def get_acq_catalog(obsid=0, *, att=None, n_acq=8,
              for acq in cand_acqs]
     cand_acqs['slot'] = slots
 
+    if len(acqs) < n_acq:
+        self.log(f'Selected only {len(acqs)} acq stars versus requested {n_acq}',
+                 warning=True)
+
     return acqs
 
 
@@ -304,11 +307,12 @@ class AcqTable(ACACatalogTable):
                                                          agasc_ids=[include_id],
                                                          date=self.meta['date'])[0]
                     except ValueError:
-                        warnings.warn(f'AGASC ID={include_id} not found in catalog, skipping')
+                        self.log(f'AGASC ID={include_id} not found in catalog, skipping',
+                                 warning=True)
                         raise Exception
                 else:
-                    warnings.warn(f'Including star id={include_id} that is not '
-                                  f'a valid star in the ACA field of view')
+                    self.log(f'Including star id={include_id} that is not '
+                             f'a valid star in the ACA field of view', warning=True)
                     cand_acqs.add_row(star)
 
     def select_best_p_acqs(self, cand_acqs, min_p_acq, acq_indices, box_sizes):
