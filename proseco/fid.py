@@ -45,6 +45,9 @@ def get_fid_catalog(*, detector=None, focus_offset=0, sim_offset=0,
     # Add a `slot` column that makes sense
     fids.set_slot_column()
 
+    # Set fid thumbs_up to just be True for now
+    fids.thumbs_up = True
+
     return fids
 
 
