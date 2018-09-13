@@ -17,6 +17,8 @@ def get_aca_catalog(obsid=0, **kwargs):
     :param obsid: obsid (default=0)
     :param att: attitude (any object that can initialize Quat)
     :param n_acq: desired number of acquisition stars (default=8)
+    :param n_fid: desired number of fid lights (req'd unless obsid spec'd)
+    :param n_guide: desired number of guide stars (req'd unless obsid spec'd)
     :param man_angle: maneuver angle (deg)
     :param t_ccd_acq: ACA CCD temperature for acquisition (degC)
     :param t_ccd_guide: ACA CCD temperature for guide (degC)
@@ -58,27 +60,38 @@ def get_aca_catalog(obsid=0, **kwargs):
     return aca
 
 
-def get_kwargs(name, args, kwargs):
-    out_kwargs = {key: kwargs[key] for key in args if key in kwargs}
-    for key in 'dither', 't_ccd':
-        key_name = key + '_' + name
-        if key_name in kwargs:
-            out_kwargs[key] = kwargs[key_name]
-    return out_kwargs
+def get_kwargs(args, kwargs):
+    out = {}
+    for key in args:
+        if isinstance(key, tuple):
+            # key is (out_key, kwargs_key), translate input kwargs e.g. from
+            # 'dither_acq' to 'dither' (which is needed by get_acq_catalog).
+            if key[1] in kwargs:
+                out[key[0]] = kwargs[key[1]]
+        elif key in kwargs:
+            out[key] = kwargs[key]
+    return out
 
 
 def _get_aca_catalog(**kwargs):
     raise_exc = kwargs.get('raise_exc')
 
     # Pluck off the kwargs that are relevant for get_acq_catalog
-    args = ('obsid', 'att', 'date', 'man_angle', 'include_ids',
+    args = ('obsid', 'att', 'date', 'man_angle',
+            'include_ids', 'include_halfws', 'exclude_ids',
             'detector', 'sim_offset', 'sim_focus',
-            'include_halfws', 'exclude_ids', 'print_log', 'n_acq')
-    acq_kwargs = get_kwargs('acq', args, kwargs)
+            ('dither', 'dither_acq'), ('t_ccd', 't_ccd_acq'),
+            'print_log', 'n_acq')
+    acq_kwargs = get_kwargs(args, kwargs)
 
     # Pluck off the kwargs that are relevant for get_guide_catalog
-    args = ('obsid', 'att', 'date', 'print_log', 'n_guide')
-    guide_kwargs = get_kwargs('guide', args, kwargs)
+    args = ('obsid', 'att', 'date', 'print_log', 'n_guide',
+            ('dither', 'dither_guide'), ('t_ccd', 't_ccd_guide'))
+    guide_kwargs = get_kwargs(args, kwargs)
+
+    # Pluck off the kwargs that are relevant for get_fid_catalog
+    args = ('n_fid',)
+    fid_kwargs = get_kwargs(args, kwargs)
 
     aca = ACACatalogTable()
 
@@ -86,7 +99,7 @@ def _get_aca_catalog(**kwargs):
     aca.meta['obsid'] = kwargs.get('obsid')
 
     aca.acqs = get_acq_catalog(**acq_kwargs)
-    aca.fids = get_fid_catalog(acqs=aca.acqs)  # FidTable grabs relevant kwargs from ``acqs.meta``
+    aca.fids = get_fid_catalog(acqs=aca.acqs, **fid_kwargs)
     aca.guides = get_guide_catalog(stars=aca.acqs.meta['stars'], **guide_kwargs)
 
     # Make a merged starcheck-like catalog.  Catch any errors at this point to avoid
