@@ -211,8 +211,8 @@ def test_check_mag_spoilers():
 
     # The mag spoiler check only works on stars that are within 10 pixels in row
     # or column, so don't bother simulating stars outside that distance
-    r_dists = np.arange(-9.25, 10, 1)
-    c_dists = np.arange(-9.5, 10, 1)
+    r_dists = np.arange(-9.25, 10, 2)
+    c_dists = np.arange(-9.5, 10, 2)
     magdiffs = np.arange(2, -5, -.5)
 
     for r_dist, c_dist, magdiff in itertools.product(r_dists, c_dists, magdiffs):
