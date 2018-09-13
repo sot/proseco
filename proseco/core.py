@@ -81,6 +81,7 @@ class ACACatalogTable(Table):
             self._default_formats[name] = '.2f'
         for name in ('ra', 'dec', 'RA_PMCORR', 'DEC_PMCORR'):
             self._default_formats[name] = '.6f'
+        self.thumbs_up = False
 
     @classmethod
     def empty(cls):

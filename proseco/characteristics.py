@@ -97,3 +97,7 @@ bad_star_list = [36178592,
                  1196953168,
                  1197635184]
 
+# Minimum acquisition probability thresholds from starcheck
+# for thumbs_up
+acq_prob_n = 2
+acq_prob = 8e-3

@@ -6,6 +6,7 @@ import numpy as np
 import chandra_aca.aca_image
 from chandra_aca.transform import mag_to_count_rate, count_rate_to_mag
 from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
+from chandra_aca.star_probs import guide_count
 
 from . import characteristics as CHAR
 from . import characteristics_guide as GUIDE_CHAR
@@ -107,6 +108,10 @@ def get_guide_catalog(obsid=0, att=None, date=None, t_ccd=None, dither=None, n_g
     if len(guides) < n_guide:
         guides.log(f'Selected only {len(guides)} guide stars versus requested {n_guide}',
                    warning=True)
+
+    # Evaluate guide catalog quality for thumbs_up
+    count = guide_count(guides['mag'], t_ccd)
+    guides.thumbs_up = count >= GUIDE_CHAR.min_guide_count
 
     return guides
 

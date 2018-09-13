@@ -169,6 +169,10 @@ def get_acq_catalog(obsid=0, *, att=None, n_acq=8,
         acqs.log(f'Selected only {len(acqs)} acq stars versus requested {n_acq}',
                  warning=True)
 
+    # Evaluate catalog for thumbs_up status
+    n_acq_probs, n_or_fewer_probs = prob_n_acq(acqs['p_acq'])
+    acqs.thumbs_up = n_or_fewer_probs[CHAR.acq_prob_n] <= CHAR.acq_prob
+
     return acqs
 
 
