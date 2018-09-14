@@ -72,9 +72,9 @@ print_log      print the run log to stdout (default=False)
 Examples
 ++++++++
 
-For generating catalog corresponding to previously run Obsids, the preferred
-strategy is to simply provide the ``obsid`` as a parameter.  Proseco will
-then fetch all necessary data via the ``mica.starcheck`` archive.  This
+For generating a catalog corresponding to an actual scheduled observation, the
+easiest strategy is to simply provide the ``obsid`` as a parameter.  Proseco
+will then fetch all necessary data via the ``mica.starcheck`` archive.  This
 requires installation of the ``cmd_states.db3`` and ``starcheck.db3`` data
 files into the correct locations.  See `Data requirements`_ for details.
 
@@ -121,13 +121,25 @@ attributes::
   37880376 189.086022 2.319189 -1356.71  1071.32  278.91 ...     2   12.30    20  6x6     1
 
 Data requirements
-+++++++++++++++++
+-----------------
+Required data files are:
 
-To be finished...
+::
+
+  $SKA/data/agasc/miniagasc.h5
+  $SKA/data/mica/archive/aca_dark/<YYYYddd>/image.fits
+  $SKA/data/mica/archive/aca_dark/<YYYYddd>/properties.json
+
+The following optional data files are needed for specifying only an
+``obsid`` in the call to :func:`~proseco.catalog.get_aca_catalog`::
+
+  $SKA/data/cmd_states/cmd_states.db3
+  $SKA/data/mica/archive/starcheck/starcheck.db3
 
 See `Syncing Ska data
 <https://github.com/sot/skare3/wiki/Ska3-runtime-environment-for-users#ska-data>`_
-for details.
+for details on automatically syncing these files for a standalone linux or Mac
+environment.  For Matlab tools on Windows a separate mechanism will be provided.
 
 API docs
 --------
