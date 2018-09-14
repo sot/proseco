@@ -36,6 +36,8 @@ obsid         obsid (default=0)
                 **OR**
 att           attitude (any object that can initialize Quat)
 n_acq         desired number of acquisition stars (default=8)
+n_fid         desired number of fid lights (req'd unless obsid spec'd)
+n_guide       desired number of guide stars (req'd unless obsid spec'd)
 man_angle     maneuver angle (deg)
 t_ccd_acq     ACA CCD temperature for acquisition (degC)
 t_ccd_guide   ACA CCD temperature for guide (degC)
