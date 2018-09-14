@@ -207,6 +207,7 @@ class AcqTable(ACACatalogTable):
         Convenience method to return the parts of meta that are needed
         for test_common OBS_INFO.
 
+        :returns: dict of observation information
         """
         keys = ('obsid', 'att', 'date', 't_ccd', 'man_angle', 'dither',
                 'detector', 'sim_offset', 'focus_offset')
@@ -221,6 +222,7 @@ class AcqTable(ACACatalogTable):
 
         :param stars: list of stars in the field
         :param max_candidates: maximum candidate acq stars
+
         :returns: Table of candidates, indices of rejected stars
         """
         ok = ((stars['CLASS'] == 0) &
@@ -320,15 +322,20 @@ class AcqTable(ACACatalogTable):
         algorithm uses the assumption of man_err=box_size.
 
         - Loop over box sizes in descending order (160, ..., 60)
-          - Sort in descending order the p_acqs corresponding to that box size
-            (where largest p_acqs come first)
-          - Loop over the list and add any stars with p_acq > min_p_acq to the
-            list of accepted stars.
-          - If the list is ``n_acq`` long (completely catalog) then stop
+        - Sort in descending order the p_acqs corresponding to that box size
+          (where largest p_acqs come first)
+        - Loop over the list and add any stars with p_acq > min_p_acq to the
+          list of accepted stars.
+        - If the list is ``n_acq`` long (completely catalog) then stop
 
         This function can be called multiple times with successively smaller
         min_p_acq to fill out the catalog.  The acq_indices and box_sizes
         arrays are appended in place in this process.
+
+        :param cand_acqs: AcqTable of candidate acquisition stars
+        :param min_p_acq: minimum p_acq to include in this round (float)
+        :param acq_indices: list of indices into cand_acqs of selected stars
+        :param box_sizes: list of box sizes of selected stars
         """
         self.log(f'Find stars with best acq prob for min_p_acq={min_p_acq}')
         self.log(f'Current catalog: acq_indices={acq_indices} box_sizes={box_sizes}')
@@ -370,7 +377,17 @@ class AcqTable(ACACatalogTable):
 
     def get_initial_catalog(self, cand_acqs, stars, dark, dither=20, t_ccd=-11.0, date=None):
         """
-        Get the initial catalog of up to ``n_acq`` candidate acquisition stars.
+        Get the initial catalog of up to ``n_acq`` candidate acquisition stars.  This
+        updates the current AcqTable (self) in place to add selected stars.
+
+        TO DO: these should all just be taken from self.meta.
+
+        :param cand_acqs: AcqTable of candidate acquisition stars
+        :param stars: StarsTable of stars in or near the ACA FOV
+        :param dark: dark current image (ndarray, e-/sec)
+        :param dither: dither (float, arcsec)
+        :param t_ccd: CCD temperature (float, degC)
+        :param date: observation date
         """
         self.log(f'Getting initial catalog from {len(cand_acqs)} candidates')
 
@@ -405,6 +422,13 @@ class AcqTable(ACACatalogTable):
             self[name] = col
 
     def calc_p_safe(self, verbose=False):
+        """
+        Calculate the probability of a safing action resulting from failure
+        to acquire at least two (2) acquisition stars.
+
+        :returns: p_safe (float)
+        """
+
         p_no_safe = 1.0
 
         for man_err, p_man_err in zip(CHAR.man_errs, self.meta['p_man_errs']):
@@ -431,6 +455,11 @@ class AcqTable(ACACatalogTable):
         """
         Optimize the box size (halfw) for the acq star ``idx`` in the current acqs
         table.  Assume current ``p_safe``.
+
+        :param idx: acq star index
+        :param p_safe: current value of p_safe
+        :param verbose: include extra information in the run log
+        :returns improved, p_safe: whether p_safe was improved and the new value
         """
         acq = self[idx]
         orig_halfw = acq['halfw']
@@ -485,6 +514,13 @@ class AcqTable(ACACatalogTable):
         return p_safe, improved
 
     def optimize_acqs_halfw(self, verbose=False):
+        """
+        Optimize the box_size (halfw) for the acq stars in the current catalog.
+        This cycles through each star and optimizes the box size for that star
+        using the ``optimize_acq_halfw()`` method.
+
+        :param verbose: include additional information in the run log
+        """
         p_safe = self.calc_p_safe()
         idxs = self.argsort('p_acq')
 
@@ -502,6 +538,11 @@ class AcqTable(ACACatalogTable):
         return p_safe, any_improved
 
     def optimize_catalog(self, verbose=False):
+        """
+        Optimize the current acquisition catalog.
+
+        :param verbose: include additional information in the run log
+        """
         # If every acq star is specified as included, then no optimization
         if all(acq['id'] in self.meta['include_ids'] for acq in self):
             return
@@ -597,12 +638,19 @@ def get_spoiler_stars(stars, acq, box_size):
 
     See this ref for information on how well the catalog mag errors correlate
     with observed.  Answer: not exactly, but probably good enough.  Plots all
-    the way at the bottom are key.
+    the way at the bottom are key::
+
       http://nbviewer.jupyter.org/url/cxc.harvard.edu/mta/ASPECT/
              ipynb/ssawg/2018x03x21/star-mag-uncertainties.ipynb
 
     TO DO: consider mag uncertainties at the faint end related to
     background subtraction and warm pixel corruption of background.
+
+    :param stars: StarsTable of stars for this field
+    :param acq: acquisition star (AcqTable Row)
+    :param box_size: box size (float, arcsec)
+
+    :returns: numpy structured array of spoiler stars
     """
     stars = stars.as_array()
     # 1-sigma of difference of stars['mag'] - acq['mag']
@@ -629,6 +677,17 @@ def get_imposter_stars(dark, star_row, star_col, thresh=None,
     and often over-estimates background.  Using this can easily miss a
     search hit that the flight ACA will detect.  So just use a mean
     dark current ``bgd``.
+
+    :param dark: dark current image (ndarray, e-/sec)
+    :param star_row: row of acq star (float)
+    :param star_col: col of acq star (float)
+    :param thresh: PEA search hit threshold for a 2x2 block (e-/sec)
+    :param maxmag: Max mag (alternate way to specify ``thresh``)
+    :param box_size: box size (arcsec)
+    :param bgd: assumed flat background (float, e-/sec)
+    :param test: hook for convenience in algorithm testing
+
+    :returns: numpy structured array of imposter stars
     """
     # Convert row/col to array index coords unless testing.
     rc_off = 0 if test else 512
@@ -745,6 +804,12 @@ def calc_p_brightest_compare(acq, mags, mag_errs):
     For given ``acq`` star and intruders mag, mag_err,
     do the probability calculation to see if the acq star is brighter
     than all of them.
+
+    :param acq: acquisition star (AcqTable Row)
+    :param mags: iterable of mags
+    :param mag_errs: iterable of mag errors
+
+    :returns: probability that acq stars is brighter than all mags
     """
     if len(mags) == 0:
         return 1.0
@@ -772,10 +837,17 @@ def calc_p_brightest_compare(acq, mags, mag_errs):
 
 def get_intruders(acq, box_size, name, n_sigma, get_func, kwargs):
     """
-    Get intruders table for name='spoilers' or 'imposters') from ``acq``.
-    If not already in acq then call get_func(**kwargs) to get it.
+    Get intruders table for name='spoilers' or 'imposters' from ``acq``.
+    If not already in acq then call ``get_func(**kwargs)`` to get it.
 
-    Returns Table with cols yang, zang, mag, mag_err.
+    :param acq: acq stars (AcqTable Row)
+    :param box_size: box size (float, arcsec)
+    :param name: intruder name ('spoilers' | 'imposters')
+    :param n_sigma: sigma threshold for comparisons
+    :param get_func: function to actually get spoilers or imposters
+    :param kwargs: kwargs to pass to get_func()
+
+    :returns: dict with keys yang, zang, mag, mag_err.
     """
     name_box = name + '_box'
     intruders = acq[name]
@@ -817,6 +889,16 @@ def calc_p_brightest(acq, box_size, stars, dark, man_err=0,
     This caches the spoiler and imposter stars in the acqs table (the row
     corresponding to ``acq``).  It is required that the first time this is
     called that the box_size and man_err be the maximum, and this is checked.
+
+    :param acq: acq stars (AcqTable Row)
+    :param box_size: box size (float, arcsec)
+    :param stars: StarsTable of stars in or near the ACA FOV
+    :param dark: dark current image (ndarray, e-/sec)
+    :param man_err: maneuver error (float, arcsec, default=0)
+    :param dither: dither (float, arsec, default=20)
+    :param bgd: assume background for imposters (float, e-sec, default=0)
+
+    :returns: probability that acq is the brightest (float)
     """
     # Spoilers
     ext_box_size = box_size + man_err
@@ -861,6 +943,12 @@ def calc_p_on_ccd(row, col, box_size):
     This uses a simplistic calculation which assumes that ``p_on_ccd`` is
     just the fraction of box area that is within the effective usable portion
     of the CCD.
+
+    :param row: row coordinate of star (float)
+    :param col: col coordinate of star (float)
+    :param box_size: box size (int)
+
+    :returns: probability the star is on usable part of CCD (float)
     """
     p_on_ccd = 1.0
     half_width = box_size / 5  # half width of box in pixels
@@ -908,13 +996,14 @@ class AcqProbs:
             of ``man_err`` and ``dither``)
         - ``p_acqs``: product of the above three
 
-        :param acqs: acqs table
-        :param acq: row in the candidate acqs table
-        :param dither: dither (arcsec)
+        :param acqs: acqs table (AcqTable)
+        :param acq: acq star (AcqTable Row) in the candidate acqs table
+        :param dither: dither (float, arcsec)
         :param stars: stars table
         :param dark: dark current map
-        :param t_ccd: CCD temperature (degC)
+        :param t_ccd: CCD temperature (float, degC)
         :param date: observation date
+        :param man_angle: maneuver angle (float, deg)
         """
         self.p_brightest = {}
         self.p_acq_model = {}
@@ -964,6 +1053,11 @@ class AcqProbs:
 def get_p_man_err(man_err, man_angle):
     """
     Probability for given ``man_err`` given maneuver angle ``man_angle``.
+
+    :param man_err: maneuver error (float, arcsec)
+    :param man_angle: maneuver angle (float, deg)
+
+    :returns: probability of man_error for given man_angle
     """
     pmea = CHAR.p_man_errs_angles  # [0, 5, 20, 40, 60, 80, 100, 120, 180]
     pme = CHAR.p_man_errs
