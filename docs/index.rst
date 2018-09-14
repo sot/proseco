@@ -24,9 +24,8 @@ function :func:`~proseco.catalog.get_aca_catalog`.
 Arguments
 +++++++++
 
-As can be seen from the
-docstring, this takes a long list of arguments which are required to
-fully specify:
+As can be seen from the docstring, :func:`~proseco.catalog.get_aca_catalog`
+takes a long list of arguments which are required to fully specify:
 
 **Required**
 
@@ -70,7 +69,7 @@ print_log      print the run log to stdout (default=False)
 ============== =========================================================
 
 Examples
-++++++++
+^^^^^^^^
 
 For generating a catalog corresponding to an actual scheduled observation, the
 easiest strategy is to simply provide the ``obsid`` as a parameter.  Proseco
@@ -108,7 +107,7 @@ attributes::
 
   >>> aca.acqs
   <AcqTable length=8>
-     id        ra       dec      yang     zang     row   ...  slot  maxmag  dim   sz   res 
+     id        ra       dec      yang     zang     row   ...  slot  maxmag  dim   sz   res
    int32    float64   float64  float64  float64  float64 ... int64 float32 int64 str3 int64
   -------- ---------- -------- -------- -------- ------- ... ----- ------- ----- ---- -----
   38280776 188.538857 3.077618 -2254.09 -2172.43  460.83 ...     3   10.27    20  6x6     1
@@ -119,6 +118,68 @@ attributes::
   37880176 188.364941 2.371052   121.33 -1068.25  -18.64 ...     0   12.12    20  6x6     1
   37881728 188.675737 1.435994  2046.89  1910.79 -406.36 ...     1   12.26    20  6x6     1
   37880376 189.086022 2.319189 -1356.71  1071.32  278.91 ...     2   12.30    20  6x6     1
+
+  >>> aca.guides
+  <GuideTable length=3>
+     id        ra       dec      yang     zang     row   ...  maxmag p_acq  dim   res  halfw  sz
+   int32    float64   float64  float64  float64  float64 ... float32 int64 int64 int64 int64 str3
+  -------- ---------- -------- -------- -------- ------- ... ------- ----- ----- ----- ----- ----
+  38280776 188.538857 3.077618 -2254.09 -2172.43  460.83 ...   10.27 0.000     1     1    25  6x6
+  37879960 188.579307 2.444460  -567.34  -632.27  119.53 ...   10.70 0.000     1     1    25  6x6
+  37882072 188.584100 1.455829  2197.62  1608.89 -436.73 ...   11.66 0.000     1     1    25  6x6
+
+  >>> aca.fids
+  <GuideTable length=3>
+     id        ra       dec      yang     zang     row   ...  maxmag p_acq  dim   res  halfw  sz
+   int32    float64   float64  float64  float64  float64 ... float32 int64 int64 int64 int64 str3
+  -------- ---------- -------- -------- -------- ------- ... ------- ----- ----- ----- ----- ----
+  38280776 188.538857 3.077618 -2254.09 -2172.43  460.83 ...   10.27 0.000     1     1    25  6x6
+  37879960 188.579307 2.444460  -567.34  -632.27  119.53 ...   10.70 0.000     1     1    25  6x6
+  37882072 188.584100 1.455829  2197.62  1608.89 -436.73 ...   11.66 0.000     1     1    25  6x6
+
+The ``aca`` object provides a ``thumbs_up`` attribute which is
+a rough indicator that the catalog will likely pass or fail ACA review.
+The value of this is ``0`` for NOT OK and ``1`` for OK.  Note in
+this case that too few guide stars have been selected::
+
+  >>> aca.thumbs_up
+  0
+
+  >>> aca.acqs.thumbs_up
+  1
+  >>> aca.guides.thumbs_up
+  0
+  >>> aca.fids.thumbs_up
+  1
+
+Each of the individual catalogs also has a ``warnings`` attribute that is a
+list of any warnings which occurred in processing::
+
+  >>> aca.guides.warnings
+  ['WARNING: Selected only 3 guide stars versus requested 5']
+
+Finally, in the event of an unhandled exception within the acq, guide, and fid
+selection code, there is an ``exception`` attribute on the top-level ``aca``
+object.  If an exception occurs then the output table will have zero length
+with a single ``id`` column::
+
+  >>> aca = get_aca_catalog(19387, detector='FAIL')
+  >>> len(aca['id'])
+  0
+
+  >>> print(aca.exception)
+  Traceback (most recent call last):
+    File "/Users/aldcroft/git/proseco/proseco/catalog.py", line 43, in get_aca_catalog
+      aca = _get_aca_catalog(obsid=obsid, **kwargs)
+    File "/Users/aldcroft/git/proseco/proseco/catalog.py", line 102, in _get_aca_catalog
+      aca.fids = get_fid_catalog(acqs=aca.acqs, **fid_kwargs)
+    File "/Users/aldcroft/git/proseco/proseco/fid.py", line 51, in get_fid_catalog
+      fids.meta['cand_fids'] = fids.get_fid_candidates()
+    File "/Users/aldcroft/git/proseco/proseco/fid.py", line 258, in get_fid_candidates
+      self.meta['sim_offset'])
+    File "/Users/aldcroft/git/proseco/proseco/fid.py", line 416, in get_fid_positions
+      ypos = FID.fidpos[detector][:, 0]
+  KeyError: 'FAIL'
 
 Data requirements
 -----------------
