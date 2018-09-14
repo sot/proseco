@@ -46,7 +46,6 @@ def test_get_fid_position():
 
 def test_get_initial_catalog():
     # Basic catalog with no stars in field.  Standard 2-4-5 config.
-    fids = get_fid_catalog(detector='ACIS-S')
     exp = ['<FidTable length=6>',
            '  id    yang     zang     row     col     mag   spoiler_score slot',
            'int64 float64  float64  float64 float64 float64     int64     str3',
@@ -57,12 +56,12 @@ def test_get_initial_catalog():
            '    4  2140.23   166.63 -424.51   39.13    7.00             0    1',
            '    5 -1826.28   160.17  372.97   36.47    7.00             0    2',
            '    6   388.59   803.75  -71.49  166.10    7.00             0  ...']
-    assert repr(fids.meta['cand_fids']).splitlines() == exp
-    assert np.all(fids['id'] == [2, 4, 5])
+    assert repr(FIDS.meta['cand_fids']).splitlines() == exp
+    assert np.all(FIDS['id'] == [2, 4, 5])
 
     # Make catalogs with some fake stars (at exactly fid positions) that spoil
     # the fids.
-    stars = fids.meta['cand_fids'].copy()
+    stars = FIDS.meta['cand_fids'].copy()
     stars['mag_err'] = 0.1
 
     # Spoil fids 1, 2
@@ -83,10 +82,21 @@ def test_get_initial_catalog():
     # Spoil fids 1, 2, 3
     fids3 = get_fid_catalog(detector='ACIS-S', stars=stars[:3], dither=8)
     assert np.all(fids3['id'] == [4, 5, 6])
+    assert fids3.thumbs_up
 
     # Spoil fids 1, 2, 3, 4 => no initial catalog gets found
     fids4 = get_fid_catalog(detector='ACIS-S', stars=stars[:4], dither=8)
     assert len(fids4) == 0
+    assert not fids4.thumbs_up
+
+
+def test_n_fid():
+    """Test specifying number of fids.
+    """
+    # Get only 2 fids
+    fids = get_fid_catalog(detector='ACIS-S', dither=8, n_fid=2)
+    assert len(fids) == 2
+    assert fids.thumbs_up
 
 
 def test_fid_spoiling_acq():

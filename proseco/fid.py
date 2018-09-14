@@ -18,7 +18,7 @@ from .core import ACACatalogTable
 
 
 def get_fid_catalog(*, detector=None, focus_offset=0, sim_offset=0,
-                    acqs=None, stars=None, dither=None,
+                    acqs=None, stars=None, dither=None, n_fid=3,
                     print_log=None):
     """
     Get a catalog of fid lights.
@@ -46,7 +46,7 @@ def get_fid_catalog(*, detector=None, focus_offset=0, sim_offset=0,
     """
     fids = FidTable(detector=detector, focus_offset=focus_offset,
                     sim_offset=sim_offset, acqs=acqs, stars=stars,
-                    dither=dither, print_log=print_log)
+                    dither=dither, n_fid=n_fid, print_log=print_log)
 
     fids.meta['cand_fids'] = fids.get_fid_candidates()
 
@@ -59,8 +59,13 @@ def get_fid_catalog(*, detector=None, focus_offset=0, sim_offset=0,
     # Add a `slot` column that makes sense
     fids.set_slot_column()
 
-    # Set fid thumbs_up to just be True for now
-    fids.thumbs_up = True
+    # TO DO: remove temporary stub to simply clip the number of returned
+    # fids to n_fid
+    if len(fids) > n_fid:
+        fids = fids[:n_fid]
+
+    # Set fid thumbs_up if fids has the number of requested fid lights
+    fids.thumbs_up = len(fids) == n_fid
 
     return fids
 
@@ -76,7 +81,7 @@ class FidTable(ACACatalogTable):
 
     def __init__(self, data=None, *,  # Keyword only from here
                  detector=None, focus_offset=0, sim_offset=0,
-                 acqs=None, stars=None, dither=None,
+                 acqs=None, stars=None, dither=None, n_fid=3,
                  print_log=None, **kwargs):
         """
         Table of fid lights, with methods for selection.
@@ -126,6 +131,7 @@ class FidTable(ACACatalogTable):
                           'sim_offset': sim_offset,
                           'acqs': acqs,
                           'dither': dither,
+                          'n_fid': n_fid,
                           'stars': stars})
 
     @property
