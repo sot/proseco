@@ -21,6 +21,17 @@ def get_fid_catalog(*, detector=None, focus_offset=0, sim_offset=0,
                     acqs=None, stars=None, dither=None,
                     print_log=None):
     """
+    Get a catalog of fid lights.
+
+    This is the initial selection and only returns a catalog that is "perfect":
+
+    - No fids are spoiled by a star
+    - No fids spoil an acq star (via ``acqs``)
+
+    If no such fid catalog is available this function returns a zero-length
+    FidTable.  In this case a subsequent concurrent optimization of fid lights
+    and acq stars is peformed.
+
     :param detector: 'ACIS-S' | 'ACIS-I' | 'HRC-S' | 'HRC-I'
     :param focus_offset: SIM focus offset [steps] (default=0)
     :param sim_offset: SIM translation offset from nominal [steps] (default=0)
@@ -28,7 +39,10 @@ def get_fid_catalog(*, detector=None, focus_offset=0, sim_offset=0,
     :param stars: stars table.  Defaults to acqs.meta['stars'] if available.
     :param dither: dither (float or 2-element sequence (dither_y, dither_z), [arcsec]
                    Defaults to acqs.meta['dither'] if available.
+    :param n_fid: number of desired fid lights
     :param print_log: print log to stdout (default=False)
+
+    :returns: fid catalog (FidTable)
     """
     fids = FidTable(detector=detector, focus_offset=focus_offset,
                     sim_offset=sim_offset, acqs=acqs, stars=stars,
@@ -74,6 +88,7 @@ class FidTable(ACACatalogTable):
         :param stars: stars table.  Defaults to acqs.meta['stars'] if available.
         :param dither: dither (float or 2-element sequence (dither_y, dither_z), [arcsec]
                        Defaults to acqs.meta['dither'] if available.
+        :param n_fid: number of desired fid lights
         :param print_log: print log to stdout (default=False)
         :param **kwargs: any other kwargs for Table init
         """
@@ -216,6 +231,11 @@ class FidTable(ACACatalogTable):
         - 2 pixel PSF of fid light that could creep into search box
         - Acq search box half-width
         - Dither amplitude (since OBC adjusts search box for dither)
+
+        :param fid: fid light (FidTable Row)
+        :param acq: acq star (AcqTable Row)
+
+        :returns: True if ``fid`` could be within ``acq`` search box
         """
         spoiler_margin = (FID.spoiler_margin +
                           self.acqs.meta['dither'] +
@@ -289,7 +309,10 @@ class FidTable(ACACatalogTable):
             cand_fids.remove_rows(idx_bads)
 
     def reject_bad_pixel(self, cand_fids):
-        """Filter out candidates that have a bad pixel too close"""
+        """Filter out candidates that have a bad pixel too close
+
+        :param cand_fids: table of candidate fid lights (on CCD)
+        """
         n_cand_fids = len(cand_fids)
         idx_bads = []
         for idx, fid in enumerate(cand_fids):
@@ -318,6 +341,7 @@ class FidTable(ACACatalogTable):
         (4 <= star_mag - fid_mag < 5) or 4 for red spoiler (star_mag - fid_mag < 4).
         The spoiler score is used later to choose an acceptable set of fids and acq stars.
 
+        :param fid: fid light (FidTable Row)
         """
         stars = self.meta['stars'][ACQ.spoiler_star_cols]
         dither = self.meta['dither']
