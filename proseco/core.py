@@ -53,7 +53,7 @@ class ACABox:
         either a two-element sequence (y, z) or a scalar (which applies
         to both y and z.
 
-        :param dither: scalar or 2-element sequence (y, z), (arcsec, default=20)
+        :param size: scalar or 2-element sequence (y, z), (arcsec, default=20)
 
         """
         if isinstance(size, ACABox):
