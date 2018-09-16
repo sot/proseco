@@ -50,12 +50,12 @@ def get_aca_catalog(obsid=0, **kwargs):
         aca = ACACatalogTable.empty()  # Makes zero-length table with correct columns
         aca.exception = traceback.format_exc()
 
-        if aca.acqs is None:
-            aca.acqs = AcqTable.empty()
-        if aca.fids is None:
-            aca.fids = FidTable.empty()
-        if aca.guides is None:
-            aca.guides = GuideTable.empty()
+    if (aca.acqs is None) or ('id' not in aca.acqs.columns):
+        aca.acqs = AcqTable.empty()
+    if (aca.fids is None) or ('id' not in aca.fids.columns):
+        aca.fids = FidTable.empty()
+    if (aca.guides is None) or ('id' not in aca.guides.columns):
+        aca.guides = GuideTable.empty()
 
     return aca
 
