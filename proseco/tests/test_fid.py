@@ -158,4 +158,4 @@ def test_dither_as_sequence():
     """
     fids = get_fid_catalog(detector='ACIS-S', dither=(8, 22))
     assert len(fids) == 3
-    assert fids.meta['dither'] == 22  # Will be (8, 22) for release 4.0
+    assert fids.meta['dither'] == (8, 22)

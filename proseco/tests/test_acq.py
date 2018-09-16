@@ -14,6 +14,7 @@ from ..acq import (get_p_man_err, bin2x2, CHAR,
                    AcqTable, calc_p_on_ccd,
                    get_acq_catalog,
                    )
+from ..core import ACABox
 from .test_common import OBS_INFO, STD_INFO
 
 TEST_DATE = '2018:144'  # Fixed date for doing tests
@@ -192,7 +193,7 @@ def test_calc_p_brightest_same_bright():
     dark_imp = add_imposter(dark, acq, dyang=-105, dzang=-105, dmag=0.0)
     stars_sp = add_spoiler(stars, acq, dyang=65, dzang=65, dmag=0.0, mag_err=mag_err)
     stars_sp = add_spoiler(stars_sp, acq, dyang=85, dzang=0, dmag=0.0, mag_err=mag_err)
-    probs = [calc_p_brightest(acq, box_size, stars_sp, dark_imp, dither=0, bgd=bgd)
+    probs = [calc_p_brightest(acq, box_size, stars_sp, dark_imp, dither=ACABox(0), bgd=bgd)
              for box_size in CHAR.box_sizes]
 
     #  Box size:                160   140   120    100   80   60  arcsec
@@ -211,21 +212,21 @@ def test_calc_p_brightest_1mag_brighter():
     # Bright spoiler at 65 arcsec
     acq = get_test_cand_acqs()[0]
     stars_sp = add_spoiler(stars, acq, dyang=65, dzang=65, dmag=-1.0)
-    probs = [calc_p_brightest(acq, box_size, stars_sp, dark, dither=0, bgd=bgd)
+    probs = [calc_p_brightest(acq, box_size, stars_sp, dark, dither=ACABox(0), bgd=bgd)
              for box_size in box_sizes]
     assert np.allclose(probs, [0.0, 1.0], rtol=0, atol=0.001)
 
     # Comparable spoiler at 65 arcsec (within mag_err)
     acq = get_test_cand_acqs()[0]
     stars_sp = add_spoiler(stars, acq, dyang=65, dzang=65, dmag=-1.0, mag_err=1.0)
-    probs = [calc_p_brightest(acq, box_size, stars_sp, dark, dither=0, bgd=bgd)
+    probs = [calc_p_brightest(acq, box_size, stars_sp, dark, dither=ACABox(0), bgd=bgd)
              for box_size in box_sizes]
     assert np.allclose(probs, [0.158974, 1.0], rtol=0, atol=0.01)
 
     # Bright imposter at 85 arcsec
     acq = get_test_cand_acqs()[0]
     dark_imp = add_imposter(dark, acq, dyang=-85, dzang=-85, dmag=-1.0)
-    probs = [calc_p_brightest(acq, box_size, stars, dark_imp, dither=0, bgd=bgd)
+    probs = [calc_p_brightest(acq, box_size, stars, dark_imp, dither=ACABox(0), bgd=bgd)
              for box_size in box_sizes]
     assert np.allclose(probs, [0.0, 1.0], rtol=0, atol=0.001)
 
@@ -465,7 +466,7 @@ def test_dither_as_sequence():
 
     acqs = get_acq_catalog(**kwargs, stars=stars)
     assert len(acqs) == 8
-    assert acqs.meta['dither'] == 22  # Will be (8, 22) for 4.0
+    assert acqs.meta['dither'] == (8, 22)
 
 
 def test_n_acq():

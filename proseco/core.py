@@ -46,6 +46,53 @@ def to_python(val):
     return val
 
 
+class ACABox:
+    def __init__(self, size=None):
+        """
+        Class to represent a box half width amplitude.  Can be initialized with
+        either a two-element sequence (y, z) or a scalar (which applies
+        to both y and z.
+
+        :param dither: scalar or 2-element sequence (y, z), (arcsec, default=20)
+
+        """
+        if isinstance(size, ACABox):
+            self.y = size.y
+            self.z = size.z
+            return
+
+        try:
+            assert len(size) == 2
+        except TypeError:
+            # len(scalar) raises TypeError
+            if size is None:
+                size = 20
+            self.y = size
+            self.z = size
+        except AssertionError:
+            # Has a length but it is not 2
+            raise ValueError('size arg must be either a scalar or a two-element sequence')
+        else:
+            self.y = size[0]
+            self.z = size[1]
+
+    @property
+    def row(self):
+        return self.y / 5
+
+    @property
+    def col(self):
+        return self.z / 5
+
+    def max(self):
+        return max(self.y, self.z)
+
+    def __eq__(self, other):
+        if not isinstance(other, ACABox):
+            other = ACABox(other)
+        return self.y == other.y and self.z == other.z
+
+
 class ACACatalogTable(Table):
     """
     Base class for representing ACA catalogs in star selection.  This

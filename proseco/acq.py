@@ -16,7 +16,7 @@ from mica.archive.aca_dark.dark_cal import get_dark_cal_image
 
 from . import characteristics as CHAR
 from .core import (get_mag_std, StarsTable, ACACatalogTable, bin2x2,
-                   get_image_props, pea_reject_image)
+                   get_image_props, pea_reject_image, ACABox)
 
 
 def get_acq_catalog(obsid=0, *, att=None, n_acq=8,
@@ -86,24 +86,14 @@ def get_acq_catalog(obsid=0, *, att=None, n_acq=8,
         if focus_offset is None:
             focus_offset = 0
 
-        dither_y_amp = obso.get('dither_y_amp')
-        dither_z_amp = obso.get('dither_z_amp')
-        if dither_y_amp is not None and dither_z_amp is not None:
-            dither = (dither_y_amp, dither_z_amp)
-
         if dither is None:
-            dither = 20
+            dither_y_amp = obso.get('dither_y_amp')
+            dither_z_amp = obso.get('dither_z_amp')
+            if dither_y_amp is not None and dither_z_amp is not None:
+                dither = ACABox((dither_y_amp, dither_z_amp))
 
-    # TO DO: fix this temporary stub put in for the 1.0 release.  This converts
-    # a 2-element dither (y, z) to a single value which is currently needed for acq
-    # selection.
-    try:
-        dither = max(dither[0], dither[1])
-    except (TypeError, IndexError):
-        # Catches only the case where dither is not subscriptable.  Sadly, np.int64
-        # raises IndexError, not TypeError (like Python int), so this test is a bit
-        # weak (would crash later for an input of a 1-element list).
-        pass
+    if not isinstance(dither, ACABox):
+        dither = ACABox(dither)
 
     acqs.log(f'getting dark cal image at date={date} t_ccd={t_ccd:.1f}')
     dark = get_dark_cal_image(date=date, select='before', t_ccd_ref=t_ccd)
@@ -910,7 +900,7 @@ def calc_p_brightest(acq, box_size, stars, dark, man_err=0,
                              get_func=get_spoiler_stars, kwargs=kwargs)
 
     # Imposters
-    ext_box_size = box_size + dither
+    ext_box_size = box_size + dither.max()
     kwargs = dict(star_row=acq['row'], star_col=acq['col'],
                   maxmag=acq['mag'] + acq['mag_err'],  # + 1.5, TO DO: put to characteristics
                   box_size=ext_box_size,
@@ -1038,7 +1028,7 @@ class AcqProbs:
 
         # Probability star is in acq box (function of man_err and dither only)
         for man_err in CHAR.man_errs:
-            p_on_ccd = calc_p_on_ccd(acq['row'], acq['col'], box_size=man_err + dither)
+            p_on_ccd = calc_p_on_ccd(acq['row'], acq['col'], box_size=man_err + dither.max())
             self.p_on_ccd[man_err] = p_on_ccd
 
         # All together now!

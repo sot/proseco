@@ -426,7 +426,7 @@ def plot_imposters(acq, dark, dither, vmin=100, vmax=2000,
     """
     Plot dark current, relevant boxes, imposters and spoilers.
     """
-    drc = int(np.max(CHAR.box_sizes) / 5 + 5 + dither / 5)
+    drc = int(np.max(CHAR.box_sizes) / 5 + 5 + dither.max() / 5)
 
     # Make an image of `dark` centered on acq row, col.  Use ACAImage
     # arithmetic to handle the corner case where row/col are near edge
@@ -464,7 +464,7 @@ def plot_imposters(acq, dark, dither, vmin=100, vmax=2000,
     rc = img.shape[0] // 2 + 0.5
     cc = img.shape[1] // 2 + 0.5
     for hw in CHAR.p_man_errs['man_err_hi']:
-        hwp = (hw + dither) / 5
+        hwp = (hw + dither.max()) / 5
         patch = patches.Rectangle((rc - hwp, cc - hwp), hwp * 2, hwp * 2, edgecolor='r',
                                   facecolor='none', lw=1, alpha=1)
         ax.add_patch(patch)
