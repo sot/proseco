@@ -171,7 +171,10 @@ def get_acq_catalog(obsid=0, *, att=None, n_acq=8,
 
     # Evaluate catalog for thumbs_up status
     n_acq_probs, n_or_fewer_probs = prob_n_acq(acqs['p_acq'])
-    acqs.thumbs_up = n_or_fewer_probs[CHAR.acq_prob_n] <= CHAR.acq_prob
+    if len(n_or_fewer_probs) >= 3:
+        acqs.thumbs_up = n_or_fewer_probs[CHAR.acq_prob_n] <= CHAR.acq_prob
+    else:
+        acqs.thumbs_up = False
 
     return acqs
 
@@ -279,21 +282,20 @@ class AcqTable(ACACatalogTable):
         cand_acqs = AcqTable(cand_acqs[names])
 
         # Make this suitable for plotting
-        cand_acqs['idx'] = np.arange(len(cand_acqs), dtype=np.int64)
-        cand_acqs['type'] = 'ACQ'
-        cand_acqs['halfw'] = np.full(len(cand_acqs), 120, dtype=np.int64)
+        n_cand = len(cand_acqs)
+        cand_acqs['idx'] = np.arange(n_cand, dtype=np.int64)
+        cand_acqs['type'] = np.full(n_cand, 'ACQ')
+        cand_acqs['halfw'] = np.full(n_cand, 120, dtype=np.int64)
 
-        # Set up columns needed for catalog initial selection and optimization
-        def empty_dicts():
-            return [{} for _ in range(len(cand_acqs))]
-
-        cand_acqs['p_acq'] = -999.0  # Acq prob for box_size=halfw, marginalized over man_err
-        cand_acqs['probs'] = empty_dicts()  # Dict keyed on (box_size, man_err) (mult next 3)
-
-        cand_acqs['spoilers'] = None  # Filled in with Table of spoilers
-        cand_acqs['imposters'] = None  # Filled in with Table of imposters
-        cand_acqs['spoilers_box'] = -999.0  # Cached value of box_size + man_err for spoilers
-        cand_acqs['imposters_box'] = -999.0  # Cached value of box_size + dither for imposters
+        # Acq prob for box_size=halfw, marginalized over man_err
+        cand_acqs['p_acq'] = np.full(n_cand, -999.0)
+        cand_acqs['probs'] = np.full(n_cand, None)  # Filled in with AcqProb objects
+        cand_acqs['spoilers'] = np.full(n_cand, None)  # Filled in with Table of spoilers
+        cand_acqs['imposters'] = np.full(n_cand, None)  # Filled in with Table of imposters
+        # Cached value of box_size + man_err for spoilers
+        cand_acqs['spoilers_box'] = np.full(n_cand, -999.0)
+        # Cached value of box_size + dither for imposters
+        cand_acqs['imposters_box'] = np.full(n_cand, -999.0)
 
         return cand_acqs, bads
 
