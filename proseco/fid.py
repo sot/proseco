@@ -184,13 +184,13 @@ class FidTable(ACACatalogTable):
         fid_sets = FID.fid_sets[self.meta['detector']]
         ok_fid_sets = [fid_set for fid_set in fid_sets if fid_set <= cand_fids_set]
 
-        # If no fid_sets are possible, leave self as a zero-length table
+        # If no fid_sets are possible, return a zero-length table with correct columns
         if not ok_fid_sets:
+            fid_set = ()
             self.log('No acceptable fid sets (off-CCD or spoiled by field stars)')
-            return
 
         # If no acq stars then just pick the first allowed fid set.
-        if self.acqs is None:
+        elif self.acqs is None:
             fid_set = ok_fid_sets[0]
             self.log(f'No acq stars available, using first OK fid set {fid_set}')
 
@@ -216,16 +216,14 @@ class FidTable(ACACatalogTable):
                     break
             else:
                 # Tried every set and none were acceptable.
-                fid_set = None
+                fid_set = ()
                 self.log('No acceptable fid set found')
 
-        if fid_set is not None:
-            # Transfer fid set columns to self (which at this point is an empty
-            # table)
-            idxs = [cand_fids.get_id_idx(fid_id) for fid_id in sorted(fid_set)]
-            for name, col in cand_fids.columns.items():
-                self[name] = col[idxs]
-
+        # Transfer fid set columns to self (which at this point is an empty
+        # table)
+        idxs = [cand_fids.get_id_idx(fid_id) for fid_id in sorted(fid_set)]
+        for name, col in cand_fids.columns.items():
+            self[name] = col[idxs]
 
     def spoils(self, fid, acq):
         """
