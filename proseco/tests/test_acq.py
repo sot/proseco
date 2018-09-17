@@ -508,3 +508,17 @@ def test_warnings():
     stars.add_fake_constellation(n_stars=6)
     acqs = get_acq_catalog(**STD_INFO, stars=stars, n_acq=8, optimize=False)
     assert acqs.warnings == ['WARNING: Selected only 6 acq stars versus requested 8']
+
+
+def test_no_candidates():
+    """
+    Test that get_acq_catalog returns a well-formed but zero-length table for
+    a star field with no acceptable candidates.
+    """
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(mag=13.0, n_stars=2)
+    acqs = get_acq_catalog(**STD_INFO, stars=stars)
+
+    assert len(acqs) == 0
+    assert 'id' in acqs.colnames
+    assert 'halfw' in acqs.colnames
