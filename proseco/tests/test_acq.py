@@ -115,7 +115,7 @@ def test_get_image_props():
 def setup_get_imposter_stars(val):
     bgd = 40
     dark = np.full((100, 100), fill_value=bgd, dtype=float)
-    box_size = 6 * 5
+    box_size = ACABox(6 * 5)
     dark[30, 28] = val + bgd
     dark[32, 29] = val + bgd
     dark[30, 30] = val + bgd

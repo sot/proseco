@@ -92,6 +92,25 @@ class ACABox:
             other = ACABox(other)
         return self.y == other.y and self.z == other.z
 
+    def __ne__(self, other):
+        return not self == other
+
+    def __gt__(self, other):
+        if not isinstance(other, ACABox):
+            other = ACABox(other)
+        return self.y > other.y or self.z > other.z
+
+    def __add__(self, other):
+        if not isinstance(other, ACABox):
+            other = ACABox(other)
+        return ACABox((self.y + other.y, self.z + other.z))
+
+    def __radd__(self, other):
+        return self.__add__(other)
+
+    def __repr__(self):
+        return f'<ACABox y={self.y} z={self.z}>'
+
 
 class ACACatalogTable(Table):
     """

@@ -283,9 +283,9 @@ class AcqTable(ACACatalogTable):
         cand_acqs['spoilers'] = np.full(n_cand, None)  # Filled in with Table of spoilers
         cand_acqs['imposters'] = np.full(n_cand, None)  # Filled in with Table of imposters
         # Cached value of box_size + man_err for spoilers
-        cand_acqs['spoilers_box'] = np.full(n_cand, -999.0)
+        cand_acqs['spoilers_box'] = np.full(n_cand, None)
         # Cached value of box_size + dither for imposters
-        cand_acqs['imposters_box'] = np.full(n_cand, -999.0)
+        cand_acqs['imposters_box'] = np.full(n_cand, None)
 
         return cand_acqs, bads
 
@@ -685,13 +685,14 @@ def get_imposter_stars(dark, star_row, star_col, thresh=None,
     rc_off = 0 if test else 512
     acq_row = int(star_row + rc_off)
     acq_col = int(star_col + rc_off)
-    box_hw = int(box_size) // 5
+    box_row = int(box_size.row)
+    box_col = int(box_size.col)
 
     # Make sure box is within CCD
-    box_r0 = np.clip(acq_row - box_hw, 0, 1024)
-    box_r1 = np.clip(acq_row + box_hw, 0, 1024)
-    box_c0 = np.clip(acq_col - box_hw, 0, 1024)
-    box_c1 = np.clip(acq_col + box_hw, 0, 1024)
+    box_r0 = np.clip(acq_row - box_row, 0, 1024)
+    box_r1 = np.clip(acq_row + box_row, 0, 1024)
+    box_c0 = np.clip(acq_col - box_col, 0, 1024)
+    box_c1 = np.clip(acq_col + box_col, 0, 1024)
 
     # Make sure box has even number of pixels on each edge.  Increase
     # box by one if needed.
@@ -843,6 +844,7 @@ def get_intruders(acq, box_size, name, n_sigma, get_func, kwargs):
     """
     name_box = name + '_box'
     intruders = acq[name]
+    box_size = ACABox(box_size)
 
     if intruders is None:
         intruders = get_func(**kwargs)
@@ -857,7 +859,7 @@ def get_intruders(acq, box_size, name, n_sigma, get_func, kwargs):
         acq[name] = intruders
 
     else:
-        # Ensure cached spoilers cover the current case
+        # Ensure cached spoilers cover the current case.
         if box_size > acq[name_box]:
             raise ValueError(f'box_size is greater than {name_box}')
 
@@ -865,8 +867,8 @@ def get_intruders(acq, box_size, name, n_sigma, get_func, kwargs):
     if len(intruders) == 0:
         intruders = {name: np.array([], dtype=np.float64) for name in colnames}
     else:
-        ok = ((np.abs(intruders['yang'] - acq['yang']) < box_size) &
-              (np.abs(intruders['zang'] - acq['zang']) < box_size))
+        ok = ((np.abs(intruders['yang'] - acq['yang']) < box_size.y) &
+              (np.abs(intruders['zang'] - acq['zang']) < box_size.z))
         intruders = {name: intruders[name][ok] for name in ['mag', 'mag_err']}
 
     return intruders
@@ -900,7 +902,7 @@ def calc_p_brightest(acq, box_size, stars, dark, man_err=0,
                              get_func=get_spoiler_stars, kwargs=kwargs)
 
     # Imposters
-    ext_box_size = box_size + dither.max()
+    ext_box_size = box_size + dither
     kwargs = dict(star_row=acq['row'], star_col=acq['col'],
                   maxmag=acq['mag'] + acq['mag_err'],  # + 1.5, TO DO: put to characteristics
                   box_size=ext_box_size,
