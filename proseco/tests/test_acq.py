@@ -232,6 +232,9 @@ def test_calc_p_brightest_1mag_brighter():
 
 
 def test_calc_p_on_ccd():
+    """
+    Test the calculation of probability of star being on usable area on the CCD.
+    """
     # These lines mimic the code in calc_p_on_ccd() which requires that
     # track readout box is fully within the usable part of CCD.
     max_ccd_row = CHAR.max_ccd_row - 5
@@ -255,6 +258,58 @@ def test_calc_p_on_ccd():
     # Same but for a negative col number
     p_in_box = calc_p_on_ccd(0, -(max_ccd_col - 1), ACABox(20))
     assert np.allclose(p_in_box, 0.625)
+
+
+def test_calc_p_on_ccd_asymmetric_dither():
+    """
+    Test the calculation of probability of star being on usable area on the CCD
+    for the case of asymmetric dither.
+    """
+    # These lines mimic the code in calc_p_on_ccd() which requires that
+    # track readout box is fully within the usable part of CCD.
+    max_ccd_row = CHAR.max_ccd_row - 5
+    max_ccd_col = CHAR.max_ccd_col - 4
+
+    # Halfway off in both row and col, (1/4 of area remaining).  These checks
+    # don't change from symmetric case because of the placement of row, col.
+    p_in_box = calc_p_on_ccd(max_ccd_row, max_ccd_col, ACABox((60, 120)))
+    assert np.allclose(p_in_box, 0.25)
+
+    p_in_box = calc_p_on_ccd(max_ccd_row, max_ccd_col, ACABox((120, 60)))
+    assert np.allclose(p_in_box, 0.25)
+
+    # 3 of 8 pixels off in row (5/8 of area remaining).  Dither_z (col) does not
+    # matter here because only rows are off CCD.
+    for dither_z in 5, 100:
+        p_in_box = calc_p_on_ccd(max_ccd_row - 1, 0, ACABox((20, dither_z)))
+        assert np.allclose(p_in_box, 0.625)
+
+    # Same but for col
+    for dither_y in 5, 100:
+        p_in_box = calc_p_on_ccd(0, max_ccd_col - 1, ACABox((dither_y, 20)))
+        assert np.allclose(p_in_box, 0.625)
+
+        # Same but for a negative col number
+        p_in_box = calc_p_on_ccd(0, -(max_ccd_col - 1), ACABox((dither_y, 20)))
+        assert np.allclose(p_in_box, 0.625)
+
+    # Show expected asymmetric behavior, starting right at the physical CCD edge.
+    # In this case the only chance to get on the CCD is for dither to bring it
+    # there.  (Note: the model assumes the dither spatial distribution is
+    # flat, but it is not).
+
+    # First, with dither_y <= 25 or dither_z <= 20, p_in_box is exactly zero
+    for dither in ((25, 20), (60, 20), (25, 60)):
+        p_in_box = calc_p_on_ccd(CHAR.max_ccd_row, CHAR.max_ccd_col, ACABox(dither))
+        assert p_in_box == 0
+
+    # Now some asymmetric cases.  p_in_ccd increases with larger dither.
+    for dither, exp in [((30, 40), 0.02083333),
+                        ((40, 30), 0.03125),
+                        ((40, 200), 0.084375),
+                        ((200, 40), 0.109375)]:
+        p_in_box = calc_p_on_ccd(CHAR.max_ccd_row, CHAR.max_ccd_col, ACABox(dither))
+        assert np.isclose(p_in_box, exp)
 
 
 def test_get_acq_catalog_19387():
