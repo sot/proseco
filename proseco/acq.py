@@ -940,13 +940,11 @@ def calc_p_on_ccd(row, col, box_size):
 
     :param row: row coordinate of star (float)
     :param col: col coordinate of star (float)
-    :param box_size: box size (int)
+    :param box_size: box size (ACABox)
 
     :returns: probability the star is on usable part of CCD (float)
     """
     p_on_ccd = 1.0
-    half_width = box_size / 5  # half width of box in pixels
-    full_width = half_width * 2
 
     # Require that the readout box when candidate acq star is evaluated
     # by the PEA (via a normal 8x8 readout) is fully on the CCD usable area.
@@ -955,12 +953,13 @@ def calc_p_on_ccd(row, col, box_size):
     max_ccd_row = CHAR.max_ccd_row - 5
     max_ccd_col = CHAR.max_ccd_col - 4
 
-    for rc, max_rc in ((row, max_ccd_row),
-                       (col, max_ccd_col)):
+    for rc, max_rc, half_width in ((row, max_ccd_row, box_size.row),
+                                   (col, max_ccd_col, box_size.col)):
 
         # Pixel boundaries are symmetric so just take abs(row/col)
         rc1 = abs(rc) + half_width
 
+        full_width = half_width * 2
         pix_off_ccd = rc1 - max_rc
         if pix_off_ccd > 0:
             # Reduce p_on_ccd by fraction of pixels inside usable area.
@@ -1030,7 +1029,7 @@ class AcqProbs:
 
         # Probability star is in acq box (function of man_err and dither only)
         for man_err in CHAR.man_errs:
-            p_on_ccd = calc_p_on_ccd(acq['row'], acq['col'], box_size=man_err + dither.max())
+            p_on_ccd = calc_p_on_ccd(acq['row'], acq['col'], box_size=man_err + dither)
             self.p_on_ccd[man_err] = p_on_ccd
 
         # All together now!

@@ -238,22 +238,22 @@ def test_calc_p_on_ccd():
     max_ccd_col = CHAR.max_ccd_col - 4
 
     # Halfway off in both row and col, (1/4 of area remaining)
-    p_in_box = calc_p_on_ccd(max_ccd_row, max_ccd_col, 60)
+    p_in_box = calc_p_on_ccd(max_ccd_row, max_ccd_col, ACABox(60))
     assert np.allclose(p_in_box, 0.25)
 
-    p_in_box = calc_p_on_ccd(max_ccd_row, max_ccd_col, 120)
+    p_in_box = calc_p_on_ccd(max_ccd_row, max_ccd_col, ACABox(120))
     assert np.allclose(p_in_box, 0.25)
 
     # 3 of 8 pixels off in row (5/8 of area remaining)
-    p_in_box = calc_p_on_ccd(max_ccd_row - 1, 0, 20)
+    p_in_box = calc_p_on_ccd(max_ccd_row - 1, 0, ACABox(20))
     assert np.allclose(p_in_box, 0.625)
 
     # Same but for col
-    p_in_box = calc_p_on_ccd(0, max_ccd_col - 1, 20)
+    p_in_box = calc_p_on_ccd(0, max_ccd_col - 1, ACABox(20))
     assert np.allclose(p_in_box, 0.625)
 
     # Same but for a negative col number
-    p_in_box = calc_p_on_ccd(0, -(max_ccd_col - 1), 20)
+    p_in_box = calc_p_on_ccd(0, -(max_ccd_col - 1), ACABox(20))
     assert np.allclose(p_in_box, 0.625)
 
 
