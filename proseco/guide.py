@@ -134,6 +134,9 @@ class GuideTable(ACACatalogTable):
         """
         cand_guides = self.meta['cand_guides']
         self.log("Starting search stages")
+        if len(cand_guides) == 0:
+            self.log("There are no candidates to check in stages.  Exiting")
+            return cand_guides
         cand_guides['stage'] = -1
         n_guide = self.meta['n_guide']
         for idx, stage in enumerate(GUIDE_CHAR.stages, 1):
