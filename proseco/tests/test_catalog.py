@@ -5,6 +5,7 @@ from pathlib import Path
 
 import mica.starcheck
 
+from ..core import StarsTable
 from ..catalog import get_aca_catalog
 
 
@@ -46,3 +47,29 @@ def test_exception_handling():
                           n_guide=8, n_fid=3, n_acq=8,
                           include_ids=[1])  # Fail
     assert 'ValueError: cannot include star id=1' in aca.exception
+
+
+def test_no_candidates():
+    """
+    Test that get_aca_catalog returns a well-formed but zero-length tables for
+    a star field with no acceptable candidates.
+    """
+    test_info = dict(obsid=1,
+                     n_guide=5, n_fid=3, n_acq=8,
+                     att=(0, 0, 0),
+                     detector='ACIS-S',
+                     sim_offset=0,
+                     focus_offset=0,
+                     date='2018:001',
+                     t_ccd_acq=-11, t_ccd_guide=-11,
+                     man_angle=90,
+                     dither_acq=(8.0, 8.0),
+                     dither_guide=(8.0, 8.0))
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(mag=13.0, n_stars=2)
+    acas = get_aca_catalog(**test_info, stars=stars)
+
+    assert 'id' in acas.acqs.colnames
+    assert 'halfw' in acas.acqs.colnames
+    assert 'id' in acas.guides.colnames
+    assert 'id' in acas.fids.colnames
