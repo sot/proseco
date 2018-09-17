@@ -96,6 +96,10 @@ class ACABox:
         return not self == other
 
     def __gt__(self, other):
+        """
+        Returns True if either component is larger.  This is somewhat
+        specific to how boxes are used in intruder processing.
+        """
         if not isinstance(other, ACABox):
             other = ACABox(other)
         return self.y > other.y or self.z > other.z
