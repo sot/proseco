@@ -79,7 +79,7 @@ def _get_aca_catalog(**kwargs):
     # Pluck off the kwargs that are relevant for get_acq_catalog
     args = ('obsid', 'att', 'date', 'man_angle',
             'include_ids', 'include_halfws', 'exclude_ids',
-            'detector', 'sim_offset', 'sim_focus',
+            'detector', 'sim_offset', 'sim_focus', 'stars',
             ('dither', 'dither_acq'), ('t_ccd', 't_ccd_acq'),
             'print_log', 'n_acq')
     acq_kwargs = get_kwargs(args, kwargs)
