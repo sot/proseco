@@ -88,6 +88,7 @@ def test_get_initial_catalog():
     fids4 = get_fid_catalog(detector='ACIS-S', stars=stars[:4], dither=8)
     assert len(fids4) == 0
     assert not fids4.thumbs_up
+    assert all(name in fids4.colnames for name in ['id', 'yang', 'zang', 'row', 'col'])
 
 
 def test_n_fid():
