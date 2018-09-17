@@ -106,7 +106,6 @@ def test_get_image_props():
     ccd_img = np.full((100, 100), fill_value=bgd, dtype=float)
     ccd_img[c_row - 4:c_row + 4, c_col - 4:c_col + 4] += psf_img
     img, img_sum, mag, row, col = get_image_props(ccd_img, c_row, c_col, bgd=bgd)
-    print(img.astype(int))
     assert np.isclose(mag, 9.0, atol=0.05, rtol=0)
     assert np.isclose(row, c_row, atol=0.001, rtol=0)
     assert np.isclose(col, c_col, atol=0.001, rtol=0)
@@ -198,6 +197,60 @@ def test_calc_p_brightest_same_bright():
 
     #  Box size:                160   140   120    100   80   60  arcsec
     assert np.allclose(probs, [0.25, 0.25, 0.25, 0.3334, 0.5, 1.0], rtol=0, atol=0.01)
+
+
+def test_calc_p_brightest_same_bright_asymm_dither():
+    """
+    Test for an easy situation of three spoiler/imposters with exactly
+    the same brightness as acq star so that p_brighter is always 0.5.
+    As each one comes into the box you add another coin toss to the
+    odds of the acq star being brightest.
+
+    Use an asymmetric dither to test the handling of this.
+    """
+    bgd = 40
+    dark = np.full((1024, 1024), dtype=float, fill_value=bgd)
+    stars = get_test_stars()
+
+    acq = get_test_cand_acqs()[0]
+    # See test_calc_p_brightest_same_bright() for explanation of mag_err
+    mag_err = 0.032234
+    acq['mag_err'] = mag_err
+
+    dither = ACABox((20, 60))
+
+    # Add a spoiler star to stars and leave dark map the same.
+    # Spoiler stars don't care about dither.
+    stars_sp = add_spoiler(stars, acq, dyang=-105, dzang=105, dmag=0.0, mag_err=mag_err)
+    probs = [calc_p_brightest(acq, box_size, stars=stars_sp, dark=dark, dither=dither,
+                              bgd=bgd, man_err=0)
+             for box_size in CHAR.box_sizes]
+
+    #  Box size:               160  140  120  100   80   60  arcsec
+    assert np.allclose(probs, [0.5, 0.5, 0.5, 1.0, 1.0, 1.0], rtol=0, atol=0.01)
+
+    # Add an imposter to dark map and leave stars the same
+    # 80" box + dither = (100, 140), so (105, 145) pixel is not included
+    # 100" box + dither = (120, 160), so (105, 145) pixel is included
+    acq['imposters'] = None
+    acq['spoilers'] = None
+    dark_imp = add_imposter(dark, acq, dyang=105, dzang=145, dmag=0.0)
+    probs = [calc_p_brightest(acq, box_size, stars=stars, dark=dark_imp, dither=dither,
+                              bgd=bgd, man_err=0)
+             for box_size in CHAR.box_sizes]
+
+    #  Box size:               160  140  120  100  80   60  arcsec
+    assert np.allclose(probs, [0.5, 0.5, 0.5, 0.5, 1.0, 1.0], rtol=0, atol=0.01)
+
+    # Both together
+    acq['imposters'] = None
+    acq['spoilers'] = None
+    probs = [calc_p_brightest(acq, box_size, stars=stars_sp, dark=dark_imp, dither=dither,
+                              bgd=bgd, man_err=0)
+             for box_size in CHAR.box_sizes]
+
+    #  Box size:                160    140    120  100   80   60  arcsec
+    assert np.allclose(probs, [0.333, 0.333, 0.333, 0.5, 1.0, 1.0], rtol=0, atol=0.01)
 
 
 def test_calc_p_brightest_1mag_brighter():
