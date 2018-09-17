@@ -136,6 +136,8 @@ class GuideTable(ACACatalogTable):
         self.log("Starting search stages")
         if len(cand_guides) == 0:
             self.log("There are no candidates to check in stages.  Exiting")
+            # Since there are no candidate stars, this returns the empty set of
+            # cand_guides as the 'selected' stars.
             return cand_guides
         cand_guides['stage'] = -1
         n_guide = self.meta['n_guide']
