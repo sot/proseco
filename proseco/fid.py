@@ -35,8 +35,8 @@ def get_fid_catalog(obsid=0, **kwargs):
     :param sim_offset: SIM translation offset from nominal [steps] (default=0)
     :param acqs: AcqTable catalog.  Optional but needed for actual fid selection.
     :param stars: stars table.  Defaults to acqs.stars if available.
-    :param dither: dither (float or 2-element sequence (dither_y, dither_z), [arcsec]
-                   Defaults to acqs.dither if available.
+    :param dither_acq: acq dither size (2-element sequence (y, z), arcsec)
+    :param dither_guide: guide dither size (2-element sequence (y, z), arcsec)
     :param n_fid: number of desired fid lights
     :param print_log: print log to stdout (default=False)
 
