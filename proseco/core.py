@@ -269,7 +269,7 @@ class ACACatalogTable(Table):
 
     @property
     def dither(self):
-        super().__getattr__(self, 'dither')
+        return None
 
     @dither.setter
     def dither(self, value):
@@ -278,7 +278,7 @@ class ACACatalogTable(Table):
 
     @property
     def t_ccd(self):
-        super().__getattr__(self, 't_ccd')
+        return None
 
     @t_ccd.setter
     def t_ccd(self, value):
