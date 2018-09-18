@@ -123,6 +123,9 @@ class AcqTable(ACACatalogTable):
     # Required attributes
     required_attrs = ('att', 'man_angle', 't_ccd_acq', 'date', 'dither_acq')
 
+    optimize = MetaAttribute(default=True)
+    verbose = MetaAttribute(default=False)
+
     p_man_errs = MetaAttribute(is_kwarg=False)
     cand_acqs = MetaAttribute(is_kwarg=False)
     p_safe = MetaAttribute(is_kwarg=False)

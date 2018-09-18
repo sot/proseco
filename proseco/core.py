@@ -177,9 +177,7 @@ class ACACatalogTable(Table):
     include_ids = MetaAttribute(default=[])
     include_halfws = MetaAttribute(default=[])
     exclude_ids = MetaAttribute(default=[])
-    optimize = MetaAttribute()
-    verbose = MetaAttribute()
-    print_log = MetaAttribute()
+    print_log = MetaAttribute(default=False)
 
     def __init__(self, data=None, **kwargs):
         super().__init__(data=data, **kwargs)
