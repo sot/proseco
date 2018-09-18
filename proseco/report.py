@@ -464,11 +464,12 @@ def plot_imposters(acq, dark, dither, vmin=100, vmax=2000,
     rc = img.shape[0] // 2 + 0.5
     cc = img.shape[1] // 2 + 0.5
     for hw in CHAR.p_man_errs['man_err_hi']:
-        hwp = (hw + dither.max()) / 5
-        patch = patches.Rectangle((rc - hwp, cc - hwp), hwp * 2, hwp * 2, edgecolor='r',
+        hwpr = hw / 5 + dither.row
+        hwpc = hw / 5 + dither.col
+        patch = patches.Rectangle((rc - hwpr, cc - hwpc), hwpr * 2, hwpc * 2, edgecolor='r',
                                   facecolor='none', lw=1, alpha=1)
         ax.add_patch(patch)
-        plt.text(rc - hwp + 1, cc - hwp + 1, f'{hw}"', color='y', fontweight='bold')
+        plt.text(rc - hwpr + 1, cc - hwpc + 1, f'{hw}"', color='y', fontweight='bold')
 
     # Hack to fix up ticks to have proper row/col coords.  There must be a
     # correct way to do this.

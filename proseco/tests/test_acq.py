@@ -456,7 +456,13 @@ def test_box_strategy_20603():
 
 
 def test_make_report(tmpdir):
+    """
+    Test making an acquisition report.  Use a big-box dither here
+    to test handling of that in report (after passing through pickle).
+    """
     obsid = 19387
+    kwargs = OBS_INFO[obsid].copy()
+    kwargs['dither'] = (8, 64)
     acqs = get_acq_catalog(**OBS_INFO[obsid])
 
     tmpdir = Path(tmpdir)
