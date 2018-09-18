@@ -529,7 +529,7 @@ class AcqTable(ACACatalogTable):
             acqs = self[ok]
 
             # Sort by the marginalized acq probability for the current box size
-            p_acqs = [acq['probs'].p_acq_marg[acq['halfw']] for acq in acqs]
+            p_acqs = [acq['probs'].p_acq_marg(acq['halfw']) for acq in acqs]
             idx_worst = np.argsort(p_acqs)[0]
 
             idx = self.get_id_idx(acqs[idx_worst]['id'])
@@ -1097,7 +1097,6 @@ class AcqProbs:
             self._p_fid_id_spoiler[box_size, fid_id] = p_fid_id_spoiler
 
             return p_fid_id_spoiler
->>>>>>> First steps including fid spoilers to acq probs
 
 
 def get_p_man_err(man_err, man_angle):

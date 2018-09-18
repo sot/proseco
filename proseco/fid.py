@@ -14,7 +14,7 @@ from chandra_aca.transform import yagzag_to_pixels
 from . import characteristics_fid as FID
 from . import characteristics as ACQ
 
-from .core import ACACatalogTable
+from .core import ACACatalogTable, MetaAttribute
 
 
 def get_fid_catalog(obsid=0, **kwargs):
@@ -79,6 +79,8 @@ class FidTable(ACACatalogTable):
     # (e.g. `obs19387/fids.yaml`).
     name = 'fids'
 
+    cand_fids = MetaAttribute(is_kwarg=False)
+
     allowed_kwargs = ACACatalogTable.allowed_kwargs | set(['acqs'])
 
     required_attrs = ('att', 'detector', 'sim_offset', 'focus_offset',
@@ -94,17 +96,17 @@ class FidTable(ACACatalogTable):
         if fid_ids is None:
             self._fid_set = None
 
-        if 'cand_fids' not in self.meta:
+        if self.cand_fids is None:
             raise ValueError('cannot set fid_set before selecting candidate fids')
 
         self._fid_set = ()
-        cand_fids_ids = list(self.meta['cand_fids']['id'])
+        cand_fids_ids = list(self.cand_fids['id'])
         for fid_id in sorted(fid_ids):
             if fid_id in cand_fids_ids:
                 self._fid_set += (fid_id,)
             else:
-                warnings.warn(f'fid {fid_id} is not in available candidate '
-                              'fid ids {cand_fids_ids}, ignoring')
+                self.add_warning(f'Fid {fid_id} is not in available candidate '
+                                 f'fid ids {cand_fids_ids}, ignoring')
 
     @property
     def acqs(self):
@@ -197,6 +199,7 @@ class FidTable(ACACatalogTable):
         for name, col in cand_fids.columns.items():
             self[name] = col[idxs]
 
+        self.cand_fids = cand_fids
         self.fid_set = fid_set
 
     def spoils(self, fid, acq):
