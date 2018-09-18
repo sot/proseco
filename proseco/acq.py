@@ -95,12 +95,7 @@ def get_acq_catalog(obsid=0, **kwargs):
         acqs.log(f'Selected only {len(acqs)} acq stars versus requested {acqs.n_acq}',
                  warning=True)
 
-    # Evaluate catalog for thumbs_up status
-    n_acq_probs, n_or_fewer_probs = prob_n_acq(acqs['p_acq'])
-    if len(n_or_fewer_probs) >= 3:
-        acqs.thumbs_up = n_or_fewer_probs[CHAR.acq_prob_n] <= CHAR.acq_prob
-    else:
-        acqs.thumbs_up = False
+    acqs.thumbs_up = acqs.get_p_2_or_fewer() <= CHAR.acq_prob
 
     return acqs
 
@@ -155,6 +150,20 @@ class AcqTable(ACACatalogTable):
     @dither.setter
     def dither(self, value):
         self.dither_acq = value
+
+    def get_p_2_or_fewer(self):
+        """
+        Return the starcheck acquisition merit function of the probability of
+        acquiring two or fewer stars.
+
+        :returns: probability (float)
+        """
+        n_or_fewer_probs = prob_n_acq(self['p_acq'])[1]
+        if len(n_or_fewer_probs) > 2:
+            p_2_or_fewer = n_or_fewer_probs[2]
+        else:
+            p_2_or_fewer = 1.0
+        return p_2_or_fewer
 
     def get_obs_info(self):
         """
