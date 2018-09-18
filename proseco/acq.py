@@ -16,14 +16,11 @@ from mica.archive.aca_dark.dark_cal import get_dark_cal_image
 
 from . import characteristics as CHAR
 from .core import (get_mag_std, StarsTable, ACACatalogTable, bin2x2,
-                   get_image_props, pea_reject_image, ACABox)
+                   get_image_props, pea_reject_image, ACABox,
+                   CatalogAttribute)
 
 
-def get_acq_catalog(obsid=0, *, att=None, n_acq=8,
-                    man_angle=None, t_ccd=None, date=None, dither=None,
-                    detector=None, sim_offset=None, focus_offset=None, stars=None,
-                    include_ids=None, include_halfws=None, exclude_ids=None,
-                    optimize=True, verbose=False, print_log=False):
+def get_acq_catalog(obsid=0, **kwargs):
     """
     Get a catalog of acquisition stars using the algorithm described in
     https://docs.google.com/presentation/d/1VtFKAW9he2vWIQAnb6unpK4u1bVAVziIdX9TnqRS3a8
@@ -55,91 +52,36 @@ def get_acq_catalog(obsid=0, *, att=None, n_acq=8,
 
     # Make an empty AcqTable object, mostly for logging.  It gets populated
     # after selecting initial an inital catalog of potential acq stars.
-    acqs = AcqTable(print_log=print_log)
+    acqs = AcqTable()
+    acqs.set_kwargs(obsid=obsid, **kwargs)
 
-    # If an explicit obsid is not provided to all getting parameters via mica
-    # then all other params must be supplied.
-    all_pars = all(x is not None for x in (att, man_angle, t_ccd, date, dither))
-    if obsid == 0 and not all_pars:
-        raise ValueError('if `obsid` not supplied then all other params are required')
-
-    # If not all params supplied then get via mica for the obsid.
-    if not all_pars:
-        from mica.starcheck import get_starcheck_catalog
-        acqs.log(f'getting starcheck catalog for obsid {obsid}')
-
-        obs = get_starcheck_catalog(obsid)
-        obso = obs['obs']
-
-        if att is None:
-            att = [obso['point_ra'], obso['point_dec'], obso['point_roll']]
-        if date is None:
-            date = obso['mp_starcat_time']
-        if t_ccd is None:
-            t_ccd = obs['pred_temp']
-        if man_angle is None:
-            man_angle = obs['manvr']['angle_deg'][0]
-        if detector is None:
-            detector = obso['sci_instr']
-        if sim_offset is None:
-            sim_offset = obso['sim_z_offset_steps']
-        if focus_offset is None:
-            focus_offset = 0
-
-        if dither is None:
-            dither_y_amp = obso.get('dither_y_amp')
-            dither_z_amp = obso.get('dither_z_amp')
-            if dither_y_amp is not None and dither_z_amp is not None:
-                dither = ACABox((dither_y_amp, dither_z_amp))
-
-    if not isinstance(dither, ACABox):
-        dither = ACABox(dither)
-
-    acqs.log(f'getting dark cal image at date={date} t_ccd={t_ccd:.1f}')
-    dark = get_dark_cal_image(date=date, select='before', t_ccd_ref=t_ccd)
-
-    acqs.meta = {'obsid': obsid,
-                 'att': att,
-                 'n_acq': n_acq,
-                 'date': date,
-                 't_ccd': t_ccd,
-                 'man_angle': man_angle,
-                 'dither': dither,
-                 'detector': detector,
-                 'sim_offset': sim_offset,
-                 'focus_offset': focus_offset,
-                 'include_ids': include_ids or [],
-                 'include_halfws': include_halfws or [],
-                 'exclude_ids': exclude_ids or []}
+    acqs.log(f'getting dark cal image at date={acqs.date} t_ccd={acqs.t_ccd:.1f}')
+    acqs.dark = get_dark_cal_image(date=acqs.date, select='before', t_ccd_ref=acqs.t_ccd)
 
     # Probability of man_err for this observation with a given man_angle.  Used
     # for marginalizing probabilities over different man_errs.
     acqs.meta['p_man_errs'] = np.array([get_p_man_err(man_err, acqs.meta['man_angle'])
                                         for man_err in CHAR.man_errs])
 
-    if stars is None:
-        stars = StarsTable.from_agasc(att, date=date, logger=acqs.log)
+    if acqs.stars is None:
+        acqs.stars = StarsTable.from_agasc(acqs.att, date=acqs.date, logger=acqs.log)
     else:
-        stars = StarsTable.from_stars(att, stars, logger=acqs.log)
+        acqs.stars = StarsTable.from_stars(acqs.att, acqs.stars, logger=acqs.log)
 
-    cand_acqs, bad_stars = acqs.get_acq_candidates(stars)
+    acqs.cand_acqs, acqs.bad_stars = acqs.get_acq_candidates(acqs.stars)
 
     # Fill in the entire acq['probs'].p_acqs table (which is actual a dict of keyed by
     # (box_size, man_err) tuples).
-    for acq in cand_acqs:
-        acq['probs'] = AcqProbs(acqs, acq, dither, stars, dark, t_ccd, date,
+    for acq in acqs.cand_acqs:
+        acq['probs'] = AcqProbs(acqs, acq, acqs.dither, acqs.stars, acqs.dark,
+                                acqs.t_ccd, acqs.date,
                                 acqs.meta['man_angle'])
 
-    acqs.get_initial_catalog(cand_acqs, stars=stars, dark=dark, dither=dither,
-                             t_ccd=t_ccd, date=date)
+        acqs.get_initial_catalog(acqs.cand_acqs, stars=acqs.stars, dark=acqs.dark,
+                                 dither=acqs.dither, t_ccd=acqs.t_ccd, date=acqs.date)
 
-    acqs.meta.update({'cand_acqs': cand_acqs,
-                      'stars': stars,
-                      'dark': dark,
-                      'bad_stars': bad_stars})
-
-    if optimize:
-        acqs.optimize_catalog(verbose)
+    if acqs.optimize:
+        acqs.optimize_catalog(acqs.verbose)
 
     # Set p_acq column to be the marginalized probabilities
     acqs['p_acq'] = [acq['probs'].p_acq_marg[acq['halfw']] for acq in acqs]
@@ -152,10 +94,10 @@ def get_acq_catalog(obsid=0, *, att=None, n_acq=8,
     # Add slot to cand_acqs table, putting in '...' if not selected as acq.
     # This is for convenience in downstream reporting or introspection.
     slots = [str(acqs.get_id(acq['id'])['slot']) if acq['id'] in acqs['id'] else '...'
-             for acq in cand_acqs]
-    cand_acqs['slot'] = slots
+             for acq in acqs.cand_acqs]
+    acqs.cand_acqs['slot'] = slots
 
-    if len(acqs) < n_acq:
+    if len(acqs) < acqs.n_acq:
         acqs.log(f'Selected only {len(acqs)} acq stars versus requested {n_acq}',
                  warning=True)
 
@@ -182,6 +124,9 @@ class AcqTable(ACACatalogTable):
     # (e.g. `obs19387/acqs.yaml`).
     name = 'acqs'
 
+    # Required attributes
+    required_attrs = ('att', 'man_angle', 't_ccd_acq', 'date', 'dither_acq')
+
     @classmethod
     def empty(cls):
         """
@@ -194,6 +139,22 @@ class AcqTable(ACACatalogTable):
         out['id'] = []
         out['halfw'] = []
         return out
+
+    @property
+    def t_ccd(self):
+        return self.t_ccd_acq
+
+    @t_ccd.setter
+    def t_ccd(self, value):
+        self.t_ccd_acq = value
+
+    @property
+    def dither(self):
+        return self.dither_acq
+
+    @dither.setter
+    def dither(self, value):
+        self.dither_acq = value
 
     def get_obs_info(self):
         """

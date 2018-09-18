@@ -116,6 +116,23 @@ class ACABox:
         return f'<ACABox y={self.y} z={self.z}>'
 
 
+class CatalogAttribute:
+    def __init__(self, default=None):
+        self.default = copy(default)
+
+    def __get__(self, instance, owner):
+        if self.name not in instance.meta and self.default is not None:
+            instance.meta[self.name] = self.default
+        return instance.meta.get(self.name)
+
+    def __set__(self, instance, value):
+        instance.meta[self.name] = value
+
+    def __set_name__(self, owner, name):
+        self.name = name
+        owner.cat_attrs.add(name)
+
+
 class ACACatalogTable(Table):
     """
     Base class for representing ACA catalogs in star selection.  This
@@ -137,12 +154,36 @@ class ACACatalogTable(Table):
     # Should be set by subclass, e.g. ``name = 'acqs'`` for AcqTable.
     name = 'aca_cat'
 
-    def __init__(self, data=None, print_log=False, **kwargs):
+    # Catalog attributes, gets set in CatalogAttribute
+    cat_attrs = set()
+
+    obsid = CatalogAttribute()
+    att = CatalogAttribute()
+    n_acq = CatalogAttribute()
+    n_fid = CatalogAttribute()
+    n_guide = CatalogAttribute()
+    man_angle = CatalogAttribute()
+    t_ccd_acq = CatalogAttribute()
+    t_ccd_guide = CatalogAttribute()
+    date = CatalogAttribute()
+    dither_acq = CatalogAttribute()
+    dither_guide = CatalogAttribute()
+    detector = CatalogAttribute()
+    sim_offset = CatalogAttribute()
+    focus_offset = CatalogAttribute()
+    stars = CatalogAttribute()
+    include_ids = CatalogAttribute(default=[])
+    include_halfws = CatalogAttribute(default=[])
+    exclude_ids = CatalogAttribute(default=[])
+    optimize = CatalogAttribute()
+    verbose = CatalogAttribute()
+    print_log = CatalogAttribute()
+
+    def __init__(self, data=None, **kwargs):
         super().__init__(data=data, **kwargs)
         self.log_info = {}
         self.log_info['events'] = []
         self.log_info['unix_run_time'] = time.time()
-        self.print_log = print_log
 
         # Set default "ok" status for a catalog to be false.  The idea is that it
         # needs to justify it is good by passing tests later.
@@ -155,6 +196,58 @@ class ACACatalogTable(Table):
             self._default_formats[name] = '.2f'
         for name in ('ra', 'dec', 'RA_PMCORR', 'DEC_PMCORR'):
             self._default_formats[name] = '.6f'
+
+    def set_kwargs(self, **kwargs):
+        for name, val in kwargs.items():
+            if name in self.cat_attrs:
+                setattr(self, name, val)
+            else:
+                raise ValueError(f'unexpected keyword argument "{name}"')
+
+        # If an explicit obsid is not provided to all getting parameters via mica
+        # then all other params must be supplied.
+        all_pars = all(getattr(self, x) is not None for x in self.required_attrs)
+        if self.obsid == 0 and not all_pars:
+            raise ValueError('if `obsid` not supplied then all other params are required')
+
+        # If not all params supplied then get via mica for the obsid.
+        if not all_pars:
+            from mica.starcheck import get_starcheck_catalog
+            self.log(f'getting starcheck catalog for obsid {self.obsid}')
+
+            obs = get_starcheck_catalog(self.obsid)
+            obso = obs['obs']
+
+            if self.att is None:
+                self.att = [obso['point_ra'], obso['point_dec'], obso['point_roll']]
+            if self.date is None:
+                self.date = obso['mp_starcat_time']
+            if self.t_ccd is None:
+                self.t_ccd = obs['pred_temp']
+            if self.man_angle is None:
+                self.man_angle = obs['manvr']['angle_deg'][0]
+            if self.detector is None:
+                self.detector = obso['sci_instr']
+            if self.sim_offset is None:
+                self.sim_offset = obso['sim_z_offset_steps']
+            if self.focus_offset is None:
+                self.focus_offset = 0
+
+            for dither_attr in ('dither_acq', 'dither_guide'):
+                if getattr(self, dither_attr) is None:
+                    dither_y_amp = obso.get('dither_y_amp')
+                    dither_z_amp = obso.get('dither_z_amp')
+                    if dither_y_amp is not None and dither_z_amp is not None:
+                        setattr(self, dither_attr, ACABox((dither_y_amp, dither_z_amp)))
+
+        for dither_attr in ('dither_acq', 'dither_guide'):
+            dither = getattr(self, dither_attr)
+            if not isinstance(dither, ACABox):
+                setattr(self, dither_attr, ACABox(dither))
+
+    @property
+    def print_log(self):
+        return self.meta.get('print_log')
 
     @classmethod
     def empty(cls):
