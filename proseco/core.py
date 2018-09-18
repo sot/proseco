@@ -15,6 +15,10 @@ import agasc
 from Quaternion import Quat
 
 
+# For testing this is used to cache fid tables for a detector
+FIDS_CACHE = {}
+
+
 def yagzag_to_radec(yag, zag, att):
     """
     Convert yag, zag [arcsec] to ra, dec [deg] for attitude ``att``.
@@ -927,6 +931,25 @@ class StarsTable(ACACatalogTable):
         out['MAG_ACA'] = out['mag']
 
         self.add_row(out)
+
+    def add_fake_star_from_fid(self, fid_id, offset_y=0, offset_z=0, mag=7.0,
+                               detector='ACIS-S'):
+        try:
+            fids = FIDS_CACHE[detector]
+        except KeyError:
+            from .fid import get_fid_catalog
+            fids = get_fid_catalog(att=(0, 0, 0),
+                                   detector=detector,
+                                   sim_offset=0,
+                                   focus_offset=0,
+                                   t_ccd=-10.0,
+                                   date='2018:001',
+                                   dither=8.0)
+            FIDS_CACHE[detector] = fids
+
+        fid = fids.cand_fids.get_id(fid_id)
+        self.add_fake_star(yang=fid['yang'] + offset_y, zang=fid['zang'] + offset_z,
+                           mag=mag)
 
 
 def bin2x2(arr):
