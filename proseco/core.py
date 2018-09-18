@@ -159,6 +159,8 @@ class ACACatalogTable(Table):
     # Catalog attributes, gets set in MetaAttribute
     allowed_kwargs = set(['dither', 't_ccd'])
 
+    required_attrs = ('dither_acq', 'dither_guide', 'date')
+
     obsid = MetaAttribute(default=0)
     att = MetaAttribute()
     n_acq = MetaAttribute(default=8)
@@ -243,6 +245,13 @@ class ACACatalogTable(Table):
                     dither_z_amp = obso.get('dither_z_amp')
                     if dither_y_amp is not None and dither_z_amp is not None:
                         setattr(self, dither_attr, ACABox((dither_y_amp, dither_z_amp)))
+
+                        # Special rule for handling big dither from mica.starcheck,
+                        # which does not yet know about dither_acq vs. dither_guide.
+                        # Use the most common dither size for ACIS / HRC.
+                        if dither_attr == 'dither_acq' and self.dither_acq.max() > 30:
+                            dither = 8 if self.detector.startswith('ACIS') else 20
+                            self.dither_acq = ACABox(dither)
 
         for dither_attr in ('dither_acq', 'dither_guide'):
             dither = getattr(self, dither_attr)

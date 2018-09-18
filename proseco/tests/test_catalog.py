@@ -5,7 +5,7 @@ from pathlib import Path
 
 import mica.starcheck
 
-from ..core import StarsTable
+from ..core import StarsTable, ACACatalogTable
 from ..catalog import get_aca_catalog
 
 
@@ -73,3 +73,17 @@ def test_no_candidates():
     assert 'halfw' in acas.acqs.colnames
     assert 'id' in acas.guides.colnames
     assert 'id' in acas.fids.colnames
+
+
+@pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
+def test_big_dither_from_mica_starcheck():
+    """
+    Test code that infers dither_acq and dither_guide for a big-dither
+    observation like 20168.
+    """
+    aca = ACACatalogTable()
+    aca.set_kwargs(obsid=20168)
+
+    assert aca.detector == 'HRC-S'
+    assert aca.dither_acq == (20, 20)
+    assert aca.dither_guide == (64, 8)
