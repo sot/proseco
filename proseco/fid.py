@@ -14,7 +14,7 @@ from chandra_aca.transform import yagzag_to_pixels
 from . import characteristics_fid as FID
 from . import characteristics as ACQ
 
-from .core import ACACatalogTable
+from .core import ACACatalogTable, ACABox
 
 
 def get_fid_catalog(*, detector=None, focus_offset=0, sim_offset=0,
@@ -92,7 +92,7 @@ class FidTable(ACACatalogTable):
         :param acqs: AcqTable catalog.  Optional but needed for actual fid selection.
         :param stars: stars table.  Defaults to acqs.meta['stars'] if available.
         :param dither: dither (float or 2-element sequence (dither_y, dither_z), [arcsec]
-                       Defaults to acqs.meta['dither'] if available.
+                       Defaults to acqs.meta['dither'] if available, or 20 otherwise.
         :param n_fid: number of desired fid lights
         :param print_log: print log to stdout (default=False)
         :param **kwargs: any other kwargs for Table init
@@ -112,9 +112,12 @@ class FidTable(ACACatalogTable):
                 focus_offset = acqs.meta['focus_offset']
             if print_log is None:
                 print_log = acqs.print_log
+
             self.acqs = acqs
 
-        # TO DO: fix this temporary stub put in for the 1.0 release.  This converts
+        if not isinstance(dither, ACABox):
+            dither = ACABox(dither)
+
         # a 2-element dither (y, z) to a single value which is currently needed for acq
         # selection.
         try:
@@ -246,7 +249,7 @@ class FidTable(ACACatalogTable):
                           acq['halfw'])
         dy = np.abs(fid['yang'] - acq['yang'])
         dz = np.abs(fid['zang'] - acq['zang'])
-        return (dy < spoiler_margin and dz < spoiler_margin)
+        return (dy < spoiler_margin.y and dz < spoiler_margin.z)
 
     def get_fid_candidates(self):
         """
@@ -351,8 +354,8 @@ class FidTable(ACACatalogTable):
         dither = self.meta['dither']
 
         # Potential spoiler by position
-        spoil = ((np.abs(stars['yang'] - fid['yang']) < FID.spoiler_margin + dither) &
-                 (np.abs(stars['zang'] - fid['zang']) < FID.spoiler_margin + dither))
+        spoil = ((np.abs(stars['yang'] - fid['yang']) < FID.spoiler_margin + dither.y) &
+                 (np.abs(stars['zang'] - fid['zang']) < FID.spoiler_margin + dither.z))
 
         if not np.any(spoil):
             # Make an empty table with same columns

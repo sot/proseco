@@ -11,7 +11,7 @@ from chandra_aca.star_probs import guide_count
 from . import characteristics as CHAR
 from . import characteristics_guide as GUIDE_CHAR
 
-from .core import (StarsTable, bin2x2, ACACatalogTable)
+from .core import StarsTable, bin2x2, ACACatalogTable, ACABox
 
 CCD = GUIDE_CHAR.CCD
 
@@ -64,13 +64,14 @@ def get_guide_catalog(obsid=0, att=None, date=None, t_ccd=None, dither=None, n_g
         dither_y_amp = obso.get('dither_y_amp')
         dither_z_amp = obso.get('dither_z_amp')
         if dither_y_amp is not None and dither_z_amp is not None:
-            dither = (dither_y_amp, dither_z_amp)
-        if dither is None:
-            dither = (20, 20)
+            dither = ACABox((dither_y_amp, dither_z_amp))
 
         if n_guide is None:
             cat = obs['cat']
             n_guide = 8 - np.count_nonzero((cat['type'] == 'FID') | (cat['type'] == 'MON'))
+
+    if not isinstance(dither, ACABox):
+        dither = ACABox(dither)
 
     if dark is None:
         from mica.archive.aca_dark import get_dark_cal_image
@@ -260,8 +261,8 @@ class GuideTable(ACACatalogTable):
         stars['offchip'] = offchip
 
         # Add a filter for stars that are too close to the chip edge including dither
-        r_dith_pad = self.meta['dither'][0] * GUIDE_CHAR.ARC_2_PIX
-        c_dith_pad = self.meta['dither'][1] * GUIDE_CHAR.ARC_2_PIX
+        r_dith_pad = self.meta['dither'].row
+        c_dith_pad = self.meta['dither'].col
         row_max = CCD['row_max'] - (CCD['row_pad'] + CCD['window_pad'] + r_dith_pad)
         col_max = CCD['col_max'] - (CCD['col_pad'] + CCD['window_pad'] + c_dith_pad)
         outofbounds = (np.abs(stars['row']) > row_max) | (np.abs(stars['col']) > col_max)
@@ -462,8 +463,8 @@ def get_imposter_mags(cand_stars, dark, dither):
     pixmags = []
 
     # Define the 1/2 pixel region as half the 8x8 plus dither
-    row_extent = np.ceil(4 + dither[0] * GUIDE_CHAR.ARC_2_PIX)
-    col_extent = np.ceil(4 + dither[1] * GUIDE_CHAR.ARC_2_PIX)
+    row_extent = np.ceil(4 + dither.row)
+    col_extent = np.ceil(4 + dither.col)
     for idx, cand in enumerate(cand_stars):
         rminus, rplus = get_ax_range(cand['row'], row_extent)
         cminus, cplus = get_ax_range(cand['col'], col_extent)
@@ -541,6 +542,9 @@ def spoiled_by_bad_pixel(cand_guides, dither):
                    in arcsecs and dither[1] is Z dither peak ampl in arcsecs
     :returns: boolean mask on cand_guides where True means star is spoiled by bad pixel
     """
+    if not isinstance(dither, ACABox):
+        dither = ACABox(dither)
+
     raw_bp = np.array(CHAR.bad_pixels)
     bp_row = []
     bp_col = []
@@ -558,8 +562,8 @@ def spoiled_by_bad_pixel(cand_guides, dither):
     # Then for the pixel region of each candidate, see if there is a bad
     # pixel in the region.
     spoiled = np.zeros(len(cand_guides)).astype(bool)
-    row_extent = np.ceil(4 + dither[0] * GUIDE_CHAR.ARC_2_PIX)
-    col_extent = np.ceil(4 + dither[1] * GUIDE_CHAR.ARC_2_PIX)
+    row_extent = np.ceil(4 + dither.row)
+    col_extent = np.ceil(4 + dither.col)
     for idx, cand in enumerate(cand_guides):
         rminus = int(np.floor(cand['row'] - row_extent))
         rplus = int(np.ceil(cand['row'] + row_extent + 1))

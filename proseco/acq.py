@@ -16,7 +16,7 @@ from mica.archive.aca_dark.dark_cal import get_dark_cal_image
 
 from . import characteristics as CHAR
 from .core import (get_mag_std, StarsTable, ACACatalogTable, bin2x2,
-                   get_image_props, pea_reject_image)
+                   get_image_props, pea_reject_image, ACABox)
 
 
 def get_acq_catalog(obsid=0, *, att=None, n_acq=8,
@@ -86,24 +86,14 @@ def get_acq_catalog(obsid=0, *, att=None, n_acq=8,
         if focus_offset is None:
             focus_offset = 0
 
-        dither_y_amp = obso.get('dither_y_amp')
-        dither_z_amp = obso.get('dither_z_amp')
-        if dither_y_amp is not None and dither_z_amp is not None:
-            dither = (dither_y_amp, dither_z_amp)
-
         if dither is None:
-            dither = 20
+            dither_y_amp = obso.get('dither_y_amp')
+            dither_z_amp = obso.get('dither_z_amp')
+            if dither_y_amp is not None and dither_z_amp is not None:
+                dither = ACABox((dither_y_amp, dither_z_amp))
 
-    # TO DO: fix this temporary stub put in for the 1.0 release.  This converts
-    # a 2-element dither (y, z) to a single value which is currently needed for acq
-    # selection.
-    try:
-        dither = max(dither[0], dither[1])
-    except (TypeError, IndexError):
-        # Catches only the case where dither is not subscriptable.  Sadly, np.int64
-        # raises IndexError, not TypeError (like Python int), so this test is a bit
-        # weak (would crash later for an input of a 1-element list).
-        pass
+    if not isinstance(dither, ACABox):
+        dither = ACABox(dither)
 
     acqs.log(f'getting dark cal image at date={date} t_ccd={t_ccd:.1f}')
     dark = get_dark_cal_image(date=date, select='before', t_ccd_ref=t_ccd)
@@ -293,9 +283,9 @@ class AcqTable(ACACatalogTable):
         cand_acqs['spoilers'] = np.full(n_cand, None)  # Filled in with Table of spoilers
         cand_acqs['imposters'] = np.full(n_cand, None)  # Filled in with Table of imposters
         # Cached value of box_size + man_err for spoilers
-        cand_acqs['spoilers_box'] = np.full(n_cand, -999.0)
+        cand_acqs['spoilers_box'] = np.full(n_cand, None)
         # Cached value of box_size + dither for imposters
-        cand_acqs['imposters_box'] = np.full(n_cand, -999.0)
+        cand_acqs['imposters_box'] = np.full(n_cand, None)
 
         return cand_acqs, bads
 
@@ -695,13 +685,14 @@ def get_imposter_stars(dark, star_row, star_col, thresh=None,
     rc_off = 0 if test else 512
     acq_row = int(star_row + rc_off)
     acq_col = int(star_col + rc_off)
-    box_hw = int(box_size) // 5
+    box_row = int(box_size.row)
+    box_col = int(box_size.col)
 
     # Make sure box is within CCD
-    box_r0 = np.clip(acq_row - box_hw, 0, 1024)
-    box_r1 = np.clip(acq_row + box_hw, 0, 1024)
-    box_c0 = np.clip(acq_col - box_hw, 0, 1024)
-    box_c1 = np.clip(acq_col + box_hw, 0, 1024)
+    box_r0 = np.clip(acq_row - box_row, 0, 1024)
+    box_r1 = np.clip(acq_row + box_row, 0, 1024)
+    box_c0 = np.clip(acq_col - box_col, 0, 1024)
+    box_c1 = np.clip(acq_col + box_col, 0, 1024)
 
     # Make sure box has even number of pixels on each edge.  Increase
     # box by one if needed.
@@ -853,6 +844,7 @@ def get_intruders(acq, box_size, name, n_sigma, get_func, kwargs):
     """
     name_box = name + '_box'
     intruders = acq[name]
+    box_size = ACABox(box_size)
 
     if intruders is None:
         intruders = get_func(**kwargs)
@@ -867,7 +859,7 @@ def get_intruders(acq, box_size, name, n_sigma, get_func, kwargs):
         acq[name] = intruders
 
     else:
-        # Ensure cached spoilers cover the current case
+        # Ensure cached spoilers cover the current case.
         if box_size > acq[name_box]:
             raise ValueError(f'box_size is greater than {name_box}')
 
@@ -875,8 +867,8 @@ def get_intruders(acq, box_size, name, n_sigma, get_func, kwargs):
     if len(intruders) == 0:
         intruders = {name: np.array([], dtype=np.float64) for name in colnames}
     else:
-        ok = ((np.abs(intruders['yang'] - acq['yang']) < box_size) &
-              (np.abs(intruders['zang'] - acq['zang']) < box_size))
+        ok = ((np.abs(intruders['yang'] - acq['yang']) < box_size.y) &
+              (np.abs(intruders['zang'] - acq['zang']) < box_size.z))
         intruders = {name: intruders[name][ok] for name in ['mag', 'mag_err']}
 
     return intruders
@@ -948,13 +940,11 @@ def calc_p_on_ccd(row, col, box_size):
 
     :param row: row coordinate of star (float)
     :param col: col coordinate of star (float)
-    :param box_size: box size (int)
+    :param box_size: box size (ACABox)
 
     :returns: probability the star is on usable part of CCD (float)
     """
     p_on_ccd = 1.0
-    half_width = box_size / 5  # half width of box in pixels
-    full_width = half_width * 2
 
     # Require that the readout box when candidate acq star is evaluated
     # by the PEA (via a normal 8x8 readout) is fully on the CCD usable area.
@@ -963,12 +953,13 @@ def calc_p_on_ccd(row, col, box_size):
     max_ccd_row = CHAR.max_ccd_row - 5
     max_ccd_col = CHAR.max_ccd_col - 4
 
-    for rc, max_rc in ((row, max_ccd_row),
-                       (col, max_ccd_col)):
+    for rc, max_rc, half_width in ((row, max_ccd_row, box_size.row),
+                                   (col, max_ccd_col, box_size.col)):
 
         # Pixel boundaries are symmetric so just take abs(row/col)
         rc1 = abs(rc) + half_width
 
+        full_width = half_width * 2
         pix_off_ccd = rc1 - max_rc
         if pix_off_ccd > 0:
             # Reduce p_on_ccd by fraction of pixels inside usable area.

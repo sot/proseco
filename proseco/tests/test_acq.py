@@ -14,6 +14,7 @@ from ..acq import (get_p_man_err, bin2x2, CHAR,
                    AcqTable, calc_p_on_ccd,
                    get_acq_catalog,
                    )
+from ..core import ACABox
 from .test_common import OBS_INFO, STD_INFO
 
 TEST_DATE = '2018:144'  # Fixed date for doing tests
@@ -105,7 +106,6 @@ def test_get_image_props():
     ccd_img = np.full((100, 100), fill_value=bgd, dtype=float)
     ccd_img[c_row - 4:c_row + 4, c_col - 4:c_col + 4] += psf_img
     img, img_sum, mag, row, col = get_image_props(ccd_img, c_row, c_col, bgd=bgd)
-    print(img.astype(int))
     assert np.isclose(mag, 9.0, atol=0.05, rtol=0)
     assert np.isclose(row, c_row, atol=0.001, rtol=0)
     assert np.isclose(col, c_col, atol=0.001, rtol=0)
@@ -114,7 +114,7 @@ def test_get_image_props():
 def setup_get_imposter_stars(val):
     bgd = 40
     dark = np.full((100, 100), fill_value=bgd, dtype=float)
-    box_size = 6 * 5
+    box_size = ACABox(6 * 5)
     dark[30, 28] = val + bgd
     dark[32, 29] = val + bgd
     dark[30, 30] = val + bgd
@@ -192,11 +192,65 @@ def test_calc_p_brightest_same_bright():
     dark_imp = add_imposter(dark, acq, dyang=-105, dzang=-105, dmag=0.0)
     stars_sp = add_spoiler(stars, acq, dyang=65, dzang=65, dmag=0.0, mag_err=mag_err)
     stars_sp = add_spoiler(stars_sp, acq, dyang=85, dzang=0, dmag=0.0, mag_err=mag_err)
-    probs = [calc_p_brightest(acq, box_size, stars_sp, dark_imp, dither=0, bgd=bgd)
+    probs = [calc_p_brightest(acq, box_size, stars_sp, dark_imp, dither=ACABox(0), bgd=bgd)
              for box_size in CHAR.box_sizes]
 
     #  Box size:                160   140   120    100   80   60  arcsec
     assert np.allclose(probs, [0.25, 0.25, 0.25, 0.3334, 0.5, 1.0], rtol=0, atol=0.01)
+
+
+def test_calc_p_brightest_same_bright_asymm_dither():
+    """
+    Test for an easy situation of three spoiler/imposters with exactly
+    the same brightness as acq star so that p_brighter is always 0.5.
+    As each one comes into the box you add another coin toss to the
+    odds of the acq star being brightest.
+
+    Use an asymmetric dither to test the handling of this.
+    """
+    bgd = 40
+    dark = np.full((1024, 1024), dtype=float, fill_value=bgd)
+    stars = get_test_stars()
+
+    acq = get_test_cand_acqs()[0]
+    # See test_calc_p_brightest_same_bright() for explanation of mag_err
+    mag_err = 0.032234
+    acq['mag_err'] = mag_err
+
+    dither = ACABox((20, 60))
+
+    # Add a spoiler star to stars and leave dark map the same.
+    # Spoiler stars don't care about dither.
+    stars_sp = add_spoiler(stars, acq, dyang=-105, dzang=105, dmag=0.0, mag_err=mag_err)
+    probs = [calc_p_brightest(acq, box_size, stars=stars_sp, dark=dark, dither=dither,
+                              bgd=bgd, man_err=0)
+             for box_size in CHAR.box_sizes]
+
+    #  Box size:               160  140  120  100   80   60  arcsec
+    assert np.allclose(probs, [0.5, 0.5, 0.5, 1.0, 1.0, 1.0], rtol=0, atol=0.01)
+
+    # Add an imposter to dark map and leave stars the same
+    # 80" box + dither = (100, 140), so (105, 145) pixel is not included
+    # 100" box + dither = (120, 160), so (105, 145) pixel is included
+    acq['imposters'] = None
+    acq['spoilers'] = None
+    dark_imp = add_imposter(dark, acq, dyang=105, dzang=145, dmag=0.0)
+    probs = [calc_p_brightest(acq, box_size, stars=stars, dark=dark_imp, dither=dither,
+                              bgd=bgd, man_err=0)
+             for box_size in CHAR.box_sizes]
+
+    #  Box size:               160  140  120  100  80   60  arcsec
+    assert np.allclose(probs, [0.5, 0.5, 0.5, 0.5, 1.0, 1.0], rtol=0, atol=0.01)
+
+    # Both together
+    acq['imposters'] = None
+    acq['spoilers'] = None
+    probs = [calc_p_brightest(acq, box_size, stars=stars_sp, dark=dark_imp, dither=dither,
+                              bgd=bgd, man_err=0)
+             for box_size in CHAR.box_sizes]
+
+    #  Box size:                160    140    120  100   80   60  arcsec
+    assert np.allclose(probs, [0.333, 0.333, 0.333, 0.5, 1.0, 1.0], rtol=0, atol=0.01)
 
 
 def test_calc_p_brightest_1mag_brighter():
@@ -211,49 +265,104 @@ def test_calc_p_brightest_1mag_brighter():
     # Bright spoiler at 65 arcsec
     acq = get_test_cand_acqs()[0]
     stars_sp = add_spoiler(stars, acq, dyang=65, dzang=65, dmag=-1.0)
-    probs = [calc_p_brightest(acq, box_size, stars_sp, dark, dither=0, bgd=bgd)
+    probs = [calc_p_brightest(acq, box_size, stars_sp, dark, dither=ACABox(0), bgd=bgd)
              for box_size in box_sizes]
     assert np.allclose(probs, [0.0, 1.0], rtol=0, atol=0.001)
 
     # Comparable spoiler at 65 arcsec (within mag_err)
     acq = get_test_cand_acqs()[0]
     stars_sp = add_spoiler(stars, acq, dyang=65, dzang=65, dmag=-1.0, mag_err=1.0)
-    probs = [calc_p_brightest(acq, box_size, stars_sp, dark, dither=0, bgd=bgd)
+    probs = [calc_p_brightest(acq, box_size, stars_sp, dark, dither=ACABox(0), bgd=bgd)
              for box_size in box_sizes]
     assert np.allclose(probs, [0.158974, 1.0], rtol=0, atol=0.01)
 
     # Bright imposter at 85 arcsec
     acq = get_test_cand_acqs()[0]
     dark_imp = add_imposter(dark, acq, dyang=-85, dzang=-85, dmag=-1.0)
-    probs = [calc_p_brightest(acq, box_size, stars, dark_imp, dither=0, bgd=bgd)
+    probs = [calc_p_brightest(acq, box_size, stars, dark_imp, dither=ACABox(0), bgd=bgd)
              for box_size in box_sizes]
     assert np.allclose(probs, [0.0, 1.0], rtol=0, atol=0.001)
 
 
 def test_calc_p_on_ccd():
+    """
+    Test the calculation of probability of star being on usable area on the CCD.
+    """
     # These lines mimic the code in calc_p_on_ccd() which requires that
     # track readout box is fully within the usable part of CCD.
     max_ccd_row = CHAR.max_ccd_row - 5
     max_ccd_col = CHAR.max_ccd_col - 4
 
     # Halfway off in both row and col, (1/4 of area remaining)
-    p_in_box = calc_p_on_ccd(max_ccd_row, max_ccd_col, 60)
+    p_in_box = calc_p_on_ccd(max_ccd_row, max_ccd_col, ACABox(60))
     assert np.allclose(p_in_box, 0.25)
 
-    p_in_box = calc_p_on_ccd(max_ccd_row, max_ccd_col, 120)
+    p_in_box = calc_p_on_ccd(max_ccd_row, max_ccd_col, ACABox(120))
     assert np.allclose(p_in_box, 0.25)
 
     # 3 of 8 pixels off in row (5/8 of area remaining)
-    p_in_box = calc_p_on_ccd(max_ccd_row - 1, 0, 20)
+    p_in_box = calc_p_on_ccd(max_ccd_row - 1, 0, ACABox(20))
     assert np.allclose(p_in_box, 0.625)
 
     # Same but for col
-    p_in_box = calc_p_on_ccd(0, max_ccd_col - 1, 20)
+    p_in_box = calc_p_on_ccd(0, max_ccd_col - 1, ACABox(20))
     assert np.allclose(p_in_box, 0.625)
 
     # Same but for a negative col number
-    p_in_box = calc_p_on_ccd(0, -(max_ccd_col - 1), 20)
+    p_in_box = calc_p_on_ccd(0, -(max_ccd_col - 1), ACABox(20))
     assert np.allclose(p_in_box, 0.625)
+
+
+def test_calc_p_on_ccd_asymmetric_dither():
+    """
+    Test the calculation of probability of star being on usable area on the CCD
+    for the case of asymmetric dither.
+    """
+    # These lines mimic the code in calc_p_on_ccd() which requires that
+    # track readout box is fully within the usable part of CCD.
+    max_ccd_row = CHAR.max_ccd_row - 5
+    max_ccd_col = CHAR.max_ccd_col - 4
+
+    # Halfway off in both row and col, (1/4 of area remaining).  These checks
+    # don't change from symmetric case because of the placement of row, col.
+    p_in_box = calc_p_on_ccd(max_ccd_row, max_ccd_col, ACABox((60, 120)))
+    assert np.allclose(p_in_box, 0.25)
+
+    p_in_box = calc_p_on_ccd(max_ccd_row, max_ccd_col, ACABox((120, 60)))
+    assert np.allclose(p_in_box, 0.25)
+
+    # 3 of 8 pixels off in row (5/8 of area remaining).  Dither_z (col) does not
+    # matter here because only rows are off CCD.
+    for dither_z in 5, 100:
+        p_in_box = calc_p_on_ccd(max_ccd_row - 1, 0, ACABox((20, dither_z)))
+        assert np.allclose(p_in_box, 0.625)
+
+    # Same but for col
+    for dither_y in 5, 100:
+        p_in_box = calc_p_on_ccd(0, max_ccd_col - 1, ACABox((dither_y, 20)))
+        assert np.allclose(p_in_box, 0.625)
+
+        # Same but for a negative col number
+        p_in_box = calc_p_on_ccd(0, -(max_ccd_col - 1), ACABox((dither_y, 20)))
+        assert np.allclose(p_in_box, 0.625)
+
+    # Show expected asymmetric behavior, starting right at the physical CCD edge.
+    # In this case the only chance to get on the CCD is for dither to bring it
+    # there.  (Note: the model assumes the dither spatial distribution is
+    # flat, but it is not).
+
+    # First, with dither_y <= 25 or dither_z <= 20, p_in_box is exactly zero
+    for dither in ((25, 20), (60, 20), (25, 60)):
+        p_in_box = calc_p_on_ccd(CHAR.max_ccd_row, CHAR.max_ccd_col, ACABox(dither))
+        assert p_in_box == 0
+
+    # Now some asymmetric cases.  p_in_ccd increases with larger dither.
+    for dither, exp in [((30, 40), 0.02083333),
+                        ((40, 30), 0.03125),
+                        ((40, 200), 0.084375),
+                        ((200, 40), 0.109375)]:
+        p_in_box = calc_p_on_ccd(CHAR.max_ccd_row, CHAR.max_ccd_col, ACABox(dither))
+        assert np.isclose(p_in_box, exp)
 
 
 def test_get_acq_catalog_19387():
@@ -347,7 +456,13 @@ def test_box_strategy_20603():
 
 
 def test_make_report(tmpdir):
+    """
+    Test making an acquisition report.  Use a big-box dither here
+    to test handling of that in report (after passing through pickle).
+    """
     obsid = 19387
+    kwargs = OBS_INFO[obsid].copy()
+    kwargs['dither'] = (8, 64)
     acqs = get_acq_catalog(**OBS_INFO[obsid])
 
     tmpdir = Path(tmpdir)
@@ -465,7 +580,7 @@ def test_dither_as_sequence():
 
     acqs = get_acq_catalog(**kwargs, stars=stars)
     assert len(acqs) == 8
-    assert acqs.meta['dither'] == 22  # Will be (8, 22) for 4.0
+    assert acqs.meta['dither'] == (8, 22)
 
 
 def test_n_acq():
