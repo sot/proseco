@@ -11,7 +11,7 @@ from .. import characteristics_fid as FID
 
 
 # Reference fid positions for spoiling tests
-FIDS = get_fid_catalog(**STD_INFO)
+FIDS = get_fid_catalog(stars=StarsTable.empty(), **STD_INFO)
 
 
 def test_get_fid_position():
@@ -63,8 +63,10 @@ def test_get_initial_catalog():
 
     # Make catalogs with some fake stars (at exactly fid positions) that spoil
     # the fids.
-    stars = FIDS.cand_fids.copy()
-    stars['mag_err'] = 0.1
+    stars = StarsTable.empty()
+    for fid in FIDS.cand_fids:
+        stars.add_fake_star(mag=fid['mag'], mag_err=0.1,
+                            yang=fid['yang'], zang=fid['zang'])
 
     # Spoil fids 1, 2
     fids2 = get_fid_catalog(stars=stars[:2], **STD_INFO)
@@ -167,7 +169,8 @@ def test_dither_as_sequence():
     std_info['dither'] = (8, 22)
     fids = get_fid_catalog(**std_info)
     assert len(fids) == 3
-    assert fids.dither == (8, 22)
+    assert fids.dither_acq == (8, 22)
+    assert fids.dither_guide == (8, 22)
 
 
 def test_fid_spoiler_score():

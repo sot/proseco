@@ -247,6 +247,22 @@ class ACACatalogTable(Table):
             if not isinstance(dither, ACABox):
                 setattr(self, dither_attr, ACABox(dither))
 
+    def set_stars(self, acqs=None):
+        """Set the object ``stars`` attribute to an appropriate StarsTable object.
+
+        If ``acqs`` is defined that will be a previously computed AcqTable with
+        ``stars`` already available, so use that.
+
+        :param acqs: AcqTable for same observation
+        """
+        if acqs is None:
+            if self.stars is None:
+                self.stars = StarsTable.from_agasc(self.att, date=self.date, logger=self.log)
+            else:
+                self.stars = StarsTable.from_stars(self.att, self.stars, logger=self.log)
+        else:
+            self.stars = acqs.stars
+
     @property
     def dither(self):
         super().__getattr__(self, 'dither')

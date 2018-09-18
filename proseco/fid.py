@@ -44,6 +44,7 @@ def get_fid_catalog(obsid=0, **kwargs):
     """
     fids = FidTable()
     fids.set_kwargs(obsid=obsid, **kwargs)
+    fids.set_stars(acqs=fids.acqs)
 
     fids.cand_fids = fids.get_fid_candidates()
 

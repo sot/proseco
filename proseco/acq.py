@@ -54,6 +54,7 @@ def get_acq_catalog(obsid=0, **kwargs):
     # after selecting initial an inital catalog of potential acq stars.
     acqs = AcqTable()
     acqs.set_kwargs(obsid=obsid, **kwargs)
+    acqs.set_stars()
 
     acqs.log(f'getting dark cal image at date={acqs.date} t_ccd={acqs.t_ccd:.1f}')
     acqs.dark = get_dark_cal_image(date=acqs.date, select='before', t_ccd_ref=acqs.t_ccd)
@@ -62,11 +63,6 @@ def get_acq_catalog(obsid=0, **kwargs):
     # for marginalizing probabilities over different man_errs.
     acqs.p_man_errs = np.array([get_p_man_err(man_err, acqs.man_angle)
                                         for man_err in CHAR.man_errs])
-
-    if acqs.stars is None:
-        acqs.stars = StarsTable.from_agasc(acqs.att, date=acqs.date, logger=acqs.log)
-    else:
-        acqs.stars = StarsTable.from_stars(acqs.att, acqs.stars, logger=acqs.log)
 
     acqs.cand_acqs, acqs.bad_stars = acqs.get_acq_candidates(acqs.stars)
 
