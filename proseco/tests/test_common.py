@@ -5,6 +5,7 @@ STD_INFO = dict(obsid=1,
                 sim_offset=0,
                 focus_offset=0,
                 date='2018:001',
+                n_guide=5,
                 t_ccd=-11,
                 man_angle=90,
                 dither=8.0)

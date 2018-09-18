@@ -2,12 +2,13 @@ import traceback
 import numpy as np
 from itertools import count
 
-from astropy.table import Column
+from astropy.table import Column, Table
 
 from .core import ACACatalogTable, get_kwargs_from_starcheck_text
 from .guide import get_guide_catalog, GuideTable
 from .acq import get_acq_catalog, AcqTable
 from .fid import get_fid_catalog, FidTable
+from . import characteristics_fid as FID
 
 
 def get_aca_catalog(obsid=0, **kwargs):
@@ -82,6 +83,9 @@ def _get_aca_catalog(**kwargs):
 
     aca.acqs = get_acq_catalog(**kwargs)
     aca.fids = get_fid_catalog(acqs=aca.acqs, **kwargs)
+
+    if len(aca.fids) == 0:
+        optimize_acqs_fids(aca.acqs, aca.fids)
 
     stars = kwargs.pop('stars', aca.acqs.stars)
     aca.guides = get_guide_catalog(stars=stars, **kwargs)
@@ -190,3 +194,34 @@ def merge_cats(fids=None, guides=None, acqs=None):
     aca.add_column(idx, index=1)
 
     return aca
+
+
+def optimize_acqs_fids(acqs, fids):
+    """
+    Concurrently optimize acqs and fids in the case where there is not
+    already a good (no spoilers) fid set available.
+
+    This updates the tables in place.
+
+    :param acqs: AcqTable object
+    :param fids: FidTable object
+    """
+    p2_opt = np.log10(acqs.get_p_2_or_fewer())
+
+    cand_fids = fids.cand_fids
+    cand_fids_ids = set(cand_fids['id'])
+
+    # Get list of fid_sets that are consistent with candidate fids. These
+    # fid sets are the combinations of 3 (or 2) fid lights in preferred
+    # order.
+    rows = []
+    for fid_set in FID.fid_sets[fids.detector]:
+        if fid_set <= cand_fids_ids:
+            spoiler_score = sum(cand_fids.get_id(fid_id)['spoiler_score']
+                                for fid_id in fid_set)
+            rows.append((fid_set, spoiler_score))
+
+    fid_sets = Table(rows=rows, names=('fid_set', 'spoiler_score'))
+    fid_sets = fid_sets.group_by('spoiler_score')
+
+    return p2_opt, fid_sets
