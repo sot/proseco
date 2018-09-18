@@ -14,12 +14,10 @@ from chandra_aca.transform import yagzag_to_pixels
 from . import characteristics_fid as FID
 from . import characteristics as ACQ
 
-from .core import ACACatalogTable, ACABox
+from .core import ACACatalogTable
 
 
-def get_fid_catalog(*, detector=None, focus_offset=0, sim_offset=0,
-                    acqs=None, stars=None, dither=None, n_fid=3,
-                    print_log=None):
+def get_fid_catalog(obsid=0, **kwargs):
     """
     Get a catalog of fid lights.
 
@@ -36,19 +34,19 @@ def get_fid_catalog(*, detector=None, focus_offset=0, sim_offset=0,
     :param focus_offset: SIM focus offset [steps] (default=0)
     :param sim_offset: SIM translation offset from nominal [steps] (default=0)
     :param acqs: AcqTable catalog.  Optional but needed for actual fid selection.
-    :param stars: stars table.  Defaults to acqs.meta['stars'] if available.
-    :param dither: dither (float or 2-element sequence (dither_y, dither_z), [arcsec]
-                   Defaults to acqs.meta['dither'] if available.
+    :param stars: stars table.  Defaults to acqs.stars if available.
+    :param dither_acq: acq dither size (2-element sequence (y, z), arcsec)
+    :param dither_guide: guide dither size (2-element sequence (y, z), arcsec)
     :param n_fid: number of desired fid lights
     :param print_log: print log to stdout (default=False)
 
     :returns: fid catalog (FidTable)
     """
-    fids = FidTable(detector=detector, focus_offset=focus_offset,
-                    sim_offset=sim_offset, acqs=acqs, stars=stars,
-                    dither=dither, n_fid=n_fid, print_log=print_log)
+    fids = FidTable()
+    fids.set_attrs_from_kwargs(obsid=obsid, **kwargs)
+    fids.set_stars(acqs=fids.acqs)
 
-    fids.meta['cand_fids'] = fids.get_fid_candidates()
+    fids.cand_fids = fids.get_fid_candidates()
 
     # Set initial fid catalog if possible to a set for which no field stars
     # spoiler any of the fid lights and no fid lights is a search spoilers for
@@ -61,11 +59,11 @@ def get_fid_catalog(*, detector=None, focus_offset=0, sim_offset=0,
 
     # TO DO: remove temporary stub to simply clip the number of returned
     # fids to n_fid
-    if len(fids) > n_fid:
-        fids = fids[:n_fid]
+    if len(fids) > fids.n_fid:
+        fids = fids[:fids.n_fid]
 
     # Set fid thumbs_up if fids has the number of requested fid lights
-    fids.thumbs_up = len(fids) == n_fid
+    fids.thumbs_up = len(fids) == fids.n_fid
 
     return fids
 
@@ -79,63 +77,11 @@ class FidTable(ACACatalogTable):
     # (e.g. `obs19387/fids.yaml`).
     name = 'fids'
 
-    def __init__(self, data=None, *,  # Keyword only from here
-                 detector=None, focus_offset=0, sim_offset=0,
-                 acqs=None, stars=None, dither=None, n_fid=3,
-                 print_log=None, **kwargs):
-        """
-        Table of fid lights, with methods for selection.
+    allowed_kwargs = ACACatalogTable.allowed_kwargs | set(['acqs'])
 
-        :param detector: 'ACIS-S' | 'ACIS-I' | 'HRC-S' | 'HRC-I'
-        :param focus_offset: SIM focus offset [steps] (default=0)
-        :param sim_offset: SIM translation offset from nominal [steps] (default=0)
-        :param acqs: AcqTable catalog.  Optional but needed for actual fid selection.
-        :param stars: stars table.  Defaults to acqs.meta['stars'] if available.
-        :param dither: dither (float or 2-element sequence (dither_y, dither_z), [arcsec]
-                       Defaults to acqs.meta['dither'] if available, or 20 otherwise.
-        :param n_fid: number of desired fid lights
-        :param print_log: print log to stdout (default=False)
-        :param **kwargs: any other kwargs for Table init
-        """
-        # If acqs (acq catalog) supplied then make a weak reference since that
-        # may have a ref to this fid catalog.
-        if acqs is not None:
-            if stars is None:
-                stars = acqs.meta['stars']
-            if dither is None:
-                dither = acqs.meta['dither']
-            if detector is None:
-                detector = acqs.meta['detector']
-            if sim_offset is None:
-                sim_offset = acqs.meta['sim_offset']
-            if focus_offset is None:
-                focus_offset = acqs.meta['focus_offset']
-            if print_log is None:
-                print_log = acqs.print_log
-
-            self.acqs = acqs
-
-        if not isinstance(dither, ACABox):
-            dither = ACABox(dither)
-
-        # a 2-element dither (y, z) to a single value which is currently needed for acq
-        # selection.
-        try:
-            dither = max(dither[0], dither[1])
-        except TypeError:
-            # Catches only the case where dither is not subscriptable.  Anything else
-            # should raise.
-            pass
-
-        super().__init__(data=data, print_log=print_log, **kwargs)
-
-        self.meta.update({'detector': detector,
-                          'focus_offset': focus_offset,
-                          'sim_offset': sim_offset,
-                          'acqs': acqs,
-                          'dither': dither,
-                          'n_fid': n_fid,
-                          'stars': stars})
+    required_attrs = ('att', 'detector', 'sim_offset', 'focus_offset',
+                      't_ccd_acq', 't_ccd_guide', 'date',
+                      'dither_acq', 'dither_guide')
 
     @property
     def acqs(self):
@@ -158,12 +104,12 @@ class FidTable(ACACatalogTable):
 
             # Add slot to cand_fids table, putting in '...' if not selected as acq.
             # This is for convenience in downstream reporting or introspection.
-            cand_fids = self.meta['cand_fids']
+            cand_fids = self.cand_fids
             slots = [str(self.get_id(fid['id'])['slot']) if fid['id'] in self['id'] else not_sel
                      for fid in cand_fids]
             cand_fids['slot'] = slots
         else:
-            self.meta['cand_fids']['slot'] = '...'
+            self.cand_fids['slot'] = '...'
 
     def set_initial_catalog(self):
         """Set initial fid catalog (fid set) if possible to the first set which is
@@ -178,13 +124,13 @@ class FidTable(ACACatalogTable):
         """
         # Start by getting the id of every fid that has a zero spoiler score,
         # meaning no star spoils the fid as set previously in get_initial_candidates.
-        cand_fids = self.meta['cand_fids']
+        cand_fids = self.cand_fids
         cand_fids_set = set(fid['id'] for fid in cand_fids if fid['spoiler_score'] == 0)
 
         # Get list of fid_sets that are consistent with candidate fids. These
         # fid sets are the combinations of 3 (or 2) fid lights in preferred
         # order.
-        fid_sets = FID.fid_sets[self.meta['detector']]
+        fid_sets = FID.fid_sets[self.detector]
         ok_fid_sets = [fid_set for fid_set in fid_sets if fid_set <= cand_fids_set]
 
         # If no fid_sets are possible, return a zero-length table with correct columns
@@ -245,7 +191,7 @@ class FidTable(ACACatalogTable):
         :returns: True if ``fid`` could be within ``acq`` search box
         """
         spoiler_margin = (FID.spoiler_margin +
-                          self.acqs.meta['dither'] +
+                          self.dither_acq +
                           acq['halfw'])
         dy = np.abs(fid['yang'] - acq['yang'])
         dz = np.abs(fid['zang'] - acq['zang'])
@@ -258,11 +204,11 @@ class FidTable(ACACatalogTable):
 
         This also finds fid spoiler stars and computes the spoiler_score.
 
-        Result is updating self.meta['cand_fids'].
+        Result is updating self.cand_fids.
         """
-        yang, zang = get_fid_positions(self.meta['detector'],
-                                       self.meta['focus_offset'],
-                                       self.meta['sim_offset'])
+        yang, zang = get_fid_positions(self.detector,
+                                       self.focus_offset,
+                                       self.sim_offset)
         row, col = yagzag_to_pixels(yang, zang, allow_bad=True)
         ids = np.arange(len(yang), dtype=np.int64) + 1  # E.g. 1 to 6 for ACIS
 
@@ -281,7 +227,7 @@ class FidTable(ACACatalogTable):
         cand_fids['spoiler_score'] = np.int64(0)
 
         # If stars are available then find stars that are bad for fid.
-        if self.meta['stars']:
+        if self.stars:
             for fid in cand_fids:
                 self.set_spoilers_score(fid)
 
@@ -350,8 +296,8 @@ class FidTable(ACACatalogTable):
 
         :param fid: fid light (FidTable Row)
         """
-        stars = self.meta['stars'][ACQ.spoiler_star_cols]
-        dither = self.meta['dither']
+        stars = self.stars[ACQ.spoiler_star_cols]
+        dither = self.dither_guide
 
         # Potential spoiler by position
         spoil = ((np.abs(stars['yang'] - fid['yang']) < FID.spoiler_margin + dither.y) &

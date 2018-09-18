@@ -1,8 +1,6 @@
 import pytest
 import numpy as np
 
-from chandra_aca.transform import yagzag_to_pixels
-
 from ..fid import get_fid_positions, get_fid_catalog
 from ..acq import get_acq_catalog
 from ..core import StarsTable
@@ -11,7 +9,7 @@ from .. import characteristics_fid as FID
 
 
 # Reference fid positions for spoiling tests
-FIDS = get_fid_catalog(detector='ACIS-S')
+FIDS = get_fid_catalog(stars=StarsTable.empty(), **STD_INFO)
 
 
 def test_get_fid_position():
@@ -58,16 +56,18 @@ def test_get_initial_catalog():
            '    4  2140.23   166.63 -424.51   39.13    7.00             0    1',
            '    5 -1826.28   160.17  372.97   36.47    7.00             0    2',
            '    6   388.59   803.75  -71.49  166.10    7.00             0  ...']
-    assert repr(FIDS.meta['cand_fids']).splitlines() == exp
+    assert repr(FIDS.cand_fids).splitlines() == exp
     assert np.all(FIDS['id'] == [2, 4, 5])
 
     # Make catalogs with some fake stars (at exactly fid positions) that spoil
     # the fids.
-    stars = FIDS.meta['cand_fids'].copy()
-    stars['mag_err'] = 0.1
+    stars = StarsTable.empty()
+    for fid in FIDS.cand_fids:
+        stars.add_fake_star(mag=fid['mag'], mag_err=0.1,
+                            yang=fid['yang'], zang=fid['zang'])
 
     # Spoil fids 1, 2
-    fids2 = get_fid_catalog(detector='ACIS-S', stars=stars[:2], dither=8)
+    fids2 = get_fid_catalog(stars=stars[:2], **STD_INFO)
     exp = ['<FidTable length=6>',
            '  id    yang     zang     row     col     mag   spoiler_score slot',
            'int64 float64  float64  float64 float64 float64     int64     str3',
@@ -78,16 +78,16 @@ def test_get_initial_catalog():
            '    4  2140.23   166.63 -424.51   39.13    7.00             0    1',
            '    5 -1826.28   160.17  372.97   36.47    7.00             0    2',
            '    6   388.59   803.75  -71.49  166.10    7.00             0  ...']
-    assert repr(fids2.meta['cand_fids']).splitlines() == exp
+    assert repr(fids2.cand_fids).splitlines() == exp
     assert np.all(fids2['id'] == [3, 4, 5])
 
     # Spoil fids 1, 2, 3
-    fids3 = get_fid_catalog(detector='ACIS-S', stars=stars[:3], dither=8)
+    fids3 = get_fid_catalog(stars=stars[:3], **STD_INFO)
     assert np.all(fids3['id'] == [4, 5, 6])
     assert fids3.thumbs_up
 
     # Spoil fids 1, 2, 3, 4 => no initial catalog gets found
-    fids4 = get_fid_catalog(detector='ACIS-S', stars=stars[:4], dither=8)
+    fids4 = get_fid_catalog(stars=stars[:4], **STD_INFO)
     assert len(fids4) == 0
     assert not fids4.thumbs_up
     assert all(name in fids4.colnames for name in ['id', 'yang', 'zang', 'row', 'col'])
@@ -97,7 +97,7 @@ def test_n_fid():
     """Test specifying number of fids.
     """
     # Get only 2 fids
-    fids = get_fid_catalog(detector='ACIS-S', dither=8, n_fid=2)
+    fids = get_fid_catalog(n_fid=2, **STD_INFO)
     assert len(fids) == 2
     assert fids.thumbs_up
 
@@ -127,11 +127,11 @@ def test_fid_spoiling_acq(dither_z):
                             zang=fid['zang'] + offset + dither_z,
                             mag=7.0)
 
-    kwargs = STD_INFO.copy()
-    kwargs['dither'] = (dither_y, dither_z)
-    acqs = get_acq_catalog(stars=stars, **kwargs)
+    std_info = STD_INFO.copy()
+    std_info['dither'] = (dither_y, dither_z)
+    acqs = get_acq_catalog(stars=stars, **std_info)
     acqs['halfw'] = 100
-    fids5 = get_fid_catalog(acqs=acqs)
+    fids5 = get_fid_catalog(acqs=acqs, **std_info)
     exp = ['<FidTable length=6>',
            '  id    yang     zang     row     col     mag   spoiler_score slot',
            'int64 float64  float64  float64 float64 float64     int64     str3',
@@ -143,7 +143,7 @@ def test_fid_spoiling_acq(dither_z):
            '    5 -1826.28   160.17  372.97   36.47    7.00             0    1',
            '    6   388.59   803.75  -71.49  166.10    7.00             0    2']
 
-    assert repr(fids5.meta['cand_fids']).splitlines() == exp
+    assert repr(fids5.cand_fids).splitlines() == exp
 
 
 def test_fid_mult_spoilers():
@@ -151,8 +151,8 @@ def test_fid_mult_spoilers():
     Test of fix for bug #54.  19605 and 20144 were previous crashing.
     """
     acqs = get_acq_catalog(**OBS_INFO[19605])
-    fids = get_fid_catalog(acqs=acqs)
-    cand_fids = fids.meta['cand_fids']
+    fids = get_fid_catalog(acqs=acqs, **OBS_INFO[19605])
+    cand_fids = fids.cand_fids
     assert np.all(cand_fids['spoiler_score'] == [0, 0, 1, 4, 0, 0])
     assert len(cand_fids['spoilers'][2]) == 1
     assert cand_fids['spoilers'][2]['warn'][0] == 'yellow'
@@ -163,9 +163,12 @@ def test_dither_as_sequence():
     Test that calling get_acq_catalog with a 2-element sequence (dither_y, dither_z)
     gives the expected response.  (Basically that it still returns a catalog).
     """
-    fids = get_fid_catalog(detector='ACIS-S', dither=(8, 22))
+    std_info = STD_INFO.copy()
+    std_info['dither'] = (8, 22)
+    fids = get_fid_catalog(**std_info)
     assert len(fids) == 3
-    assert fids.meta['dither'] == (8, 22)
+    assert fids.dither_acq == (8, 22)
+    assert fids.dither_guide == (8, 22)
 
 
 def test_fid_spoiler_score():
@@ -178,5 +181,8 @@ def test_fid_spoiler_score():
                             mag=7.0)
 
     dither = (dither_y, dither_z)
-    fids = get_fid_catalog(stars=stars, detector='ACIS-S', dither=dither)
-    assert np.all(fids.meta['cand_fids']['spoiler_score'] == [0, 4, 0, 0, 0, 0])
+
+    std_info = STD_INFO.copy()
+    std_info['dither'] = dither
+    fids = get_fid_catalog(stars=stars, **std_info)
+    assert np.all(fids.cand_fids['spoiler_score'] == [0, 4, 0, 0, 0, 0])

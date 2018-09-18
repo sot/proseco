@@ -15,15 +15,12 @@ from chandra_aca.transform import (pixels_to_yagzag, mag_to_count_rate)
 from mica.archive.aca_dark.dark_cal import get_dark_cal_image
 
 from . import characteristics as CHAR
-from .core import (get_mag_std, StarsTable, ACACatalogTable, bin2x2,
-                   get_image_props, pea_reject_image, ACABox)
+from .core import (get_mag_std, ACACatalogTable, bin2x2,
+                   get_image_props, pea_reject_image, ACABox,
+                   MetaAttribute)
 
 
-def get_acq_catalog(obsid=0, *, att=None, n_acq=8,
-                    man_angle=None, t_ccd=None, date=None, dither=None,
-                    detector=None, sim_offset=None, focus_offset=None, stars=None,
-                    include_ids=None, include_halfws=None, exclude_ids=None,
-                    optimize=True, verbose=False, print_log=False):
+def get_acq_catalog(obsid=0, **kwargs):
     """
     Get a catalog of acquisition stars using the algorithm described in
     https://docs.google.com/presentation/d/1VtFKAW9he2vWIQAnb6unpK4u1bVAVziIdX9TnqRS3a8
@@ -55,91 +52,32 @@ def get_acq_catalog(obsid=0, *, att=None, n_acq=8,
 
     # Make an empty AcqTable object, mostly for logging.  It gets populated
     # after selecting initial an inital catalog of potential acq stars.
-    acqs = AcqTable(print_log=print_log)
+    acqs = AcqTable()
+    acqs.set_attrs_from_kwargs(obsid=obsid, **kwargs)
+    acqs.set_stars()
 
-    # If an explicit obsid is not provided to all getting parameters via mica
-    # then all other params must be supplied.
-    all_pars = all(x is not None for x in (att, man_angle, t_ccd, date, dither))
-    if obsid == 0 and not all_pars:
-        raise ValueError('if `obsid` not supplied then all other params are required')
-
-    # If not all params supplied then get via mica for the obsid.
-    if not all_pars:
-        from mica.starcheck import get_starcheck_catalog
-        acqs.log(f'getting starcheck catalog for obsid {obsid}')
-
-        obs = get_starcheck_catalog(obsid)
-        obso = obs['obs']
-
-        if att is None:
-            att = [obso['point_ra'], obso['point_dec'], obso['point_roll']]
-        if date is None:
-            date = obso['mp_starcat_time']
-        if t_ccd is None:
-            t_ccd = obs['pred_temp']
-        if man_angle is None:
-            man_angle = obs['manvr']['angle_deg'][0]
-        if detector is None:
-            detector = obso['sci_instr']
-        if sim_offset is None:
-            sim_offset = obso['sim_z_offset_steps']
-        if focus_offset is None:
-            focus_offset = 0
-
-        if dither is None:
-            dither_y_amp = obso.get('dither_y_amp')
-            dither_z_amp = obso.get('dither_z_amp')
-            if dither_y_amp is not None and dither_z_amp is not None:
-                dither = ACABox((dither_y_amp, dither_z_amp))
-
-    if not isinstance(dither, ACABox):
-        dither = ACABox(dither)
-
-    acqs.log(f'getting dark cal image at date={date} t_ccd={t_ccd:.1f}')
-    dark = get_dark_cal_image(date=date, select='before', t_ccd_ref=t_ccd)
-
-    acqs.meta = {'obsid': obsid,
-                 'att': att,
-                 'n_acq': n_acq,
-                 'date': date,
-                 't_ccd': t_ccd,
-                 'man_angle': man_angle,
-                 'dither': dither,
-                 'detector': detector,
-                 'sim_offset': sim_offset,
-                 'focus_offset': focus_offset,
-                 'include_ids': include_ids or [],
-                 'include_halfws': include_halfws or [],
-                 'exclude_ids': exclude_ids or []}
+    acqs.log(f'getting dark cal image at date={acqs.date} t_ccd={acqs.t_ccd:.1f}')
+    acqs.dark = get_dark_cal_image(date=acqs.date, select='before', t_ccd_ref=acqs.t_ccd)
 
     # Probability of man_err for this observation with a given man_angle.  Used
     # for marginalizing probabilities over different man_errs.
-    acqs.meta['p_man_errs'] = np.array([get_p_man_err(man_err, acqs.meta['man_angle'])
-                                        for man_err in CHAR.man_errs])
+    acqs.p_man_errs = np.array([get_p_man_err(man_err, acqs.man_angle)
+                                for man_err in CHAR.man_errs])
 
-    if stars is None:
-        stars = StarsTable.from_agasc(att, date=date, logger=acqs.log)
-    else:
-        stars = StarsTable.from_stars(att, stars, logger=acqs.log)
-
-    cand_acqs, bad_stars = acqs.get_acq_candidates(stars)
+    acqs.cand_acqs, acqs.bad_stars = acqs.get_acq_candidates(acqs.stars)
 
     # Fill in the entire acq['probs'].p_acqs table (which is actual a dict of keyed by
     # (box_size, man_err) tuples).
-    for acq in cand_acqs:
-        acq['probs'] = AcqProbs(acqs, acq, dither, stars, dark, t_ccd, date,
-                                acqs.meta['man_angle'])
+    for acq in acqs.cand_acqs:
+        acq['probs'] = AcqProbs(acqs, acq, acqs.dither, acqs.stars, acqs.dark,
+                                acqs.t_ccd, acqs.date,
+                                acqs.man_angle)
 
-    acqs.get_initial_catalog(cand_acqs, stars=stars, dark=dark, dither=dither,
-                             t_ccd=t_ccd, date=date)
+    acqs.get_initial_catalog(acqs.cand_acqs, stars=acqs.stars, dark=acqs.dark,
+                             dither=acqs.dither, t_ccd=acqs.t_ccd, date=acqs.date)
 
-    acqs.meta.update({'cand_acqs': cand_acqs,
-                      'stars': stars,
-                      'dark': dark,
-                      'bad_stars': bad_stars})
-
-    if optimize:
-        acqs.optimize_catalog(verbose)
+    if acqs.optimize:
+        acqs.optimize_catalog(acqs.verbose)
 
     # Set p_acq column to be the marginalized probabilities
     acqs['p_acq'] = [acq['probs'].p_acq_marg[acq['halfw']] for acq in acqs]
@@ -152,11 +90,11 @@ def get_acq_catalog(obsid=0, *, att=None, n_acq=8,
     # Add slot to cand_acqs table, putting in '...' if not selected as acq.
     # This is for convenience in downstream reporting or introspection.
     slots = [str(acqs.get_id(acq['id'])['slot']) if acq['id'] in acqs['id'] else '...'
-             for acq in cand_acqs]
-    cand_acqs['slot'] = slots
+             for acq in acqs.cand_acqs]
+    acqs.cand_acqs['slot'] = slots
 
-    if len(acqs) < n_acq:
-        acqs.log(f'Selected only {len(acqs)} acq stars versus requested {n_acq}',
+    if len(acqs) < acqs.n_acq:
+        acqs.log(f'Selected only {len(acqs)} acq stars versus requested {acqs.n_acq}',
                  warning=True)
 
     # Evaluate catalog for thumbs_up status
@@ -182,6 +120,16 @@ class AcqTable(ACACatalogTable):
     # (e.g. `obs19387/acqs.yaml`).
     name = 'acqs'
 
+    # Required attributes
+    required_attrs = ('att', 'man_angle', 't_ccd_acq', 'date', 'dither_acq')
+
+    optimize = MetaAttribute(default=True)
+    verbose = MetaAttribute(default=False)
+
+    p_man_errs = MetaAttribute(is_kwarg=False)
+    cand_acqs = MetaAttribute(is_kwarg=False)
+    p_safe = MetaAttribute(is_kwarg=False)
+
     @classmethod
     def empty(cls):
         """
@@ -195,6 +143,22 @@ class AcqTable(ACACatalogTable):
         out['halfw'] = []
         return out
 
+    @property
+    def t_ccd(self):
+        return self.t_ccd_acq
+
+    @t_ccd.setter
+    def t_ccd(self, value):
+        self.t_ccd_acq = value
+
+    @property
+    def dither(self):
+        return self.dither_acq
+
+    @dither.setter
+    def dither(self, value):
+        self.dither_acq = value
+
     def get_obs_info(self):
         """
         Convenience method to return the parts of meta that are needed
@@ -202,9 +166,10 @@ class AcqTable(ACACatalogTable):
 
         :returns: dict of observation information
         """
-        keys = ('obsid', 'att', 'date', 't_ccd', 'man_angle', 'dither',
+        keys = ('obsid', 'att', 'date', 't_ccd_acq', 't_ccd_guide', 'man_angle',
+                'dither_acq', 'dither_guide',
                 'detector', 'sim_offset', 'focus_offset')
-        return {key: self.meta[key] for key in keys}
+        return {key: getattr(self, key) for key in keys}
 
     def get_acq_candidates(self, stars, max_candidates=20):
         """
@@ -239,7 +204,7 @@ class AcqTable(ACACatalogTable):
 
         # If any include_ids (stars forced to be in catalog) ensure that the
         # star is in the cand_acqs table
-        if self.meta.get('include_ids'):
+        if self.include_ids:
             self.add_include_ids(cand_acqs, stars)
 
         cand_acqs.sort('mag')
@@ -296,7 +261,7 @@ class AcqTable(ACACatalogTable):
         :param stars: stars table
 
         """
-        for include_id in self.meta['include_ids']:
+        for include_id in self.include_ids:
             if include_id not in cand_acqs['id']:
                 try:
                     star = stars.get_id(include_id)
@@ -347,7 +312,7 @@ class AcqTable(ACACatalogTable):
                 acq = cand_acqs[acq_idx]
 
                 # Don't consider any stars in the exclude list
-                if acq['id'] in self.meta['exclude_ids']:
+                if acq['id'] in self.exclude_ids:
                     continue
 
                 p_acq = p_acqs_for_box[acq_idx]
@@ -363,8 +328,8 @@ class AcqTable(ACACatalogTable):
                     acq_indices.append(acq_idx)
                     box_sizes.append(box_size)
 
-                if len(acq_indices) == self.meta['n_acq']:
-                    self.log(f'Found {self.meta["n_acq"]} acq stars, done')
+                if len(acq_indices) == self.n_acq:
+                    self.log(f'Found {self.n_acq} acq stars, done')
                     return
 
     def get_initial_catalog(self, cand_acqs, stars, dark, dither=20, t_ccd=-11.0, date=None):
@@ -372,7 +337,7 @@ class AcqTable(ACACatalogTable):
         Get the initial catalog of up to ``n_acq`` candidate acquisition stars.  This
         updates the current AcqTable (self) in place to add selected stars.
 
-        TO DO: these should all just be taken from self.meta.
+        TO DO: these should all just be taken from self
 
         :param cand_acqs: AcqTable of candidate acquisition stars
         :param stars: StarsTable of stars in or near the ACA FOV
@@ -385,17 +350,17 @@ class AcqTable(ACACatalogTable):
 
         # Start the lists of acq indices and box sizes with the values from
         # the include lists.  Usually these will be empty.
-        acq_indices = [cand_acqs.get_id_idx(id) for id in self.meta['include_ids']]
-        box_sizes = self.meta['include_halfws'][:]  # make a copy
+        acq_indices = [cand_acqs.get_id_idx(id) for id in self.include_ids]
+        box_sizes = self.include_halfws[:]  # make a copy
 
         # Accumulate indices and box sizes of candidate acq stars that meet
         # successively less stringent minimum p_acq.
         for min_p_acq in (0.75, 0.5, 0.25, 0.05):
-            if len(acq_indices) < self.meta['n_acq']:
+            if len(acq_indices) < self.n_acq:
                 # Updates acq_indices, box_sizes in place
                 self.select_best_p_acqs(cand_acqs, min_p_acq, acq_indices, box_sizes)
 
-            if len(acq_indices) == self.meta['n_acq']:
+            if len(acq_indices) == self.n_acq:
                 break
 
         # Make all the not-accepted candidate acqs have halfw=120 as a reasonable
@@ -423,7 +388,7 @@ class AcqTable(ACACatalogTable):
 
         p_no_safe = 1.0
 
-        for man_err, p_man_err in zip(CHAR.man_errs, self.meta['p_man_errs']):
+        for man_err, p_man_err in zip(CHAR.man_errs, self.p_man_errs):
             if p_man_err == 0.0:
                 continue
 
@@ -439,7 +404,7 @@ class AcqTable(ACACatalogTable):
             p_no_safe *= (1 - p_man_err * p_01)
 
         p_safe = 1 - p_no_safe
-        self.meta['p_safe'] = p_safe
+        self.p_safe = p_safe
 
         return p_safe
 
@@ -521,7 +486,7 @@ class AcqTable(ACACatalogTable):
 
         for idx in idxs:
             # Don't optimize halfw for a star that is specified for inclusion
-            if self['id'][idx] in self.meta['include_ids']:
+            if self['id'][idx] in self.include_ids:
                 continue
 
             p_safe, improved = self.optimize_acq_halfw(idx, p_safe, verbose)
@@ -536,7 +501,7 @@ class AcqTable(ACACatalogTable):
         :param verbose: include additional information in the run log
         """
         # If every acq star is specified as included, then no optimization
-        if all(acq['id'] in self.meta['include_ids'] for acq in self):
+        if all(acq['id'] in self.include_ids for acq in self):
             return
 
         p_safe = self.calc_p_safe(verbose=True)
@@ -553,15 +518,15 @@ class AcqTable(ACACatalogTable):
         # Now try to swap in a new star from the candidate list and see if
         # it can improve p_safe.  Skips candidates already in the catalog
         # or specifically excluded.
-        skip_acq_ids = set(self['id']) | set(self.meta['exclude_ids'])
-        for cand_acq in self.meta['cand_acqs']:
+        skip_acq_ids = set(self['id']) | set(self.exclude_ids)
+        for cand_acq in self.cand_acqs:
             cand_id = cand_acq['id']
             if cand_id in skip_acq_ids:
                 continue
 
             # Get the index of the worst p_acq in the catalog, excluding acq stars
             # that are in include_ids (since they are not to be replaced).
-            ok = [acq['id'] not in self.meta['include_ids'] for acq in self]
+            ok = [acq['id'] not in self.include_ids for acq in self]
             acqs = self[ok]
 
             # Sort by the marginalized acq probability for the current box size
@@ -601,7 +566,7 @@ class AcqTable(ACACatalogTable):
         :param out: dict of pure-Python output to be serialized to YAML
         """
         # Convert cand_acqs table to a pure-Python structure
-        out['cand_acqs'] = self.meta['cand_acqs'].to_struct()
+        out['cand_acqs'] = self.cand_acqs.to_struct()
 
     def from_yaml_custom(self, obj):
         """
@@ -613,7 +578,7 @@ class AcqTable(ACACatalogTable):
         """
         # Create candidate acqs AcqTable from pure-Python structure
         cand_acqs = obj.pop('cand_acqs')
-        self.meta['cand_acqs'] = self.__class__.from_struct(cand_acqs)
+        self.cand_acqs = self.__class__.from_struct(cand_acqs)
 
 
 def get_spoiler_stars(stars, acq, box_size):
@@ -1035,7 +1000,7 @@ class AcqProbs:
         # All together now!
         for box_size in CHAR.box_sizes:
             p_acq_marg = 0.0
-            for man_err, p_man_err in zip(CHAR.man_errs, acqs.meta['p_man_errs']):
+            for man_err, p_man_err in zip(CHAR.man_errs, acqs.p_man_errs):
                 self.p_acqs[box_size, man_err] = (self.p_brightest[box_size, man_err] *
                                                   self.p_acq_model[box_size] *
                                                   self.p_on_ccd[man_err])

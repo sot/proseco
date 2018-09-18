@@ -39,11 +39,12 @@ def get_aca_catalog(obsid=0, **kwargs):
     :returns: AcaCatalogTable of stars and fids
 
     """
+    raise_exc = kwargs.pop('raise_exc', None)
     try:
-        aca = _get_aca_catalog(obsid=obsid, **kwargs)
+        aca = _get_aca_catalog(obsid=obsid, raise_exc=raise_exc, **kwargs)
 
     except Exception:
-        if kwargs.get('raise_exc'):
+        if raise_exc:
             # This is for debugging
             raise
 
@@ -60,47 +61,17 @@ def get_aca_catalog(obsid=0, **kwargs):
     return aca
 
 
-def get_kwargs(args, kwargs):
-    out = {}
-    for key in args:
-        if isinstance(key, tuple):
-            # key is (out_key, kwargs_key), translate input kwargs e.g. from
-            # 'dither_acq' to 'dither' (which is needed by get_acq_catalog).
-            if key[1] in kwargs:
-                out[key[0]] = kwargs[key[1]]
-        elif key in kwargs:
-            out[key] = kwargs[key]
-    return out
-
-
 def _get_aca_catalog(**kwargs):
-    raise_exc = kwargs.get('raise_exc')
-
-    # Pluck off the kwargs that are relevant for get_acq_catalog
-    args = ('obsid', 'att', 'date', 'man_angle',
-            'include_ids', 'include_halfws', 'exclude_ids',
-            'detector', 'sim_offset', 'sim_focus', 'stars',
-            ('dither', 'dither_acq'), ('t_ccd', 't_ccd_acq'),
-            'print_log', 'n_acq')
-    acq_kwargs = get_kwargs(args, kwargs)
-
-    # Pluck off the kwargs that are relevant for get_guide_catalog
-    args = ('obsid', 'att', 'date', 'print_log', 'n_guide',
-            ('dither', 'dither_guide'), ('t_ccd', 't_ccd_guide'))
-    guide_kwargs = get_kwargs(args, kwargs)
-
-    # Pluck off the kwargs that are relevant for get_fid_catalog
-    args = ('n_fid',)
-    fid_kwargs = get_kwargs(args, kwargs)
+    raise_exc = kwargs.pop('raise_exc')
 
     aca = ACACatalogTable()
 
     # Put at least the obsid in top level meta for now
-    aca.meta['obsid'] = kwargs.get('obsid')
+    aca.obsid = kwargs.get('obsid')
 
-    aca.acqs = get_acq_catalog(**acq_kwargs)
-    aca.fids = get_fid_catalog(acqs=aca.acqs, **fid_kwargs)
-    aca.guides = get_guide_catalog(stars=aca.acqs.meta['stars'], **guide_kwargs)
+    aca.acqs = get_acq_catalog(**kwargs)
+    aca.fids = get_fid_catalog(acqs=aca.acqs, **kwargs)
+    aca.guides = get_guide_catalog(stars=aca.acqs.stars, **kwargs)
 
     # Get overall catalog thumbs_up
     aca.thumbs_up = aca.acqs.thumbs_up & aca.fids.thumbs_up & aca.guides.thumbs_up

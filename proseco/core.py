@@ -116,6 +116,25 @@ class ACABox:
         return f'<ACABox y={self.y} z={self.z}>'
 
 
+class MetaAttribute:
+    def __init__(self, default=None, is_kwarg=True):
+        self.default = copy(default)
+        self.is_kwarg = is_kwarg
+
+    def __get__(self, instance, owner):
+        if self.name not in instance.meta and self.default is not None:
+            instance.meta[self.name] = self.default
+        return instance.meta.get(self.name)
+
+    def __set__(self, instance, value):
+        instance.meta[self.name] = value
+
+    def __set_name__(self, owner, name):
+        self.name = name
+        if self.is_kwarg:
+            owner.allowed_kwargs.add(name)
+
+
 class ACACatalogTable(Table):
     """
     Base class for representing ACA catalogs in star selection.  This
@@ -137,12 +156,36 @@ class ACACatalogTable(Table):
     # Should be set by subclass, e.g. ``name = 'acqs'`` for AcqTable.
     name = 'aca_cat'
 
-    def __init__(self, data=None, print_log=False, **kwargs):
+    # Catalog attributes, gets set in MetaAttribute
+    allowed_kwargs = set(['dither', 't_ccd'])
+
+    required_attrs = ('dither_acq', 'dither_guide', 'date')
+
+    obsid = MetaAttribute(default=0)
+    att = MetaAttribute()
+    n_acq = MetaAttribute(default=8)
+    n_guide = MetaAttribute()
+    n_fid = MetaAttribute(default=3)
+    man_angle = MetaAttribute()
+    t_ccd_acq = MetaAttribute()
+    t_ccd_guide = MetaAttribute()
+    date = MetaAttribute()
+    dither_acq = MetaAttribute()
+    dither_guide = MetaAttribute()
+    detector = MetaAttribute()
+    sim_offset = MetaAttribute()
+    focus_offset = MetaAttribute()
+    stars = MetaAttribute()
+    include_ids = MetaAttribute(default=[])
+    include_halfws = MetaAttribute(default=[])
+    exclude_ids = MetaAttribute(default=[])
+    print_log = MetaAttribute(default=False)
+
+    def __init__(self, data=None, **kwargs):
         super().__init__(data=data, **kwargs)
         self.log_info = {}
         self.log_info['events'] = []
         self.log_info['unix_run_time'] = time.time()
-        self.print_log = print_log
 
         # Set default "ok" status for a catalog to be false.  The idea is that it
         # needs to justify it is good by passing tests later.
@@ -155,6 +198,103 @@ class ACACatalogTable(Table):
             self._default_formats[name] = '.2f'
         for name in ('ra', 'dec', 'RA_PMCORR', 'DEC_PMCORR'):
             self._default_formats[name] = '.6f'
+
+    def set_attrs_from_kwargs(self, **kwargs):
+        for name, val in kwargs.items():
+            if name in self.allowed_kwargs:
+                setattr(self, name, val)
+            else:
+                raise ValueError(f'unexpected keyword argument "{name}"')
+
+        # If an explicit obsid is not provided to all getting parameters via mica
+        # then all other params must be supplied.
+        all_pars = all(getattr(self, x) is not None for x in self.required_attrs)
+        if self.obsid == 0 and not all_pars:
+            raise ValueError('if `obsid` not supplied then all other params are required')
+
+        # If not all params supplied then get via mica for the obsid.
+        if not all_pars:
+            from mica.starcheck import get_starcheck_catalog
+            self.log(f'getting starcheck catalog for obsid {self.obsid}')
+
+            obs = get_starcheck_catalog(self.obsid)
+            obso = obs['obs']
+
+            if self.att is None:
+                self.att = [obso['point_ra'], obso['point_dec'], obso['point_roll']]
+            if self.date is None:
+                self.date = obso['mp_starcat_time']
+            if self.t_ccd is None:
+                self.t_ccd = obs.get('pred_temp', -15.0)
+            if self.man_angle is None:
+                self.man_angle = obs['manvr']['angle_deg'][0]
+            if self.detector is None:
+                self.detector = obso['sci_instr']
+            if self.sim_offset is None:
+                self.sim_offset = obso['sim_z_offset_steps']
+            if self.focus_offset is None:
+                self.focus_offset = 0
+
+            if self.n_guide is None:
+                fid_or_mon = (obs['cat']['type'] == 'FID') | (obs['cat']['type'] == 'MON')
+                self.n_guide = 8 - np.count_nonzero(fid_or_mon)
+
+            for dither_attr in ('dither_acq', 'dither_guide'):
+                if getattr(self, dither_attr) is None:
+                    dither_y_amp = obso.get('dither_y_amp')
+                    dither_z_amp = obso.get('dither_z_amp')
+                    if dither_y_amp is not None and dither_z_amp is not None:
+                        setattr(self, dither_attr, ACABox((dither_y_amp, dither_z_amp)))
+
+                        # Special rule for handling big dither from mica.starcheck,
+                        # which does not yet know about dither_acq vs. dither_guide.
+                        # Use the most common dither size for ACIS / HRC.
+                        if dither_attr == 'dither_acq' and self.dither_acq.max() > 30:
+                            dither = 8 if self.detector.startswith('ACIS') else 20
+                            self.dither_acq = ACABox(dither)
+
+        for dither_attr in ('dither_acq', 'dither_guide'):
+            dither = getattr(self, dither_attr)
+            if not isinstance(dither, ACABox):
+                setattr(self, dither_attr, ACABox(dither))
+
+    def set_stars(self, acqs=None):
+        """Set the object ``stars`` attribute to an appropriate StarsTable object.
+
+        If ``acqs`` is defined that will be a previously computed AcqTable with
+        ``stars`` already available, so use that.
+
+        :param acqs: AcqTable for same observation
+        """
+        if acqs is None:
+            if self.stars is None:
+                self.stars = StarsTable.from_agasc(self.att, date=self.date, logger=self.log)
+            else:
+                self.stars = StarsTable.from_stars(self.att, self.stars, logger=self.log)
+        else:
+            self.stars = acqs.stars
+
+    @property
+    def dither(self):
+        return None
+
+    @dither.setter
+    def dither(self, value):
+        self.dither_acq = value
+        self.dither_guide = value
+
+    @property
+    def t_ccd(self):
+        return None
+
+    @t_ccd.setter
+    def t_ccd(self, value):
+        self.t_ccd_acq = value
+        self.t_ccd_guide = value
+
+    @property
+    def print_log(self):
+        return self.meta.get('print_log')
 
     @classmethod
     def empty(cls):
