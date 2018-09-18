@@ -245,11 +245,11 @@ class FidTable(ACACatalogTable):
         :returns: True if ``fid`` could be within ``acq`` search box
         """
         spoiler_margin = (FID.spoiler_margin +
-                          self.acqs.meta['dither'].max() +
+                          self.acqs.meta['dither'] +
                           acq['halfw'])
         dy = np.abs(fid['yang'] - acq['yang'])
         dz = np.abs(fid['zang'] - acq['zang'])
-        return (dy < spoiler_margin and dz < spoiler_margin)
+        return (dy < spoiler_margin.y and dz < spoiler_margin.z)
 
     def get_fid_candidates(self):
         """
@@ -354,8 +354,8 @@ class FidTable(ACACatalogTable):
         dither = self.meta['dither']
 
         # Potential spoiler by position
-        spoil = ((np.abs(stars['yang'] - fid['yang']) < FID.spoiler_margin + dither.max()) &
-                 (np.abs(stars['zang'] - fid['zang']) < FID.spoiler_margin + dither.max()))
+        spoil = ((np.abs(stars['yang'] - fid['yang']) < FID.spoiler_margin + dither.y) &
+                 (np.abs(stars['zang'] - fid['zang']) < FID.spoiler_margin + dither.z))
 
         if not np.any(spoil):
             # Make an empty table with same columns

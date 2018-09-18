@@ -1,3 +1,4 @@
+import pytest
 import numpy as np
 
 from chandra_aca.transform import yagzag_to_pixels
@@ -6,6 +7,7 @@ from ..fid import get_fid_positions, get_fid_catalog
 from ..acq import get_acq_catalog
 from ..core import StarsTable
 from .test_common import OBS_INFO, STD_INFO
+from .. import characteristics_fid as FID
 
 
 # Reference fid positions for spoiling tests
@@ -100,7 +102,8 @@ def test_n_fid():
     assert fids.thumbs_up
 
 
-def test_fid_spoiling_acq():
+@pytest.mark.parametrize('dither_z', [8, 64])
+def test_fid_spoiling_acq(dither_z):
     """
     Check fid spoiling acq:
     - 20" (4 pix) positional err on fid light
@@ -109,20 +112,24 @@ def test_fid_spoiling_acq():
     - Acq search box half-width
     - Dither amplitude (since OBC adjusts search box for dither)
 
-    For this case (100" halfw and 8" dither) the threshold for spoiling
-    is 20 + 20 + 10 + 100 + 8 = 158".  So this test puts stars at the
-    positions of ACIS-S 2, 4, 5 but offset by 90, 157 and 159 arcsec.
+    For this case (100" halfw and dither) the threshold for spoiling
+    is 20 + 20 + 10 + 100 + dither = 150" + dither.  So this test puts stars at the
+    positions of ACIS-S 2, 4, 5 but offset by 82, 149 and 151 arcsec + dither.
     Only ACIS-S-5 is allowed, so we end up with the first fid set using
     1, 3, 5, 6, which is 1, 5, 6.
     """
+    dither_y = 8
     stars = StarsTable.empty()
     stars.add_fake_constellation(n_stars=5)
 
-    for fid, offset in zip(FIDS[:3], [90, 157, 159]):
-        stars.add_fake_star(yang=fid['yang'] + offset,
-                            zang=fid['zang'] + offset, mag=7.0)
+    for fid, offset in zip(FIDS[:3], [82, 149, 151]):
+        stars.add_fake_star(yang=fid['yang'] + offset + dither_y,
+                            zang=fid['zang'] + offset + dither_z,
+                            mag=7.0)
 
-    acqs = get_acq_catalog(stars=stars, **STD_INFO)
+    kwargs = STD_INFO.copy()
+    kwargs['dither'] = (dither_y, dither_z)
+    acqs = get_acq_catalog(stars=stars, **kwargs)
     acqs['halfw'] = 100
     fids5 = get_fid_catalog(acqs=acqs)
     exp = ['<FidTable length=6>',
@@ -159,3 +166,17 @@ def test_dither_as_sequence():
     fids = get_fid_catalog(detector='ACIS-S', dither=(8, 22))
     assert len(fids) == 3
     assert fids.meta['dither'] == (8, 22)
+
+
+def test_fid_spoiler_score():
+    dither_y = 8
+    dither_z = 64
+    stars = StarsTable.empty()
+    for fid, offset in zip(FIDS[:2], [-1, 1]):
+        stars.add_fake_star(yang=fid['yang'] + FID.spoiler_margin + dither_y + offset,
+                            zang=fid['zang'] + FID.spoiler_margin + dither_z + offset,
+                            mag=7.0)
+
+    dither = (dither_y, dither_z)
+    fids = get_fid_catalog(stars=stars, detector='ACIS-S', dither=dither)
+    assert np.all(fids.meta['cand_fids']['spoiler_score'] == [0, 4, 0, 0, 0, 0])
