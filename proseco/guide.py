@@ -38,7 +38,7 @@ def get_guide_catalog(obsid=0, **kwargs):
     """
 
     guides = GuideTable()
-    guides.set_kwargs(obsid=obsid, **kwargs)
+    guides.set_attrs_from_kwargs(obsid=obsid, **kwargs)
     guides.set_stars()
 
     if guides.dark is None:

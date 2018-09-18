@@ -82,7 +82,7 @@ def test_big_dither_from_mica_starcheck():
     observation like 20168.
     """
     aca = ACACatalogTable()
-    aca.set_kwargs(obsid=20168)
+    aca.set_attrs_from_kwargs(obsid=20168)
 
     assert aca.detector == 'HRC-S'
     assert aca.dither_acq == (20, 20)

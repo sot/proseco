@@ -199,7 +199,7 @@ class ACACatalogTable(Table):
         for name in ('ra', 'dec', 'RA_PMCORR', 'DEC_PMCORR'):
             self._default_formats[name] = '.6f'
 
-    def set_kwargs(self, **kwargs):
+    def set_attrs_from_kwargs(self, **kwargs):
         for name, val in kwargs.items():
             if name in self.allowed_kwargs:
                 setattr(self, name, val)

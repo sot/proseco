@@ -53,7 +53,7 @@ def get_acq_catalog(obsid=0, **kwargs):
     # Make an empty AcqTable object, mostly for logging.  It gets populated
     # after selecting initial an inital catalog of potential acq stars.
     acqs = AcqTable()
-    acqs.set_kwargs(obsid=obsid, **kwargs)
+    acqs.set_attrs_from_kwargs(obsid=obsid, **kwargs)
     acqs.set_stars()
 
     acqs.log(f'getting dark cal image at date={acqs.date} t_ccd={acqs.t_ccd:.1f}')
