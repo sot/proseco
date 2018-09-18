@@ -395,6 +395,21 @@ def test_get_acq_catalog_19387():
 
     assert repr(acqs.cand_acqs[TEST_COLS]).splitlines() == exp
 
+    exp = ['<AcqTable length=8>',
+           ' idx   slot    id      yang     zang   halfw   mag    p_acq ',
+           'int64 int64  int32   float64  float64  int64 float32 float64',
+           '----- ----- -------- -------- -------- ----- ------- -------',
+           '    0     0 38280776 -2254.09 -2172.43   160    8.77   0.985',
+           '    1     1 37879960  -567.34  -632.27    80    9.20   0.984',
+           '    2     2 37882072  2197.62  1608.89    80   10.16   0.956',
+           '    3     3 37879992   318.47 -1565.92    60   10.41   0.933',
+           '    4     4 37882416   481.80  2204.44    80   10.41   0.901',
+           '    5     5 37880176   121.33 -1068.25    60   10.62   0.584',
+           '    6     6 37881728  2046.89  1910.79   100   10.76   0.057',
+           '    7     7 37880376 -1356.71  1071.32   100   10.80   0.084']
+
+    assert repr(acqs[TEST_COLS]).splitlines() == exp
+
 
 def test_get_acq_catalog_21007():
     """Put it all together.  Regression test for selected stars.
@@ -427,6 +442,21 @@ def test_get_acq_catalog_21007():
 
     assert repr(acqs.cand_acqs[TEST_COLS]).splitlines() == exp
 
+    exp = ['<AcqTable length=8>',
+           ' idx   slot     id      yang     zang   halfw   mag    p_acq ',
+           'int64 int64   int32   float64  float64  int64 float32 float64',
+           '----- ----- --------- -------- -------- ----- ------- -------',
+           '    0     0 189417400 -2271.86 -1634.77   160    7.71   0.985',
+           '    1     1 189410928   -62.52  1763.04   160    8.84   0.982',
+           '    2     2 189409160 -2223.75  1998.69   160    9.84   0.876',
+           '    3     3 189417920  1482.94   243.72   160    9.94   0.807',
+           '    4     4 189015480  2222.47  -580.99    60   10.01   0.538',
+           '    5     5 189417752  1994.07   699.55   100   10.24   0.503',
+           '    6     6 189406216 -2311.90  -240.18    60   10.26   0.742',
+           '    7     7 189416328  1677.88   137.11    60   10.40   0.348']
+
+    assert repr(acqs[TEST_COLS]).splitlines() == exp
+
 
 def test_box_strategy_20603():
     """Test for PR #32 that doesn't allow p_acq to be reduced below 0.1.
@@ -453,6 +483,21 @@ def test_box_strategy_20603():
            '   12  ... 116918232 -2074.91 -1769.96   120   10.96   0.000']
 
     assert repr(acqs.cand_acqs[TEST_COLS]).splitlines() == exp
+
+    exp = ['<AcqTable length=8>',
+           ' idx   slot     id      yang     zang   halfw   mag    p_acq ',
+           'int64 int64   int32   float64  float64  int64 float32 float64',
+           '----- ----- --------- -------- -------- ----- ------- -------',
+           '    0     0  40113544   102.74  1133.37   160    7.91   0.985',
+           '    1     1 116791824   622.00  -953.60   160    9.01   0.958',
+           '    2     2 116923496 -1337.79  1049.27   120    9.14   0.970',
+           '    3     3  40114416   394.22  1204.43   140    9.78   0.912',
+           '    4     4  40112304 -1644.35  2032.47   160    9.79   0.687',
+           '    5     5 116923528 -2418.65  1088.40   160    9.84   0.593',
+           '    6     6 116791744   985.38 -1210.19   140   10.29   0.347',
+           '    8     7 116785920  -673.94 -1575.87    60   10.50   0.136']
+
+    assert repr(acqs[TEST_COLS]).splitlines() == exp
 
 
 def test_make_report(tmpdir):
