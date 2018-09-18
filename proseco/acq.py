@@ -70,11 +70,9 @@ def get_acq_catalog(obsid=0, **kwargs):
     # (box_size, man_err) tuples).
     for acq in acqs.cand_acqs:
         acq['probs'] = AcqProbs(acqs, acq, acqs.dither, acqs.stars, acqs.dark,
-                                acqs.t_ccd, acqs.date,
-                                acqs.man_angle)
+                                acqs.t_ccd, acqs.date)
 
-    acqs.get_initial_catalog(acqs.cand_acqs, stars=acqs.stars, dark=acqs.dark,
-                             dither=acqs.dither, t_ccd=acqs.t_ccd, date=acqs.date)
+    acqs.get_initial_catalog()
 
     if acqs.optimize:
         acqs.optimize_catalog(acqs.verbose)
@@ -331,7 +329,7 @@ class AcqTable(ACACatalogTable):
                     self.log(f'Found {self.n_acq} acq stars, done')
                     return
 
-    def get_initial_catalog(self, cand_acqs, stars, dark, dither=20, t_ccd=-11.0, date=None):
+    def get_initial_catalog(self):
         """
         Get the initial catalog of up to ``n_acq`` candidate acquisition stars.  This
         updates the current AcqTable (self) in place to add selected stars.
@@ -345,6 +343,8 @@ class AcqTable(ACACatalogTable):
         :param t_ccd: CCD temperature (float, degC)
         :param date: observation date
         """
+        cand_acqs = self.cand_acqs
+
         self.log(f'Getting initial catalog from {len(cand_acqs)} candidates')
 
         # Start the lists of acq indices and box sizes with the values from
@@ -937,7 +937,7 @@ def calc_p_on_ccd(row, col, box_size):
 
 
 class AcqProbs:
-    def __init__(self, acqs, acq, dither, stars, dark, t_ccd, date, man_angle):
+    def __init__(self, acqs, acq, dither, stars, dark, t_ccd, date):
         """
         Calculate probabilities related to acquisition, in particular an element
         in the ``p_acqs`` matrix which specifies star acquisition probability
@@ -960,7 +960,6 @@ class AcqProbs:
         :param dark: dark current map
         :param t_ccd: CCD temperature (float, degC)
         :param date: observation date
-        :param man_angle: maneuver angle (float, deg)
         """
         self._p_brightest = {}
         self._p_acq_model = {}
@@ -1079,7 +1078,8 @@ class AcqProbs:
         except KeyError:
             fids = self.acqs.fids
             if fids is None:
-                warnings.warn('Requested fid spoiler probability without setting acqs.fids first')
+                self.acqs.add_warning('Requested fid spoiler probability without '
+                                      'setting acqs.fids first')
                 return 1.0
 
             p_fid_id_spoiler = 1.0
@@ -1088,8 +1088,8 @@ class AcqProbs:
             except (KeyError, IndexError, AssertionError):
                 # This should not happen, but ignore with a warning in any case.  Non-candidate
                 # fid cannot spoil an acq star.
-                warnings.warn(f'Requested fid spoiler probability for fid '
-                              f'{self.acqs.meta["detector"]}-{fid_id} but it is not a candidate')
+                self.acqs.add_warning(f'Requested fid spoiler probability for fid '
+                                      f'{self.acqs.detector}-{fid_id} but it is not a candidate')
             else:
                 if fids.spoils(fid, self.acq['yang'], self.acq['zang'], box_size):
                     p_fid_id_spoiler = 0.0
