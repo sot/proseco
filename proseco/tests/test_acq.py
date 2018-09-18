@@ -373,7 +373,7 @@ def test_get_acq_catalog_19387():
     >>> from proseco.acq import AcqTable
     >>> acqs = get_acq_catalog(19387)
     >>> TEST_COLS = ('idx', 'slot', 'id', 'yang', 'zang', 'halfw', 'mag', 'p_acq')
-    >>> repr(acqs.meta['cand_acqs'][TEST_COLS]).splitlines()
+    >>> repr(acqs.cand_acqs[TEST_COLS]).splitlines()
     """
     acqs = get_acq_catalog(**OBS_INFO[19387])
     # Expected
@@ -393,7 +393,7 @@ def test_get_acq_catalog_19387():
            '    9  ... 37880152 -1542.43   970.39   120   10.88   0.008',
            '   10  ... 37882776  1485.00   127.97   120   10.93   0.007']
 
-    assert repr(acqs.meta['cand_acqs'][TEST_COLS]).splitlines() == exp
+    assert repr(acqs.cand_acqs[TEST_COLS]).splitlines() == exp
 
 
 def test_get_acq_catalog_21007():
@@ -402,7 +402,7 @@ def test_get_acq_catalog_21007():
     >>> from proseco.acq import AcqTable
     >>> acqs = get_acq_catalog(21007)
     >>> TEST_COLS = ('idx', 'slot', 'id', 'yang', 'zang', 'halfw', 'mag', 'p_acq')
-    >>> repr(acqs.meta['cand_acqs'][TEST_COLS]).splitlines()
+    >>> repr(acqs.cand_acqs[TEST_COLS]).splitlines()
     """
     acqs = get_acq_catalog(**OBS_INFO[21007])
 
@@ -425,7 +425,7 @@ def test_get_acq_catalog_21007():
            '   12  ... 189017968  1612.35 -1117.76   120   10.98   0.000',
            '   13  ... 189011576   553.50 -2473.81   120   10.99   0.000']
 
-    assert repr(acqs.meta['cand_acqs'][TEST_COLS]).splitlines() == exp
+    assert repr(acqs.cand_acqs[TEST_COLS]).splitlines() == exp
 
 
 def test_box_strategy_20603():
@@ -452,7 +452,7 @@ def test_box_strategy_20603():
            '   11  ... 116923744  -853.18   937.73   120   10.84   0.000',
            '   12  ... 116918232 -2074.91 -1769.96   120   10.96   0.000']
 
-    assert repr(acqs.meta['cand_acqs'][TEST_COLS]).splitlines() == exp
+    assert repr(acqs.cand_acqs[TEST_COLS]).splitlines() == exp
 
 
 def test_make_report(tmpdir):
@@ -476,13 +476,13 @@ def test_make_report(tmpdir):
     assert len(list(obsdir.glob('*.png'))) > 0
 
     assert repr(acqs) == repr(acqs2)
-    assert repr(acqs.meta['cand_acqs']) == repr(acqs2.meta['cand_acqs'])
+    assert repr(acqs.cand_acqs) == repr(acqs2.cand_acqs)
     for event, event2 in zip(acqs.log_info, acqs2.log_info):
         assert event == event2
 
     for attr in ['att', 'date', 't_ccd', 'man_angle', 'dither', 'p_safe']:
-        val = acqs.meta[attr]
-        val2 = acqs2.meta[attr]
+        val = getattr(acqs, attr)
+        val2 = getattr(acqs2, attr)
         if isinstance(val, float):
             assert np.isclose(val, val2)
         else:
@@ -517,7 +517,7 @@ def test_cand_acqs_include_exclude():
     acqs = get_acq_catalog(**STD_INFO, optimize=False, stars=stars)
     assert np.all(acqs['id'] == np.arange(1, 9))
     assert np.all(acqs['halfw'] == 160)
-    assert np.all(acqs.meta['cand_acqs']['id'] == np.arange(1, 11))
+    assert np.all(acqs.cand_acqs['id'] == np.arange(1, 11))
 
     # Define includes and excludes. id=9 is in nominal cand_acqs but not in acqs.
     include_ids = [9, 11]
@@ -529,10 +529,10 @@ def test_cand_acqs_include_exclude():
                                include_ids=include_ids, include_halfws=include_halfws,
                                exclude_ids=exclude_ids)
 
-        assert acqs.meta['include_ids'] == include_ids
-        assert acqs.meta['include_halfws'] == include_halfws
-        assert acqs.meta['exclude_ids'] == exclude_ids
-        assert all(id_ in acqs.meta['cand_acqs']['id'] for id_ in include_ids)
+        assert acqs.include_ids == include_ids
+        assert acqs.include_halfws == include_halfws
+        assert acqs.exclude_ids == exclude_ids
+        assert all(id_ in acqs.cand_acqs['id'] for id_ in include_ids)
 
         assert all(id_ in acqs['id'] for id_ in include_ids)
         assert all(id_ not in acqs['id'] for id_ in exclude_ids)
@@ -542,15 +542,15 @@ def test_cand_acqs_include_exclude():
         assert np.allclose(acqs['mag'], [7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 10.0, 12.0])
 
     # Re-optimize catalog now after removing include and exclude
-    acqs.meta['exclude_ids'] = []
-    acqs.meta['include_ids'] = []
-    acqs.meta['include_halfws'] = []
+    acqs.exclude_ids = []
+    acqs.include_ids = []
+    acqs.include_halfws = []
 
     # Now starting from the catalog chosen with the include/exclude
     # constraints applied, remove those constraints and re-optimize.
     # This must come back to the original catalog of the 8 bright stars.
     del acqs['slot']
-    del acqs.meta['cand_acqs']['slot']
+    del acqs.cand_acqs['slot']
     acqs.optimize_catalog()
     acqs.sort('idx')
     assert np.all(acqs['id'] == np.arange(1, 9))
@@ -580,7 +580,7 @@ def test_dither_as_sequence():
 
     acqs = get_acq_catalog(**kwargs, stars=stars)
     assert len(acqs) == 8
-    assert acqs.meta['dither'] == (8, 22)
+    assert acqs.dither == (8, 22)
 
 
 def test_n_acq():
@@ -611,7 +611,7 @@ def test_n_acq():
            '   10  ...   106 -1000.00  1000.00   120   10.06   0.797',
            '   11  ...   107 -1000.00 -1000.00   120   10.07   0.787']
 
-    assert repr(acqs.meta['cand_acqs'][TEST_COLS]).splitlines() == exp
+    assert repr(acqs.cand_acqs[TEST_COLS]).splitlines() == exp
 
 
 def test_warnings():

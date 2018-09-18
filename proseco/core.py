@@ -116,9 +116,10 @@ class ACABox:
         return f'<ACABox y={self.y} z={self.z}>'
 
 
-class CatalogAttribute:
-    def __init__(self, default=None):
+class MetaAttribute:
+    def __init__(self, default=None, is_kwarg=True):
         self.default = copy(default)
+        self.is_kwarg = is_kwarg
 
     def __get__(self, instance, owner):
         if self.name not in instance.meta and self.default is not None:
@@ -130,7 +131,8 @@ class CatalogAttribute:
 
     def __set_name__(self, owner, name):
         self.name = name
-        owner.cat_attrs.add(name)
+        if self.is_kwarg:
+            owner.allowed_kwargs.add(name)
 
 
 class ACACatalogTable(Table):
@@ -154,30 +156,30 @@ class ACACatalogTable(Table):
     # Should be set by subclass, e.g. ``name = 'acqs'`` for AcqTable.
     name = 'aca_cat'
 
-    # Catalog attributes, gets set in CatalogAttribute
-    cat_attrs = set()
+    # Catalog attributes, gets set in MetaAttribute
+    allowed_kwargs = set(['dither', 't_ccd'])
 
-    obsid = CatalogAttribute()
-    att = CatalogAttribute()
-    n_acq = CatalogAttribute()
-    n_fid = CatalogAttribute()
-    n_guide = CatalogAttribute()
-    man_angle = CatalogAttribute()
-    t_ccd_acq = CatalogAttribute()
-    t_ccd_guide = CatalogAttribute()
-    date = CatalogAttribute()
-    dither_acq = CatalogAttribute()
-    dither_guide = CatalogAttribute()
-    detector = CatalogAttribute()
-    sim_offset = CatalogAttribute()
-    focus_offset = CatalogAttribute()
-    stars = CatalogAttribute()
-    include_ids = CatalogAttribute(default=[])
-    include_halfws = CatalogAttribute(default=[])
-    exclude_ids = CatalogAttribute(default=[])
-    optimize = CatalogAttribute()
-    verbose = CatalogAttribute()
-    print_log = CatalogAttribute()
+    obsid = MetaAttribute(default=0)
+    att = MetaAttribute()
+    n_acq = MetaAttribute(default=8)
+    n_guide = MetaAttribute(default=8)
+    n_fid = MetaAttribute(default=3)
+    man_angle = MetaAttribute()
+    t_ccd_acq = MetaAttribute()
+    t_ccd_guide = MetaAttribute()
+    date = MetaAttribute()
+    dither_acq = MetaAttribute()
+    dither_guide = MetaAttribute()
+    detector = MetaAttribute()
+    sim_offset = MetaAttribute()
+    focus_offset = MetaAttribute()
+    stars = MetaAttribute()
+    include_ids = MetaAttribute(default=[])
+    include_halfws = MetaAttribute(default=[])
+    exclude_ids = MetaAttribute(default=[])
+    optimize = MetaAttribute()
+    verbose = MetaAttribute()
+    print_log = MetaAttribute()
 
     def __init__(self, data=None, **kwargs):
         super().__init__(data=data, **kwargs)
@@ -199,7 +201,7 @@ class ACACatalogTable(Table):
 
     def set_kwargs(self, **kwargs):
         for name, val in kwargs.items():
-            if name in self.cat_attrs:
+            if name in self.allowed_kwargs:
                 setattr(self, name, val)
             else:
                 raise ValueError(f'unexpected keyword argument "{name}"')
@@ -244,6 +246,24 @@ class ACACatalogTable(Table):
             dither = getattr(self, dither_attr)
             if not isinstance(dither, ACABox):
                 setattr(self, dither_attr, ACABox(dither))
+
+    @property
+    def dither(self):
+        super().__getattr__(self, 'dither')
+
+    @dither.setter
+    def dither(self, value):
+        self.dither_acq = value
+        self.dither_guide = value
+
+    @property
+    def t_ccd(self):
+        super().__getattr__(self, 't_ccd')
+
+    @t_ccd.setter
+    def t_ccd(self, value):
+        self.t_ccd_acq = value
+        self.t_ccd_guide = value
 
     @property
     def print_log(self):

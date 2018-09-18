@@ -167,19 +167,19 @@ def make_cand_acqs_report(acqs, cand_acqs, events, context, obsdir):
         # Pull a fast-one and mark the final selected ACQ stars as BOT so they
         # get a circle in the plot.  This might be confusing and need fixing
         # later, but for now it is an easy way to show the winning candidates.
-        for acq in acqs.meta['cand_acqs']:
+        for acq in acqs.cand_acqs:
             if acq['id'] in acqs['id']:
                 acq['type'] = 'BOT'
 
-        fig = plot_aca.plot_stars(acqs.meta['att'], stars=acqs.meta['stars'],
-                                  catalog=acqs.meta['cand_acqs'],
-                                  bad_stars=acqs.meta['bad_stars'])
+        fig = plot_aca.plot_stars(acqs.att, stars=acqs.stars,
+                                  catalog=acqs.cand_acqs,
+                                  bad_stars=acqs.bad_stars)
         # When Ska3 has matplotlib 2.2+ then just use `filename`
         fig.savefig(str(filename))
         plt.close(fig)
 
         # Restore original type designation
-        acqs.meta['cand_acqs']['type'] = 'ACQ'
+        acqs.cand_acqs['type'] = 'ACQ'
 
 
 def make_initial_cat_report(events, context):
@@ -191,8 +191,8 @@ def make_acq_star_details_report(acqs, cand_acqs, events, context, obsdir):
     ######################################################
     # Candidate acq star detail sections
     ######################################################
-    acqs.meta['dark'] = get_dark_cal_image(date=acqs.meta['date'], select='nearest',
-                                           t_ccd_ref=acqs.meta['t_ccd'])
+    acqs.dark = get_dark_cal_image(date=acqs.date, select='nearest',
+                                           t_ccd_ref=acqs.t_ccd)
 
     context['cand_acqs'] = []
 
@@ -231,7 +231,7 @@ def make_acq_star_details_report(acqs, cand_acqs, events, context, obsdir):
         filename = obsdir / basename
         cca['imposters_plot'] = basename
         if not filename.exists():
-            plot_imposters(acq, acqs.meta['dark'], acqs.meta['dither'], filename=filename)
+            plot_imposters(acq, acqs.dark, acqs.dither, filename=filename)
 
         if len(acq['imposters']) > 0:
             if not isinstance(acq['imposters'], Table):
@@ -298,9 +298,9 @@ def make_obsid_summary(acqs, events, context, obsdir):
         fig = plt.figure(figsize=(4, 4))
         fig.subplots_adjust(top=0.95)
         ax = fig.add_subplot(1, 1, 1)
-        plot_aca.plot_stars(acqs.meta['att'], stars=acqs.meta['stars'],
+        plot_aca.plot_stars(acqs.att, stars=acqs.stars,
                             catalog=acqs,
-                            bad_stars=acqs.meta['bad_stars'], ax=ax)
+                            bad_stars=acqs.bad_stars, ax=ax)
         # When Ska3 has matplotlib 2.2+ then just use `filename`
         plt.savefig(str(filename))
         plt.close()
@@ -312,13 +312,13 @@ def make_report(obsid, rootdir='.'):
 
     obsdir = rootdir / f'obs{obsid:05}'
     acqs = AcqTable.from_pickle(obsid, rootdir)
-    cand_acqs = acqs.meta['cand_acqs']
+    cand_acqs = acqs.cand_acqs
 
     context = copy(acqs.meta)
 
     # Get information that is not stored in the acqs pickle for space reasons
-    acqs.meta['stars'] = StarsTable.from_agasc(acqs.meta['att'], date=acqs.meta['date'])
-    _, acqs.meta['bad_stars'] = acqs.get_acq_candidates(acqs.meta['stars'])
+    acqs.stars = StarsTable.from_agasc(acqs.att, date=acqs.date)
+    _, acqs.bad_stars = acqs.get_acq_candidates(acqs.stars)
 
     events = make_events(acqs)
     context['events'] = events
@@ -354,11 +354,11 @@ def plot_spoilers(acq, acqs, filename=None):
     hwp = plot_hw / 5  # Halfwidth of plot in pixels
 
     # Get stars
-    stars = acqs.meta['stars']
+    stars = acqs.stars
     ok = ((np.abs(stars['yang'] - acq['yang']) < plot_hw) &
           (np.abs(stars['zang'] - acq['zang']) < plot_hw))
     stars = stars[ok]
-    bad_stars = acqs.meta['bad_stars'][ok]
+    bad_stars = acqs.bad_stars[ok]
 
     fig = plt.figure(figsize=(5, 5))
     ax = fig.add_subplot(1, 1, 1)
@@ -397,7 +397,7 @@ def plot_spoilers(acq, acqs, filename=None):
     # Monkey patch the symsize function to make the stars bigger
     orig_symsize = plot_aca.symsize
     plot_aca.symsize = local_symsize
-    plot_aca._plot_field_stars(ax, stars=stars, attitude=acqs.meta['att'],
+    plot_aca._plot_field_stars(ax, stars=stars, attitude=acqs.att,
                                bad_stars=bad_stars)
     for star in stars:
         plt.text(star['row'], star['col'] - 3,
