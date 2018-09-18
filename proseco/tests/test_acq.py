@@ -9,12 +9,12 @@ from chandra_aca.transform import mag_to_count_rate, yagzag_to_pixels
 
 from ..report import make_report
 from ..acq import (get_p_man_err, bin2x2, CHAR,
-                   get_imposter_stars, StarsTable,
+                   get_imposter_stars,
                    get_image_props, calc_p_brightest,
                    AcqTable, calc_p_on_ccd,
                    get_acq_catalog,
                    )
-from ..core import ACABox
+from ..core import ACABox, StarsTable
 from .test_common import OBS_INFO, STD_INFO
 
 TEST_DATE = '2018:144'  # Fixed date for doing tests

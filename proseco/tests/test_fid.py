@@ -1,8 +1,6 @@
 import pytest
 import numpy as np
 
-from chandra_aca.transform import yagzag_to_pixels
-
 from ..fid import get_fid_positions, get_fid_catalog
 from ..acq import get_acq_catalog
 from ..core import StarsTable

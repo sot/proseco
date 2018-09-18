@@ -14,7 +14,7 @@ from chandra_aca.transform import yagzag_to_pixels
 from . import characteristics_fid as FID
 from . import characteristics as ACQ
 
-from .core import ACACatalogTable, ACABox
+from .core import ACACatalogTable
 
 
 def get_fid_catalog(obsid=0, **kwargs):

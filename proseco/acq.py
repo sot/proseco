@@ -15,7 +15,7 @@ from chandra_aca.transform import (pixels_to_yagzag, mag_to_count_rate)
 from mica.archive.aca_dark.dark_cal import get_dark_cal_image
 
 from . import characteristics as CHAR
-from .core import (get_mag_std, StarsTable, ACACatalogTable, bin2x2,
+from .core import (get_mag_std, ACACatalogTable, bin2x2,
                    get_image_props, pea_reject_image, ACABox,
                    MetaAttribute)
 
@@ -62,7 +62,7 @@ def get_acq_catalog(obsid=0, **kwargs):
     # Probability of man_err for this observation with a given man_angle.  Used
     # for marginalizing probabilities over different man_errs.
     acqs.p_man_errs = np.array([get_p_man_err(man_err, acqs.man_angle)
-                                        for man_err in CHAR.man_errs])
+                                for man_err in CHAR.man_errs])
 
     acqs.cand_acqs, acqs.bad_stars = acqs.get_acq_candidates(acqs.stars)
 

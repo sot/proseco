@@ -18,7 +18,8 @@ from astropy.table import Table, Column
 from chandra_aca.aca_image import ACAImage
 
 from . import characteristics as CHAR
-from .acq import AcqTable, StarsTable
+from .acq import AcqTable
+from .core import StarsTable
 from chandra_aca import plot as plot_aca
 from mica.archive.aca_dark.dark_cal import get_dark_cal_image
 
@@ -192,7 +193,7 @@ def make_acq_star_details_report(acqs, cand_acqs, events, context, obsdir):
     # Candidate acq star detail sections
     ######################################################
     acqs.dark = get_dark_cal_image(date=acqs.date, select='nearest',
-                                           t_ccd_ref=acqs.t_ccd)
+                                   t_ccd_ref=acqs.t_ccd)
 
     context['cand_acqs'] = []
 

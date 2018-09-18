@@ -11,7 +11,7 @@ from chandra_aca.star_probs import guide_count
 from . import characteristics as CHAR
 from . import characteristics_guide as GUIDE_CHAR
 
-from .core import StarsTable, bin2x2, ACACatalogTable, ACABox, MetaAttribute
+from .core import bin2x2, ACACatalogTable, ACABox, MetaAttribute
 
 CCD = GUIDE_CHAR.CCD
 
@@ -297,9 +297,8 @@ def check_spoil_contrib(cand_stars, ok, stars, regfrac, bgthresh):
     for cand in cand_stars[ok]:
         if cand['ASPQ1'] == 0:
             continue
-        pix_dist = np.sqrt(((cand['row'] - stars['row']) ** 2) + ((cand['col'] - stars['col']) ** 2))
-        spoilers = ((np.abs(cand['row'] - stars['row']) < 9)
-                    & (np.abs(cand['col'] - stars['col']) < 9))
+        spoilers = ((np.abs(cand['row'] - stars['row']) < 9) &
+                    (np.abs(cand['col'] - stars['col']) < 9))
 
         # If there is only one match, it is the candidate so there's nothing to do
         if np.count_nonzero(spoilers) == 1:
@@ -349,7 +348,6 @@ def check_mag_spoilers(cand_stars, ok, stars, n_sigma):
     :param n_sigma: multiplier use for mag_err when reviewing spoilers
     :returns: bool mask of length cand_stars marking mag_spoiled stars
     """
-    maxsep = GUIDE_CHAR.mag_spoiler['MaxSep']
     intercept = GUIDE_CHAR.mag_spoiler['Intercept']
     spoilslope = GUIDE_CHAR.mag_spoiler['Slope']
     magdifflim = GUIDE_CHAR.mag_spoiler['MagDiffLimit']
@@ -361,9 +359,10 @@ def check_mag_spoilers(cand_stars, ok, stars, n_sigma):
     mag_spoiled = np.zeros(len(ok)).astype(bool)
 
     for cand in cand_stars[ok]:
-        pix_dist = np.sqrt(((cand['row'] - stars['row']) **2) + ((cand['col'] - stars['col']) ** 2))
-        spoilers = ((np.abs(cand['row'] - stars['row']) < 10)
-                    & (np.abs(cand['col'] - stars['col']) < 10))
+        pix_dist = np.sqrt(((cand['row'] - stars['row']) ** 2) +
+                           ((cand['col'] - stars['col']) ** 2))
+        spoilers = ((np.abs(cand['row'] - stars['row']) < 10) &
+                    (np.abs(cand['col'] - stars['col']) < 10))
 
         # If there is only one match, it is the candidate so there's nothing to do
         if np.count_nonzero(spoilers) == 1:
@@ -401,12 +400,12 @@ def check_column_spoilers(cand_stars, ok, stars, n_sigma):
             continue
         dcol = cand['col'] - stars['col'][~stars['offchip']]
         direction = stars['row'][~stars['offchip']] / cand['row']
-        pos_spoil = ((np.abs(dcol) <= (GUIDE_CHAR.col_spoiler['Separation']))
-                     & (direction > 1.0))
+        pos_spoil = ((np.abs(dcol) <= (GUIDE_CHAR.col_spoiler['Separation'])) &
+                     (direction > 1.0))
         if not np.count_nonzero(pos_spoil) >= 1:
             continue
-        mag_errs = (n_sigma * np.sqrt(cand['mag_err'] ** 2
-                                      + stars['mag_err'][~stars['offchip']][pos_spoil] ** 2))
+        mag_errs = (n_sigma * np.sqrt(cand['mag_err'] ** 2 +
+                                      stars['mag_err'][~stars['offchip']][pos_spoil] ** 2))
         dm = (cand['mag'] - stars['mag'][~stars['offchip']][pos_spoil] + mag_errs)
         if np.any(dm > GUIDE_CHAR.col_spoiler['MagDiff']):
             column_spoiled[idx] = True
