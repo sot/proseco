@@ -162,7 +162,7 @@ class ACACatalogTable(Table):
     obsid = MetaAttribute(default=0)
     att = MetaAttribute()
     n_acq = MetaAttribute(default=8)
-    n_guide = MetaAttribute(default=8)
+    n_guide = MetaAttribute()
     n_fid = MetaAttribute(default=3)
     man_angle = MetaAttribute()
     t_ccd_acq = MetaAttribute()
@@ -225,7 +225,7 @@ class ACACatalogTable(Table):
             if self.date is None:
                 self.date = obso['mp_starcat_time']
             if self.t_ccd is None:
-                self.t_ccd = obs['pred_temp']
+                self.t_ccd = obs.get('pred_temp', -15.0)
             if self.man_angle is None:
                 self.man_angle = obs['manvr']['angle_deg'][0]
             if self.detector is None:
@@ -234,6 +234,10 @@ class ACACatalogTable(Table):
                 self.sim_offset = obso['sim_z_offset_steps']
             if self.focus_offset is None:
                 self.focus_offset = 0
+
+            if self.n_guide is None:
+                fid_or_mon = (obs['cat']['type'] == 'FID') | (obs['cat']['type'] == 'MON')
+                self.n_guide = 8 - np.count_nonzero(fid_or_mon)
 
             for dither_attr in ('dither_acq', 'dither_guide'):
                 if getattr(self, dither_attr) is None:
