@@ -10,6 +10,12 @@ STD_INFO = dict(obsid=1,
                 man_angle=90,
                 dither=8.0)
 
+
+def mod_std_info(**kwargs):
+    std_info = STD_INFO.copy()
+    std_info.update(kwargs)
+    return std_info
+
 # Parameters for test cases (to avoid starcheck.db3 dependence)
 OBS_INFO = {}
 
