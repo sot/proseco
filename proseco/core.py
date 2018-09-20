@@ -1001,7 +1001,14 @@ def get_kwargs_from_starcheck_text(obs_text):
     # Remove common leading whitespace
     obs_text = textwrap.dedent(obs_text)
 
-    kw = {}
+    # Set up defaults
+    kw = {'dither': (8.0, 8.0),
+          't_ccd': -10.0,
+          'date': '2018:001',
+          'n_guide': 8,
+          'detector': 'ACIS-S',
+          'sim_offset': 0,
+          'focus_offset': 0}
     try:
         kw['obsid'] = int(re.search("OBSID:\s(\d+).*", obs_text).group(1))
     except:
@@ -1046,6 +1053,7 @@ def get_kwargs_from_starcheck_text(obs_text):
         cat = Table(get_catalog(obs_text))
         fid_or_mon = (cat['type'] == 'FID') | (cat['type'] == 'MON')
         kw['n_guide'] = 8 - np.count_nonzero(fid_or_mon)
+        kw['n_fid'] = np.count_nonzero(cat['type'] == 'FID')
     except:
         pass
 
