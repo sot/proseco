@@ -2,7 +2,7 @@
 
 import pytest
 
-from ..core import ACABox
+from ..core import ACABox, get_kwargs_from_starcheck_text
 
 
 def test_box_init():
@@ -88,3 +88,54 @@ def test_box_greater():
     assert not box1 > (10, 15)
     assert not box1 > box1
     assert not box1 > (11, 16)
+
+
+def test_get_kwargs_from_starcheck_text():
+    text = """
+    OBSID: 21071  Kapteyn's Star         ACIS-S SIM Z offset:0     (0.00mm) Grating: NONE
+    RA, Dec, Roll (deg):    77.976747   -45.066796    85.007351
+    Dither: ON  Y_amp= 8.0  Z_amp= 8.0  Y_period=1000.0  Z_period= 707.1
+    BACKSTOP GUIDE_SUMM OR MANVR DOT MAKE_STARS TLR
+
+    MP_TARGQUAT at 2018:273:05:06:56.863 (VCDU count = 15011745)
+      Q1,Q2,Q3,Q4: 0.30730924  0.61223190  0.22717786  0.69218737
+      MANVR: Angle=  98.00 deg  Duration= 1967 sec  Slew err= 58.3 arcsec  End= 2018:273:05:39:39
+
+    MP_STARCAT at 2018:273:05:06:58.506 (VCDU count = 15011751)
+    ---------------------------------------------------------------------------------------------
+     IDX SLOT        ID  TYPE   SZ   P_ACQ    MAG   MAXMAG   YANG   ZANG DIM RES HALFW PASS NOTES
+    ---------------------------------------------------------------------------------------------
+    [ 1]  0           1   FID  8x8     ---   7.000   8.000    922  -1737   1   1   25
+    [ 2]  1           2   FID  8x8     ---   7.000   8.000   -773  -1741   1   1   25
+    [ 3]  2           4   FID  8x8     ---   7.000   8.000   2140    166   1   1   25
+    [ 4]  3   995373760   BOT  6x6   0.985   8.227   9.734    571   1383  32   1  180
+    [ 5]  4  1058803776   BOT  6x6   0.985   8.591  10.094  -1871    288  28   1  160    a2
+    [ 6]  5  1058806384   BOT  6x6   0.945   9.144  10.641  -1541   -971  28   1  160    a2
+    [ 7]  6   995368032   GUI  6x6     ---   8.639  10.141   1711    912   1   1   25
+    [ 8]  7         ---   MON  8x8     ---     ---  13.938     66     31   3   0   20    mX
+    [ 9]  6   995373040   ACQ  6x6   0.944   9.470  10.969    642   1162  23   1  135    a2
+    [10]  7   995371984   ACQ  6x6   0.934   9.684  11.188    427    974  23   1  135    a2
+    [11]  0   995369464   ACQ  6x6   0.925   9.398  10.906   1420     21  28   1  160    a2
+    [12]  1  1058803424   ACQ  6x6   0.930   9.521  11.031  -1409   2023  26   1  150    a2
+    [13]  2  1059724992   ACQ  6x6   0.848   9.989  11.500  -1271  -2201  20   1  120    a3
+
+    >> INFO   : CCD temperature exceeds -10.9 C
+    >> INFO   : Monitor window special commanding meets requirements
+
+    Probability of acquiring 2,3, and 4 or fewer stars (10^x):	-6.191	-4.565	-3.180
+    Acquisition Stars Expected  : 7.49
+    Predicted Max CCD temperature: -10.6 C       N100 Warm Pix Frac 0.270
+    Dynamic Mag Limits: Yellow 10.08     Red 10.22
+    """
+    kwargs = get_kwargs_from_starcheck_text(text)
+    exp = {'obsid': 21071,
+           'att': [77.976747, -45.066796, 85.007351],
+           'man_angle': 98.0,
+           'dither': (8.0, 8.0),
+           't_ccd': -10.6,
+           'date': '2018:273:05:06:58.506',
+           'n_guide': 4,
+           'detector': 'ACIS-S',
+           'sim_offset': 0,
+           'focus_offset': 0}
+    assert kwargs == exp

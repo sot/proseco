@@ -982,3 +982,79 @@ def pea_reject_image(img):
     """
     # To be implemented
     return False
+
+
+def get_kwargs_from_starcheck_text(obs_text):
+    """
+    Get proseco kwargs using the exact catalog from the starcheck output text
+    ``obs_text``.  Mostly copied from annie/annie (should move into mica.starcheck
+    one day).
+
+    :param obs_text: text copied from starcheck output
+    :returns: dict of keyword args corresponding to proseco args
+    """
+    import re
+    import textwrap
+    from mica.starcheck.starcheck_parser import (get_coords, get_dither, get_starcat_header,
+                                                 get_pred_temp, get_manvrs, get_catalog,
+                                                 get_targ)
+    # Remove common leading whitespace
+    obs_text = textwrap.dedent(obs_text)
+
+    kw = {}
+    try:
+        kw['obsid'] = int(re.search("OBSID:\s(\d+).*", obs_text).group(1))
+    except:
+        # Nothing else will work so raise an exception
+        raise ValueError('text does not have OBSID: <obsid>, does not look like appropriate text')
+
+    try:
+        out = get_coords(obs_text)
+        kw['att'] = [out['point_ra'], out['point_dec'], out['point_roll']]
+    except:
+        try:
+            out = get_manvrs(obs_text)[-1]
+            kw['att'] = [out['target_Q1'], out['target_Q2'], out['target_Q3'], out['target_Q4']]
+        except:
+            pass
+
+    try:
+        out = get_manvrs(obs_text)[-1]
+        kw['man_angle'] = out['angle_deg']
+    except:
+        pass
+
+    try:
+        out = get_dither(obs_text)
+        kw['dither'] = (out['dither_y_amp'], out['dither_z_amp'])
+    except:
+        pass
+
+    try:
+        ccd_temp = get_pred_temp(obs_text)
+        kw['t_ccd'] = ccd_temp
+    except:
+        pass
+
+    try:
+        starcat_hdr = get_starcat_header(obs_text)
+        kw['date'] = starcat_hdr['mp_starcat_time']
+    except:
+        pass
+
+    try:
+        cat = Table(get_catalog(obs_text))
+        fid_or_mon = (cat['type'] == 'FID') | (cat['type'] == 'MON')
+        kw['n_guide'] = 8 - np.count_nonzero(fid_or_mon)
+    except:
+        pass
+
+    try:
+        targ = get_targ(obs_text)
+        kw['detector'] = targ['sci_instr']
+        kw['sim_offset'] = targ['sim_z_offset_steps']
+        kw['focus_offset'] = 0
+    except:
+        pass
+
+    return kw
