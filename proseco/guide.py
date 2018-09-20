@@ -390,7 +390,7 @@ def check_column_spoilers(cand_stars, ok, stars, n_sigma):
     :param cand_stars: Table of candidate stars
     :param ok: mask on cand_stars describing still "ok" candidates
     :param stars: Table of AGASC stars
-    :param n_sigma: multiplier used when checking mag with mag_err
+    :param n_sigma: multiplier used when checking mag with MAG_ACA_ERR
     :returns: bool mask on cand_stars marking column spoiled stars
     """
     column_spoiled = np.zeros_like(ok)
@@ -403,8 +403,8 @@ def check_column_spoilers(cand_stars, ok, stars, n_sigma):
                      (direction > 1.0))
         if not np.count_nonzero(pos_spoil) >= 1:
             continue
-        mag_errs = (n_sigma * np.sqrt(cand['mag_err'] ** 2 +
-                                      stars['mag_err'][~stars['offchip']][pos_spoil] ** 2))
+        mag_errs = (n_sigma * np.sqrt(cand['MAG_ACA_ERR'] ** 2 +
+                                      stars['MAG_ACA_ERR'][~stars['offchip']][pos_spoil] ** 2))
         dm = (cand['mag'] - stars['mag'][~stars['offchip']][pos_spoil] + mag_errs)
         if np.any(dm > GUIDE_CHAR.col_spoiler['MagDiff']):
             column_spoiled[idx] = True
