@@ -78,9 +78,7 @@ def _get_aca_catalog(**kwargs):
     raise_exc = kwargs.pop('raise_exc')
 
     aca = ACACatalogTable()
-
-    # Put at least the obsid in top level meta for now
-    aca.obsid = kwargs.get('obsid')
+    aca.set_attrs_from_kwargs(**kwargs)
 
     aca.acqs = get_acq_catalog(**kwargs)
     aca.fids = get_fid_catalog(acqs=aca.acqs, **kwargs)
