@@ -336,16 +336,15 @@ def check_mag_spoilers(cand_stars, ok, stars, n_sigma):
     """
     Use the slope-intercept mag-spoiler relationship to exclude all
     stars that have a "mag spoiler".  This is basically equivalent to the
-    "direct catalog search" for spoilers in SAUSAGE, but uses the mag_err
-    from the proseco acq, and does not forbid all stars within 7 pixels
-    (spoilers must be faint to be close).
+    "direct catalog search" for spoilers in SAUSAGE, but does not forbid
+    all stars within 7 pixels (spoilers must be faint to be close).
 
     The n-sigma changes by stage for the mags/magerrs used in the check.
 
     :param cand_stars: Table of candidate stars
     :param ok: mask on cand_stars describing those that are still "ok"
     :param stars: Table of AGASC stars in this field
-    :param n_sigma: multiplier use for mag_err when reviewing spoilers
+    :param n_sigma: multiplier use for MAG_ACA_ERR when reviewing spoilers
     :returns: bool mask of length cand_stars marking mag_spoiled stars
     """
     intercept = GUIDE_CHAR.mag_spoiler['Intercept']
@@ -373,7 +372,7 @@ def check_mag_spoilers(cand_stars, ok, stars, n_sigma):
                 continue
             if (cand['mag'] - spoil['mag']) < magdifflim:
                 continue
-            mag_err_sum = np.sqrt(cand['mag_err'] ** 2 + spoil['mag_err'] ** 2)
+            mag_err_sum = np.sqrt(cand['MAG_ACA_ERR'] ** 2 + spoil['MAG_ACA_ERR'] ** 2)
             delmag = cand['mag'] - spoil['mag'] + n_sigma * mag_err_sum
             thsep = intercept + delmag * spoilslope
             if dist < thsep:
