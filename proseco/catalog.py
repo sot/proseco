@@ -4,7 +4,7 @@ from itertools import count
 
 from astropy.table import Column
 
-from .core import ACACatalogTable
+from .core import ACACatalogTable, get_kwargs_from_starcheck_text
 from .guide import get_guide_catalog, GuideTable
 from .acq import get_acq_catalog, AcqTable
 from .fid import get_fid_catalog, FidTable
@@ -14,7 +14,11 @@ def get_aca_catalog(obsid=0, **kwargs):
     """
     Get a catalog of guide stars, acquisition stars and fid lights.
 
-    :param obsid: obsid (default=0)
+    If ``obsid`` is supplied and is a string, then it is taken to be starcheck text
+    with required info.  User-supplied kwargs take precedence, however (e.g.
+    one can override the dither from starcheck).
+
+    :param obsid: obsid (int) or starcheck text (str) (default=0)
     :param att: attitude (any object that can initialize Quat)
     :param n_acq: desired number of acquisition stars (default=8)
     :param n_fid: desired number of fid lights (req'd unless obsid spec'd)
@@ -39,6 +43,15 @@ def get_aca_catalog(obsid=0, **kwargs):
     :returns: AcaCatalogTable of stars and fids
 
     """
+    # If obsid is supplied as a string then it is taken to be starcheck text
+    # with required info.  User-supplied kwargs take precedence, however.
+    if isinstance(obsid, str):
+        kw = get_kwargs_from_starcheck_text(obsid)
+        obsid = kw.pop('obsid')
+        for key, val in kw.items():
+            if key not in kwargs:
+                kwargs[key] = val
+
     raise_exc = kwargs.pop('raise_exc', None)
     try:
         aca = _get_aca_catalog(obsid=obsid, raise_exc=raise_exc, **kwargs)
