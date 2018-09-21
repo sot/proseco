@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from pathlib import Path
 
-from chandra_aca.aca_image import AcaPsfLibrary
+from chandra_aca.aca_image import AcaPsfLibrary, ACAImage
 from chandra_aca.transform import mag_to_count_rate, yagzag_to_pixels
 
 from ..report import make_report
@@ -14,8 +14,11 @@ from ..acq import (get_p_man_err, bin2x2, CHAR,
                    AcqTable, calc_p_on_ccd,
                    get_acq_catalog,
                    )
+from ..catalog import get_aca_catalog
 from ..core import ACABox, StarsTable
-from .test_common import OBS_INFO, STD_INFO
+from .test_common import OBS_INFO, STD_INFO, mod_std_info
+from .. import characteristics_fid as FID
+
 
 TEST_DATE = '2018:144'  # Fixed date for doing tests
 ATT = [10, 20, 3]  # Arbitrary test attitude
@@ -682,3 +685,69 @@ def test_no_candidates():
     assert len(acqs) == 0
     assert 'id' in acqs.colnames
     assert 'halfw' in acqs.colnames
+
+
+def test_acq_fid_probs():
+    """
+    Low-level tests of machinery to handle different fid light sets within
+    acquisition probabilities.
+    """
+    dark = ACAImage(np.full(shape=(1024, 1024), fill_value=40), row0=-512, col0=-512)
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(mag=[9.5, 9.6, 9.7], n_stars=3)
+    stars.add_fake_stars_from_fid(fid_id=[1, 2, 3, 4],
+                                  id=[1, 2, 3, 4],
+                                  mag=[10, 8.2, 11.5, 11.5],
+                                  offset_y=[100, 120, 10, 10], detector='HRC-S')
+
+    dither = 20
+    kwargs = mod_std_info(stars=stars, dark=dark, dither=dither,
+                          n_guide=0, n_acq=5, detector='HRC-S')
+    aca = get_aca_catalog(**kwargs)
+
+    acqs = aca.acqs
+
+    print(np.log10(acqs.calc_p_safe()))
+    assert np.allclose(np.log10(acqs.calc_p_safe()), -4.0,
+                       rtol=0, atol=0.05)
+
+    # Initial fid set is empty ()
+    assert acqs.fid_set == ()
+
+    acq = acqs.get_id(2)
+    p0 = acq['probs']
+
+    # FID.spoiler_margin + self.dither_acq + box_size = 50 + 20 + box_size
+    # compared to 120" offset => threshold at 120 - 70 = 50
+    box_size_thresh = 120 - (FID.spoiler_margin + dither)
+    assert p0.p_fid_id_spoiler(box_size_thresh - 1, fid_id=2) == 1.0  # OK
+    assert p0.p_fid_id_spoiler(box_size_thresh + 1, fid_id=2) == 0.0  # spoiled
+
+    # Caching of values
+    assert p0._p_fid_id_spoiler == {(box_size_thresh - 1, 2): 1.0,
+                                    (box_size_thresh + 1, 2): 0.0}
+
+    # With fid_set = (), the probability multiplier for any fid in the fid set
+    # spoiling this star is 1.0, i.e. no fids spoil this star (since there
+    # are no fids).
+    assert p0.p_fid_spoiler(box_size_thresh - 1) == 1.0
+    assert p0.p_fid_spoiler(box_size_thresh + 1) == 1.0
+
+    # Now change the fid set to include ones (in particular fid_id=2) that
+    # spoils an acq star.  This makes the p_safe value much worse.
+    acqs.fid_set = (4, 1, 2)
+    assert acqs.fid_set == (1, 2, 4)  # gets sorted when set
+    print(np.log10(acqs.calc_p_safe()))
+    assert np.allclose(np.log10(acqs.calc_p_safe()), -1.7,
+                       rtol=0, atol=0.05)
+
+    # With fid_set = (1, 2, 4), the probability multiplier for catalog
+    # ids 2 and 4 are spoiled.  This test checks for star id=2 (which is
+    # near fid_id=2).
+    assert p0.p_fid_spoiler(box_size_thresh - 1) == 1.0
+    assert p0.p_fid_spoiler(box_size_thresh + 1) == 0.0
+
+    # Reverting fid set also revert the p_safe value.
+    acqs.fid_set = ()
+    assert np.allclose(np.log10(acqs.calc_p_safe()), -4.0,
+                       rtol=0, atol=0.05)

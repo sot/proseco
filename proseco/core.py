@@ -932,8 +932,8 @@ class StarsTable(ACACatalogTable):
 
         self.add_row(out)
 
-    def add_fake_star_from_fid(self, fid_id, offset_y=0, offset_z=0, mag=7.0,
-                               detector='ACIS-S'):
+    def add_fake_stars_from_fid(self, fid_id=1, offset_y=0, offset_z=0, mag=7.0,
+                                id=None, detector='ACIS-S'):
         try:
             fids = FIDS_CACHE[detector]
         except KeyError:
@@ -947,9 +947,16 @@ class StarsTable(ACACatalogTable):
                                    dither=8.0)
             FIDS_CACHE[detector] = fids
 
-        fid = fids.cand_fids.get_id(fid_id)
-        self.add_fake_star(yang=fid['yang'] + offset_y, zang=fid['zang'] + offset_z,
-                           mag=mag)
+        arrays = np.broadcast_arrays(fid_id, offset_y, offset_z, mag, id)
+
+        for fid_id, offset_y, offset_z, mag, id in zip(*arrays):
+            fid = fids.cand_fids.get_id(fid_id)
+            kwargs = dict(yang=fid['yang'] + offset_y,
+                          zang=fid['zang'] + offset_z,
+                          mag=mag)
+            if id is not None:
+                kwargs['id'] = id
+            self.add_fake_star(**kwargs)
 
 
 def bin2x2(arr):
