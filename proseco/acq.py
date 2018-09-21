@@ -122,6 +122,7 @@ class AcqTable(ACACatalogTable):
     p_man_errs = MetaAttribute(is_kwarg=False)
     cand_acqs = MetaAttribute(is_kwarg=False)
     p_safe = MetaAttribute(is_kwarg=False)
+    _fid_set = MetaAttribute(is_kwarg=False, default=())
 
     @classmethod
     def empty(cls):
@@ -150,6 +151,35 @@ class AcqTable(ACACatalogTable):
     @dither.setter
     def dither(self, value):
         self.dither_acq = value
+
+    @property
+    def fid_set(self):
+        return self._fid_set
+
+    @fid_set.setter
+    def fid_set(self, fid_ids):
+        if self.fids is None:
+            raise ValueError('cannot set fid_set before setting fids')
+
+        cand_fids = self.fids.cand_fids
+        if cand_fids is None:
+            raise ValueError('cannot set fid_set before selecting candidate fids')
+
+        self._fid_set = ()
+        cand_fids_ids = list(cand_fids['id'])
+        for fid_id in sorted(fid_ids):
+            if fid_id in cand_fids_ids:
+                self._fid_set += (fid_id,)
+            else:
+                self.log(f'Fid {fid_id} is not in available candidate '
+                         f'fid ids {cand_fids_ids}, ignoring',
+                         warning=True)
+
+        # Update marginalized p_acq and p_safe.  The underlying probability
+        # functions know about fid_set and new values are computed on-demand.
+        for acq in self:
+            acq['p_acq'] = acq['probs'].p_acq_marg(acq['halfw'])
+        self.p_safe = self.calc_p_safe()
 
     def get_p_2_or_fewer(self):
         """
@@ -1011,11 +1041,6 @@ class AcqProbs:
             p_on_ccd = calc_p_on_ccd(acq['row'], acq['col'], box_size=man_err + dither)
             self._p_on_ccd[man_err] = p_on_ccd
 
-    @property
-    def fid_set(self):
-        fids = self.acqs.fids
-        return () if (fids is None) else fids.fid_set
-
     def p_on_ccd(self, man_err):
         return self._p_on_ccd[man_err]
 
@@ -1026,24 +1051,26 @@ class AcqProbs:
         return self._p_acq_model[box_size]
 
     def p_acqs(self, box_size, man_err):
+        fid_set = self.acqs.fid_set
         try:
-            return self._p_acqs[box_size, man_err, self.fid_set]
+            return self._p_acqs[box_size, man_err, fid_set]
         except KeyError:
             p_acq = (self.p_brightest(box_size, man_err) *
                      self.p_acq_model(box_size) *
                      self.p_on_ccd(man_err) *
                      self.p_fid_spoiler(box_size))
-            self._p_acqs[box_size, man_err, self.fid_set] = p_acq
+            self._p_acqs[box_size, man_err, fid_set] = p_acq
             return p_acq
 
     def p_acq_marg(self, box_size):
+        fid_set = self.acqs.fid_set
         try:
-            return self._p_acq_marg[box_size, self.fid_set]
+            return self._p_acq_marg[box_size, fid_set]
         except KeyError:
             p_acq_marg = 0.0
             for man_err, p_man_err in zip(CHAR.man_errs, self.acqs.p_man_errs):
                 p_acq_marg += self.p_acqs(box_size, man_err) * p_man_err
-            self._p_acq_marg[box_size, self.fid_set] = p_acq_marg
+            self._p_acq_marg[box_size, fid_set] = p_acq_marg
             return p_acq_marg
 
     def p_fid_spoiler(self, box_size):
@@ -1058,7 +1085,7 @@ class AcqProbs:
         :param box_size: search box size in arcsec
         :returns: probability multiplier (0 or 1)
         """
-        fid_set = self.fid_set
+        fid_set = self.acqs.fid_set
         try:
             return self._p_fid_spoiler[box_size, fid_set]
         except KeyError:
