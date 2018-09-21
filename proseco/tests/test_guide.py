@@ -25,7 +25,7 @@ def test_select():
     """
     selected = get_guide_catalog(att=(10, 20, 3), date='2018:001', dither=(8, 8),
                                  t_ccd=-13, n_guide=5)
-    expected_star_ids = [156384720, 155980240, 156376184, 156381600, 156379416]
+    expected_star_ids = [156384720, 155980240, 156377856, 156376184, 156381600]
     assert selected['id'].tolist() == expected_star_ids
 
 
@@ -207,7 +207,7 @@ def test_check_mag_spoilers():
     """
     intercept = mag_spoiler['Intercept']
     spoilslope = mag_spoiler['Slope']
-    star1 = {'row': 0, 'col': 0, 'mag': 9.0, 'mag_err': 0, 'id': 1}
+    star1 = {'row': 0, 'col': 0, 'mag': 9.0, 'MAG_ACA_ERR': 0, 'id': 1}
 
     # The mag spoiler check only works on stars that are within 10 pixels in row
     # or column, so don't bother simulating stars outside that distance
@@ -217,7 +217,7 @@ def test_check_mag_spoilers():
 
     for r_dist, c_dist, magdiff in itertools.product(r_dists, c_dists, magdiffs):
         star2 = {'row': r_dist, 'col': c_dist, 'mag': star1['mag'] - magdiff,
-                 'mag_err': 0, 'id': 2}
+                 'MAG_ACA_ERR': 0, 'id': 2}
         dist = np.sqrt(r_dist ** 2 + c_dist ** 2)
         stars = Table([star1, star2])
         spoiled = check_mag_spoilers(stars, np.array([True, True]), stars, 0)
