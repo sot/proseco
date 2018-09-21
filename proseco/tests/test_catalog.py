@@ -48,6 +48,18 @@ def test_exception_handling():
                           include_ids=[1])  # Fail
     assert 'ValueError: cannot include star id=1' in aca.exception
 
+    for obj in (aca, aca.acqs, aca.guides, aca.fids):
+        assert len(obj) == 0
+        assert 'id' in obj.colnames
+        assert 'idx' in obj.colnames
+        if obj.name == 'acqs':
+            assert 'halfw' in obj.colnames
+
+
+def test_unhandled_exception():
+    with pytest.raises(TypeError):
+        get_aca_catalog(obsid=None, raise_exc=True)
+
 
 def test_no_candidates():
     """

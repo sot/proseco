@@ -59,6 +59,8 @@ def get_guide_catalog(obsid=0, **kwargs):
     for name, col in selected.columns.items():
         guides[name] = col
 
+    guides['idx'] = np.arange(len(guides))
+
     if len(guides) < guides.n_guide:
         guides.log(f'Selected only {len(guides)} guide stars versus requested {guides.n_guide}',
                    warning=True)

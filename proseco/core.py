@@ -274,6 +274,23 @@ class ACACatalogTable(Table):
         else:
             self.stars = acqs.stars
 
+    def plot(self, ax=None):
+        """
+        Plot the catalog and background stars.
+
+        :param ax: matplotlib axes object for plotting to (optional)
+        """
+        from chandra_aca.plot import plot_stars
+        import matplotlib.pyplot as plt
+
+        stars_kwargs = {}
+        if self.acqs:
+            stars_kwargs['stars'] = self.acqs.stars
+            stars_kwargs['bad_stars'] = self.acqs.bad_stars
+
+        plot_stars(attitude=self.att, catalog=self, ax=ax, **stars_kwargs)
+        plt.show()
+
     @property
     def dither(self):
         return None
@@ -305,7 +322,8 @@ class ACACatalogTable(Table):
         :returns: StarsTable of stars (empty)
         """
         out = cls()
-        out['id'] = []
+        out['id'] = np.full(fill_value=0, shape=(0,), dtype=np.int64)
+        out['idx'] = np.full(fill_value=0, shape=(0,), dtype=np.int64)
         return out
 
     def make_index(self):
