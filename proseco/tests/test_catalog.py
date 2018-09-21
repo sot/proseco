@@ -1,10 +1,13 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
+import pickle
 import pytest
 from pathlib import Path
 
+import numpy as np
 import mica.starcheck
 
+from .test_common import STD_INFO
 from ..core import StarsTable, ACACatalogTable
 from ..catalog import get_aca_catalog
 
@@ -99,3 +102,38 @@ def test_big_dither_from_mica_starcheck():
     assert aca.detector == 'HRC-S'
     assert aca.dither_acq == (20, 20)
     assert aca.dither_guide == (64, 8)
+
+
+def test_pickle():
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(mag=10.0, n_stars=5)
+    aca = get_aca_catalog(stars=stars, n_guide=5, raise_exc=True, **STD_INFO)
+
+    assert aca.thumbs_up == 0
+    assert aca.acqs.thumbs_up == 0
+    assert aca.guides.thumbs_up == 1
+    assert aca.fids.thumbs_up == 1
+
+    aca2 = pickle.loads(pickle.dumps(aca))
+
+    assert repr(aca) == repr(aca2)
+    assert repr(aca.acqs.cand_acqs) == repr(aca2.acqs.cand_acqs)
+
+    for cat in None, 'acqs', 'guides', 'fids':
+        if cat:
+            obj = getattr(aca, cat)
+            obj2 = getattr(aca2, cat)
+            for event, event2 in zip(obj.log_info['events'],
+                                     obj2.log_info['events']):
+                assert event == event2
+        else:
+            obj = aca
+            obj2 = aca2
+
+        for attr in ['att', 'date', 't_ccd', 'man_angle', 'dither', 'thumbs_up']:
+            val = getattr(obj, attr)
+            val2 = getattr(obj2, attr)
+            if isinstance(val, float):
+                assert np.isclose(val, val2)
+            else:
+                assert val == val2

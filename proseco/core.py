@@ -118,7 +118,7 @@ class ACABox:
 
 class MetaAttribute:
     def __init__(self, default=None, is_kwarg=True):
-        self.default = copy(default)
+        self.default = default
         self.is_kwarg = is_kwarg
 
     def __get__(self, instance, owner):
@@ -126,8 +126,8 @@ class MetaAttribute:
             return instance.meta[self.name]
         except KeyError:
             if self.default is not None:
-                instance.meta[self.name] = self.default
-            return self.default
+                instance.meta[self.name] = copy(self.default)
+            return instance.meta.get(self.name)
 
     def __set__(self, instance, value):
         instance.meta[self.name] = value
@@ -421,7 +421,10 @@ class ACACatalogTable(Table):
         if event.get('warning') and isinstance(data, str):
             event['data'] = 'WARNING: ' + event['data']
 
-        log_info.setdefault('events', []).append(event)
+        if 'events' not in log_info:
+            log_info['events'] = []
+        log_info['events'].append(event)
+
         if self.print_log:
             data_str = ' ' * event.get('level', 0) * 4 + str(event['data'])
             print(f'{dt:7.3f} {func:20s}: {data_str}')

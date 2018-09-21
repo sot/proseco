@@ -82,7 +82,9 @@ def _get_aca_catalog(**kwargs):
 
     aca.acqs = get_acq_catalog(**kwargs)
     aca.fids = get_fid_catalog(acqs=aca.acqs, **kwargs)
-    aca.guides = get_guide_catalog(stars=aca.acqs.stars, **kwargs)
+
+    stars = kwargs.pop('stars', aca.acqs.stars)
+    aca.guides = get_guide_catalog(stars=stars, **kwargs)
 
     # Get overall catalog thumbs_up
     aca.thumbs_up = aca.acqs.thumbs_up & aca.fids.thumbs_up & aca.guides.thumbs_up
