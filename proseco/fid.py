@@ -105,8 +105,9 @@ class FidTable(ACACatalogTable):
             if fid_id in cand_fids_ids:
                 self._fid_set += (fid_id,)
             else:
-                self.add_warning(f'Fid {fid_id} is not in available candidate '
-                                 f'fid ids {cand_fids_ids}, ignoring')
+                self.log(f'Fid {fid_id} is not in available candidate '
+                         f'fid ids {cand_fids_ids}, ignoring',
+                         warning=True)
 
     @property
     def acqs(self):
@@ -176,7 +177,7 @@ class FidTable(ACACatalogTable):
                 for fid_id in fid_set:
                     if fid_id not in spoils_any_acq:
                         fid = cand_fids.get_id(fid_id)
-                        spoils_any_acq[fid_id] = any(self.spoils(fid, acq)
+                        spoils_any_acq[fid_id] = any(self.spoils(fid, acq, acq['halfw'])
                                                      for acq in self.acqs)
                     if spoils_any_acq[fid_id]:
                         # Loser, don't bother with the rest.
@@ -202,7 +203,7 @@ class FidTable(ACACatalogTable):
         self.cand_fids = cand_fids
         self.fid_set = fid_set
 
-    def spoils(self, fid, acq):
+    def spoils(self, fid, acq, box_size):
         """
         Return true if ``fid`` could be within ``acq`` search box.
 
@@ -215,15 +216,14 @@ class FidTable(ACACatalogTable):
 
         :param fid: fid light (FidTable Row)
         :param acq: acq star (AcqTable Row)
+        :param box_size: box size (arcsec)
 
         :returns: True if ``fid`` could be within ``acq`` search box
         """
-        spoiler_margin = (FID.spoiler_margin +
-                          self.dither_acq +
-                          acq['halfw'])
+        spoiler_margin = FID.spoiler_margin + self.dither_acq + box_size
         dy = np.abs(fid['yang'] - acq['yang'])
         dz = np.abs(fid['zang'] - acq['zang'])
-        return (dy < spoiler_margin.y and dz < spoiler_margin.z)
+        return dy < spoiler_margin.y and dz < spoiler_margin.z
 
     def get_fid_candidates(self):
         """

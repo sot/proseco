@@ -1093,14 +1093,14 @@ class AcqProbs:
 
             p_fid_id_spoiler = 1.0
             try:
-                fid = fids.meta['cand_fids'].get_id(fid_id)
+                fid = fids.cand_fids.get_id(fid_id)
             except (KeyError, IndexError, AssertionError):
                 # This should not happen, but ignore with a warning in any case.  Non-candidate
                 # fid cannot spoil an acq star.
                 self.acqs.add_warning(f'Requested fid spoiler probability for fid '
                                       f'{self.acqs.detector}-{fid_id} but it is not a candidate')
             else:
-                if fids.spoils(fid, self.acq['yang'], self.acq['zang'], box_size):
+                if fids.spoils(fid, self.acq, box_size):
                     p_fid_id_spoiler = 0.0
 
             self._p_fid_id_spoiler[box_size, fid_id] = p_fid_id_spoiler

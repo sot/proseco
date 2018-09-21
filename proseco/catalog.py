@@ -84,6 +84,8 @@ def _get_aca_catalog(**kwargs):
     aca.acqs = get_acq_catalog(**kwargs)
     aca.fids = get_fid_catalog(acqs=aca.acqs, **kwargs)
 
+    aca.acqs.fids = aca.fids
+
     if len(aca.fids) == 0:
         optimize_acqs_fids(aca.acqs, aca.fids)
 
