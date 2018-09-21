@@ -138,9 +138,8 @@ class AcqTable(ACACatalogTable):
 
         :returns: StarsTable of stars (empty)
         """
-        out = cls()
-        out['id'] = []
-        out['halfw'] = []
+        out = super().empty()
+        out['halfw'] = np.full(fill_value=0, shape=(0,), dtype=np.int64)
         return out
 
     @property

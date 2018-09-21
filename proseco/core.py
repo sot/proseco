@@ -322,7 +322,8 @@ class ACACatalogTable(Table):
         :returns: StarsTable of stars (empty)
         """
         out = cls()
-        out['id'] = []
+        out['id'] = np.full(fill_value=0, shape=(0,), dtype=np.int64)
+        out['idx'] = np.full(fill_value=0, shape=(0,), dtype=np.int64)
         return out
 
     def make_index(self):

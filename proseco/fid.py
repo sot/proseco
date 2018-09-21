@@ -62,6 +62,8 @@ def get_fid_catalog(obsid=0, **kwargs):
     if len(fids) > fids.n_fid:
         fids = fids[:fids.n_fid]
 
+    fids['idx'] = np.arange(len(fids))
+
     # Set fid thumbs_up if fids has the number of requested fid lights
     fids.thumbs_up = len(fids) == fids.n_fid
 

@@ -135,6 +135,7 @@ def test_get_kwargs_from_starcheck_text():
            't_ccd': -10.6,
            'date': '2018:273:05:06:58.506',
            'n_guide': 4,
+           'n_fid': 3,
            'detector': 'ACIS-S',
            'sim_offset': 0,
            'focus_offset': 0}
