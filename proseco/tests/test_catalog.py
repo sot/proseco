@@ -107,7 +107,7 @@ def test_big_dither_from_mica_starcheck():
 def test_pickle():
     stars = StarsTable.empty()
     stars.add_fake_constellation(mag=10.0, n_stars=5)
-    aca = get_aca_catalog(stars=stars, n_guide=5, raise_exc=True, **STD_INFO)
+    aca = get_aca_catalog(stars=stars, raise_exc=True, **STD_INFO)
 
     assert aca.thumbs_up == 0
     assert aca.acqs.thumbs_up == 0
