@@ -687,20 +687,26 @@ def test_no_candidates():
     assert 'halfw' in acqs.colnames
 
 
-def test_acq_fid_probs():
+def test_acq_fid_probs_low_level():
     """
     Low-level tests of machinery to handle different fid light sets within
     acquisition probabilities.
     """
+    # Put an acq star at an offset from fid light id=2 such that for a search
+    # box size larger than box_size_thresh, that star will be spoiled.  This
+    # uses the equation in FidTable.spoils().
+    dither = 20
+    box_size_thresh = 90
+    offset = box_size_thresh + FID.spoiler_margin + dither
+
     dark = ACAImage(np.full(shape=(1024, 1024), fill_value=40), row0=-512, col0=-512)
     stars = StarsTable.empty()
     stars.add_fake_constellation(mag=[9.5, 9.6, 9.7], n_stars=3)
     stars.add_fake_stars_from_fid(fid_id=[1, 2, 3, 4],
                                   id=[1, 2, 3, 4],
                                   mag=[10, 8.2, 11.5, 11.5],
-                                  offset_y=[100, 120, 10, 10], detector='HRC-S')
+                                  offset_y=[100, offset, 10, 10], detector='HRC-S')
 
-    dither = 20
     kwargs = mod_std_info(stars=stars, dark=dark, dither=dither,
                           n_guide=0, n_acq=5, detector='HRC-S')
     aca = get_aca_catalog(**kwargs)
@@ -717,9 +723,6 @@ def test_acq_fid_probs():
     acq = acqs.get_id(2)
     p0 = acq['probs']
 
-    # FID.spoiler_margin + self.dither_acq + box_size = 50 + 20 + box_size
-    # compared to 120" offset => threshold at 120 - 70 = 50
-    box_size_thresh = 120 - (FID.spoiler_margin + dither)
     assert p0.p_fid_id_spoiler(box_size_thresh - 1, fid_id=2) == 1.0  # OK
     assert p0.p_fid_id_spoiler(box_size_thresh + 1, fid_id=2) == 0.0  # spoiled
 
