@@ -118,13 +118,16 @@ class ACABox:
 
 class MetaAttribute:
     def __init__(self, default=None, is_kwarg=True):
-        self.default = copy(default)
+        self.default = default
         self.is_kwarg = is_kwarg
 
     def __get__(self, instance, owner):
-        if self.name not in instance.meta and self.default is not None:
-            instance.meta[self.name] = self.default
-        return instance.meta.get(self.name)
+        try:
+            return instance.meta[self.name]
+        except KeyError:
+            if self.default is not None:
+                instance.meta[self.name] = copy(self.default)
+            return instance.meta.get(self.name)
 
     def __set__(self, instance, value):
         instance.meta[self.name] = value
@@ -133,6 +136,11 @@ class MetaAttribute:
         self.name = name
         if self.is_kwarg:
             owner.allowed_kwargs.add(name)
+
+
+class IntMetaAttribute(MetaAttribute):
+    def __set__(self, instance, value):
+        instance.meta[self.name] = int(value)
 
 
 class ACACatalogTable(Table):
@@ -181,15 +189,11 @@ class ACACatalogTable(Table):
     exclude_ids = MetaAttribute(default=[])
     print_log = MetaAttribute(default=False)
 
+    thumbs_up = IntMetaAttribute(default=0, is_kwarg=False)
+    log_info = MetaAttribute(default={}, is_kwarg=False)
+
     def __init__(self, data=None, **kwargs):
         super().__init__(data=data, **kwargs)
-        self.log_info = {}
-        self.log_info['events'] = []
-        self.log_info['unix_run_time'] = time.time()
-
-        # Set default "ok" status for a catalog to be false.  The idea is that it
-        # needs to justify it is good by passing tests later.
-        self.thumbs_up = False
 
         # Make printed table look nicer.  This is defined in advance
         # and will be applied the first time the table is represented.
@@ -389,14 +393,6 @@ class ACACatalogTable(Table):
     def guides(self, val):
         self.meta['guides'] = val
 
-    @property
-    def thumbs_up(self):
-        return self.meta.get('thumbs_up')
-
-    @thumbs_up.setter
-    def thumbs_up(self, val):
-        self.meta['thumbs_up'] = int(val)
-
     def log(self, data, **kwargs):
         """
         Add a log event to self.log_info['events'] include ``data`` (which
@@ -412,8 +408,11 @@ class ACACatalogTable(Table):
         # framerecs = inspect.stack()[1:-1]
         # funcs = [framerec[3] for framerec in reversed(framerecs)]
         # func = funcs[-1]
+        log_info = self.log_info
 
-        dt = time.time() - self.log_info['unix_run_time']
+        tm = time.time()
+        dt = tm - log_info.setdefault('unix_run_time', tm)
+
         kwargs = {key: to_python(val) for key, val in kwargs.items()}
         event = dict(dt=round(dt, 4),
                      func=func,
@@ -422,7 +421,10 @@ class ACACatalogTable(Table):
         if event.get('warning') and isinstance(data, str):
             event['data'] = 'WARNING: ' + event['data']
 
-        self.log_info['events'].append(event)
+        if 'events' not in log_info:
+            log_info['events'] = []
+        log_info['events'].append(event)
+
         if self.print_log:
             data_str = ' ' * event.get('level', 0) * 4 + str(event['data'])
             print(f'{dt:7.3f} {func:20s}: {data_str}')
@@ -465,16 +467,10 @@ class ACACatalogTable(Table):
     def __getstate__(self):
         columns, meta = super().__getstate__()
         meta = meta.copy()
-        meta['log_info'] = self.log_info
         for attr in self.pickle_exclude:
             if attr in meta:
                 del meta[attr]
         return columns, meta
-
-    def __setstate__(self, state):
-        super().__setstate__(state)
-        self.log_info = self.meta['log_info']
-        del self.meta['log_info']
 
     def to_pickle(self, rootdir='.'):
         """
