@@ -83,13 +83,13 @@ def get_acq_catalog(obsid=0, **kwargs):
     # Sort to make order match the original candidate list order (by
     # increasing mag), and assign a slot.
     acqs.sort('idx')
-    acqs['slot'] = np.arange(len(acqs))
+    acqs['slot'] = np.arange(len(acqs), dtype=np.int64)
 
     # Add slot to cand_acqs table, putting in -99 if not selected as acq.
     # This is for convenience in downstream reporting or introspection.
     slots = [acqs.get_id(acq['id'])['slot'] if acq['id'] in acqs['id'] else -99
              for acq in acqs.cand_acqs]
-    acqs.cand_acqs['slot'] = slots
+    acqs.cand_acqs['slot'] = np.array(slots, dtype=np.int64)
 
     if len(acqs) < acqs.n_acq:
         acqs.log(f'Selected only {len(acqs)} acq stars versus requested {acqs.n_acq}',
