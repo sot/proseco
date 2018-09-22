@@ -216,9 +216,16 @@ def optimize_acqs_fids(acqs, fids):
     :param acqs: AcqTable object
     :param fids: FidTable object
     """
-    p2_opt = acqs.get_log_p_2_or_fewer()
+    opt_P2 = -acqs.get_log_p_2_or_fewer()
+    orig_ids = acqs['id'].tolist()
+    orig_halfws = acqs['halfw'].tolist()
 
     cand_fids = fids.cand_fids
+    if len(cand_fids) < 2:
+        acqs.log('Fewer than 2 candidate fid lights, skipping optimization',
+                 warning=True)
+        return
+
     cand_fids_ids = set(cand_fids['id'])
 
     # Get list of fid_sets that are consistent with candidate fids. These
@@ -231,7 +238,36 @@ def optimize_acqs_fids(acqs, fids):
                                 for fid_id in fid_set)
             rows.append((fid_set, spoiler_score))
 
-    fid_sets = Table(rows=rows, names=('fid_set', 'spoiler_score'))
+    fid_sets = Table(rows=rows, names=('fid_ids', 'spoiler_score'))
+    fid_sets['P2'] = -1.0  # Marker for unfilled values
+    fid_sets['halfws'] = None
+    fid_sets['ids'] = None
     fid_sets = fid_sets.group_by('spoiler_score')
 
-    return p2_opt, fid_sets
+    for fid_set_group in fid_sets.groups:
+        spoiler_score = fid_set_group['spoiler_score'][0]
+
+        for fid_set in fid_set_group:
+            acqs.fid_set = fid_set['fid_ids']
+            acqs.optimize_catalog()
+            acqs.update_p_acq_column()
+            fid_set['P2'] = -acqs.get_log_p_2_or_fewer()
+            fid_set['halfws'] = acqs['halfw'].tolist()
+            fid_set['ids'] = acqs['id'].tolist()
+            acqs.update_ids_halfws(orig_ids, orig_halfws)
+
+        idx = np.argmax(fid_sets['P2'])
+        best_P2 = fid_sets['P2'][idx]
+        stage = ACQ.fid_acq_stages.loc[spoiler_score]
+        stage_min_P2 = stage['min_P2'](opt_P2)
+
+        if best_P2 >= stage_min_P2:
+            best_ids = fid_sets['ids'][idx]
+            best_halfws = fid_sets['halfws'][idx]
+            acqs.update_ids_halfws(best_ids, best_halfws)
+            acqs.fid_set = fid_sets['fid_ids'][idx]
+            # Update fids also!
+            return
+
+    # This should never happen and indicates a flaw in program logic
+    raise RuntimeError('optimize_acqs_fids failed to find a fid set')
