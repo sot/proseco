@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 import mica.starcheck
 
-from .test_common import STD_INFO
+from .test_common import STD_INFO, mod_std_info
 from ..core import StarsTable, ACACatalogTable
 from ..catalog import get_aca_catalog
 
@@ -137,3 +137,16 @@ def test_pickle():
                 assert np.isclose(val, val2)
             else:
                 assert val == val2
+
+
+def test_big_sim_offset():
+    """
+    Check getting a catalog for a large SIM offset that means there are
+    no candidates.
+    """
+    aca = get_aca_catalog(**mod_std_info(sim_offset=200000, raise_exc=True))
+    assert len(aca.acqs) == 8
+    assert len(aca.guides) == 5
+    assert len(aca.fids) == 0
+    names = ['id', 'yang', 'zang', 'row', 'col', 'mag', 'spoiler_score', 'idx']
+    assert all(name in aca.fids.colnames for name in names)

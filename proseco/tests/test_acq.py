@@ -712,7 +712,7 @@ def test_acq_fid_probs_low_level():
                                   offset_y=[offset, 10, 10], detector='HRC-S')
 
     # Get the catalogs (n_guide=0 so skip guide selection)
-    kwargs = mod_std_info(stars=stars, dark=dark, dither=dither,
+    kwargs = mod_std_info(stars=stars, dark=dark, dither=dither, raise_exc=True,
                           n_guide=0, n_acq=5, detector='HRC-S', optimize=False)
     aca = get_aca_catalog(**kwargs)
     acqs = aca.acqs

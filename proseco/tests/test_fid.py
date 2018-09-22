@@ -4,7 +4,7 @@ import numpy as np
 from ..fid import get_fid_positions, get_fid_catalog
 from ..acq import get_acq_catalog
 from ..core import StarsTable
-from .test_common import OBS_INFO, STD_INFO
+from .test_common import OBS_INFO, STD_INFO, mod_std_info
 from .. import characteristics_fid as FID
 
 
@@ -186,3 +186,9 @@ def test_fid_spoiler_score():
     std_info['dither'] = dither
     fids = get_fid_catalog(stars=stars, **std_info)
     assert np.all(fids.cand_fids['spoiler_score'] == [0, 4, 0, 0, 0, 0])
+
+
+def test_big_sim_offset():
+    fids = get_fid_catalog(**mod_std_info(stars=StarsTable.empty(), sim_offset=300000))
+    names = ['id', 'yang', 'zang', 'row', 'col', 'mag', 'spoiler_score', 'idx']
+    assert all(name in fids.colnames for name in names)

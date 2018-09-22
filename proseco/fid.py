@@ -99,8 +99,6 @@ class FidTable(ACACatalogTable):
         """
         Set the `slot` column.
         """
-        not_sel = -99  # Not selected
-
         if len(self) > 0:
             # Sort to make order match the original candidate list order (by
             # increasing mag), and assign a slot.
@@ -109,11 +107,11 @@ class FidTable(ACACatalogTable):
             # Add slot to cand_fids table, putting in '...' if not selected as acq.
             # This is for convenience in downstream reporting or introspection.
             cand_fids = self.cand_fids
-            slots = [self.get_id(fid['id'])['slot'] if fid['id'] in self['id'] else not_sel
+            slots = [self.get_id(fid['id'])['slot'] if fid['id'] in self['id'] else -99
                      for fid in cand_fids]
             cand_fids['slot'] = slots
         else:
-            self.cand_fids['slot'] = -99
+            self.cand_fids['slot'] = np.full((len(self.cand_fids),), -99, dtype=np.int64)
 
     def set_initial_catalog(self):
         """Set initial fid catalog (fid set) if possible to the first set which is
@@ -227,9 +225,10 @@ class FidTable(ACACatalogTable):
         self.reject_off_ccd(cand_fids)
         self.reject_bad_pixel(cand_fids)
 
-        cand_fids['mag'] = FID.fid_mag  # 7.000
-        cand_fids['spoilers'] = None  # Filled in with Table of spoilers
-        cand_fids['spoiler_score'] = np.int64(0)
+        shape = (len(cand_fids),)
+        cand_fids['mag'] = np.full(shape, FID.fid_mag)  # 7.000
+        cand_fids['spoilers'] = np.full(shape, None)  # Filled in with Table of spoilers
+        cand_fids['spoiler_score'] = np.full(shape, 0, dtype=np.int64)
 
         # If stars are available then find stars that are bad for fid.
         if self.stars:
@@ -245,19 +244,11 @@ class FidTable(ACACatalogTable):
 
         :param cand_fids: table of candidate fid lights (on CCD)
         """
-        n_cand_fids = len(cand_fids)
         idx_bads = []
 
         for idx, fid in enumerate(cand_fids):
             if ((np.abs(fid['row']) + FID.ccd_edge_margin > ACQ.max_ccd_row) or
                     (np.abs(fid['col']) + FID.ccd_edge_margin > ACQ.max_ccd_col)):
-                # If this would result in fewer than 2 fid lights in catalog then
-                # just stop rejecting.  It will be picked up in review.
-                if n_cand_fids - len(idx_bads) <= 2:
-                    self.log('ERROR: fewer than 2 good fids found, accepting '
-                             'off-CCD fid light(s)', level=1)
-                    break
-
                 self.log(f'Rejecting fid id={fid["id"]} row,col='
                          f'({fid["row"]:.1f}, {fid["col"]:.1f}) off CCD',
                          level=1)
