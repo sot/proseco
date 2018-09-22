@@ -216,7 +216,7 @@ def optimize_acqs_fids(acqs, fids):
     :param acqs: AcqTable object
     :param fids: FidTable object
     """
-    p2_opt = np.log10(acqs.get_p_2_or_fewer())
+    p2_opt = acqs.get_log_p_2_or_fewer()
 
     cand_fids = fids.cand_fids
     cand_fids_ids = set(cand_fids['id'])

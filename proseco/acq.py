@@ -78,7 +78,7 @@ def get_acq_catalog(obsid=0, **kwargs):
         acqs.optimize_catalog(acqs.verbose)
 
     # Set p_acq column to be the marginalized probabilities
-    acqs['p_acq'] = [acq['probs'].p_acq_marg(acq['halfw']) for acq in acqs]
+    acqs.update_p_acq_column()
 
     # Sort to make order match the original candidate list order (by
     # increasing mag), and assign a slot.
@@ -95,7 +95,7 @@ def get_acq_catalog(obsid=0, **kwargs):
         acqs.log(f'Selected only {len(acqs)} acq stars versus requested {acqs.n_acq}',
                  warning=True)
 
-    acqs.thumbs_up = acqs.get_p_2_or_fewer() <= CHAR.acq_prob
+    acqs.thumbs_up = acqs.get_log_p_2_or_fewer() <= np.log10(CHAR.acq_prob)
 
     return acqs
 
@@ -177,23 +177,26 @@ class AcqTable(ACACatalogTable):
 
         # Update marginalized p_acq and p_safe.  The underlying probability
         # functions know about fid_set and new values are computed on-demand.
-        for acq in self:
-            acq['p_acq'] = acq['probs'].p_acq_marg(acq['halfw'])
+        self.update_p_acq_column()
         self.p_safe = self.calc_p_safe()
 
-    def get_p_2_or_fewer(self):
+    def update_p_acq_column(self):
+        for acq in self:
+            acq['p_acq'] = acq['probs'].p_acq_marg(acq['halfw'])
+
+    def get_log_p_2_or_fewer(self):
         """
         Return the starcheck acquisition merit function of the probability of
         acquiring two or fewer stars.
 
-        :returns: probability (float)
+        :returns: log10(probability) (float)
         """
         n_or_fewer_probs = prob_n_acq(self['p_acq'])[1]
         if len(n_or_fewer_probs) > 2:
             p_2_or_fewer = n_or_fewer_probs[2]
         else:
             p_2_or_fewer = 1.0
-        return p_2_or_fewer
+        return np.log10(p_2_or_fewer)
 
     def get_obs_info(self):
         """
@@ -406,8 +409,7 @@ class AcqTable(ACACatalogTable):
         # p_acq to the marginalized acquisition probability.
         cand_acqs['halfw'] = 120
         cand_acqs['halfw'][acq_indices] = box_sizes
-        for acq in cand_acqs:
-            acq['p_acq'] = acq['probs'].p_acq_marg(acq['halfw'])
+        cand_acqs.update_p_acq_column()
 
         # Finally select the initial catalog
         acqs_init = cand_acqs[acq_indices]
