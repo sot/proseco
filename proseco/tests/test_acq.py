@@ -719,7 +719,7 @@ def test_acq_fid_probs_low_level():
 
     # Initial fid set is empty () and we check baseline p_safe
     assert acqs.fid_set == ()
-    assert np.allclose(np.log10(acqs.calc_p_safe()), -4.0,
+    assert np.allclose(np.log10(acqs.calc_p_safe()), -3.75,
                        rtol=0, atol=0.1)
 
     # This is the acq star spoiled by fid_id=2
@@ -743,7 +743,7 @@ def test_acq_fid_probs_low_level():
     # spoils an acq star.  This makes the p_safe value much worse.
     acqs.fid_set = (4, 3, 2)
     assert acqs.fid_set == (2, 3, 4)  # gets sorted when set
-    assert np.allclose(np.log10(acqs.calc_p_safe()), -2.6,
+    assert np.allclose(np.log10(acqs.calc_p_safe()), -2.4,
                        rtol=0, atol=0.1)
 
     # With fid_set = (1, 2, 4), the probability multiplier for catalog
@@ -756,7 +756,7 @@ def test_acq_fid_probs_low_level():
     # set does not spoil an acq star.
     for fid_set in ((1, 3, 4), ()):
         acqs.fid_set = fid_set
-        assert np.allclose(np.log10(acqs.calc_p_safe()), -4.0,
+        assert np.allclose(np.log10(acqs.calc_p_safe()), -3.75,
                            rtol=0, atol=0.1)
 
     # Check that p_acqs() method responds to fid_set in expected way
