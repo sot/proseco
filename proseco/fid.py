@@ -99,7 +99,7 @@ class FidTable(ACACatalogTable):
         """
         Set the `slot` column.
         """
-        not_sel = '...'  # Not selected
+        not_sel = -99  # Not selected
 
         if len(self) > 0:
             # Sort to make order match the original candidate list order (by
@@ -109,11 +109,11 @@ class FidTable(ACACatalogTable):
             # Add slot to cand_fids table, putting in '...' if not selected as acq.
             # This is for convenience in downstream reporting or introspection.
             cand_fids = self.cand_fids
-            slots = [str(self.get_id(fid['id'])['slot']) if fid['id'] in self['id'] else not_sel
+            slots = [self.get_id(fid['id'])['slot'] if fid['id'] in self['id'] else not_sel
                      for fid in cand_fids]
             cand_fids['slot'] = slots
         else:
-            self.cand_fids['slot'] = '...'
+            self.cand_fids['slot'] = -99
 
     def set_initial_catalog(self):
         """Set initial fid catalog (fid set) if possible to the first set which is

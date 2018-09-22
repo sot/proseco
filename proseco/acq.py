@@ -85,9 +85,9 @@ def get_acq_catalog(obsid=0, **kwargs):
     acqs.sort('idx')
     acqs['slot'] = np.arange(len(acqs))
 
-    # Add slot to cand_acqs table, putting in '...' if not selected as acq.
+    # Add slot to cand_acqs table, putting in -99 if not selected as acq.
     # This is for convenience in downstream reporting or introspection.
-    slots = [str(acqs.get_id(acq['id'])['slot']) if acq['id'] in acqs['id'] else '...'
+    slots = [acqs.get_id(acq['id'])['slot'] if acq['id'] in acqs['id'] else -99
              for acq in acqs.cand_acqs]
     acqs.cand_acqs['slot'] = slots
 

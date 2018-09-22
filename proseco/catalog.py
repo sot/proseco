@@ -4,11 +4,12 @@ from itertools import count
 
 from astropy.table import Column, Table
 
-from .core import ACACatalogTable, get_kwargs_from_starcheck_text
+from .core import ACACatalogTable, get_kwargs_from_starcheck_text, MetaAttribute
 from .guide import get_guide_catalog, GuideTable
 from .acq import get_acq_catalog, AcqTable
 from .fid import get_fid_catalog, FidTable
 from . import characteristics_fid as FID
+from . import characteristics as ACQ
 
 
 def get_aca_catalog(obsid=0, **kwargs):
@@ -80,7 +81,7 @@ def _get_aca_catalog(**kwargs):
 
     aca.acqs.fids = aca.fids
 
-    if len(aca.fids) == 0:
+    if len(aca.fids) == 0 and aca.optimize:
         optimize_acqs_fids(aca.acqs, aca.fids)
 
     stars = kwargs.pop('stars', aca.acqs.stars)
@@ -109,6 +110,8 @@ def _get_aca_catalog(**kwargs):
 
 
 class ACATable(ACACatalogTable):
+    optimize = MetaAttribute(default=True)
+
     @classmethod
     def empty(cls):
         out = super().empty()
