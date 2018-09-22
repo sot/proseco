@@ -181,8 +181,33 @@ class AcqTable(ACACatalogTable):
         self.p_safe = self.calc_p_safe()
 
     def update_p_acq_column(self):
+        """
+        Update (in-place) the marginalized acquisition probability column
+        'p_acq'.  This is typically called after a change in catalog or
+        change in the fid set.  The acq['probs'].p_acq_marg() method will
+        pick up the new fid set.
+        """
         for acq in self:
             acq['p_acq'] = acq['probs'].p_acq_marg(acq['halfw'])
+
+    def update_ids_halfws(self, agasc_ids, halfws):
+        """
+        Update the rows of self to match the specified ``agasc_ids``
+        and half widths.  These two input lists must match the length
+        of self and correspond to stars in self.cand_acqs.
+
+        :param agasc_ids: list of AGASC IDs
+        :param halfws: list of search box half widths
+        """
+        if len(agasc_ids) != len(self) or len(halfws) != len(self):
+            raise ValueError('input lists must match length of acqs')
+
+        for acq, agasc_id, halfw in zip(self, agasc_ids, halfws):
+            if acq['id'] != agasc_id:
+                acq_orig = self.cand_acqs.get_id(agasc_id)
+                for name in self.colnames:
+                    acq[name] = acq_orig[name]
+            acq['halfw'] = halfw
 
     def get_log_p_2_or_fewer(self):
         """
