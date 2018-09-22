@@ -14,7 +14,7 @@ from chandra_aca.transform import yagzag_to_pixels
 from . import characteristics_fid as FID
 from . import characteristics as ACQ
 
-from .core import ACACatalogTable
+from .core import ACACatalogTable, MetaAttribute
 
 
 def get_fid_catalog(obsid=0, **kwargs):
@@ -78,6 +78,8 @@ class FidTable(ACACatalogTable):
     # Name of table.  Use to define default file names where applicable.
     # (e.g. `obs19387/fids.yaml`).
     name = 'fids'
+
+    cand_fids = MetaAttribute(is_kwarg=False)
 
     allowed_kwargs = ACACatalogTable.allowed_kwargs | set(['acqs'])
 
@@ -153,7 +155,7 @@ class FidTable(ACACatalogTable):
                 for fid_id in fid_set:
                     if fid_id not in spoils_any_acq:
                         fid = cand_fids.get_id(fid_id)
-                        spoils_any_acq[fid_id] = any(self.spoils(fid, acq)
+                        spoils_any_acq[fid_id] = any(self.spoils(fid, acq, acq['halfw'])
                                                      for acq in self.acqs)
                     if spoils_any_acq[fid_id]:
                         # Loser, don't bother with the rest.
@@ -176,7 +178,9 @@ class FidTable(ACACatalogTable):
         for name, col in cand_fids.columns.items():
             self[name] = col[idxs]
 
-    def spoils(self, fid, acq):
+        self.cand_fids = cand_fids
+
+    def spoils(self, fid, acq, box_size):
         """
         Return true if ``fid`` could be within ``acq`` search box.
 
@@ -189,15 +193,14 @@ class FidTable(ACACatalogTable):
 
         :param fid: fid light (FidTable Row)
         :param acq: acq star (AcqTable Row)
+        :param box_size: box size (arcsec)
 
         :returns: True if ``fid`` could be within ``acq`` search box
         """
-        spoiler_margin = (FID.spoiler_margin +
-                          self.dither_acq +
-                          acq['halfw'])
+        spoiler_margin = FID.spoiler_margin + self.dither_acq + box_size
         dy = np.abs(fid['yang'] - acq['yang'])
         dz = np.abs(fid['zang'] - acq['zang'])
-        return (dy < spoiler_margin.y and dz < spoiler_margin.z)
+        return dy < spoiler_margin.y and dz < spoiler_margin.z
 
     def get_fid_candidates(self):
         """
