@@ -269,7 +269,7 @@ def optimize_acqs_fids(acqs, fids):
             best_halfws = fid_sets['halfws'][idx]
             acqs.update_ids_halfws(best_ids, best_halfws)
             acqs.fid_set = fid_sets['fid_ids'][idx]
-            # Update fids also!
+            fids.set_fid_set(acqs.fid_set)
             return
 
     # This should never happen and indicates a flaw in program logic

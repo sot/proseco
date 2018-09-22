@@ -62,8 +62,6 @@ def get_fid_catalog(obsid=0, **kwargs):
     if len(fids) > fids.n_fid:
         fids = fids[:fids.n_fid]
 
-    fids['idx'] = np.arange(len(fids))
-
     # Set fid thumbs_up if fids has the number of requested fid lights
     fids.thumbs_up = len(fids) == fids.n_fid
 
@@ -95,23 +93,24 @@ class FidTable(ACACatalogTable):
     def acqs(self, val):
         self._acqs = weakref.ref(val)
 
+    def set_fid_set(self, fid_ids):
+        if len(self) > 0:
+            self.remove_rows(np.arange(len(self)))
+        for fid_id in sorted(fid_ids):
+            self.add_row(self.cand_fids.get_id(fid_id))
+
     def set_slot_column(self):
         """
         Set the `slot` column.
         """
-        if len(self) > 0:
-            # Sort to make order match the original candidate list order (by
-            # increasing mag), and assign a slot.
-            self['slot'] = np.arange(len(self))
+        self['slot'] = np.arange(len(self), dtype=np.int64)
 
-            # Add slot to cand_fids table, putting in '...' if not selected as acq.
-            # This is for convenience in downstream reporting or introspection.
-            cand_fids = self.cand_fids
-            slots = [self.get_id(fid['id'])['slot'] if fid['id'] in self['id'] else -99
-                     for fid in cand_fids]
-            cand_fids['slot'] = slots
-        else:
-            self.cand_fids['slot'] = np.full((len(self.cand_fids),), -99, dtype=np.int64)
+        # Add slot to cand_fids table, putting in -99 if not selected as acq.
+        # This is for convenience in downstream reporting or introspection.
+        cand_fids = self.cand_fids
+        slots = [self.get_id(fid['id'])['slot'] if fid['id'] in self['id'] else -99
+                 for fid in cand_fids]
+        cand_fids['slot'] = np.array(slots, dtype=np.int64)
 
     def set_initial_catalog(self):
         """Set initial fid catalog (fid set) if possible to the first set which is
@@ -229,6 +228,7 @@ class FidTable(ACACatalogTable):
         cand_fids['mag'] = np.full(shape, FID.fid_mag)  # 7.000
         cand_fids['spoilers'] = np.full(shape, None)  # Filled in with Table of spoilers
         cand_fids['spoiler_score'] = np.full(shape, 0, dtype=np.int64)
+        cand_fids['idx'] = np.arange(len(cand_fids), dtype=np.int64)
 
         # If stars are available then find stars that are bad for fid.
         if self.stars:
