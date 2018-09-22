@@ -44,17 +44,18 @@ def get_aca_catalog(obsid=0, **kwargs):
     :returns: AcaCatalogTable of stars and fids
 
     """
-    # If obsid is supplied as a string then it is taken to be starcheck text
-    # with required info.  User-supplied kwargs take precedence, however.
-    if isinstance(obsid, str):
-        kw = get_kwargs_from_starcheck_text(obsid)
-        obsid = kw.pop('obsid')
-        for key, val in kw.items():
-            if key not in kwargs:
-                kwargs[key] = val
-
-    raise_exc = kwargs.pop('raise_exc', None)
     try:
+        # If obsid is supplied as a string then it is taken to be starcheck text
+        # with required info.  User-supplied kwargs take precedence, however.
+        if isinstance(obsid, str):
+            kw = get_kwargs_from_starcheck_text(obsid)
+            obsid = kw.pop('obsid')
+            for key, val in kw.items():
+                if key not in kwargs:
+                    kwargs[key] = val
+
+        raise_exc = kwargs.pop('raise_exc', None)
+
         aca = _get_aca_catalog(obsid=obsid, raise_exc=raise_exc, **kwargs)
 
     except Exception:
@@ -62,15 +63,8 @@ def get_aca_catalog(obsid=0, **kwargs):
             # This is for debugging
             raise
 
-        aca = ACACatalogTable.empty()  # Makes zero-length table with correct columns
+        aca = ACATable.empty()  # Makes zero-length table with correct columns
         aca.exception = traceback.format_exc()
-
-        if aca.acqs is None:
-            aca.acqs = AcqTable.empty()
-        if aca.fids is None:
-            aca.fids = FidTable.empty()
-        if aca.guides is None:
-            aca.guides = GuideTable.empty()
 
     return aca
 
@@ -78,7 +72,7 @@ def get_aca_catalog(obsid=0, **kwargs):
 def _get_aca_catalog(**kwargs):
     raise_exc = kwargs.pop('raise_exc')
 
-    aca = ACACatalogTable()
+    aca = ACATable()
     aca.set_attrs_from_kwargs(**kwargs)
 
     aca.acqs = get_acq_catalog(**kwargs)
@@ -104,10 +98,24 @@ def _get_aca_catalog(**kwargs):
     except Exception:
         if raise_exc:
             raise
-        aca['id'] = []  # Equivalent to ACACatalogTable.empty()
+
+        empty = ACACatalogTable.empty()
+        for name in empty.colnames:
+            aca[name] = empty[name]
+
         aca.exception = traceback.format_exc()
 
     return aca
+
+
+class ACATable(ACACatalogTable):
+    @classmethod
+    def empty(cls):
+        out = super().empty()
+        out.acqs = AcqTable.empty()
+        out.fids = FidTable.empty()
+        out.guides = GuideTable.empty()
+        return out
 
 
 def merge_cats(fids=None, guides=None, acqs=None):
