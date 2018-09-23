@@ -1,6 +1,7 @@
 from __future__ import print_function, division, absolute_import
 
 import numpy as np
+from scipy.interpolate import interp1d
 from astropy.table import Table
 
 box_sizes = np.array([160, 140, 120, 100, 80, 60])  # MUST be descending order
@@ -100,3 +101,37 @@ bad_star_list = [36178592,
 # Minimum acquisition probability thresholds from starcheck for thumbs_up
 acq_prob_n = 2
 acq_prob = 8e-3
+
+
+def _get_fid_acq_stages():
+    fid_acqs = Table.read("""
+
+   warns score P2=0.0 P2=2.0 P2=2.5 P2=3.0 P2=4.0 P2=5.0 P2=6.0 P2=8.0 P2=99.0
+   ----- ----- ------ ------ ------ ------ ------ ------ ------ ------ -------
+       -     0      0    1.9    2.4    2.8    3.6    4.5    5.0    6.0     6.0
+       Y     1      0    1.9    2.4    2.8    3.6    4.5    5.0    6.0     6.0
+      YY     2      0    1.9    2.4   2.75    3.4    4.2    4.2    4.5     4.5
+     YYY     3      0    1.9    2.4    2.7    3.2    3.5    3.5    3.5     3.5
+       R     4      0    1.7    2.2    2.5    3.1    3.4    3.4    3.4     3.4
+      RY     5      0    1.7    2.2    2.4    3.0    3.3    3.3    3.3     3.3
+     RYY     6      0    1.7    2.2    2.3    2.5    2.5    2.5    2.5     2.5
+      RR     8      0    1.5    2.0    2.0    2.0    2.0    2.0    2.0     2.0
+     RRY     9      0    1.5    2.0    2.0    2.0    2.0    2.0    2.0     2.0
+     RRR    12     -1   -1.0   -1.0   -1.0   -1.0   -1.0   -1.0   -1.0    -1.0
+
+    """, format='ascii.fixed_width_two_line')
+
+    P2s = [float(name[3:]) for name in fid_acqs.colnames
+           if name.startswith('P2=')]
+    funcs = []
+    for fid_acq in fid_acqs:
+        vals = [fid_acq[name] for name in fid_acqs.colnames
+                if name.startswith('P2=')]
+        funcs.append(interp1d(P2s, vals))
+
+    out = Table([fid_acqs['score'], funcs],
+                names=['spoiler_score', 'min_P2'])
+    out.add_index('spoiler_score')
+    return out
+
+fid_acq_stages = _get_fid_acq_stages()

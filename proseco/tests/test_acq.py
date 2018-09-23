@@ -382,20 +382,20 @@ def test_get_acq_catalog_19387():
     acqs = get_acq_catalog(**OBS_INFO[19387])
     # Expected
     exp = ['<AcqTable length=11>',
-           ' idx  slot    id      yang     zang   halfw   mag    p_acq ',
-           'int64 str3  int32   float64  float64  int64 float32 float64',
-           '----- ---- -------- -------- -------- ----- ------- -------',
-           '    0    0 38280776 -2254.09 -2172.43   160    8.77   0.985',
-           '    1    1 37879960  -567.34  -632.27    80    9.20   0.984',
-           '    2    2 37882072  2197.62  1608.89   160   10.16   0.857',
-           '    3    3 37879992   318.47 -1565.92    60   10.41   0.933',
-           '    4    4 37882416   481.80  2204.44   100   10.41   0.865',
-           '    5    5 37880176   121.33 -1068.25    60   10.62   0.584',
-           '    6    6 37881728  2046.89  1910.79   100   10.76   0.057',
-           '    7    7 37880376 -1356.71  1071.32   100   10.80   0.084',
-           '    8  ... 38276824 -1822.26 -1813.66   120   10.86   0.017',
-           '    9  ... 37880152 -1542.43   970.39   120   10.88   0.008',
-           '   10  ... 37882776  1485.00   127.97   120   10.93   0.007']
+           ' idx   slot    id      yang     zang   halfw   mag    p_acq ',
+           'int64 int64  int32   float64  float64  int64 float32 float64',
+           '----- ----- -------- -------- -------- ----- ------- -------',
+           '    0     0 38280776 -2254.09 -2172.43   160    8.77   0.985',
+           '    1     1 37879960  -567.34  -632.27    80    9.20   0.984',
+           '    2     2 37882072  2197.62  1608.89   160   10.16   0.857',
+           '    3     3 37879992   318.47 -1565.92    60   10.41   0.933',
+           '    4     4 37882416   481.80  2204.44   100   10.41   0.865',
+           '    5     5 37880176   121.33 -1068.25    60   10.62   0.584',
+           '    6     6 37881728  2046.89  1910.79   100   10.76   0.057',
+           '    7     7 37880376 -1356.71  1071.32   100   10.80   0.084',
+           '    8   -99 38276824 -1822.26 -1813.66   120   10.86   0.017',
+           '    9   -99 37880152 -1542.43   970.39   120   10.88   0.008',
+           '   10   -99 37882776  1485.00   127.97   120   10.93   0.007']
 
     assert repr(acqs.cand_acqs[TEST_COLS]).splitlines() == exp
 
@@ -426,23 +426,23 @@ def test_get_acq_catalog_21007():
     acqs = get_acq_catalog(**OBS_INFO[21007])
 
     exp = ['<AcqTable length=14>',
-           ' idx  slot     id      yang     zang   halfw   mag    p_acq ',
-           'int64 str3   int32   float64  float64  int64 float32 float64',
-           '----- ---- --------- -------- -------- ----- ------- -------',
-           '    0    0 189417400 -2271.86 -1634.77   160    7.71   0.985',
-           '    1    1 189410928   -62.52  1763.04   160    8.84   0.982',
-           '    2    2 189409160 -2223.75  1998.69   160    9.84   0.876',
-           '    3    3 189417920  1482.94   243.72   160    9.94   0.807',
-           '    4    4 189015480  2222.47  -580.99    60   10.01   0.538',
-           '    5    5 189417752  1994.07   699.55   100   10.24   0.503',
-           '    6    6 189406216 -2311.90  -240.18    80   10.26   0.514',
-           '    7    7 189416328  1677.88   137.11    60   10.40   0.348',
-           '    8  ... 189416496   333.11   -63.30   120   10.58   0.003',
-           '    9  ... 189410280  -495.21  1712.02   120   10.62   0.005',
-           '   10  ... 189416808  2283.31  2007.54   120   10.86   0.000',
-           '   11  ... 189417392   163.37   165.65   120   10.95   0.000',
-           '   12  ... 189017968  1612.35 -1117.76   120   10.98   0.000',
-           '   13  ... 189011576   553.50 -2473.81   120   10.99   0.000']
+           ' idx   slot     id      yang     zang   halfw   mag    p_acq ',
+           'int64 int64   int32   float64  float64  int64 float32 float64',
+           '----- ----- --------- -------- -------- ----- ------- -------',
+           '    0     0 189417400 -2271.86 -1634.77   160    7.71   0.985',
+           '    1     1 189410928   -62.52  1763.04   160    8.84   0.982',
+           '    2     2 189409160 -2223.75  1998.69   160    9.84   0.876',
+           '    3     3 189417920  1482.94   243.72   160    9.94   0.807',
+           '    4     4 189015480  2222.47  -580.99    60   10.01   0.538',
+           '    5     5 189417752  1994.07   699.55   100   10.24   0.503',
+           '    6     6 189406216 -2311.90  -240.18    80   10.26   0.514',
+           '    7     7 189416328  1677.88   137.11    60   10.40   0.348',
+           '    8   -99 189416496   333.11   -63.30   120   10.58   0.003',
+           '    9   -99 189410280  -495.21  1712.02   120   10.62   0.005',
+           '   10   -99 189416808  2283.31  2007.54   120   10.86   0.000',
+           '   11   -99 189417392   163.37   165.65   120   10.95   0.000',
+           '   12   -99 189017968  1612.35 -1117.76   120   10.98   0.000',
+           '   13   -99 189011576   553.50 -2473.81   120   10.99   0.000']
 
     assert repr(acqs.cand_acqs[TEST_COLS]).splitlines() == exp
 
@@ -469,22 +469,22 @@ def test_box_strategy_20603():
     acqs = get_acq_catalog(**OBS_INFO[20603])
 
     exp = ['<AcqTable length=13>',
-           ' idx  slot     id      yang     zang   halfw   mag    p_acq ',
-           'int64 str3   int32   float64  float64  int64 float32 float64',
-           '----- ---- --------- -------- -------- ----- ------- -------',
-           '    0    0  40113544   102.74  1133.37   160    7.91   0.985',
-           '    1    1 116791824   622.00  -953.60   160    9.01   0.958',
-           '    2    2 116923496 -1337.79  1049.27   120    9.14   0.970',
-           '    3    3  40114416   394.22  1204.43   160    9.78   0.885',
-           '    4    4  40112304 -1644.35  2032.47    80    9.79   0.932',
-           '    5    5 116923528 -2418.65  1088.40   160    9.84   0.593',
-           '    6    6 116791744   985.38 -1210.19    60   10.29   0.501',
-           '    7  ...  40108048     2.21  1619.17   120   10.46   0.023',
-           '    8    7 116785920  -673.94 -1575.87    60   10.50   0.136',
-           '    9  ... 116791664  2307.25 -1504.54   120   10.74   0.000',
-           '   10  ... 116792320   941.59 -1784.10   120   10.83   0.000',
-           '   11  ... 116923744  -853.18   937.73   120   10.84   0.000',
-           '   12  ... 116918232 -2074.91 -1769.96   120   10.96   0.000']
+           ' idx   slot     id      yang     zang   halfw   mag    p_acq ',
+           'int64 int64   int32   float64  float64  int64 float32 float64',
+           '----- ----- --------- -------- -------- ----- ------- -------',
+           '    0     0  40113544   102.74  1133.37   160    7.91   0.985',
+           '    1     1 116791824   622.00  -953.60   160    9.01   0.958',
+           '    2     2 116923496 -1337.79  1049.27   120    9.14   0.970',
+           '    3     3  40114416   394.22  1204.43   160    9.78   0.885',
+           '    4     4  40112304 -1644.35  2032.47    80    9.79   0.932',
+           '    5     5 116923528 -2418.65  1088.40   160    9.84   0.593',
+           '    6     6 116791744   985.38 -1210.19    60   10.29   0.501',
+           '    7   -99  40108048     2.21  1619.17   120   10.46   0.023',
+           '    8     7 116785920  -673.94 -1575.87    60   10.50   0.136',
+           '    9   -99 116791664  2307.25 -1504.54   120   10.74   0.000',
+           '   10   -99 116792320   941.59 -1784.10   120   10.83   0.000',
+           '   11   -99 116923744  -853.18   937.73   120   10.84   0.000',
+           '   12   -99 116918232 -2074.91 -1769.96   120   10.96   0.000']
 
     assert repr(acqs.cand_acqs[TEST_COLS]).splitlines() == exp
 
@@ -644,21 +644,21 @@ def test_n_acq():
     stars.add_fake_constellation(mag=np.linspace(10.005, 10.035, 4), size=1500, n_stars=4)
     acqs = get_acq_catalog(**STD_INFO, stars=stars, n_acq=6)
     exp = ['<AcqTable length=12>',
-           ' idx  slot   id    yang     zang   halfw   mag    p_acq ',
-           'int64 str3 int32 float64  float64  int64 float32 float64',
-           '----- ---- ----- -------- -------- ----- ------- -------',
-           '    0    0   100  2000.00     0.00   160   10.00   0.777',
-           '    1    1   108  1500.00     0.00   160   10.01   0.773',
-           '    2    2   101     0.00  2000.00   160   10.01   0.768',
-           '    3    3   109     0.00  1500.00   160   10.02   0.763',
-           '    4    4   102 -2000.00     0.00   160   10.02   0.758',
-           '    5  ...   110 -1500.00     0.00   120   10.02   0.634',
-           '    6    5   103     0.00 -2000.00   140   10.03   0.787',
-           '    7  ...   111     0.00 -1500.00   120   10.03   0.821',
-           '    8  ...   104  1000.00  1000.00   120   10.04   0.285',
-           '    9  ...   105  1000.00 -1000.00   120   10.05   0.807',
-           '   10  ...   106 -1000.00  1000.00   120   10.06   0.797',
-           '   11  ...   107 -1000.00 -1000.00   120   10.07   0.787']
+           ' idx   slot   id    yang     zang   halfw   mag    p_acq ',
+           'int64 int64 int32 float64  float64  int64 float32 float64',
+           '----- ----- ----- -------- -------- ----- ------- -------',
+           '    0     0   100  2000.00     0.00   160   10.00   0.777',
+           '    1     1   108  1500.00     0.00   160   10.01   0.773',
+           '    2     2   101     0.00  2000.00   160   10.01   0.768',
+           '    3     3   109     0.00  1500.00   160   10.02   0.763',
+           '    4     4   102 -2000.00     0.00   160   10.02   0.758',
+           '    5   -99   110 -1500.00     0.00   120   10.02   0.634',
+           '    6     5   103     0.00 -2000.00   140   10.03   0.787',
+           '    7   -99   111     0.00 -1500.00   120   10.03   0.821',
+           '    8   -99   104  1000.00  1000.00   120   10.04   0.285',
+           '    9   -99   105  1000.00 -1000.00   120   10.05   0.807',
+           '   10   -99   106 -1000.00  1000.00   120   10.06   0.797',
+           '   11   -99   107 -1000.00 -1000.00   120   10.07   0.787']
 
     assert repr(acqs.cand_acqs[TEST_COLS]).splitlines() == exp
 
@@ -712,14 +712,14 @@ def test_acq_fid_probs_low_level():
                                   offset_y=[offset, 10, 10], detector='HRC-S')
 
     # Get the catalogs (n_guide=0 so skip guide selection)
-    kwargs = mod_std_info(stars=stars, dark=dark, dither=dither,
-                          n_guide=0, n_acq=5, detector='HRC-S')
+    kwargs = mod_std_info(stars=stars, dark=dark, dither=dither, raise_exc=True,
+                          n_guide=0, n_acq=5, detector='HRC-S', optimize=False)
     aca = get_aca_catalog(**kwargs)
     acqs = aca.acqs
 
     # Initial fid set is empty () and we check baseline p_safe
     assert acqs.fid_set == ()
-    assert np.allclose(np.log10(acqs.calc_p_safe()), -4.0,
+    assert np.allclose(np.log10(acqs.calc_p_safe()), -3.75,
                        rtol=0, atol=0.1)
 
     # This is the acq star spoiled by fid_id=2
@@ -743,7 +743,7 @@ def test_acq_fid_probs_low_level():
     # spoils an acq star.  This makes the p_safe value much worse.
     acqs.fid_set = (4, 3, 2)
     assert acqs.fid_set == (2, 3, 4)  # gets sorted when set
-    assert np.allclose(np.log10(acqs.calc_p_safe()), -2.6,
+    assert np.allclose(np.log10(acqs.calc_p_safe()), -2.4,
                        rtol=0, atol=0.1)
 
     # With fid_set = (1, 2, 4), the probability multiplier for catalog
@@ -756,7 +756,7 @@ def test_acq_fid_probs_low_level():
     # set does not spoil an acq star.
     for fid_set in ((1, 3, 4), ()):
         acqs.fid_set = fid_set
-        assert np.allclose(np.log10(acqs.calc_p_safe()), -4.0,
+        assert np.allclose(np.log10(acqs.calc_p_safe()), -3.75,
                            rtol=0, atol=0.1)
 
     # Check that p_acqs() method responds to fid_set in expected way
@@ -778,3 +778,38 @@ def test_acq_fid_probs_low_level():
             else:
                 # No spoiler, so no change in p_acq
                 assert p_acq0 == p_acq1
+
+
+def test_acq_fid_simple():
+    """
+    Test optimizing acq and fid in a simple case.
+    """
+    # Put an acq star at an offset from fid light id=2 such that for a search
+    # box size larger than box_size_thresh, that star will be spoiled.  This
+    # uses the equation in FidTable.spoils().
+    dither = 20
+    box_size_thresh = 90
+    offset = box_size_thresh + FID.spoiler_margin + dither
+
+    dark = ACAImage(np.full(shape=(1024, 1024), fill_value=40), row0=-512, col0=-512)
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(mag=[9.5, 9.6, 9.7, 10], n_stars=4)
+
+    # Add stars near fid light positions.  For fids 3, 4 put in fid spoilers
+    # so the initial fid set is empty.
+    stars.add_fake_stars_from_fid(fid_id=[2, 3, 4],
+                                  id=[2, 3, 4],
+                                  mag=[8.2, 11.5, 11.5],
+                                  offset_y=[offset, 10, 10], detector='HRC-S')
+
+    # Get the catalogs (n_guide=0 so skip guide selection)
+    kwargs = mod_std_info(stars=stars, dark=dark, dither=dither, raise_exc=True,
+                          n_guide=0, n_acq=5, detector='HRC-S')
+    aca = get_aca_catalog(**kwargs)
+    acqs = aca.acqs
+
+    repr(acqs)
+    assert acqs['id'].tolist() == [2, 100, 101, 102, 103]
+    assert acqs['halfw'].tolist() == [160, 160, 160, 160, 80]
+    assert acqs.fids['id'].tolist() == [1, 3, 4]
+    assert acqs.fid_set == (1, 3, 4)

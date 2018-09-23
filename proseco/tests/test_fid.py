@@ -4,7 +4,7 @@ import numpy as np
 from ..fid import get_fid_positions, get_fid_catalog
 from ..acq import get_acq_catalog
 from ..core import StarsTable
-from .test_common import OBS_INFO, STD_INFO
+from .test_common import OBS_INFO, STD_INFO, mod_std_info
 from .. import characteristics_fid as FID
 
 
@@ -47,15 +47,15 @@ def test_get_fid_position():
 def test_get_initial_catalog():
     # Basic catalog with no stars in field.  Standard 2-4-5 config.
     exp = ['<FidTable length=6>',
-           '  id    yang     zang     row     col     mag   spoiler_score slot',
-           'int64 float64  float64  float64 float64 float64     int64     str3',
-           '----- -------- -------- ------- ------- ------- ------------- ----',
-           '    1   922.59 -1737.89 -180.05 -344.10    7.00             0  ...',
-           '    2  -773.20 -1742.03  160.79 -345.35    7.00             0    0',
-           '    3    40.01 -1871.10   -2.67 -371.00    7.00             0  ...',
-           '    4  2140.23   166.63 -424.51   39.13    7.00             0    1',
-           '    5 -1826.28   160.17  372.97   36.47    7.00             0    2',
-           '    6   388.59   803.75  -71.49  166.10    7.00             0  ...']
+           '  id    yang     zang     row     col     mag   spoiler_score  idx   slot',
+           'int64 float64  float64  float64 float64 float64     int64     int64 int64',
+           '----- -------- -------- ------- ------- ------- ------------- ----- -----',
+           '    1   922.59 -1737.89 -180.05 -344.10    7.00             0     0   -99',
+           '    2  -773.20 -1742.03  160.79 -345.35    7.00             0     1     0',
+           '    3    40.01 -1871.10   -2.67 -371.00    7.00             0     2   -99',
+           '    4  2140.23   166.63 -424.51   39.13    7.00             0     3     1',
+           '    5 -1826.28   160.17  372.97   36.47    7.00             0     4     2',
+           '    6   388.59   803.75  -71.49  166.10    7.00             0     5   -99']
     assert repr(FIDS.cand_fids).splitlines() == exp
     assert np.all(FIDS['id'] == [2, 4, 5])
 
@@ -69,15 +69,15 @@ def test_get_initial_catalog():
     # Spoil fids 1, 2
     fids2 = get_fid_catalog(stars=stars[:2], **STD_INFO)
     exp = ['<FidTable length=6>',
-           '  id    yang     zang     row     col     mag   spoiler_score slot',
-           'int64 float64  float64  float64 float64 float64     int64     str3',
-           '----- -------- -------- ------- ------- ------- ------------- ----',
-           '    1   922.59 -1737.89 -180.05 -344.10    7.00             4  ...',
-           '    2  -773.20 -1742.03  160.79 -345.35    7.00             4  ...',
-           '    3    40.01 -1871.10   -2.67 -371.00    7.00             0    0',
-           '    4  2140.23   166.63 -424.51   39.13    7.00             0    1',
-           '    5 -1826.28   160.17  372.97   36.47    7.00             0    2',
-           '    6   388.59   803.75  -71.49  166.10    7.00             0  ...']
+           '  id    yang     zang     row     col     mag   spoiler_score  idx   slot',
+           'int64 float64  float64  float64 float64 float64     int64     int64 int64',
+           '----- -------- -------- ------- ------- ------- ------------- ----- -----',
+           '    1   922.59 -1737.89 -180.05 -344.10    7.00             4     0   -99',
+           '    2  -773.20 -1742.03  160.79 -345.35    7.00             4     1   -99',
+           '    3    40.01 -1871.10   -2.67 -371.00    7.00             0     2     0',
+           '    4  2140.23   166.63 -424.51   39.13    7.00             0     3     1',
+           '    5 -1826.28   160.17  372.97   36.47    7.00             0     4     2',
+           '    6   388.59   803.75  -71.49  166.10    7.00             0     5   -99']
     assert repr(fids2.cand_fids).splitlines() == exp
     assert np.all(fids2['id'] == [3, 4, 5])
 
@@ -133,15 +133,15 @@ def test_fid_spoiling_acq(dither_z):
     acqs['halfw'] = 100
     fids5 = get_fid_catalog(acqs=acqs, **std_info)
     exp = ['<FidTable length=6>',
-           '  id    yang     zang     row     col     mag   spoiler_score slot',
-           'int64 float64  float64  float64 float64 float64     int64     str3',
-           '----- -------- -------- ------- ------- ------- ------------- ----',
-           '    1   922.59 -1737.89 -180.05 -344.10    7.00             0    0',
-           '    2  -773.20 -1742.03  160.79 -345.35    7.00             0  ...',
-           '    3    40.01 -1871.10   -2.67 -371.00    7.00             0  ...',
-           '    4  2140.23   166.63 -424.51   39.13    7.00             0  ...',
-           '    5 -1826.28   160.17  372.97   36.47    7.00             0    1',
-           '    6   388.59   803.75  -71.49  166.10    7.00             0    2']
+           '  id    yang     zang     row     col     mag   spoiler_score  idx   slot',
+           'int64 float64  float64  float64 float64 float64     int64     int64 int64',
+           '----- -------- -------- ------- ------- ------- ------------- ----- -----',
+           '    1   922.59 -1737.89 -180.05 -344.10    7.00             0     0     0',
+           '    2  -773.20 -1742.03  160.79 -345.35    7.00             0     1   -99',
+           '    3    40.01 -1871.10   -2.67 -371.00    7.00             0     2   -99',
+           '    4  2140.23   166.63 -424.51   39.13    7.00             0     3   -99',
+           '    5 -1826.28   160.17  372.97   36.47    7.00             0     4     1',
+           '    6   388.59   803.75  -71.49  166.10    7.00             0     5     2']
 
     assert repr(fids5.cand_fids).splitlines() == exp
 
@@ -186,3 +186,9 @@ def test_fid_spoiler_score():
     std_info['dither'] = dither
     fids = get_fid_catalog(stars=stars, **std_info)
     assert np.all(fids.cand_fids['spoiler_score'] == [0, 4, 0, 0, 0, 0])
+
+
+def test_big_sim_offset():
+    fids = get_fid_catalog(**mod_std_info(stars=StarsTable.empty(), sim_offset=300000))
+    names = ['id', 'yang', 'zang', 'row', 'col', 'mag', 'spoiler_score', 'idx']
+    assert all(name in fids.colnames for name in names)

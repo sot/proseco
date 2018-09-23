@@ -78,24 +78,24 @@ def get_acq_catalog(obsid=0, **kwargs):
         acqs.optimize_catalog(acqs.verbose)
 
     # Set p_acq column to be the marginalized probabilities
-    acqs['p_acq'] = [acq['probs'].p_acq_marg(acq['halfw']) for acq in acqs]
+    acqs.update_p_acq_column()
 
     # Sort to make order match the original candidate list order (by
     # increasing mag), and assign a slot.
     acqs.sort('idx')
-    acqs['slot'] = np.arange(len(acqs))
+    acqs['slot'] = np.arange(len(acqs), dtype=np.int64)
 
-    # Add slot to cand_acqs table, putting in '...' if not selected as acq.
+    # Add slot to cand_acqs table, putting in -99 if not selected as acq.
     # This is for convenience in downstream reporting or introspection.
-    slots = [str(acqs.get_id(acq['id'])['slot']) if acq['id'] in acqs['id'] else '...'
+    slots = [acqs.get_id(acq['id'])['slot'] if acq['id'] in acqs['id'] else -99
              for acq in acqs.cand_acqs]
-    acqs.cand_acqs['slot'] = slots
+    acqs.cand_acqs['slot'] = np.array(slots, dtype=np.int64)
 
     if len(acqs) < acqs.n_acq:
         acqs.log(f'Selected only {len(acqs)} acq stars versus requested {acqs.n_acq}',
                  warning=True)
 
-    acqs.thumbs_up = acqs.get_p_2_or_fewer() <= CHAR.acq_prob
+    acqs.thumbs_up = acqs.get_log_p_2_or_fewer() <= np.log10(CHAR.acq_prob)
 
     return acqs
 
@@ -177,23 +177,51 @@ class AcqTable(ACACatalogTable):
 
         # Update marginalized p_acq and p_safe.  The underlying probability
         # functions know about fid_set and new values are computed on-demand.
+        self.update_p_acq_column()
+        self.calc_p_safe()
+
+    def update_p_acq_column(self):
+        """
+        Update (in-place) the marginalized acquisition probability column
+        'p_acq'.  This is typically called after a change in catalog or
+        change in the fid set.  The acq['probs'].p_acq_marg() method will
+        pick up the new fid set.
+        """
         for acq in self:
             acq['p_acq'] = acq['probs'].p_acq_marg(acq['halfw'])
-        self.p_safe = self.calc_p_safe()
 
-    def get_p_2_or_fewer(self):
+    def update_ids_halfws(self, agasc_ids, halfws):
+        """
+        Update the rows of self to match the specified ``agasc_ids``
+        and half widths.  These two input lists must match the length
+        of self and correspond to stars in self.cand_acqs.
+
+        :param agasc_ids: list of AGASC IDs
+        :param halfws: list of search box half widths
+        """
+        if len(agasc_ids) != len(self) or len(halfws) != len(self):
+            raise ValueError('input lists must match length of acqs')
+
+        for acq, agasc_id, halfw in zip(self, agasc_ids, halfws):
+            if acq['id'] != agasc_id:
+                acq_orig = self.cand_acqs.get_id(agasc_id)
+                for name in self.colnames:
+                    acq[name] = acq_orig[name]
+            acq['halfw'] = halfw
+
+    def get_log_p_2_or_fewer(self):
         """
         Return the starcheck acquisition merit function of the probability of
         acquiring two or fewer stars.
 
-        :returns: probability (float)
+        :returns: log10(probability) (float)
         """
         n_or_fewer_probs = prob_n_acq(self['p_acq'])[1]
         if len(n_or_fewer_probs) > 2:
             p_2_or_fewer = n_or_fewer_probs[2]
         else:
             p_2_or_fewer = 1.0
-        return p_2_or_fewer
+        return np.log10(p_2_or_fewer)
 
     def get_obs_info(self):
         """
@@ -406,8 +434,7 @@ class AcqTable(ACACatalogTable):
         # p_acq to the marginalized acquisition probability.
         cand_acqs['halfw'] = 120
         cand_acqs['halfw'][acq_indices] = box_sizes
-        for acq in cand_acqs:
-            acq['p_acq'] = acq['probs'].p_acq_marg(acq['halfw'])
+        cand_acqs.update_p_acq_column()
 
         # Finally select the initial catalog
         acqs_init = cand_acqs[acq_indices]
