@@ -180,12 +180,26 @@ class ACATable(ACACatalogTable):
             self.log(f'Checking fid sets with spoiler_score={spoiler_score}', level=1)
 
             for fid_set in fid_set_group:
-                # Set the internal acqs fid set.  This does validation of the set.
+                # Set the internal acqs fid set.  This does validation of the set
+                # and also calls update_p_acq_column().
                 acqs.fid_set = fid_set['fid_ids']
 
-                # Re-optimize the catalog with the fid set selected and get new probs.
-                acqs.optimize_catalog()
-                acqs.update_p_acq_column()  # Needed for get_log_p_2_or_fewer
+                # If P2 is effectively unchanged after updating the fid set,
+                # that means there are no fids spoiling an acq star in the
+                # optimum (no-fid) acq catalog, and there is no need to
+                # re-optimize.  Furthermore this fid set is guaranteed to meet
+                # the stage_min_P2 acceptance so no need to check any other fid
+                # sets.  Only optimize if P2 decreased by at least 0.001,
+                # remembering P2 is the -log10(prob).
+                fid_set_P2 = -acqs.get_log_p_2_or_fewer()
+                found_good_set = fid_set_P2 - opt_P2 > -0.001
+                if found_good_set:
+                    self.log(f'No change in P2 for fid set {acqs.fid_set}, '
+                             f'skipping optimization')
+                else:
+                    # Re-optimize the catalog with the fid set selected and get new probs.
+                    acqs.optimize_catalog()
+                    acqs.update_p_acq_column()  # Needed for get_log_p_2_or_fewer
 
                 # Store optimization results
                 fid_set['P2'] = -acqs.get_log_p_2_or_fewer()
@@ -196,8 +210,12 @@ class ACATable(ACACatalogTable):
                          f"acq_idxs={fid_set['acq_idxs']} halfws={fid_set['acq_halfws']}",
                          level=2)
 
-                # Put the catalog back to the original no-fid optimum
-                acqs.update_idxs_halfws(orig_acq_idxs, orig_acq_halfws)
+                if found_good_set:
+                    break
+                else:
+                    # Put the catalog back to the original no-fid optimum and continue
+                    # trying remaining fid sets.
+                    acqs.update_idxs_halfws(orig_acq_idxs, orig_acq_halfws)
 
             # Get the best fid set / acq catalog configuration so far.  Fid sets not
             # yet considered have P2 = -99.
@@ -209,8 +227,8 @@ class ACATable(ACACatalogTable):
             stage = ACQ.fid_acq_stages.loc[spoiler_score]
             stage_min_P2 = stage['min_P2'](opt_P2)
 
-            self.log(f'Best P2={best_P2:.2f} at idx={best_idx} vs. stage_min_P2={stage_min_P2}',
-                     level=1)
+            self.log(f'Best P2={best_P2:.2f} at idx={best_idx} vs. '
+                     'stage_min_P2={stage_min_P2:.2f}', level=1)
 
             # If we have a winner then use that.
             if best_P2 >= stage_min_P2:
