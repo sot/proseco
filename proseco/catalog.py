@@ -42,7 +42,7 @@ def get_aca_catalog(obsid=0, **kwargs):
     :param verbose: provide extra logging info (mostly calc_p_safe) (default=False)
     :param print_log: print the run log to stdout (default=False)
 
-    :returns: AcaCatalogTable of stars and fids
+    :returns: ACATable of stars and fids
 
     """
     try:
@@ -142,10 +142,12 @@ class ACATable(ACACatalogTable):
         orig_ids = acqs['id'].tolist()
         orig_halfws = acqs['halfw'].tolist()
 
+        self.log(f'Starting opt_P2={opt_P2:.2f} for ids={orig_ids} and halfws={orig_halfws}')
+
         # If not at least 2 fids then punt on optimization.
         cand_fids = fids.cand_fids
         if len(cand_fids) < 2:
-            acqs.log('Fewer than 2 candidate fid lights, skipping optimization',
+            self.log('Fewer than 2 candidate fid lights, skipping optimization',
                      warning=True)
             return
 
@@ -175,6 +177,7 @@ class ACATable(ACACatalogTable):
         # over each fid set.
         for fid_set_group in fid_sets.groups:
             spoiler_score = fid_set_group['spoiler_score'][0]
+            self.log(f'Checking fid sets with spoiler_score={spoiler_score}', level=1)
 
             for fid_set in fid_set_group:
                 # Set the internal acqs fid set.  This does validation of the set.
@@ -186,8 +189,13 @@ class ACATable(ACACatalogTable):
 
                 # Store optimization results
                 fid_set['P2'] = -acqs.get_log_p_2_or_fewer()
-                fid_set['acq_halfws'] = acqs['halfw'].tolist()
                 fid_set['acq_ids'] = acqs['id'].tolist()
+                fid_set['acq_halfws'] = acqs['halfw'].tolist()
+                acq_idxs = acqs['idx'].tolist()
+
+                self.log(f"Fid set {fid_set['fid_ids']}: P2={fid_set['P2']:.2f} "
+                         f"acq_idxs={acq_idxs} halfws={fid_set['acq_halfws']}",
+                         level=2)
 
                 # Put the catalog back to the original no-fid optimum
                 acqs.update_ids_halfws(orig_ids, orig_halfws)
@@ -202,6 +210,9 @@ class ACATable(ACACatalogTable):
             stage = ACQ.fid_acq_stages.loc[spoiler_score]
             stage_min_P2 = stage['min_P2'](opt_P2)
 
+            self.log(f'Best P2={best_P2:.2f} at idx={idx} vs. stage_min_P2={stage_min_P2}',
+                     level=1)
+
             # If we have a winner then use that.
             if best_P2 >= stage_min_P2:
                 # Set the acqs table to the best catalog
@@ -209,10 +220,13 @@ class ACATable(ACACatalogTable):
                 best_halfws = fid_sets['acq_halfws'][idx]
                 acqs.update_ids_halfws(best_ids, best_halfws)
                 acqs.fid_set = fid_sets['fid_ids'][idx]
+                acq_idxs = acqs['idx'].tolist()
 
                 # Finally set the fids table to the desired fid set
                 fids.set_fid_set(acqs.fid_set)
 
+                self.log(f"Optimum found: fid set {best_ids}, P2={best_P2:.2f} "
+                         f"acq_idxs={acq_idxs} halfws={best_halfws}")
                 return
 
         # This should never happen and indicates a flaw in program logic
