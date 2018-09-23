@@ -778,3 +778,38 @@ def test_acq_fid_probs_low_level():
             else:
                 # No spoiler, so no change in p_acq
                 assert p_acq0 == p_acq1
+
+
+def test_acq_fid_simple():
+    """
+    Test optimizing acq and fid in a simple case.
+    """
+    # Put an acq star at an offset from fid light id=2 such that for a search
+    # box size larger than box_size_thresh, that star will be spoiled.  This
+    # uses the equation in FidTable.spoils().
+    dither = 20
+    box_size_thresh = 90
+    offset = box_size_thresh + FID.spoiler_margin + dither
+
+    dark = ACAImage(np.full(shape=(1024, 1024), fill_value=40), row0=-512, col0=-512)
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(mag=[9.5, 9.6, 9.7, 10], n_stars=4)
+
+    # Add stars near fid light positions.  For fids 3, 4 put in fid spoilers
+    # so the initial fid set is empty.
+    stars.add_fake_stars_from_fid(fid_id=[2, 3, 4],
+                                  id=[2, 3, 4],
+                                  mag=[8.2, 11.5, 11.5],
+                                  offset_y=[offset, 10, 10], detector='HRC-S')
+
+    # Get the catalogs (n_guide=0 so skip guide selection)
+    kwargs = mod_std_info(stars=stars, dark=dark, dither=dither, raise_exc=True,
+                          n_guide=0, n_acq=5, detector='HRC-S')
+    aca = get_aca_catalog(**kwargs)
+    acqs = aca.acqs
+
+    repr(acqs)
+    assert acqs['id'].tolist() == [2, 100, 101, 102, 103]
+    assert acqs['halfw'].tolist() == [160, 160, 160, 160, 80]
+    assert acqs.fids['id'].tolist() == [1, 3, 4]
+    assert acqs.fid_set == (1, 3, 4)
