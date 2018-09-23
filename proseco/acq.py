@@ -190,7 +190,7 @@ class AcqTable(ACACatalogTable):
         for acq in self:
             acq['p_acq'] = acq['probs'].p_acq_marg(acq['halfw'])
 
-    def update_ids_halfws(self, agasc_ids, halfws):
+    def update_idxs_halfws(self, idxs, halfws):
         """
         Update the rows of self to match the specified ``agasc_ids``
         and half widths.  These two input lists must match the length
@@ -199,14 +199,14 @@ class AcqTable(ACACatalogTable):
         :param agasc_ids: list of AGASC IDs
         :param halfws: list of search box half widths
         """
-        if len(agasc_ids) != len(self) or len(halfws) != len(self):
+        if len(idxs) != len(self) or len(halfws) != len(self):
             raise ValueError('input lists must match length of acqs')
 
-        for acq, agasc_id, halfw in zip(self, agasc_ids, halfws):
-            if acq['id'] != agasc_id:
-                acq_orig = self.cand_acqs.get_id(agasc_id)
+        for acq, idx, halfw in zip(self, idxs, halfws):
+            if acq['idx'] != idx:
+                acq_new = self.cand_acqs[idx]
                 for name in self.colnames:
-                    acq[name] = acq_orig[name]
+                    acq[name] = acq_new[name]
             acq['halfw'] = halfw
 
     def get_log_p_2_or_fewer(self):
