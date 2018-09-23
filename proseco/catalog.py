@@ -139,10 +139,10 @@ class ACATable(ACACatalogTable):
 
         # Start with the no-fids optimum catalog and save required info to restore
         opt_P2 = -acqs.get_log_p_2_or_fewer()
-        orig_ids = acqs['id'].tolist()
-        orig_halfws = acqs['halfw'].tolist()
+        orig_acq_idxs = acqs['idx'].tolist()
+        orig_acq_halfws = acqs['halfw'].tolist()
 
-        self.log(f'Starting opt_P2={opt_P2:.2f} for ids={orig_ids} and halfws={orig_halfws}')
+        self.log(f'Starting opt_P2={opt_P2:.2f}: ids={orig_acq_idxs} halfws={orig_acq_halfws}')
 
         # If not at least 2 fids then punt on optimization.
         cand_fids = fids.cand_fids
@@ -167,7 +167,7 @@ class ACATable(ACACatalogTable):
         fid_sets = Table(rows=rows, names=('fid_ids', 'spoiler_score'))
         fid_sets['P2'] = -99.0  # Marker for unfilled values
         fid_sets['acq_halfws'] = None
-        fid_sets['acq_ids'] = None
+        fid_sets['acq_idxs'] = None
 
         # Group the table into groups by spoiler score.  This preserves the
         # original fid set ordering within a group.
@@ -180,53 +180,69 @@ class ACATable(ACACatalogTable):
             self.log(f'Checking fid sets with spoiler_score={spoiler_score}', level=1)
 
             for fid_set in fid_set_group:
-                # Set the internal acqs fid set.  This does validation of the set.
+                # Set the internal acqs fid set.  This does validation of the set
+                # and also calls update_p_acq_column().
                 acqs.fid_set = fid_set['fid_ids']
 
-                # Re-optimize the catalog with the fid set selected and get new probs.
-                acqs.optimize_catalog()
-                acqs.update_p_acq_column()  # Needed for get_log_p_2_or_fewer
+                # If P2 is effectively unchanged after updating the fid set,
+                # that means there are no fids spoiling an acq star in the
+                # optimum (no-fid) acq catalog, and there is no need to
+                # re-optimize.  Furthermore this fid set is guaranteed to meet
+                # the stage_min_P2 acceptance so no need to check any other fid
+                # sets.  Only optimize if P2 decreased by at least 0.001,
+                # remembering P2 is the -log10(prob).
+                fid_set_P2 = -acqs.get_log_p_2_or_fewer()
+                found_good_set = fid_set_P2 - opt_P2 > -0.001
+                if found_good_set:
+                    self.log(f'No change in P2 for fid set {acqs.fid_set}, '
+                             f'skipping optimization')
+                else:
+                    # Re-optimize the catalog with the fid set selected and get new probs.
+                    acqs.optimize_catalog()
+                    acqs.update_p_acq_column()  # Needed for get_log_p_2_or_fewer
 
                 # Store optimization results
                 fid_set['P2'] = -acqs.get_log_p_2_or_fewer()
-                fid_set['acq_ids'] = acqs['id'].tolist()
+                fid_set['acq_idxs'] = acqs['idx'].tolist()
                 fid_set['acq_halfws'] = acqs['halfw'].tolist()
-                acq_idxs = acqs['idx'].tolist()
 
                 self.log(f"Fid set {fid_set['fid_ids']}: P2={fid_set['P2']:.2f} "
-                         f"acq_idxs={acq_idxs} halfws={fid_set['acq_halfws']}",
+                         f"acq_idxs={fid_set['acq_idxs']} halfws={fid_set['acq_halfws']}",
                          level=2)
 
-                # Put the catalog back to the original no-fid optimum
-                acqs.update_ids_halfws(orig_ids, orig_halfws)
+                if found_good_set:
+                    break
+                else:
+                    # Put the catalog back to the original no-fid optimum and continue
+                    # trying remaining fid sets.
+                    acqs.update_idxs_halfws(orig_acq_idxs, orig_acq_halfws)
 
             # Get the best fid set / acq catalog configuration so far.  Fid sets not
             # yet considered have P2 = -99.
-            idx = np.argmax(fid_sets['P2'])
-            best_P2 = fid_sets['P2'][idx]
+            best_idx = np.argmax(fid_sets['P2'])
+            best_P2 = fid_sets['P2'][best_idx]
 
             # Get the row of the fid / acq stages table to determine the required minimum
             # P2 given the fid spoiler score.
             stage = ACQ.fid_acq_stages.loc[spoiler_score]
             stage_min_P2 = stage['min_P2'](opt_P2)
 
-            self.log(f'Best P2={best_P2:.2f} at idx={idx} vs. stage_min_P2={stage_min_P2}',
-                     level=1)
+            self.log(f'Best P2={best_P2:.2f} at idx={best_idx} vs. '
+                     'stage_min_P2={stage_min_P2:.2f}', level=1)
 
             # If we have a winner then use that.
             if best_P2 >= stage_min_P2:
                 # Set the acqs table to the best catalog
-                best_ids = fid_sets['acq_ids'][idx]
-                best_halfws = fid_sets['acq_halfws'][idx]
-                acqs.update_ids_halfws(best_ids, best_halfws)
-                acqs.fid_set = fid_sets['fid_ids'][idx]
-                acq_idxs = acqs['idx'].tolist()
+                best_acq_idxs = fid_sets['acq_idxs'][best_idx]
+                best_acq_halfws = fid_sets['acq_halfws'][best_idx]
+                acqs.update_idxs_halfws(best_acq_idxs, best_acq_halfws)
+                acqs.fid_set = fid_sets['fid_ids'][best_idx]
 
                 # Finally set the fids table to the desired fid set
                 fids.set_fid_set(acqs.fid_set)
 
-                self.log(f"Optimum found: fid set {best_ids}, P2={best_P2:.2f} "
-                         f"acq_idxs={acq_idxs} halfws={best_halfws}")
+                self.log(f"Optimum found: P2={best_P2:.2f} "
+                         f"acq_idxs={best_acq_idxs} halfws={best_acq_halfws}")
                 return
 
         # This should never happen and indicates a flaw in program logic

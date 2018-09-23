@@ -39,6 +39,32 @@ def test_get_aca_catalog_20603():
     assert aca.pformat(max_width=-1) == exp
 
 
+@pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
+def test_get_aca_catalog_20259():
+    """
+    Test obsid 20259 which has two spoiled fids: HRC-2 is yellow and HRC-4 is red.
+    Expectation is to choose fids 1, 2, 3 (not 4).
+    """
+    # Force not using a bright star so there is a GUI-only (not BOT) star
+    aca = get_aca_catalog(20259, raise_exc=True)
+    exp = ['slot idx     id    type  sz p_acq mag  maxmag   yang     zang   dim res halfw',
+           '---- --- --------- ---- --- ----- ---- ------ -------- -------- --- --- -----',
+           '   0   1         1  FID 8x8 0.000 7.00   8.00 -1175.03  -468.23   1   1    25',
+           '   1   2         2  FID 8x8 0.000 7.00   8.00  1224.70  -460.93   1   1    25',
+           '   2   3         3  FID 8x8 0.000 7.00   8.00 -1177.69   561.30   1   1    25',
+           '   3   4 896009152  BOT 6x6 0.985 7.25   8.75  1693.39   217.92  20   1   160',
+           '   4   5 897712576  BOT 6x6 0.985 8.25   9.75 -1099.95  2140.23  20   1   160',
+           '   5   6 897717296  BOT 6x6 0.985 8.20   9.70   932.58  1227.48  20   1   160',
+           '   6   7 896013056  BOT 6x6 0.983 8.75  10.25  1547.25 -2455.12  20   1   160',
+           '   7   8 897722680  GUI 6x6 0.000 8.85  10.35  1007.82  1676.78   1   1    25',
+           '   7   9 896011576  ACQ 6x6 0.985 8.12   9.62   810.99   -69.21  20   1   160',
+           '   0  10 897192352  ACQ 6x6 0.985 9.03  10.53 -2110.43  2005.21  20   1   100',
+           '   1  11 896008728  ACQ 6x6 0.985 9.08  10.58  2223.64  -341.57  20   1    80',
+           '   2  12 896010144  ACQ 6x6 0.985 9.11  10.61  1081.11   912.90  20   1    80']
+    repr(aca)  # Apply default formats
+    assert aca.pformat(max_width=-1) == exp
+
+
 def test_exception_handling():
     """
     Test top-level exception catching.
