@@ -178,7 +178,7 @@ class AcqTable(ACACatalogTable):
         # Update marginalized p_acq and p_safe.  The underlying probability
         # functions know about fid_set and new values are computed on-demand.
         self.update_p_acq_column()
-        self.p_safe = self.calc_p_safe()
+        self.calc_p_safe()
 
     def update_p_acq_column(self):
         """
