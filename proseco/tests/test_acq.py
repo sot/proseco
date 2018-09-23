@@ -688,7 +688,7 @@ def test_no_candidates():
     assert 'halfw' in acqs.colnames
 
 
-def test_acq_fid_probs_low_level():
+def test_acq_fid_catalog_probs_low_level():
     """
     Low-level tests of machinery to handle different fid light sets within
     acquisition probabilities.
@@ -780,7 +780,7 @@ def test_acq_fid_probs_low_level():
                 assert p_acq0 == p_acq1
 
 
-def test_acq_fid_simple():
+def test_acq_fid_catalog_simple():
     """
     Test optimizing acq and fid in a simple case.
     """
