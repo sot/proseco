@@ -154,13 +154,11 @@ class ACATable(ACACatalogTable):
         # Get list of fid_sets that are consistent with candidate fids. These
         # fid sets are the combinations of 3 (or 2) fid lights in preferred
         # order.
-        cand_fids_ids = set(cand_fids['id'])
         rows = []
-        for fid_set in FID.fid_sets[fids.detector]:
-            if fid_set <= cand_fids_ids:  # fid_set is a subset of cand_fids_ids
-                spoiler_score = sum(cand_fids.get_id(fid_id)['spoiler_score']
-                                    for fid_id in fid_set)
-                rows.append((fid_set, spoiler_score))
+        for fid_set in fids.cand_fid_sets:
+            spoiler_score = sum(cand_fids.get_id(fid_id)['spoiler_score']
+                                for fid_id in fid_set)
+            rows.append((fid_set, spoiler_score))
 
         # Make a table to keep track of candidate fid_sets along with the
         # ranking metric P2 and the acq catalog info halfws and star ids.
