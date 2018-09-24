@@ -180,13 +180,14 @@ class FidTable(ACACatalogTable):
         # Start by getting the id of every fid that has a zero spoiler score,
         # meaning no star spoils the fid as set previously in get_initial_candidates.
         cand_fids = self.cand_fids
-        cand_fids_set = set(fid['id'] for fid in cand_fids if fid['spoiler_score'] == 0)
+        unspoiled_fid_ids = set(fid['id'] for fid in cand_fids
+                                if fid['spoiler_score'] == 0)
 
         # Get list of fid_sets that are consistent with candidate fids. These
         # fid sets are the combinations of 3 (or 2) fid lights in preferred
         # order.
-        fid_sets = FID.fid_sets[self.detector]
-        ok_fid_sets = [fid_set for fid_set in fid_sets if fid_set <= cand_fids_set]
+        ok_fid_sets = [fid_set for fid_set in self.cand_fid_sets
+                       if fid_set <= unspoiled_fid_ids]
 
         # If no fid_sets are possible, return a zero-length table with correct columns
         if not ok_fid_sets:
