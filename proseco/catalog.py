@@ -85,10 +85,10 @@ def _get_aca_catalog(**kwargs):
 
     aca.acqs.fids = aca.fids
 
-    if aca.n_fid > 0 and len(aca.fids) == 0 and aca.optimize:
+    if aca.optimize:
         aca.optimize_acqs_fids()
-    else:
-        aca.acqs.fid_set = aca.fids['id']
+
+    aca.acqs.fid_set = aca.fids['id']
 
     stars = kwargs.pop('stars', aca.acqs.stars)
     aca.guides = get_guide_catalog(stars=stars, **kwargs)
@@ -138,6 +138,13 @@ class ACATable(ACACatalogTable):
         """
         acqs = self.acqs
         fids = self.fids
+
+        # IF get_fid_catalog returned a good catalog,
+        #    OR no fids were requested,
+        #    OR no candidate fids are available,
+        # THEN no optimization action required here.
+        if len(self.fids) > 0 or self.n_fid == 0 or len(self.fids.cand_fids) == 0:
+            return
 
         # Start with the no-fids optimum catalog and save required info to restore
         opt_P2 = -acqs.get_log_p_2_or_fewer()

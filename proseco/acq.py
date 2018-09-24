@@ -154,10 +154,16 @@ class AcqTable(ACACatalogTable):
 
     @property
     def fid_set(self):
+        if not hasattr(self, '_fid_set'):
+            self._fid_set = ()
         return self._fid_set
 
     @fid_set.setter
     def fid_set(self, fid_ids):
+        # No action required if fid_set is already fid_ids
+        if self.fid_set == tuple(fid_ids):
+            return
+
         if self.fids is None:
             raise ValueError('cannot set fid_set before setting fids')
 
