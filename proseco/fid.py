@@ -67,11 +67,6 @@ def get_fid_catalog(obsid=0, **kwargs):
     # Add a `slot` column that makes sense
     fids.set_slot_column()
 
-    # TO DO: remove temporary stub to simply clip the number of returned
-    # fids to n_fid
-    if len(fids) > fids.n_fid:
-        fids = fids[:fids.n_fid]
-
     return fids
 
 
