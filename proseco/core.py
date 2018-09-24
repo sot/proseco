@@ -317,10 +317,6 @@ class ACACatalogTable(Table):
         self.t_ccd_acq = value
         self.t_ccd_guide = value
 
-    @property
-    def print_log(self):
-        return self.meta.get('print_log')
-
     @classmethod
     def empty(cls):
         """
