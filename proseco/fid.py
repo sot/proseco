@@ -98,7 +98,11 @@ class FidTable(ACACatalogTable):
 
     @property
     def thumbs_up(self):
-        return int(len(self) == self.n_fid)
+        if self.n_fid == 0:
+            out = 1
+        else:
+            out = int(len(self) == self.n_fid)
+        return out
 
     def set_fid_set(self, fid_ids):
         if len(self) > 0:

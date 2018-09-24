@@ -186,8 +186,12 @@ class AcqTable(ACACatalogTable):
 
     @property
     def thumbs_up(self):
-        self.update_p_acq_column()
-        return int(self.get_log_p_2_or_fewer() <= np.log10(CHAR.acq_prob))
+        if self.n_acq == 0:
+            out = 1
+        else:
+            self.update_p_acq_column()
+            out = int(self.get_log_p_2_or_fewer() <= np.log10(CHAR.acq_prob))
+        return out
 
     def update_p_acq_column(self):
         """
