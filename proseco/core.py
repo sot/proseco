@@ -193,7 +193,6 @@ class ACACatalogTable(Table):
     exclude_ids = MetaAttribute(default=[])
     print_log = MetaAttribute(default=False)
 
-    thumbs_up = IntMetaAttribute(default=0, is_kwarg=False)
     log_info = MetaAttribute(default={}, is_kwarg=False)
 
     def __init__(self, data=None, **kwargs):

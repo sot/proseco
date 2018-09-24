@@ -72,9 +72,6 @@ def get_fid_catalog(obsid=0, **kwargs):
     if len(fids) > fids.n_fid:
         fids = fids[:fids.n_fid]
 
-    # Set fid thumbs_up if fids has the number of requested fid lights
-    fids.thumbs_up = len(fids) == fids.n_fid
-
     return fids
 
 
@@ -103,6 +100,10 @@ class FidTable(ACACatalogTable):
     @acqs.setter
     def acqs(self, val):
         self._acqs = weakref.ref(val)
+
+    @property
+    def thumbs_up(self):
+        return int(len(self) == self.n_fid)
 
     def set_fid_set(self, fid_ids):
         if len(self) > 0:

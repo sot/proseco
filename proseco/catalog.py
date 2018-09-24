@@ -93,9 +93,6 @@ def _get_aca_catalog(**kwargs):
     stars = kwargs.pop('stars', aca.acqs.stars)
     aca.guides = get_guide_catalog(stars=stars, **kwargs)
 
-    # Get overall catalog thumbs_up
-    aca.thumbs_up = aca.acqs.thumbs_up & aca.fids.thumbs_up & aca.guides.thumbs_up
-
     # Make a merged starcheck-like catalog.  Catch any errors at this point to avoid
     # impacting operational work (call from Matlab).
     try:
@@ -125,6 +122,12 @@ class ACATable(ACACatalogTable):
         out.fids = FidTable.empty()
         out.guides = GuideTable.empty()
         return out
+
+    @property
+    def thumbs_up(self):
+        return int(self.acqs.thumbs_up &
+                   self.fids.thumbs_up &
+                   self.guides.thumbs_up)
 
     def optimize_acqs_fids(self):
         """
