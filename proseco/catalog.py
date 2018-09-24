@@ -235,21 +235,22 @@ class ACATable(ACACatalogTable):
 
             # If we have a winner then use that.
             if best_P2 >= stage_min_P2:
-                # Set the acqs table to the best catalog
-                best_acq_idxs = fid_sets['acq_idxs'][best_idx]
-                best_acq_halfws = fid_sets['acq_halfws'][best_idx]
-                acqs.update_idxs_halfws(best_acq_idxs, best_acq_halfws)
-                acqs.fid_set = fid_sets['fid_ids'][best_idx]
+                break
 
-                # Finally set the fids table to the desired fid set
-                fids.set_fid_set(acqs.fid_set)
+        # Set the acqs table to the best catalog
+        best_acq_idxs = fid_sets['acq_idxs'][best_idx]
+        best_acq_halfws = fid_sets['acq_halfws'][best_idx]
+        acqs.update_idxs_halfws(best_acq_idxs, best_acq_halfws)
+        acqs.fid_set = fid_sets['fid_ids'][best_idx]
 
-                self.log(f"Optimum found: P2={best_P2:.2f} "
-                         f"acq_idxs={best_acq_idxs} halfws={best_acq_halfws}")
-                return
+        # Finally set the fids table to the desired fid set
+        fids.set_fid_set(acqs.fid_set)
 
-        # This should never happen and indicates a flaw in program logic
-        raise RuntimeError('optimize_acqs_fids failed to find a fid set')
+        self.log(f"Best acq-fid set: P2={best_P2:.2f} "
+                 f"acq_idxs={best_acq_idxs} halfws={best_acq_halfws} fid_ids={acqs.fid_set}")
+
+        if best_P2 < stage_min_P2:
+            self.log(f'No acq-fid combination was found that met stage requirements')
 
 
 def merge_cats(fids=None, guides=None, acqs=None):

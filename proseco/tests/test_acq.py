@@ -814,8 +814,53 @@ def test_acq_fid_catalog_n_fid(n_fid_exp_fid_ids):
     aca = get_aca_catalog(**kwargs)
     acqs = aca.acqs
 
-    repr(acqs)
     assert acqs['id'].tolist() == [2, 100, 101, 102, 103]
     assert acqs['halfw'].tolist() == [160, 160, 160, 160, 80]
     assert acqs.fids['id'].tolist() == exp_fid_ids
     assert acqs.fid_set == tuple(exp_fid_ids)
+
+
+def test_acq_fid_catalog_one_cand_fid():
+    """
+    Test optimizing acq and fid for an ACIS-S observation with large sim_offset
+    (-55000) such that only ACIS-6 is still on the ACA CCD.  Add a couple of stars:
+
+    - id=60 is 8.2 mag star that should be selected but is spoiled by fid id=6
+      for box size > 90.  Expect optimized size to be 80".
+    - id=61 is 11.5 mag star that is a yellow spoiler for fid id=6.  Expect
+      fid_set == (6,).
+
+    """
+    box_size_thresh = 90
+    dither = 8
+    sim_offset = -55000
+    offset = box_size_thresh + FID.spoiler_margin + dither
+
+    dark = ACAImage(np.full(shape=(1024, 1024), fill_value=40), row0=-512, col0=-512)
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(mag=[9.5, 9.6, 9.7, 10], n_stars=4)
+
+    # Add stars near fid light positions.  For fids 3, 4 put in fid spoilers
+    # so the initial fid set is empty.
+    stars.add_fake_stars_from_fid(fid_id=[6, 6],
+                                  id=[2, 3],  # assigned catalog ID
+                                  mag=[8.2, 11.5],
+                                  offset_y=[offset, 10],
+                                  detector='ACIS-S', sim_offset=sim_offset)
+
+    kwargs = mod_std_info(stars=stars, dark=dark, dither=dither, raise_exc=True,
+                          n_guide=0, n_fid=3, n_acq=5,
+                          detector='ACIS-S', sim_offset=sim_offset)
+    aca = get_aca_catalog(**kwargs)
+
+    assert aca.acqs['id'].tolist() == [2, 100, 101, 102, 103]
+    assert aca.acqs['halfw'].tolist() == [80, 160, 160, 160, 140]
+
+    assert aca.n_fid == 3
+    assert aca.fids['id'].tolist() == [6]
+    assert aca.acqs.fid_set == (6,)
+
+    # Not enough fids
+    assert aca.thumbs_up == 0
+    assert aca.fids.thumbs_up == 0
+    assert aca.acqs.thumbs_up == 1
