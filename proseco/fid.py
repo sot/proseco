@@ -42,8 +42,15 @@ def get_fid_catalog(obsid=0, **kwargs):
 
     :returns: fid catalog (FidTable)
     """
-    fids = FidTable()
+    # If no fids are requested then just initialize an empty table
+    # here, set the attributes and return the table.  No need to go
+    # through the trouble of getting candidate fids.
+    fids = FidTable.empty() if (kwargs.get('n_fid') == 0) else FidTable()
     fids.set_attrs_from_kwargs(obsid=obsid, **kwargs)
+
+    if fids.n_fid == 0:
+        return fids
+
     fids.set_stars(acqs=fids.acqs)
 
     fids.cand_fids = fids.get_fid_candidates()

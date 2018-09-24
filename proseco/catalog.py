@@ -85,8 +85,10 @@ def _get_aca_catalog(**kwargs):
 
     aca.acqs.fids = aca.fids
 
-    if len(aca.fids) == 0 and aca.optimize:
+    if aca.n_fid > 0 and len(aca.fids) == 0 and aca.optimize:
         aca.optimize_acqs_fids()
+    else:
+        aca.acqs.fid_set = aca.fids['id']
 
     stars = kwargs.pop('stars', aca.acqs.stars)
     aca.guides = get_guide_catalog(stars=stars, **kwargs)
@@ -146,10 +148,6 @@ class ACATable(ACACatalogTable):
 
         # If not at least 2 fids then punt on optimization.
         cand_fids = fids.cand_fids
-        if len(cand_fids) < 2:
-            self.log('Fewer than 2 candidate fid lights, skipping optimization',
-                     warning=True)
-            return
 
         # Get list of fid_sets that are consistent with candidate fids. These
         # fid sets are the combinations of 3 (or 2) fid lights in preferred
