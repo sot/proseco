@@ -85,14 +85,13 @@ def _get_aca_catalog(**kwargs):
 
     aca.acqs.fids = aca.fids
 
-    if len(aca.fids) == 0 and aca.optimize:
+    if aca.optimize:
         aca.optimize_acqs_fids()
+
+    aca.acqs.fid_set = aca.fids['id']
 
     stars = kwargs.pop('stars', aca.acqs.stars)
     aca.guides = get_guide_catalog(stars=stars, **kwargs)
-
-    # Get overall catalog thumbs_up
-    aca.thumbs_up = aca.acqs.thumbs_up & aca.fids.thumbs_up & aca.guides.thumbs_up
 
     # Make a merged starcheck-like catalog.  Catch any errors at this point to avoid
     # impacting operational work (call from Matlab).
@@ -124,6 +123,12 @@ class ACATable(ACACatalogTable):
         out.guides = GuideTable.empty()
         return out
 
+    @property
+    def thumbs_up(self):
+        return int(self.acqs.thumbs_up &
+                   self.fids.thumbs_up &
+                   self.guides.thumbs_up)
+
     def optimize_acqs_fids(self):
         """
         Concurrently optimize acqs and fids in the case where there is not
@@ -137,6 +142,13 @@ class ACATable(ACACatalogTable):
         acqs = self.acqs
         fids = self.fids
 
+        # IF get_fid_catalog returned a good catalog,
+        #    OR no fids were requested,
+        #    OR no candidate fids are available,
+        # THEN no optimization action required here.
+        if len(self.fids) > 0 or self.n_fid == 0 or len(self.fids.cand_fids) == 0:
+            return
+
         # Start with the no-fids optimum catalog and save required info to restore
         opt_P2 = -acqs.get_log_p_2_or_fewer()
         orig_acq_idxs = acqs['idx'].tolist()
@@ -146,21 +158,15 @@ class ACATable(ACACatalogTable):
 
         # If not at least 2 fids then punt on optimization.
         cand_fids = fids.cand_fids
-        if len(cand_fids) < 2:
-            self.log('Fewer than 2 candidate fid lights, skipping optimization',
-                     warning=True)
-            return
 
         # Get list of fid_sets that are consistent with candidate fids. These
         # fid sets are the combinations of 3 (or 2) fid lights in preferred
         # order.
-        cand_fids_ids = set(cand_fids['id'])
         rows = []
-        for fid_set in FID.fid_sets[fids.detector]:
-            if fid_set <= cand_fids_ids:  # fid_set is a subset of cand_fids_ids
-                spoiler_score = sum(cand_fids.get_id(fid_id)['spoiler_score']
-                                    for fid_id in fid_set)
-                rows.append((fid_set, spoiler_score))
+        for fid_set in fids.cand_fid_sets:
+            spoiler_score = sum(cand_fids.get_id(fid_id)['spoiler_score']
+                                for fid_id in fid_set)
+            rows.append((fid_set, spoiler_score))
 
         # Make a table to keep track of candidate fid_sets along with the
         # ranking metric P2 and the acq catalog info halfws and star ids.
@@ -232,21 +238,23 @@ class ACATable(ACACatalogTable):
 
             # If we have a winner then use that.
             if best_P2 >= stage_min_P2:
-                # Set the acqs table to the best catalog
-                best_acq_idxs = fid_sets['acq_idxs'][best_idx]
-                best_acq_halfws = fid_sets['acq_halfws'][best_idx]
-                acqs.update_idxs_halfws(best_acq_idxs, best_acq_halfws)
-                acqs.fid_set = fid_sets['fid_ids'][best_idx]
+                break
 
-                # Finally set the fids table to the desired fid set
-                fids.set_fid_set(acqs.fid_set)
+        # Set the acqs table to the best catalog
+        best_acq_idxs = fid_sets['acq_idxs'][best_idx]
+        best_acq_halfws = fid_sets['acq_halfws'][best_idx]
+        acqs.update_idxs_halfws(best_acq_idxs, best_acq_halfws)
+        acqs.fid_set = fid_sets['fid_ids'][best_idx]
 
-                self.log(f"Optimum found: P2={best_P2:.2f} "
-                         f"acq_idxs={best_acq_idxs} halfws={best_acq_halfws}")
-                return
+        # Finally set the fids table to the desired fid set
+        fids.set_fid_set(acqs.fid_set)
 
-        # This should never happen and indicates a flaw in program logic
-        raise RuntimeError('optimize_acqs_fids failed to find a fid set')
+        self.log(f"Best acq-fid set: P2={best_P2:.2f} "
+                 f"acq_idxs={best_acq_idxs} halfws={best_acq_halfws} fid_ids={acqs.fid_set}")
+
+        if best_P2 < stage_min_P2:
+            self.log(f'No acq-fid combination was found that met stage requirements',
+                     warning=True)
 
 
 def merge_cats(fids=None, guides=None, acqs=None):

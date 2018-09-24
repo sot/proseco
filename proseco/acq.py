@@ -95,8 +95,6 @@ def get_acq_catalog(obsid=0, **kwargs):
         acqs.log(f'Selected only {len(acqs)} acq stars versus requested {acqs.n_acq}',
                  warning=True)
 
-    acqs.thumbs_up = acqs.get_log_p_2_or_fewer() <= np.log10(CHAR.acq_prob)
-
     return acqs
 
 
@@ -154,10 +152,16 @@ class AcqTable(ACACatalogTable):
 
     @property
     def fid_set(self):
+        if not hasattr(self, '_fid_set'):
+            self._fid_set = ()
         return self._fid_set
 
     @fid_set.setter
     def fid_set(self, fid_ids):
+        # No action required if fid_set is already fid_ids
+        if self.fid_set == tuple(fid_ids):
+            return
+
         if self.fids is None:
             raise ValueError('cannot set fid_set before setting fids')
 
@@ -179,6 +183,15 @@ class AcqTable(ACACatalogTable):
         # functions know about fid_set and new values are computed on-demand.
         self.update_p_acq_column()
         self.calc_p_safe()
+
+    @property
+    def thumbs_up(self):
+        if self.n_acq == 0:
+            out = 1
+        else:
+            self.update_p_acq_column()
+            out = int(self.get_log_p_2_or_fewer() <= np.log10(CHAR.acq_prob))
+        return out
 
     def update_p_acq_column(self):
         """

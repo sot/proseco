@@ -65,10 +65,6 @@ def get_guide_catalog(obsid=0, **kwargs):
         guides.log(f'Selected only {len(guides)} guide stars versus requested {guides.n_guide}',
                    warning=True)
 
-    # Evaluate guide catalog quality for thumbs_up
-    count = guide_count(guides['mag'], guides.t_ccd)
-    guides.thumbs_up = count >= GUIDE_CHAR.min_guide_count
-
     return guides
 
 
@@ -104,6 +100,17 @@ class GuideTable(ACACatalogTable):
     @dither.setter
     def dither(self, value):
         self.dither_guide = value
+
+    @property
+    def thumbs_up(self):
+        if self.n_guide == 0:
+            # If no guides were requested then always OK
+            out = 1
+        else:
+            # Evaluate guide catalog quality for thumbs_up
+            count = guide_count(self['mag'], self.t_ccd)
+            out = int(count >= GUIDE_CHAR.min_guide_count)
+        return out
 
     def run_search_stages(self):
         """

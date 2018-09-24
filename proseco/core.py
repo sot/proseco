@@ -193,7 +193,6 @@ class ACACatalogTable(Table):
     exclude_ids = MetaAttribute(default=[])
     print_log = MetaAttribute(default=False)
 
-    thumbs_up = IntMetaAttribute(default=0, is_kwarg=False)
     log_info = MetaAttribute(default={}, is_kwarg=False)
 
     def __init__(self, data=None, **kwargs):
@@ -929,19 +928,19 @@ class StarsTable(ACACatalogTable):
         self.add_row(out)
 
     def add_fake_stars_from_fid(self, fid_id=1, offset_y=0, offset_z=0, mag=7.0,
-                                id=None, detector='ACIS-S'):
+                                id=None, detector='ACIS-S', sim_offset=0):
         try:
-            fids = FIDS_CACHE[detector]
+            fids = FIDS_CACHE[detector, sim_offset]
         except KeyError:
             from .fid import get_fid_catalog
             fids = get_fid_catalog(att=(0, 0, 0),
                                    detector=detector,
-                                   sim_offset=0,
+                                   sim_offset=sim_offset,
                                    focus_offset=0,
                                    t_ccd=-10.0,
                                    date='2018:001',
                                    dither=8.0)
-            FIDS_CACHE[detector] = fids
+            FIDS_CACHE[detector, sim_offset] = fids
 
         arrays = np.broadcast_arrays(fid_id, offset_y, offset_z, mag, id)
 

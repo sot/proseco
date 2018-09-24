@@ -688,16 +688,21 @@ def test_no_candidates():
     assert 'halfw' in acqs.colnames
 
 
-def test_acq_fid_catalog_probs_low_level():
+def get_dark_stars_simple(box_size_thresh, dither):
     """
-    Low-level tests of machinery to handle different fid light sets within
-    acquisition probabilities.
+    Set-up for tests of optimized acq and fid selection.
+
+    id    mag  status
+    100   9.5  ok
+    101   9.6  ok
+    102   9.7  ok
+    103    10  ok
+      2   8.2  spoiled by fid 2 for box > 90
+      3  11.5  yellow spoiler for fid 3
+      4  11.5  yellow spoiler for fid 4
+
+    All fid sets have spoiler sum = 1 or 2.
     """
-    # Put an acq star at an offset from fid light id=2 such that for a search
-    # box size larger than box_size_thresh, that star will be spoiled.  This
-    # uses the equation in FidTable.spoils().
-    dither = 20
-    box_size_thresh = 90
     offset = box_size_thresh + FID.spoiler_margin + dither
 
     dark = ACAImage(np.full(shape=(1024, 1024), fill_value=40), row0=-512, col0=-512)
@@ -710,6 +715,22 @@ def test_acq_fid_catalog_probs_low_level():
                                   id=[2, 3, 4],
                                   mag=[8.2, 11.5, 11.5],
                                   offset_y=[offset, 10, 10], detector='HRC-S')
+
+    return dark, stars
+
+
+def test_acq_fid_catalog_probs_low_level():
+    """
+    Low-level tests of machinery to handle different fid light sets within
+    acquisition probabilities.
+    """
+    # Put an acq star at an offset from fid light id=2 such that for a search
+    # box size larger than box_size_thresh, that star will be spoiled.  This
+    # uses the equation in FidTable.spoils().
+    dither = 20
+    box_size_thresh = 90
+
+    dark, stars = get_dark_stars_simple(dither, box_size_thresh)
 
     # Get the catalogs (n_guide=0 so skip guide selection)
     kwargs = mod_std_info(stars=stars, dark=dark, dither=dither, raise_exc=True,
@@ -780,15 +801,97 @@ def test_acq_fid_catalog_probs_low_level():
                 assert p_acq0 == p_acq1
 
 
-def test_acq_fid_catalog_simple():
+@pytest.mark.parametrize('n_fid_exp_fid_ids', [(1, [1]),
+                                               (2, [1, 4]),
+                                               (3, [1, 3, 4])])
+def test_acq_fid_catalog_n_fid(n_fid_exp_fid_ids):
     """
-    Test optimizing acq and fid in a simple case.
+    Test optimizing acq and fid in a simple case (which does exercise acq-fid
+    optimization) with n_fid=1, 2, 3.
+
+    id    mag  status
+    100   9.5  ok
+    101   9.6  ok
+    102   9.7  ok
+    103    10  ok
+      2   8.2  spoiled by fid 2 for box > 90
+      3  11.5  yellow spoiler for fid 3
+      4  11.5  yellow spoiler for fid 4
+
+    For n_fid=1, this chooses fid_set=[1] because that is not spoiled and is
+    not a spoiler.
+
+    For n_fid=2, this chooses fid_set=[1, 4] to allow star id=2 to have a
+    160" box (maintaining the no-fid opt_P2).  Set [1, 3] would be the same
+    but the [1, 3] separation is less than the [1, 4] separation.
+
+    For n_fid=3, this choose fid_set=[1, 3, 4], again so star id=2 is free to
+    have a 160" box.  From the stage perspective the spoiler_score=1 fid sets
+    have sufficiently degraded P2 that it moves on to the spoiler_score=2 set
+    that includes fids 3 and 4.
     """
     # Put an acq star at an offset from fid light id=2 such that for a search
     # box size larger than box_size_thresh, that star will be spoiled.  This
     # uses the equation in FidTable.spoils().
+    n_fid, exp_fid_ids = n_fid_exp_fid_ids  # this is a 2-tuple
+
     dither = 20
     box_size_thresh = 90
+
+    dark, stars = get_dark_stars_simple(dither, box_size_thresh)
+
+    # Get the catalogs (n_guide=0 so skip guide selection)
+    kwargs = mod_std_info(stars=stars, dark=dark, dither=dither, raise_exc=True,
+                          n_guide=0, n_fid=n_fid, n_acq=5, detector='HRC-S')
+    aca = get_aca_catalog(**kwargs)
+    acqs = aca.acqs
+
+    assert acqs['id'].tolist() == [2, 100, 101, 102, 103]
+    assert acqs['halfw'].tolist() == [160, 160, 160, 160, 80]
+    assert acqs.fids['id'].tolist() == exp_fid_ids
+    assert acqs.fid_set == tuple(exp_fid_ids)
+
+
+def test_acq_fid_catalog_zero_cand_fid():
+    """
+    Test catalog selection with n_fid=3 requested but zero candidate fids.
+    This should not happen in practice.
+    """
+    dither = 20
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(n_stars=5)
+    dark = ACAImage(np.full(shape=(1024, 1024), fill_value=40), row0=-512, col0=-512)
+
+    kwargs = mod_std_info(stars=stars, dark=dark, dither=dither, raise_exc=True,
+                          n_guide=0, n_fid=3, n_acq=5,
+                          detector='HRC-S', sim_offset=300000)
+    aca = get_aca_catalog(**kwargs)
+
+    assert not aca.fids.thumbs_up
+    assert len(aca.fids) == 0
+    assert len(aca.fids.cand_fids) == 0
+    assert aca.acqs.fid_set == ()
+    assert len(aca.acqs) == 5
+    assert aca.acqs.thumbs_up
+
+
+def test_acq_fid_catalog_one_cand_fid():
+    """
+    Test optimizing acq and fid for an ACIS-S observation with large sim_offset
+    (-55000) such that only ACIS-6 is still on the ACA CCD.  Add a couple of stars:
+
+    - id=1 is 8.2 mag star that should be selected but is spoiled by fid id=6
+      for box size > 90.  Expect optimized size to be 80".
+    - id=2 is 11.5 mag star that is a yellow spoiler for fid id=6.  Expect
+      fid_set == (6,).
+
+    This test is good because with fid_set=(6,) the final catalog does not meet
+    stage requirements and thus excercise the path of never finding a good fid set.
+    In that case the best available is selected with a warning.
+    """
+    box_size_thresh = 90
+    dither = 8
+    sim_offset = -55000
     offset = box_size_thresh + FID.spoiler_margin + dither
 
     dark = ACAImage(np.full(shape=(1024, 1024), fill_value=40), row0=-512, col0=-512)
@@ -797,19 +900,77 @@ def test_acq_fid_catalog_simple():
 
     # Add stars near fid light positions.  For fids 3, 4 put in fid spoilers
     # so the initial fid set is empty.
-    stars.add_fake_stars_from_fid(fid_id=[2, 3, 4],
-                                  id=[2, 3, 4],
-                                  mag=[8.2, 11.5, 11.5],
-                                  offset_y=[offset, 10, 10], detector='HRC-S')
+    stars.add_fake_stars_from_fid(fid_id=[6, 6],
+                                  id=[1, 2],  # assigned catalog ID
+                                  mag=[8.2, 11.5],
+                                  offset_y=[offset, 10],
+                                  detector='ACIS-S', sim_offset=sim_offset)
 
-    # Get the catalogs (n_guide=0 so skip guide selection)
     kwargs = mod_std_info(stars=stars, dark=dark, dither=dither, raise_exc=True,
-                          n_guide=0, n_acq=5, detector='HRC-S')
+                          n_guide=0, n_fid=3, n_acq=5,
+                          detector='ACIS-S', sim_offset=sim_offset)
     aca = get_aca_catalog(**kwargs)
-    acqs = aca.acqs
 
-    repr(acqs)
-    assert acqs['id'].tolist() == [2, 100, 101, 102, 103]
-    assert acqs['halfw'].tolist() == [160, 160, 160, 160, 80]
-    assert acqs.fids['id'].tolist() == [1, 3, 4]
-    assert acqs.fid_set == (1, 3, 4)
+    assert aca.acqs['id'].tolist() == [1, 100, 101, 102, 103]
+    assert aca.acqs['halfw'].tolist() == [80, 160, 160, 160, 140]
+
+    assert aca.n_fid == 3
+    assert aca.fids['id'].tolist() == [6]
+    assert aca.acqs.fid_set == (6,)
+
+    # Not enough fids
+    assert aca.thumbs_up == 0
+    assert aca.fids.thumbs_up == 0
+    assert aca.acqs.thumbs_up == 1
+    assert aca.warnings == ['WARNING: No acq-fid combination was '
+                            'found that met stage requirements']
+
+
+@pytest.mark.parametrize('n_fid', [2, 3])
+def test_acq_fid_catalog_two_cand_fid(n_fid):
+    """
+    Test optimizing acq and fid for an HRC-I observation with large sim_offset
+    (29829) such that only two fids id=(1, 2) are still on the ACA CCD.  This
+    is an ACIS undercover observation (obsid 19793 from DEC0516B).
+
+    Add a couple of stars:
+
+    - id=1 is 8.2 mag star that should be selected but is spoiled by fid id=1
+      for box size > 90.  Expect optimized size to be 80".
+    - id=2 is 11.5 mag star that is a yellow spoiler for fid id=2.  Expect
+      fid_set == (1, 2) with spoiler_score=1.
+
+    """
+    box_size_thresh = 90
+    dither = 20
+    sim_offset = 29829
+    offset = box_size_thresh + FID.spoiler_margin + dither
+
+    dark = ACAImage(np.full(shape=(1024, 1024), fill_value=40), row0=-512, col0=-512)
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(mag=[9.5, 9.6, 9.7, 10], n_stars=4)
+
+    # Add stars near fid light positions.
+    stars.add_fake_stars_from_fid(fid_id=[1, 2],
+                                  id=[1, 2],  # assigned catalog ID
+                                  mag=[8.2, 11.5],
+                                  offset_y=[offset, 10],
+                                  detector='HRC-I', sim_offset=sim_offset)
+
+    kwargs = mod_std_info(stars=stars, dark=dark, dither=dither, raise_exc=True,
+                          n_guide=0, n_fid=n_fid, n_acq=5,
+                          detector='HRC-I', sim_offset=sim_offset)
+    aca = get_aca_catalog(**kwargs)
+
+    assert aca.acqs['id'].tolist() == [1, 100, 101, 102, 103]
+    assert aca.acqs['halfw'].tolist() == [80, 160, 160, 160, 140]
+
+    assert aca.n_fid == n_fid
+    assert aca.fids['id'].tolist() == [1, 2]
+    assert aca.acqs.fid_set == (1, 2)
+
+    # If n_fid=2 then getting only 2 fids is OK, but otherwise thumbs-down.
+    thumbs_up = (1 if n_fid == 2 else 0)
+    assert aca.thumbs_up == thumbs_up
+    assert aca.fids.thumbs_up == thumbs_up
+    assert aca.acqs.thumbs_up == 1
