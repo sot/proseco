@@ -48,6 +48,9 @@ def get_fid_catalog(obsid=0, **kwargs):
 
     fids.cand_fids = fids.get_fid_candidates()
 
+    # Set list of available fid_set's, accounting for n_fid and cand_fids.
+    fids.cand_fid_sets = fids.get_cand_fid_sets()
+
     # Set initial fid catalog if possible to a set for which no field stars
     # spoiler any of the fid lights and no fid lights is a search spoilers for
     # any current acq star.  If not possible then the table is still zero
@@ -78,6 +81,7 @@ class FidTable(ACACatalogTable):
     name = 'fids'
 
     cand_fids = MetaAttribute(is_kwarg=False)
+    cand_fid_sets = MetaAttribute(is_kwarg=False)
 
     allowed_kwargs = ACACatalogTable.allowed_kwargs | set(['acqs'])
 
@@ -98,6 +102,56 @@ class FidTable(ACACatalogTable):
             self.remove_rows(np.arange(len(self)))
         for fid_id in sorted(fid_ids):
             self.add_row(self.cand_fids.get_id(fid_id))
+
+    def get_cand_fid_sets(self):
+        """
+        Get a list of candidate fid-sets that can be selected given the list
+        of candidate fids that are available.  It also ensure that the fid sets
+        are compatible with the specified n_fid.
+        """
+        cand_fids = self.cand_fids
+
+        if self.n_fid > 3 or self.n_fid < 0:
+            raise ValueError('number of fids n_fid must be between 0 and 3 inclusive')
+
+        # Final number of fids is the max of n_fid and the number of candidate fids.
+        actual_n_fid = min(self.n_fid, len(cand_fids))
+
+        if actual_n_fid == 0:
+            cand_fid_sets = []
+
+        elif actual_n_fid == 1:
+            cand_fid_sets = [set([fid_id]) for fid_id in cand_fids['id']]
+
+        elif actual_n_fid == 2:
+            # Make a list of available pairs sorted in order of radial separation
+            # (largest first).
+            dist2s = []
+            fid_ids0 = []
+            fid_ids1 = []
+            for idx0 in range(len(cand_fids)):
+                for idx1 in range(idx0 + 1, len(cand_fids)):
+                    fid0 = cand_fids[idx0]
+                    fid1 = cand_fids[idx1]
+                    dist2 = -((fid0['yang'] - fid1['yang']) ** 2 +
+                              (fid0['zang'] - fid1['zang']) ** 2)
+                    fid_ids0.append(fid0['id'])
+                    fid_ids1.append(fid1['id'])
+                    dist2s.append(dist2)
+
+            sort_idx = np.argsort(dist2s)
+            fid_ids0 = np.array(fid_ids0)[sort_idx]
+            fid_ids1 = np.array(fid_ids1)[sort_idx]
+
+            cand_fid_sets = [set([fid_id0, fid_id1]) for
+                             fid_id0, fid_id1 in zip(fid_ids0, fid_ids1)]
+
+        elif actual_n_fid == 3:
+            cand_fids_ids = set(cand_fids['id'])
+            cand_fid_sets = [fid_set for fid_set in FID.fid_sets[self.detector]
+                             if fid_set <= cand_fids_ids]
+
+        return cand_fid_sets
 
     def set_slot_column(self):
         """
