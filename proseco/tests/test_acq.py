@@ -691,6 +691,17 @@ def test_no_candidates():
 def get_dark_stars_simple(box_size_thresh, dither):
     """
     Set-up for tests of optimized acq and fid selection.
+
+    id    mag  status
+    100   9.5  ok
+    101   9.6  ok
+    102   9.7  ok
+    103    10  ok
+      2   8.2  spoiled by fid 2 for box > 90
+      3  11.5  yellow spoiler for fid 3
+      4  11.5  yellow spoiler for fid 4
+
+    All fid sets have spoiler sum = 1 or 2.
     """
     offset = box_size_thresh + FID.spoiler_margin + dither
 
@@ -790,13 +801,34 @@ def test_acq_fid_catalog_probs_low_level():
                 assert p_acq0 == p_acq1
 
 
-@pytest.mark.parametrize('n_fid_exp_fid_ids', [(1, [1]), (2, [1, 4])])
+@pytest.mark.parametrize('n_fid_exp_fid_ids', [(1, [1]),
+                                               (2, [1, 4]),
+                                               (3, [1, 3, 4])])
 def test_acq_fid_catalog_n_fid(n_fid_exp_fid_ids):
     """
     Test optimizing acq and fid in a simple case (which does exercise acq-fid
-    optimization) with n_fid=2.
+    optimization) with n_fid=1, 2, 3.
 
-    TO DO: do the results make sense?
+    id    mag  status
+    100   9.5  ok
+    101   9.6  ok
+    102   9.7  ok
+    103    10  ok
+      2   8.2  spoiled by fid 2 for box > 90
+      3  11.5  yellow spoiler for fid 3
+      4  11.5  yellow spoiler for fid 4
+
+    For n_fid=1, this chooses fid_set=[1] because that is not spoiled and is
+    not a spoiler.
+
+    For n_fid=2, this chooses fid_set=[1, 4] to allow star id=2 to have a
+    160" box (maintaining the no-fid opt_P2).  Set [1, 3] would be the same
+    but the [1, 3] separation is less than the [1, 4] separation.
+
+    For n_fid=3, this choose fid_set=[1, 3, 4], again so star id=2 is free to
+    have a 160" box.  From the stage perspective the spoiler_score=1 fid sets
+    have sufficiently degraded P2 that it moves on to the spoiler_score=2 set
+    that includes fids 3 and 4.
     """
     # Put an acq star at an offset from fid light id=2 such that for a search
     # box size larger than box_size_thresh, that star will be spoiled.  This
@@ -818,6 +850,29 @@ def test_acq_fid_catalog_n_fid(n_fid_exp_fid_ids):
     assert acqs['halfw'].tolist() == [160, 160, 160, 160, 80]
     assert acqs.fids['id'].tolist() == exp_fid_ids
     assert acqs.fid_set == tuple(exp_fid_ids)
+
+
+def test_acq_fid_catalog_zero_cand_fid():
+    """
+    Test catalog selection with n_fid=3 requested but zero candidate fids.
+    This should not happen in practice.
+    """
+    dither = 20
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(n_stars=5)
+    dark = ACAImage(np.full(shape=(1024, 1024), fill_value=40), row0=-512, col0=-512)
+
+    kwargs = mod_std_info(stars=stars, dark=dark, dither=dither, raise_exc=True,
+                          n_guide=0, n_fid=3, n_acq=5,
+                          detector='HRC-S', sim_offset=300000)
+    aca = get_aca_catalog(**kwargs)
+
+    assert not aca.fids.thumbs_up
+    assert len(aca.fids) == 0
+    assert len(aca.fids.cand_fids) == 0
+    assert aca.acqs.fid_set == ()
+    assert len(aca.acqs) == 5
+    assert aca.acqs.thumbs_up
 
 
 def test_acq_fid_catalog_one_cand_fid():
