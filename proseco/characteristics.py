@@ -52,7 +52,7 @@ man_errs = p_man_errs['man_err_hi']
 spoiler_star_cols = ['id', 'yang', 'zang', 'row', 'col', 'mag', 'mag_err']
 
 
-bad_pixels = [[-245,0,454,454]]
+bad_pixels = [[-245, 0, 454, 454]]
 
 bad_star_list = [36178592,
                  39980640,
