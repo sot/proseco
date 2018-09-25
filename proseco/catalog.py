@@ -80,22 +80,27 @@ def _get_aca_catalog(**kwargs):
     aca = ACATable()
     aca.set_attrs_from_kwargs(**kwargs)
 
+    aca.log('Starting get_acq_catalog')
     aca.acqs = get_acq_catalog(**kwargs)
+    aca.log('Starting get_fid_catalog')
     aca.fids = get_fid_catalog(acqs=aca.acqs, **kwargs)
 
     aca.acqs.fids = aca.fids
 
     if aca.optimize:
+        aca.log('Starting optimize_acqs_fids')
         aca.optimize_acqs_fids()
 
     aca.acqs.fid_set = aca.fids['id']
 
     stars = kwargs.pop('stars', aca.acqs.stars)
+    aca.log('Starting get_guide_catalog')
     aca.guides = get_guide_catalog(stars=stars, **kwargs)
 
     # Make a merged starcheck-like catalog.  Catch any errors at this point to avoid
     # impacting operational work (call from Matlab).
     try:
+        aca.log('Starting merge_cats')
         merge_cat = merge_cats(fids=aca.fids, guides=aca.guides, acqs=aca.acqs)
         for name in merge_cat.colnames:
             aca[name] = merge_cat[name]
@@ -109,11 +114,16 @@ def _get_aca_catalog(**kwargs):
 
         aca.exception = traceback.format_exc()
 
+    aca.log('Finished aca_get_catalog')
     return aca
 
 
 class ACATable(ACACatalogTable):
     optimize = MetaAttribute(default=True)
+
+    # For validation with get_aca_catalog(obsid), store the starcheck
+    # catalog in the ACATable meta.
+    starcheck_catalog = MetaAttribute(is_kwarg=False)
 
     @classmethod
     def empty(cls):

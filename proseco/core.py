@@ -1,3 +1,4 @@
+import functools
 import pickle
 import inspect
 import time
@@ -48,6 +49,12 @@ def to_python(val):
     except AttributeError:
         pass
     return val
+
+
+@functools.lru_cache(maxsize=8)
+def get_starcheck_catalog(obsid):
+    from mica.starcheck import get_starcheck_catalog
+    return get_starcheck_catalog(obsid)
 
 
 class ACABox:
@@ -221,7 +228,6 @@ class ACACatalogTable(Table):
 
         # If not all params supplied then get via mica for the obsid.
         if not all_pars:
-            from mica.starcheck import get_starcheck_catalog
             self.log(f'getting starcheck catalog for obsid {self.obsid}')
 
             obs = get_starcheck_catalog(self.obsid)
@@ -246,6 +252,10 @@ class ACACatalogTable(Table):
                 fid_or_mon = (obs['cat']['type'] == 'FID') | (obs['cat']['type'] == 'MON')
                 self.n_guide = 8 - np.count_nonzero(fid_or_mon)
 
+            if self.detector is None:
+                self.n_fid = 0
+                self.detector = 'HRC-S'
+
             for dither_attr in ('dither_acq', 'dither_guide'):
                 if getattr(self, dither_attr) is None:
                     dither_y_amp = obso.get('dither_y_amp')
@@ -259,6 +269,8 @@ class ACACatalogTable(Table):
                         if dither_attr == 'dither_acq' and self.dither_acq.max() > 30:
                             dither = 8 if self.detector.startswith('ACIS') else 20
                             self.dither_acq = ACABox(dither)
+
+            self.starcheck_catalog = obs
 
         for dither_attr in ('dither_acq', 'dither_guide'):
             dither = getattr(self, dither_attr)
