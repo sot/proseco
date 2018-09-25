@@ -562,11 +562,16 @@ def test_cand_acqs_include_exclude():
                                  id=[9, 10, 11],
                                  size=1500, n_stars=3)
 
+    # Put in a neighboring star that will keep star 9 out of the cand_acqs table
+    star9 = stars.get_id(9)
+    stars.add_fake_star(yang=star9['yang'] + 20, zang=star9['zang'],
+                        mag=star9['mag'] + 2.5, id=90)
+
     # Make sure baseline catalog is working like expected
     acqs = get_acq_catalog(**STD_INFO, optimize=False, stars=stars)
     assert np.all(acqs['id'] == np.arange(1, 9))
     assert np.all(acqs['halfw'] == 160)
-    assert np.all(acqs.cand_acqs['id'] == np.arange(1, 11))
+    assert np.all(acqs.cand_acqs['id'] == [1, 2, 3, 4, 5, 6, 7, 8, 10])
 
     # Define includes and excludes. id=9 is in nominal cand_acqs but not in acqs.
     include_ids = [9, 11]

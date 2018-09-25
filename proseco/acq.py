@@ -283,11 +283,6 @@ class AcqTable(ACACatalogTable):
         bads = ~ok
         cand_acqs = stars[ok]
 
-        # If any include_ids (stars forced to be in catalog) ensure that the
-        # star is in the cand_acqs table
-        if self.include_ids:
-            self.add_include_ids(cand_acqs, stars)
-
         cand_acqs.sort('mag')
         self.log('Filtering on CLASS, mag, COLOR1, row/col, '
                  'mag_err, ASPQ1/2, POS_ERR:')
@@ -311,6 +306,12 @@ class AcqTable(ACACatalogTable):
         cand_acqs = cand_acqs[goods]
         self.log('Selected {} candidates with no spoiler (star within 3 mag and 30 arcsec)'
                  .format(len(cand_acqs)))
+
+        # If any include_ids (stars forced to be in catalog) ensure that the
+        # star is in the cand_acqs table.  Need to re-sort as well.
+        if self.include_ids:
+            self.add_include_ids(cand_acqs, stars)
+            cand_acqs.sort('mag')
 
         cand_acqs.rename_column('COLOR1', 'color')
         # Drop all the other AGASC columns.  No longer useful.
@@ -351,6 +352,7 @@ class AcqTable(ACACatalogTable):
                                      f'a valid star in the ACA field of view')
                 else:
                     cand_acqs.add_row(star)
+                    self.log(f'Included star id={include_id} in cand_acqs')
 
     def select_best_p_acqs(self, cand_acqs, min_p_acq, acq_indices, box_sizes):
         """
