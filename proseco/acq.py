@@ -57,7 +57,10 @@ def get_acq_catalog(obsid=0, **kwargs):
     acqs.set_stars()
 
     acqs.log(f'getting dark cal image at date={acqs.date} t_ccd={acqs.t_ccd:.1f}')
-    acqs.dark = get_dark_cal_image(date=acqs.date, select='before', t_ccd_ref=acqs.t_ccd)
+
+    # If dark map not provided via input kwarg then get from dark cal archive
+    if acqs.dark is None:
+        acqs.dark = get_dark_cal_image(date=acqs.date, select='before', t_ccd_ref=acqs.t_ccd)
 
     # Probability of man_err for this observation with a given man_angle.  Used
     # for marginalizing probabilities over different man_errs.
@@ -114,6 +117,7 @@ class AcqTable(ACACatalogTable):
     # Required attributes
     required_attrs = ('att', 'man_angle', 't_ccd_acq', 'date', 'dither_acq')
 
+    dark = MetaAttribute()
     optimize = MetaAttribute(default=True)
     verbose = MetaAttribute(default=False)
 
