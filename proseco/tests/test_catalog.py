@@ -190,3 +190,20 @@ def test_big_sim_offset():
     assert len(aca.fids) == 0
     names = ['id', 'yang', 'zang', 'row', 'col', 'mag', 'spoiler_score', 'idx']
     assert all(name in aca.fids.colnames for name in names)
+
+
+def test_call_args_attr():
+    aca = get_aca_catalog(**mod_std_info(optimize=False, n_guide=0, n_acq=0, n_fid=0))
+    assert aca.call_args == {'att': (0, 0, 0),
+                             'date': '2018:001',
+                             'detector': 'ACIS-S',
+                             'dither': 8.0,
+                             'focus_offset': 0,
+                             'man_angle': 90,
+                             'n_acq': 0,
+                             'n_fid': 0,
+                             'n_guide': 0,
+                             'obsid': 1,
+                             'optimize': False,
+                             'sim_offset': 0,
+                             't_ccd': -11}
