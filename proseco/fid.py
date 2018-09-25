@@ -45,11 +45,13 @@ def get_fid_catalog(obsid=0, **kwargs):
     # If no fids are requested then just initialize an empty table
     # here, set the attributes and return the table.  No need to go
     # through the trouble of getting candidate fids.
-    fids = FidTable.empty() if (kwargs.get('n_fid') == 0) else FidTable()
+    fids = FidTable()
     fids.set_attrs_from_kwargs(obsid=obsid, **kwargs)
 
     if fids.n_fid == 0:
-        return fids
+        empty_fids = FidTable.empty()
+        empty_fids.meta = fids.meta
+        return empty_fids
 
     fids.set_stars(acqs=fids.acqs)
 

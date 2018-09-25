@@ -16,6 +16,19 @@ HAS_SC_ARCHIVE = Path(mica.starcheck.starcheck.FILES['data_root']).exists()
 
 
 @pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
+def test_get_aca_catalog_49531():
+    """
+    Test of getting an ER using the mica.starcheck archive for getting the
+    obs parameters.  This tests a regression introduced in the acq-fid
+    functionality.
+    """
+    aca = get_aca_catalog(49531, raise_exc=True)
+    assert len(aca.acqs) == 8
+    assert len(aca.guides) == 8
+    assert len(aca.fids) == 0
+
+
+@pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
 def test_get_aca_catalog_20603():
     """Put it all together.  Regression test for selected stars.
     """
