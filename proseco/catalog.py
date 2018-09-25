@@ -8,7 +8,6 @@ from .core import ACACatalogTable, get_kwargs_from_starcheck_text, MetaAttribute
 from .guide import get_guide_catalog, GuideTable
 from .acq import get_acq_catalog, AcqTable
 from .fid import get_fid_catalog, FidTable
-from . import characteristics_fid as FID
 from . import characteristics as ACQ
 
 
@@ -78,6 +77,7 @@ def _get_aca_catalog(**kwargs):
     raise_exc = kwargs.pop('raise_exc')
 
     aca = ACATable()
+    aca.call_args = kwargs.copy()
     aca.set_attrs_from_kwargs(**kwargs)
 
     aca.acqs = get_acq_catalog(**kwargs)
@@ -114,6 +114,7 @@ def _get_aca_catalog(**kwargs):
 
 class ACATable(ACACatalogTable):
     optimize = MetaAttribute(default=True)
+    call_args = MetaAttribute(default={})
 
     @classmethod
     def empty(cls):
