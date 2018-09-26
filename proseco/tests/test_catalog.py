@@ -13,6 +13,7 @@ from ..catalog import get_aca_catalog
 
 
 HAS_SC_ARCHIVE = Path(mica.starcheck.starcheck.FILES['data_root']).exists()
+TEST_COLS = 'slot idx id type sz yang zang dim res halfw'.split()
 
 
 @pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
@@ -36,21 +37,21 @@ def test_get_aca_catalog_20603():
     aca = get_aca_catalog(20603, exclude_ids=[40113544], n_fid=2, n_guide=6, n_acq=7,
                           raise_exc=True)
     # Expected 2 fids, 6 guide, 7 acq
-    exp = ['slot idx     id    type  sz p_acq  mag  maxmag   yang     zang   dim res halfw',
-           '---- --- --------- ---- --- ----- ----- ------ -------- -------- --- --- -----',
-           '   0   1         4  FID 8x8 0.000  7.00   8.00  2140.23   166.63   1   1    25',
-           '   1   2         5  FID 8x8 0.000  7.00   8.00 -1826.28   160.17   1   1    25',
-           '   2   3 116791824  BOT 6x6 0.958  9.01  10.51   622.00  -953.60  20   1   160',
-           '   3   4  40114416  BOT 6x6 0.912  9.78  11.28   394.22  1204.43  20   1   140',
-           '   4   5 116923528  BOT 6x6 0.593  9.84  11.34 -2418.65  1088.40  20   1   160',
-           '   5   6  40112304  BOT 6x6 0.687  9.79  11.29 -1644.35  2032.47  20   1   160',
-           '   6   7 116791744  BOT 6x6 0.347 10.29  11.79   985.38 -1210.19  20   1   140',
-           '   7   8  40113544  GUI 6x6 0.000  7.91   9.41   102.74  1133.37   1   1    25',
-           '   7   9 116923496  ACQ 6x6 0.970  9.14  10.64 -1337.79  1049.27  20   1   120',
-           '   0  10 116785920  ACQ 6x6 0.136 10.50  12.00  -673.94 -1575.87  20   1    60']
+    exp = ['slot idx     id    type  sz   yang     zang   dim res halfw',
+           '---- --- --------- ---- --- -------- -------- --- --- -----',
+           '   0   1         4  FID 8x8  2140.23   166.63   1   1    25',
+           '   1   2         5  FID 8x8 -1826.28   160.17   1   1    25',
+           '   2   3 116791824  BOT 6x6   622.00  -953.60  20   1   160',
+           '   3   4  40114416  BOT 6x6   394.22  1204.43  20   1   140',
+           '   4   5 116923528  BOT 6x6 -2418.65  1088.40  20   1   160',
+           '   5   6  40112304  BOT 6x6 -1644.35  2032.47  20   1   160',
+           '   6   7  40113544  GUI 6x6   102.74  1133.37   1   1    25',
+           '   6   8 116923496  ACQ 6x6 -1337.79  1049.27  20   1   120',
+           '   7   9 116791744  ACQ 6x6   985.38 -1210.19  20   1    60',
+           '   0  10 116785920  ACQ 6x6  -673.94 -1575.87  20   1    80']
 
     repr(aca)  # Apply default formats
-    assert aca.pformat(max_width=-1) == exp
+    assert aca[TEST_COLS].pformat(max_width=-1) == exp
 
 
 @pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
@@ -61,22 +62,22 @@ def test_get_aca_catalog_20259():
     """
     # Force not using a bright star so there is a GUI-only (not BOT) star
     aca = get_aca_catalog(20259, raise_exc=True)
-    exp = ['slot idx     id    type  sz p_acq mag  maxmag   yang     zang   dim res halfw',
-           '---- --- --------- ---- --- ----- ---- ------ -------- -------- --- --- -----',
-           '   0   1         1  FID 8x8 0.000 7.00   8.00 -1175.03  -468.23   1   1    25',
-           '   1   2         2  FID 8x8 0.000 7.00   8.00  1224.70  -460.93   1   1    25',
-           '   2   3         3  FID 8x8 0.000 7.00   8.00 -1177.69   561.30   1   1    25',
-           '   3   4 896009152  BOT 6x6 0.985 7.25   8.75  1693.39   217.92  20   1   160',
-           '   4   5 897717296  BOT 6x6 0.985 8.20   9.70   932.58  1227.48  20   1   160',
-           '   5   6 897712576  BOT 6x6 0.985 8.25   9.75 -1099.95  2140.23  20   1   160',
-           '   6   7 896013056  BOT 6x6 0.983 8.75  10.25  1547.25 -2455.12  20   1   160',
-           '   7   8 897722680  GUI 6x6 0.000 8.85  10.35  1007.82  1676.78   1   1    25',
-           '   7   9 896011576  ACQ 6x6 0.985 8.12   9.62   810.99   -69.21  20   1   160',
-           '   0  10 897192352  ACQ 6x6 0.985 9.03  10.53 -2110.43  2005.21  20   1   100',
-           '   1  11 896008728  ACQ 6x6 0.985 9.08  10.58  2223.64  -341.57  20   1    80',
-           '   2  12 896010144  ACQ 6x6 0.985 9.11  10.61  1081.11   912.90  20   1    80']
+    exp = ['slot idx     id    type  sz   yang     zang   dim res halfw',
+           '---- --- --------- ---- --- -------- -------- --- --- -----',
+           '   0   1         1  FID 8x8 -1175.03  -468.23   1   1    25',
+           '   1   2         2  FID 8x8  1224.70  -460.93   1   1    25',
+           '   2   3         3  FID 8x8 -1177.69   561.30   1   1    25',
+           '   3   4 896009152  BOT 6x6  1693.39   217.92  20   1   160',
+           '   4   5 897712576  BOT 6x6 -1099.95  2140.23  20   1   160',
+           '   5   6 897717296  BOT 6x6   932.58  1227.48  20   1   160',
+           '   6   7 896013056  BOT 6x6  1547.25 -2455.12  20   1   160',
+           '   7   8 896008536  GUI 6x6  1705.59   158.91   1   1    25',
+           '   7   9 896011576  ACQ 6x6   810.99   -69.21  20   1   160',
+           '   0  10 896009240  ACQ 6x6  -911.41   402.62  20   1   160',
+           '   1  11 897192352  ACQ 6x6 -2110.43  2005.21  20   1   100',
+           '   2  12 897719248  ACQ 6x6  1650.09  2019.62  20   1    80']
     repr(aca)  # Apply default formats
-    assert aca.pformat(max_width=-1) == exp
+    assert aca[TEST_COLS].pformat(max_width=-1) == exp
 
 
 def test_exception_handling():
