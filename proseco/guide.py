@@ -381,7 +381,8 @@ def check_mag_spoilers(cand_stars, ok, stars, n_sigma):
                 continue
             if (cand['mag'] - spoil['mag']) < magdifflim:
                 continue
-            mag_err_sum = np.sqrt(cand['MAG_ACA_ERR'] ** 2 + spoil['MAG_ACA_ERR'] ** 2)
+            mag_err_sum = np.sqrt((cand['MAG_ACA_ERR'] * 0.01) ** 2 +
+                                  (spoil['MAG_ACA_ERR'] * 0.01) ** 2)
             delmag = cand['mag'] - spoil['mag'] + n_sigma * mag_err_sum
             thsep = intercept + delmag * spoilslope
             if dist < thsep:
@@ -412,8 +413,9 @@ def check_column_spoilers(cand_stars, ok, stars, n_sigma):
                      (direction > 1.0))
         if not np.count_nonzero(pos_spoil) >= 1:
             continue
-        mag_errs = (n_sigma * np.sqrt(cand['MAG_ACA_ERR'] ** 2 +
-                                      stars['MAG_ACA_ERR'][~stars['offchip']][pos_spoil] ** 2))
+        mag_errs = (n_sigma *
+                    np.sqrt((cand['MAG_ACA_ERR'] * 0.01) ** 2 +
+                            (stars['MAG_ACA_ERR'][~stars['offchip']][pos_spoil] * 0.01) ** 2))
         dm = (cand['mag'] - stars['mag'][~stars['offchip']][pos_spoil] + mag_errs)
         if np.any(dm > GUIDE_CHAR.col_spoiler['MagDiff']):
             column_spoiled[idx] = True
