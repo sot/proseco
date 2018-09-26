@@ -11,7 +11,8 @@ from scipy import ndimage, stats
 from astropy.table import Table
 
 from chandra_aca.star_probs import acq_success_prob, prob_n_acq
-from chandra_aca.transform import (pixels_to_yagzag, mag_to_count_rate)
+from chandra_aca.transform import (pixels_to_yagzag, mag_to_count_rate,
+                                   snr_mag_for_t_ccd)
 from mica.archive.aca_dark.dark_cal import get_dark_cal_image
 
 from . import characteristics as CHAR
@@ -55,6 +56,13 @@ def get_acq_catalog(obsid=0, **kwargs):
     acqs = AcqTable()
     acqs.set_attrs_from_kwargs(obsid=obsid, **kwargs)
     acqs.set_stars()
+
+    # Only allow imposters that are statistical outliers and are brighter than
+    # this (temperature-dependent) threshold.  See characterisics.py for more
+    # explanation.
+    acqs.imposters_mag_limit = snr_mag_for_t_ccd(acqs.t_ccd,
+                                                 ref_mag=CHAR.imposter_mag_lim_ref_mag,
+                                                 ref_t_ccd=CHAR.imposter_mag_lim_ref_t_ccd)
 
     acqs.log(f'getting dark cal image at date={acqs.date} t_ccd={acqs.t_ccd:.1f}')
 
@@ -132,6 +140,7 @@ class AcqTable(ACACatalogTable):
     cand_acqs = MetaAttribute(is_kwarg=False)
     p_safe = MetaAttribute(is_kwarg=False)
     _fid_set = MetaAttribute(is_kwarg=False, default=())
+    imposters_mag_limit = MetaAttribute(is_kwarg=False, default=20.0)
 
     @classmethod
     def empty(cls):
@@ -510,6 +519,7 @@ class AcqTable(ACACatalogTable):
                       box_size=ext_box_size,
                       dark=dark,
                       bgd=bgd,  # TO DO deal with this
+                      mag_limit=self.imposters_mag_limit
                       )
         imposters = get_intruders(acq, ext_box_size, 'imposters',
                                   n_sigma=1.0,  # TO DO: put to characteristics
@@ -770,7 +780,7 @@ def get_spoiler_stars(stars, acq, box_size):
 
 
 def get_imposter_stars(dark, star_row, star_col, thresh=None,
-                       maxmag=11.5, box_size=120, bgd=40, test=False):
+                       maxmag=11.5, box_size=120, bgd=40, mag_limit=20.0, test=False):
     """
     Note: current alg purposely avoids using the actual flight background
     calculation because this is unstable to small fluctuations in values
@@ -782,9 +792,10 @@ def get_imposter_stars(dark, star_row, star_col, thresh=None,
     :param star_row: row of acq star (float)
     :param star_col: col of acq star (float)
     :param thresh: PEA search hit threshold for a 2x2 block (e-/sec)
-    :param maxmag: Max mag (alternate way to specify ``thresh``)
+    :param maxmag: Max mag (alternate way to specify search hit ``thresh``)
     :param box_size: box size (arcsec)
     :param bgd: assumed flat background (float, e-/sec)
+    :param mag_limit: Max mag for imposter (using 6x6 readout)
     :param test: hook for convenience in algorithm testing
 
     :returns: numpy structured array of imposter stars
@@ -864,6 +875,9 @@ def get_imposter_stars(dark, star_row, star_col, thresh=None,
             continue
 
         img, img_sum, mag, row, col = get_image_props(dark, c_row, c_col, bgd)
+
+        if mag > mag_limit:
+            continue
 
         if pea_reject_image(img):
             continue
