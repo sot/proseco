@@ -60,7 +60,6 @@ def test_get_aca_catalog_20259():
     Test obsid 20259 which has two spoiled fids: HRC-2 is yellow and HRC-4 is red.
     Expectation is to choose fids 1, 2, 3 (not 4).
     """
-    # Force not using a bright star so there is a GUI-only (not BOT) star
     aca = get_aca_catalog(20259, raise_exc=True)
     exp = ['slot idx     id    type  sz   yang     zang   dim res halfw',
            '---- --- --------- ---- --- -------- -------- --- --- -----',
@@ -71,11 +70,11 @@ def test_get_aca_catalog_20259():
            '   4   5 897712576  BOT 6x6 -1099.95  2140.23  20   1   160',
            '   5   6 897717296  BOT 6x6   932.58  1227.48  20   1   160',
            '   6   7 896013056  BOT 6x6  1547.25 -2455.12  20   1   160',
-           '   7   8 896008536  GUI 6x6  1705.59   158.91   1   1    25',
-           '   7   9 896011576  ACQ 6x6   810.99   -69.21  20   1   160',
-           '   0  10 896009240  ACQ 6x6  -911.41   402.62  20   1   160',
-           '   1  11 897192352  ACQ 6x6 -2110.43  2005.21  20   1   100',
-           '   2  12 897719248  ACQ 6x6  1650.09  2019.62  20   1    80']
+           '   7   8 896009240  BOT 6x6  -911.41   402.62  20   1   160',
+           '   0   9 896011576  ACQ 6x6   810.99   -69.21  20   1   160',
+           '   1  10 897192352  ACQ 6x6 -2110.43  2005.21  20   1   100',
+           '   2  11 897719248  ACQ 6x6  1650.09  2019.62  20   1    80']
+
     repr(aca)  # Apply default formats
     assert aca[TEST_COLS].pformat(max_width=-1) == exp
 
