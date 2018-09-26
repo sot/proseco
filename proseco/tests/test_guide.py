@@ -25,7 +25,7 @@ def test_select():
     """
     selected = get_guide_catalog(att=(10, 20, 3), date='2018:001', dither=(8, 8),
                                  t_ccd=-13, n_guide=5)
-    expected_star_ids = [156384720, 155980240, 156377856, 156376184, 156381600]
+    expected_star_ids = [156384720, 155980240, 156376184, 156381600, 156379416]
     assert selected['id'].tolist() == expected_star_ids
 
 
