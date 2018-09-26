@@ -10,7 +10,7 @@ from chandra_aca.transform import mag_to_count_rate, yagzag_to_pixels
 from ..report import make_report
 from ..acq import (get_p_man_err, bin2x2, CHAR,
                    get_imposter_stars,
-                   get_image_props, calc_p_brightest,
+                   get_image_props,
                    AcqTable, calc_p_on_ccd,
                    get_acq_catalog,
                    )
@@ -25,6 +25,18 @@ TEST_DATE = '2018:144'  # Fixed date for doing tests
 ATT = [10, 20, 3]  # Arbitrary test attitude
 CACHE = {}  # Cache stuff for speed
 TEST_COLS = ('idx', 'slot', 'id', 'yang', 'zang', 'halfw')
+
+
+def calc_p_brightest(acq, box_size, stars, dark, man_err=0, dither=20, bgd=0):
+    """
+    Stub for original functional version of acq.calc_p_brightest, which was
+    turned into an AcqTable method.
+    """
+    acqs = AcqTable()
+    acqs.stars = stars
+    acqs.dark = dark
+    acqs.dither = dither
+    return acqs.calc_p_brightest(acq, box_size, man_err, bgd)
 
 
 def add_imposter(dark, acq, dyang, dzang, dmag):
