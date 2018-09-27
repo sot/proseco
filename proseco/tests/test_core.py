@@ -2,7 +2,23 @@
 
 import pytest
 
+import agasc
 from ..core import ACABox, get_kwargs_from_starcheck_text
+
+
+def test_agasc_1p7():
+    """
+    Ensure that AGASC 1.7 is being used.
+    """
+    # Updated with APASS info
+    star = agasc.get_star(688522864)
+    assert star['RSV3'] == 1
+    assert star['RSV2'] == 11944
+
+    # NOT updated with APASS info
+    star = agasc.get_star(611193056)
+    assert star['RSV3'] == 0
+    assert star['RSV2'] == -9999
 
 
 def test_box_init():
