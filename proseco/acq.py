@@ -883,7 +883,7 @@ def calc_p_brightest_compare(acq, mags, mag_errs):
         # CDF is prob that sp_mag < x, so take 1-CDF.
         sp_cdf = stats.norm.cdf(x, loc=mag, scale=mag_err)
         sp_cdfs.append(1 - sp_cdf)
-    prod_sp_cdf = np.prod(sp_cdfs, axis=0)
+    prod_sp_cdf = np.prod(sp_cdfs, axis=0).clip(1e-30)
 
     # Do the integral  ∫ dθ p(θ|t) Πm≠t p(θ<θt|m)
     prob = np.sum(acq_pdf * prod_sp_cdf * dx)
