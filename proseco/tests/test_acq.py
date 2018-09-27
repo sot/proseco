@@ -385,34 +385,35 @@ def test_get_acq_catalog_19387():
            ' idx   slot    id      yang     zang   halfw',
            'int64 int64  int32   float64  float64  int64',
            '----- ----- -------- -------- -------- -----',
-           '    0     0 38280776 -2254.09 -2172.43   160',
+           '    0     0 38280776 -2254.09 -2172.43    80',
            '    1     1 37879960  -567.34  -632.27    80',
-           '    2     2 37882072  2197.62  1608.89   160',
+           '    2     2 37882072  2197.62  1608.89    80',
            '    3     3 37879992   318.47 -1565.92    60',
-           '    4     4 37882416   481.80  2204.44   100',
+           '    4     4 37882416   481.80  2204.44    80',
            '    5     5 37880176   121.33 -1068.25    60',
-           '    6     6 37881728  2046.89  1910.79   140',
-           '    7     7 37880376 -1356.71  1071.32    60',
-           '    8   -99 38276824 -1822.26 -1813.66   120',
-           '    9   -99 37882776  1485.00   127.97   120',
-           '   10   -99 37880152 -1542.43   970.39   120',
-           '   11   -99 37880584 -2005.80  2449.74   120',
-           '   12   -99 38273720  -672.32 -2474.85   120']
+           '    6   -99 37881728  2046.89  1910.79    80',
+           '    7     6 37880376 -1356.71  1071.32    60',
+           '    8     7 38276824 -1822.26 -1813.66    80',
+           '    9   -99 37882776  1485.00   127.97    80',
+           '   10   -99 37880152 -1542.43   970.39    80',
+           '   11   -99 37880584 -2005.80  2449.74    80',
+           '   12   -99 38273720  -672.32 -2474.85    80']
 
+    repr(acqs.cand_acqs)
     assert repr(acqs.cand_acqs[TEST_COLS]).splitlines() == exp
 
     exp = ['<AcqTable length=8>',
            ' idx   slot    id      yang     zang   halfw',
            'int64 int64  int32   float64  float64  int64',
            '----- ----- -------- -------- -------- -----',
-           '    0     0 38280776 -2254.09 -2172.43   160',
+           '    0     0 38280776 -2254.09 -2172.43    80',
            '    1     1 37879960  -567.34  -632.27    80',
            '    2     2 37882072  2197.62  1608.89    80',
            '    3     3 37879992   318.47 -1565.92    60',
            '    4     4 37882416   481.80  2204.44    80',
            '    5     5 37880176   121.33 -1068.25    60',
-           '    6     6 37881728  2046.89  1910.79   140',
-           '    7     7 37880376 -1356.71  1071.32    80']
+           '    7     6 37880376 -1356.71  1071.32    80',
+           '    8     7 38276824 -1822.26 -1813.66    80']
 
     assert repr(acqs[TEST_COLS]).splitlines() == exp
 
@@ -983,3 +984,20 @@ def test_acq_fid_catalog_two_cand_fid(n_fid):
     assert aca.thumbs_up == thumbs_up
     assert aca.fids.thumbs_up == thumbs_up
     assert aca.acqs.thumbs_up == 1
+
+
+def test_0_5_degree_man_angle_bin():
+    """
+    It was decided at the 2018-09-26 SSAWG to set the probability of
+    man_err > 60 to 0.0 for the 0-5 degree maneuver angle bin.  This tests
+    that.
+
+    """
+    dark = ACAImage(np.full(shape=(1024, 1024), fill_value=40), row0=-512, col0=-512)
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(mag=np.linspace(9, 10.3, 5), n_stars=5)
+    kwargs = mod_std_info(stars=stars, dark=dark,
+                          n_guide=0, n_fid=0, n_acq=8, man_angle=4.8)
+    acqs = get_acq_catalog(**kwargs)
+    assert acqs['halfw'].tolist() == [80, 80, 80, 60, 60]
+    assert acqs.box_sizes.tolist() == [80, 60]
