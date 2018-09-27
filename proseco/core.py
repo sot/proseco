@@ -873,8 +873,8 @@ class StarsTable(ACACatalogTable):
             raise ValueError('max value of n_stars is 8')
 
         ids = len(self) + 100 + np.arange(n_stars)
-        yangs = np.array([1, 0, -1, 0, 0.5, 0.5, -0.5, -0.5][:n_stars]) * size
-        zangs = np.array([0, 1, 0, -1, 0.5, -0.5, 0.5, -0.5][:n_stars]) * size
+        yangs = np.array([1, 0, -1, 0, 0.5, 0.5, -0.5, -0.5][:n_stars], dtype=np.float64) * size
+        zangs = np.array([0, 1, 0, -1, 0.5, -0.5, 0.5, -0.5][:n_stars], dtype=np.float64) * size
 
         arrays = [ids, yangs, zangs, mag]
         names = ['id', 'yang', 'zang', 'mag']
