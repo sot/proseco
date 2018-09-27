@@ -402,7 +402,6 @@ class AcqTable(ACACatalogTable):
             self.log(f'Trying search box size {box_size} arcsec', level=1)
 
             indices = np.argsort(-p_acqs_for_box, kind='mergesort')
-            print(indices)
             for acq_idx in indices:
                 if acq_idx in acq_indices:
                     continue
