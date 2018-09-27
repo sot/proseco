@@ -401,7 +401,8 @@ class AcqTable(ACACatalogTable):
 
             self.log(f'Trying search box size {box_size} arcsec', level=1)
 
-            indices = np.argsort(-p_acqs_for_box)
+            indices = np.argsort(-p_acqs_for_box, kind='mergesort')
+            print(indices)
             for acq_idx in indices:
                 if acq_idx in acq_indices:
                     continue
@@ -629,7 +630,7 @@ class AcqTable(ACACatalogTable):
 
             # Sort by the marginalized acq probability for the current box size
             p_acqs = [acq['probs'].p_acq_marg(acq['halfw']) for acq in acqs]
-            idx_worst = np.argsort(p_acqs)[0]
+            idx_worst = np.argsort(p_acqs, kind='mergesort')[0]
 
             idx = self.get_id_idx(acqs[idx_worst]['id'])
 
