@@ -207,3 +207,8 @@ def test_call_args_attr():
                              'optimize': False,
                              'sim_offset': 0,
                              't_ccd': -11}
+
+
+def test_bad_obsid():
+    aca = get_aca_catalog(obsid='blah blah')  # Expects this to be starcheck catalog
+    assert 'ValueError: text does not have OBSID' in aca.exception
