@@ -44,6 +44,8 @@ def get_aca_catalog(obsid=0, **kwargs):
     :returns: ACATable of stars and fids
 
     """
+    raise_exc = kwargs.pop('raise_exc', None)  # This cannot credibly fail
+
     try:
         # If obsid is supplied as a string then it is taken to be starcheck text
         # with required info.  User-supplied kwargs take precedence, however.
@@ -53,8 +55,6 @@ def get_aca_catalog(obsid=0, **kwargs):
             for key, val in kw.items():
                 if key not in kwargs:
                     kwargs[key] = val
-
-        raise_exc = kwargs.pop('raise_exc', None)
 
         aca = _get_aca_catalog(obsid=obsid, raise_exc=raise_exc, **kwargs)
 
