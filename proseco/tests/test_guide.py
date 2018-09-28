@@ -190,7 +190,7 @@ def test_check_spoil_contrib():
     stars = StarsTable.empty()
     stars.add_fake_star(row=0, col=0, mag=8.0, id=1, ASPQ1=1)
     stars.add_fake_star(row=0, col=-5, mag=6.0, id=2, ASPQ1=0)
-    bg_spoil, reg_spoil = check_spoil_contrib(stars, np.array([True, True]), stars, .05, 25)
+    bg_spoil, reg_spoil, rej = check_spoil_contrib(stars, np.array([True, True]), stars, .05, 25)
     assert reg_spoil[0]
 
     # Construct a case where a star spoils just a background pixel
@@ -198,7 +198,7 @@ def test_check_spoil_contrib():
     stars.add_fake_star(row=0, col=0, mag=8.0, id=1, ASPQ1=1)
     stars.add_fake_star(row=-5.5, col=-5.5, mag=9.5, id=2, ASPQ1=0)
 
-    bg_spoil, reg_spoil = check_spoil_contrib(stars, np.array([True, True]), stars, .05, 25)
+    bg_spoil, reg_spoil, rej = check_spoil_contrib(stars, np.array([True, True]), stars, .05, 25)
     assert bg_spoil[0]
 
 

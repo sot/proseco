@@ -228,8 +228,11 @@ class GuideTable(ACACatalogTable):
         if stage['ASPQ1Lim'] > 0:
             bg_pix_thresh = np.percentile(dark, stage['Spoiler']['BgPixThresh'])
             reg_frac = stage['Spoiler']['RegionFrac']
-            bg_spoil, reg_spoil = check_spoil_contrib(cand_guides, ok, stars,
-                                                      reg_frac, bg_pix_thresh)
+            bg_spoil, reg_spoil, light_rej = check_spoil_contrib(cand_guides, ok, stars,
+                                                                 reg_frac, bg_pix_thresh)
+            for rej in light_rej:
+                rej['stage'] = stage['Stage']
+                self.reject(rej)
             cand_guides[scol][bg_spoil] += GUIDE_CHAR.errs['spoiler (bgd)']
             cand_guides[scol][reg_spoil] += GUIDE_CHAR.errs['spoiler (frac)']
             ok = ok & ~bg_spoil & ~reg_spoil
@@ -348,6 +351,7 @@ def check_spoil_contrib(cand_stars, ok, stars, regfrac, bgthresh):
     bg_spoiled = np.zeros_like(ok)
     reg_spoiled = np.zeros_like(ok)
     bgpix = CCD['bgpix']
+    rej = []
     for cand in cand_stars[ok]:
         if cand['ASPQ1'] == 0:
             continue
@@ -372,8 +376,16 @@ def check_spoil_contrib(cand_stars, ok, stars, regfrac, bgthresh):
             on_region = on_region + spoil_img.aca
 
         # Consider it spoiled if the star contribution on the 8x8 is over a fraction
-        if np.sum(on_region) > (cand_counts * fraction):
+        frac_limit = cand_counts * fraction
+        sum_in_region = np.sum(on_region)
+        if sum_in_region > frac_limit:
             reg_spoiled[cand_stars['id'] == cand['id']] = True
+            rej.append({'id': cand_stars['id'],
+                        'type': 'region sum spoiled',
+                        'limit_for_star': frac_limit,
+                        'fraction': fraction,
+                        'sum_in_region': sum_in_region,
+                        'text': f'Cand {cand_stars["id"]} has too much contribution to region from spoilers'})
             continue
 
         # Or consider it spoiled if the star contribution to any background pixel
@@ -382,8 +394,15 @@ def check_spoil_contrib(cand_stars, ok, stars, regfrac, bgthresh):
             val = on_region[pixlabel == chandra_aca.aca_image.EIGHT_LABELS][0]
             if val > bgthresh:
                 bg_spoiled[cand_stars['id'] == cand['id']] = True
+                rej.append({'id': cand['id'],
+                            'type': 'region background spoiled',
+                            'bg_thresh': bgthresh,
+                            'bg_pix_val': val,
+                            'pix_id': pixlabel,
+                            'text': f'Cand {cand["id"]} has bg pix spoiled by spoilers'})
+                continue
 
-    return bg_spoiled, reg_spoiled
+    return bg_spoiled, reg_spoiled, rej
 
 
 def check_mag_spoilers(cand_stars, ok, stars, n_sigma):
