@@ -185,11 +185,26 @@ class GuideTable(ACACatalogTable):
         faint_lim = stage['MagLimit'][1]
         bad_mag = (((cand_guides['mag'] - n_sigma * cand_guides['mag_err']) < bright_lim) |
                    ((cand_guides['mag'] + n_sigma * cand_guides['mag_err']) > faint_lim))
+        for idx in np.flatnonzero(bad_mag):
+            self.reject({'id': cand_guides['id'][idx],
+                         'type': 'mag outside range',
+                         'stage': stage['Stage'],
+                         'bright_lim': bright_lim,
+                         'faint_lim': faint_lim,
+                         'cand_mag': cand_guides['mag'][idx],
+                         'cand_mag_err_times_sigma': n_sigma * cand_guides['mag_err'][idx],
+                         'text': f'Cand {cand_guides["id"][idx]} rejected with mag outside range for stage'})
         cand_guides[scol][bad_mag] += GUIDE_CHAR.errs['mag range']
         ok = ok & ~bad_mag
 
         # Check stage ASPQ1
         bad_aspq1 = cand_guides['ASPQ1'] > stage['ASPQ1Lim']
+        for idx in np.flatnonzero(bad_aspq1):
+            self.reject({'id': cand_guides['id'][idx],
+                         'type': 'aspq1 outside range',
+                         'stage': stage['Stage'],
+                         'aspq1_lim': stage['ASPQ1Lim'],
+                         'text': f'Cand {cand_guides["id"][idx]} rejected with aspq1 > {stage["ASPQ1Lim"]}'})
         cand_guides[scol][bad_aspq1] += GUIDE_CHAR.errs['aspq1']
         ok = ok & ~bad_aspq1
 
@@ -223,6 +238,11 @@ class GuideTable(ACACatalogTable):
 
         if stage['DoBminusVcheck'] == 1:
             bad_color = np.isclose(cand_guides['COLOR1'], 0.7, atol=1e-6, rtol=0)
+            for idx in np.flatnonzero(bad_color):
+                self.reject({'id': cand_guides['id'][idx],
+                             'type': 'bad color',
+                             'stage': stage['Stage'],
+                             'text': f'Cand {cand_guides["id"][idx]} has bad color (0.7)'})
             cand_guides[scol][bad_color] += GUIDE_CHAR.errs['bad color']
             ok = ok & ~bad_color
         return ok
