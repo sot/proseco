@@ -213,6 +213,20 @@ class GuideTable(ACACatalogTable):
                                             stage['Imposter']['CentroidOffsetLim'])
         # Which candidates have an 'imposter' brighter than the limit for this stage
         imp_spoil = cand_guides['imp_mag'] < pixmag_lims
+        for idx in np.flatnonzero(imp_spoil):
+            cand = cand_guides[idx]
+            cen_limit = stage['Imposter']['CentroidOffsetLim']
+            self.reject({
+                'id': cand['id'],
+                'stage': stage['Stage'],
+                'type': 'hot pixel',
+                'centroid_offset_thresh': cen_limit,
+                'pseudo_mag_for_thresh': pixmag_lims[idx],
+                'imposter_mag': cand['imp_mag'],
+                'imp_row_start': cand['imp_r'],
+                'imp_col_start': cand['imp_c'],
+                'text': (f'Cand {cand["id"]} mag {cand["mag"]:.1f} imposter with "mag" {cand["imp_mag"]:.1f} '
+                         f'limit {pixmag_lims[idx]:.2f} with offset lim {cen_limit} at stage')})
         cand_guides[scol][imp_spoil] += GUIDE_CHAR.errs['hot pix']
         ok = ok & ~imp_spoil
 
@@ -325,8 +339,12 @@ class GuideTable(ACACatalogTable):
         self.log(f'Reduced star list from {len(box_spoiled)} to '
                  f'{len(cand_guides)} candidate guide stars')
 
-        cand_guides['imp_mag'] = get_imposter_mags(cand_guides, dark, self.dither)
-        self.log('Getting pseudo-mag of brightest pixel in candidate region')
+        # Get the brightest 2x2 in the dark map for each candidate and save value and location
+        imp_mag, imp_row, imp_col = get_imposter_mags(cand_guides, dark, self.dither)
+        cand_guides['imp_mag'] = imp_mag
+        cand_guides['imp_r'] = imp_row
+        cand_guides['imp_c'] = imp_col
+        self.log('Getting pseudo-mag of brightest pixel 2x2 in candidate region')
 
         return cand_guides
 
@@ -530,6 +548,8 @@ def get_imposter_mags(cand_stars, dark, dither):
         return rminus, rplus
 
     pixmags = []
+    pix_r = []
+    pix_c = []
 
     # Define the 1/2 pixel region as half the 8x8 plus dither
     row_extent = np.ceil(4 + dither.row)
@@ -538,13 +558,21 @@ def get_imposter_mags(cand_stars, dark, dither):
         rminus, rplus = get_ax_range(cand['row'], row_extent)
         cminus, cplus = get_ax_range(cand['col'], col_extent)
         pix = np.array(dark.aca[rminus:rplus, cminus:cplus])
-        pixmax = max(np.max(bin2x2(pix)),
-                     np.max(bin2x2(pix[1:-1])),
-                     np.max(bin2x2(pix[:, 1:-1])),
-                     np.max(bin2x2(pix[1:-1, 1:-1])))
+        pixmax = 0
+        max_r = None
+        max_c = None
+        for i in range(0, pix.shape[0] - 1):
+            for j in range(0, pix.shape[1] - 1):
+                pixsum = np.sum(pix[i:i+2, j:j+2])
+                if pixsum > pixmax:
+                    pixmax = pixsum
+                    max_r = rminus + i
+                    max_c = cminus + j
         pixmax_mag = count_rate_to_mag(pixmax)
         pixmags.append(pixmax_mag)
-    return np.array(pixmags)
+        pix_r.append(max_r)
+        pix_c.append(max_c)
+    return np.array(pixmags), np.array(pix_r), np.array(pix_c)
 
 
 def get_pixmag_for_offset(cand_mag, offset):
