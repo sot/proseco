@@ -221,7 +221,7 @@ def test_check_mag_spoilers():
                  'MAG_ACA_ERR': 0, 'id': 2}
         dist = np.sqrt(r_dist ** 2 + c_dist ** 2)
         stars = Table([star1, star2])
-        spoiled = check_mag_spoilers(stars, np.array([True, True]), stars, 0)
+        spoiled, rej = check_mag_spoilers(stars, np.array([True, True]), stars, 0)
         req_sep = intercept + magdiff * spoilslope
         assert (dist < req_sep) == spoiled[0]
 

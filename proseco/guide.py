@@ -217,7 +217,10 @@ class GuideTable(ACACatalogTable):
         ok = ok & ~imp_spoil
 
         # Check for 'direct catalog search' spoilers
-        mag_spoil = check_mag_spoilers(cand_guides, ok, stars, n_sigma)
+        mag_spoil, mag_rej = check_mag_spoilers(cand_guides, ok, stars, n_sigma)
+        for rej in mag_rej:
+            rej['stage'] = stage['Stage']
+            self.reject(rej)
         cand_guides[scol][mag_spoil] += GUIDE_CHAR.errs['spoiler (line)']
         ok = ok & ~mag_spoil
 
@@ -401,10 +404,10 @@ def check_mag_spoilers(cand_stars, ok, stars, n_sigma):
 
     # If there are already no candidates, there isn't anything to do
     if not np.any(ok):
-        return np.zeros(len(ok)).astype(bool)
+        return np.zeros(len(ok)).astype(bool), []
 
     mag_spoiled = np.zeros(len(ok)).astype(bool)
-
+    rej = []
     for cand in cand_stars[ok]:
         pix_dist = np.sqrt(((cand['row'] - stars['row']) ** 2) +
                            ((cand['col'] - stars['col']) ** 2))
@@ -425,10 +428,19 @@ def check_mag_spoilers(cand_stars, ok, stars, n_sigma):
             delmag = cand['mag'] - spoil['mag'] + n_sigma * mag_err_sum
             thsep = intercept + delmag * spoilslope
             if dist < thsep:
+                rej.append({'id': cand['id'],
+                            'spoiler': spoil['id'],
+                            'spoiler_mag': spoil['mag'],
+                            'dmag_with_err': delmag,
+                            'min_dist_for_dmag': thsep,
+                            'actual_dist': dist,
+                            'type': 'spoiler by distance-mag line',
+                            'text': (f'Cand {cand["id"]} spoiled by {spoil["id"]}, '
+                                     f'too close ({dist:.1f}) pix for magdiff ({delmag:.1f})')})
                 mag_spoiled[cand['id'] == cand_stars['id']] = True
                 continue
 
-    return mag_spoiled
+    return mag_spoiled, rej
 
 
 def check_column_spoilers(cand_stars, ok, stars, n_sigma):
