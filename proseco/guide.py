@@ -84,6 +84,14 @@ class GuideTable(ACACatalogTable):
 
     dark = MetaAttribute()
     cand_guides = MetaAttribute(is_kwarg=False)
+    reject_info = MetaAttribute(default=[], is_kwarg=False)
+
+    def reject(self, reject):
+        """
+        Add a reject dict to self.reject_info
+        """
+        reject_info = self.reject_info
+        reject_info.append(reject)
 
     @property
     def t_ccd(self):
