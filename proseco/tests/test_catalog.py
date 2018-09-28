@@ -89,7 +89,7 @@ def test_exception_handling():
                           detector='ACIS-S', sim_offset=0, focus_offset=0,
                           n_guide=8, n_fid=3, n_acq=8,
                           include_ids=[1])  # Fail
-    assert 'ValueError: cannot include star id=1' in aca.exception
+    assert 'include_ids and include_halfws must have same length' in aca.exception
 
     for obj in (aca, aca.acqs, aca.guides, aca.fids):
         assert len(obj) == 0

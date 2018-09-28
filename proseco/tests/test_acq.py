@@ -578,7 +578,8 @@ def test_cand_acqs_include_exclude():
 
     # Define includes and excludes. id=9 is in nominal cand_acqs but not in acqs.
     include_ids = [9, 11]
-    include_halfws = [60, 80]
+    include_halfws = [45, 89]
+    exp_include_halfws = [60, 80]
     exclude_ids = [1]
 
     for optimize in False, True:
@@ -587,7 +588,7 @@ def test_cand_acqs_include_exclude():
                                exclude_ids=exclude_ids)
 
         assert acqs.include_ids == include_ids
-        assert acqs.include_halfws == include_halfws
+        assert acqs.include_halfws == exp_include_halfws
         assert acqs.exclude_ids == exclude_ids
         assert all(id_ in acqs.cand_acqs['id'] for id_ in include_ids)
 
@@ -615,13 +616,14 @@ def test_cand_acqs_include_exclude():
 
     # Finally include all 8 stars
     include_ids = [1, 3, 4, 5, 6, 7, 9, 11]
-    include_halfws = [60, 80, 100, 120, 140, 60, 80, 100]
+    include_halfws = [45, 85, 101, 120, 140, 60, 80, 100]
+    exp_include_halfws = [60, 80, 100, 120, 140, 60, 80, 100]
 
     acqs = get_acq_catalog(**STD_INFO, optimize=True, stars=stars,
                            include_ids=include_ids, include_halfws=include_halfws)
 
     assert acqs['id'].tolist() == include_ids
-    assert acqs['halfw'].tolist() == include_halfws
+    assert acqs['halfw'].tolist() == exp_include_halfws
 
 
 def test_dither_as_sequence():
