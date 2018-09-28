@@ -72,7 +72,8 @@ def test_box_mag_spoiler():
     assert 688523960 in selected1['id']
 
     # Set the spoiler to be 10th mag and closer to the second star
-    stars.get_id(688522000)['mag'] = 10.0
+    stars.get_id(688522000)['mag'] = 9
+    stars.get_id(688522000)['row'] = 50
 
     # Confirm the 688523960 star is not selected if the spoiler is brighter
     selected2 = get_guide_catalog(att=att, date=date, t_ccd=-20, dither=(8, 8), n_guide=5,
