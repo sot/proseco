@@ -8,6 +8,7 @@ https://docs.google.com/presentation/d/1VtFKAW9he2vWIQAnb6unpK4u1bVAVziIdX9TnqRS
 
 import numpy as np
 from scipy import ndimage, stats
+from scipy.interpolate import interp1d
 from astropy.table import Table
 
 from chandra_aca.star_probs import acq_success_prob, prob_n_acq
@@ -323,8 +324,8 @@ class AcqTable(ACACatalogTable):
 
         # If any include_ids (stars forced to be in catalog) ensure that the
         # star is in the cand_acqs table.  Need to re-sort as well.
-        if self.include_ids:
-            self.add_include_ids(cand_acqs, stars)
+        if self.include_ids or self.include_halfws:
+            self.process_include_ids(cand_acqs, stars)
             cand_acqs.sort('mag')
 
         cand_acqs.rename_column('COLOR1', 'color')
@@ -350,13 +351,23 @@ class AcqTable(ACACatalogTable):
 
         return cand_acqs, bads
 
-    def add_include_ids(self, cand_acqs, stars):
+    def process_include_ids(self, cand_acqs, stars):
         """Ensure that the cand_acqs table has stars that were forced to be included.
+
+        Also do validation of include_ids and include_halfws.
 
         :param cand_acqs: candidate acquisition stars table
         :param stars: stars table
 
         """
+        if len(self.include_ids) != len(self.include_halfws):
+            raise ValueError('include_ids and include_halfws must have same length')
+
+        # Ensure values are valid box_sizes
+        grid_func = interp1d(CHAR.box_sizes, CHAR.box_sizes,
+                             kind='nearest', fill_value='extrapolate')
+        self.include_halfws = grid_func(self.include_halfws).tolist()
+
         for include_id in self.include_ids:
             if include_id not in cand_acqs['id']:
                 try:
