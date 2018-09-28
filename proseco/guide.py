@@ -265,21 +265,32 @@ class GuideTable(ACACatalogTable):
         self.log(f'Reduced star list from {len(stars)} to '
                  f'{len(cand_guides)} candidate guide stars')
 
-        bp = spoiled_by_bad_pixel(cand_guides, self.dither)
+        bp, bp_rej = spoiled_by_bad_pixel(cand_guides, self.dither)
+        for rej in bp_rej:
+            rej['stage'] = 0
+            self.reject(rej)
         cand_guides = cand_guides[~bp]
         self.log('Filtering on candidates near bad (not just bright/hot) pixels')
         self.log(f'Reduced star list from {len(bp)} to '
                  f'{len(cand_guides)} candidate guide stars')
 
         bs = in_bad_star_list(cand_guides)
+        for idx in np.flatnonzero(bs):
+            self.reject({'id': cand_guides['id'][idx],
+                         'stage': 0,
+                         'type': 'bad star list',
+                         'text': f'Cand {cand_guides["id"][idx]} in bad star list'})
         cand_guides = cand_guides[~bs]
         self.log('Filtering stars on bad star list')
         self.log(f'Reduced star list from {len(bs)} to '
                  f'{len(cand_guides)} candidate guide stars')
 
-        box_spoiled = has_spoiler_in_box(cand_guides, stars,
-                                         halfbox=GUIDE_CHAR.box_spoiler['halfbox'],
-                                         magdiff=GUIDE_CHAR.box_spoiler['magdiff'])
+        box_spoiled, box_rej = has_spoiler_in_box(cand_guides, stars,
+                                                  halfbox=GUIDE_CHAR.box_spoiler['halfbox'],
+                                                  magdiff=GUIDE_CHAR.box_spoiler['magdiff'])
+        for rej in box_rej:
+            rej['stage'] = 0
+            self.reject(rej)
         cand_guides = cand_guides[~box_spoiled]
         self.log('Filtering stars that have bright spoilers with centroids near/in 8x8')
         self.log(f'Reduced star list from {len(box_spoiled)} to '
@@ -501,6 +512,7 @@ def has_spoiler_in_box(cand_guides, stars, halfbox=5, magdiff=-4):
     :returns: mask on cand_guides set to True if star spoiled by another star in the pixel box
     """
     box_spoiled = np.zeros(len(cand_guides)).astype(bool)
+    rej = []
     for idx, cand in enumerate(cand_guides):
         dr = np.abs(cand['row'] - stars['row'])
         dc = np.abs(cand['col'] - stars['col'])
@@ -509,7 +521,21 @@ def has_spoiler_in_box(cand_guides, stars, halfbox=5, magdiff=-4):
         box_spoilers = ~itself & inbox & (cand['mag'] - stars['mag'] > magdiff)
         if np.any(box_spoilers):
             box_spoiled[idx] = True
-    return box_spoiled
+            n = np.count_nonzero(box_spoilers)
+            boxsize = halfbox * 2
+            bright = np.argmin(stars[box_spoilers]['mag'])
+            spoiler = stars[box_spoilers][bright]
+            rej.append({'id': cand['id'],
+                        'type': 'in-box spoiler star',
+                        'boxsize': boxsize,
+                        'magdiff_thresh': magdiff,
+                        'spoiler': spoiler['id'],
+                        'dmag': cand['mag'] - spoiler['mag'],
+                        'n': n,
+                        'text': (f'Cand {cand["id"]} spoiled by {n} stars in {boxsize}x{boxsize} '
+                                 f' including {spoiler["id"]}')
+                    })
+    return box_spoiled, rej
 
 
 def in_bad_star_list(cand_guides):
@@ -554,6 +580,8 @@ def spoiled_by_bad_pixel(cand_guides, dither):
     # Then for the pixel region of each candidate, see if there is a bad
     # pixel in the region.
     spoiled = np.zeros(len(cand_guides)).astype(bool)
+    # Also save an array of rejects to pass back
+    rej = []
     row_extent = np.ceil(4 + dither.row)
     col_extent = np.ceil(4 + dither.col)
     for idx, cand in enumerate(cand_guides):
@@ -563,6 +591,13 @@ def spoiled_by_bad_pixel(cand_guides, dither):
         cplus = int(np.ceil(cand['col'] + col_extent + 1))
 
         # If any bad pixel is in the guide star pixel region, mark as spoiled
-        if np.any((bp_row >= rminus) & (bp_row <= rplus) & (bp_col >= cminus) & (bp_col <= cplus)):
+        bps = ((bp_row >= rminus) & (bp_row <= rplus) & (bp_col >= cminus) & (bp_col <= cplus))
+        if np.any(bps):
             spoiled[idx] = True
-    return spoiled
+            rej.append({'id': cand['id'],
+                        'type': 'bad pixel',
+                        'pixel': (bp_row[bps][0], bp_col[bps][0]),
+                        'n_bad': np.count_nonzero(bps),
+                        'text': (f'Cand {cand["id"]} spoiled by {np.count_nonzero(bps)} bad pixels '
+                                 f'including {(bp_row[bps][0], bp_col[bps][0])}')})
+    return spoiled, rej
