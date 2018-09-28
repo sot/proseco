@@ -235,7 +235,10 @@ class GuideTable(ACACatalogTable):
             ok = ok & ~bg_spoil & ~reg_spoil
 
         # Check for column spoiler
-        col_spoil = check_column_spoilers(cand_guides, ok, stars, n_sigma)
+        col_spoil, col_rej = check_column_spoilers(cand_guides, ok, stars, n_sigma)
+        for rej in col_rej:
+            rej['stage'] = stage['Stage']
+            self.reject(rej)
         cand_guides[scol][col_spoil] += GUIDE_CHAR.errs['col spoiler']
         ok = ok & ~col_spoil
 
@@ -455,6 +458,7 @@ def check_column_spoilers(cand_stars, ok, stars, n_sigma):
     :returns: bool mask on cand_stars marking column spoiled stars
     """
     column_spoiled = np.zeros_like(ok)
+    rej = []
     for idx, cand in enumerate(cand_stars):
         if not ok[idx]:
             continue
@@ -468,9 +472,20 @@ def check_column_spoilers(cand_stars, ok, stars, n_sigma):
                     np.sqrt((cand['MAG_ACA_ERR'] * 0.01) ** 2 +
                             (stars['MAG_ACA_ERR'][~stars['offchip']][pos_spoil] * 0.01) ** 2))
         dm = (cand['mag'] - stars['mag'][~stars['offchip']][pos_spoil] + mag_errs)
-        if np.any(dm > GUIDE_CHAR.col_spoiler['MagDiff']):
+        spoils = dm > GUIDE_CHAR.col_spoiler['MagDiff']
+        if np.any(spoils):
             column_spoiled[idx] = True
-    return column_spoiled
+            spoiler = stars[~stars['offchip']][pos_spoil][spoils][0]
+            rej.append({'id': cand['id'],
+                        'type': 'column spoiled',
+                        'spoiler': spoiler['id'],
+                        'spoiler_mag': spoiler['mag'],
+                        'dmag_with_err': dm[spoils][0],
+                        'dmag_lim': GUIDE_CHAR.col_spoiler['MagDiff'],
+                        'dcol': cand['col'] - spoiler['col'],
+                        'text': (f'Cand {cand["id"]} has column spoiler {spoiler["id"]} '
+                                 f'at ({spoiler["row"]:.1f}, {spoiler["row"]:.1f}), mag {spoiler["mag"]:.2f}')})
+    return column_spoiled, rej
 
 
 def get_imposter_mags(cand_stars, dark, dither):
