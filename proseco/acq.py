@@ -14,7 +14,6 @@ from astropy.table import Table
 from chandra_aca.star_probs import acq_success_prob, prob_n_acq
 from chandra_aca.transform import (pixels_to_yagzag, mag_to_count_rate,
                                    snr_mag_for_t_ccd)
-from mica.archive.aca_dark.dark_cal import get_dark_cal_image
 
 from . import characteristics as CHAR
 from .core import (get_mag_std, ACACatalogTable, bin2x2,

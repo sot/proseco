@@ -6,6 +6,7 @@ from ..acq import get_acq_catalog
 from ..core import StarsTable
 from .test_common import OBS_INFO, STD_INFO, mod_std_info
 from .. import characteristics_fid as FID
+from .test_acq import DARK40
 
 
 # Reference fid positions for spoiling tests
@@ -192,3 +193,20 @@ def test_big_sim_offset():
     fids = get_fid_catalog(**mod_std_info(stars=StarsTable.empty(), sim_offset=300000))
     names = ['id', 'yang', 'zang', 'row', 'col', 'mag', 'spoiler_score', 'idx']
     assert all(name in fids.colnames for name in names)
+
+
+def test_fid_hot_pixel_reject():
+    lim = FID.hot_pixel_spoiler_limit
+    dark = DARK40.copy()
+    for fid_id, off, dc in [(1, 8.0, lim * 1.05),  # spoiler,
+                            (2, 12.0, lim * 1.05),  # not spoiler (spatially)
+                            (3, 8.0, lim * 0.95),  # not spoiler (dark current too low)
+                            (4, -8.0, lim * 1.05),  # spoiler
+                            (5, 0.0, lim * 1.05)]:  # spoiler
+        fid = FIDS.cand_fids.get_id(fid_id)
+        r = int(round(fid['row'] + off))
+        c = int(round(fid['col'] + off))
+        dark.aca[r, c] = dc
+
+    fids = get_fid_catalog(stars=StarsTable.empty(), dark=dark, **STD_INFO)
+    assert fids['id'].tolist() == [2, 3, 6]

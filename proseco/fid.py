@@ -286,7 +286,7 @@ class FidTable(ACACatalogTable):
 
         # Reject (entirely) candidates that are off CCD or have a bad pixel
         self.reject_off_ccd(cand_fids)
-        self.reject_bad_pixel(cand_fids)
+        self.reject_hot_or_bad_pixel(cand_fids)
 
         shape = (len(cand_fids),)
         cand_fids['mag'] = np.full(shape, FID.fid_mag)  # 7.000
@@ -321,23 +321,27 @@ class FidTable(ACACatalogTable):
         if idx_bads:
             cand_fids.remove_rows(idx_bads)
 
-    def reject_bad_pixel(self, cand_fids):
+    def reject_hot_or_bad_pixel(self, cand_fids):
         """Filter out candidates that have a bad pixel too close
 
         :param cand_fids: table of candidate fid lights (on CCD)
         """
-        n_cand_fids = len(cand_fids)
         idx_bads = []
         for idx, fid in enumerate(cand_fids):
-            # TO BE IMPLEMENTED
-            if False:
-                # If this would result in fewer than 2 fid lights in catalog then
-                # just stop.  It will be picked up in review.
-                if n_cand_fids - len(idx_bads) <= 2:
-                    self.log('ERROR: fewer than 2 good fids found, accepting bad fid light(s)')
-                    break
+            dp = FID.spoiler_margin / 5
+            r0 = int(fid['row'] - dp)
+            c0 = int(fid['col'] - dp)
+            r1 = int(fid['row'] + dp) + 1
+            c1 = int(fid['col'] + dp) + 1
+            dark = self.dark.aca[r0:r1, c0:c1]
 
-                self.log(f'Rejecting fid {fid["id"]}: near bad pixel')
+            bad = dark > FID.hot_pixel_spoiler_limit
+            if np.any(bad):
+                idxs = np.flatnonzero(bad)
+                rows, cols = np.unravel_index(idxs, dark.shape)
+                vals = dark[rows, cols]
+                self.log(f'Rejecting fid {fid["id"]}: near hot or bad pixel(s) '
+                         f'rows={rows + r0} cols={cols + c0} vals={vals}')
                 idx_bads.append(idx)
 
         if idx_bads:
