@@ -11,6 +11,7 @@ from scipy.interpolate import interp1d
 from astropy.table import Table, Column
 
 from chandra_aca.transform import yagzag_to_pixels, count_rate_to_mag, pixels_to_yagzag
+from chandra_aca.aca_image import ACAImage
 from Ska.quatutil import radec2yagzag, yagzag2radec
 import agasc
 from Quaternion import Quat
@@ -194,6 +195,7 @@ class ACACatalogTable(Table):
     detector = MetaAttribute()
     sim_offset = MetaAttribute()
     focus_offset = MetaAttribute()
+    dark = MetaAttribute()
     stars = MetaAttribute()
     include_ids = MetaAttribute(default=[])
     include_halfws = MetaAttribute(default=[])
@@ -219,6 +221,9 @@ class ACACatalogTable(Table):
                 setattr(self, name, val)
             else:
                 raise ValueError(f'unexpected keyword argument "{name}"')
+
+        if self.dark is not None and not isinstance(self.dark, ACAImage):
+            self.dark = ACAImage(self.dark, row0=-512, col0=-512, copy=False)
 
         # If an explicit obsid is not provided to all getting parameters via mica
         # then all other params must be supplied.

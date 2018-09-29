@@ -82,7 +82,6 @@ class GuideTable(ACACatalogTable):
     # Required attributes
     required_attrs = ('att', 't_ccd_guide', 'date', 'dither_guide')
 
-    dark = MetaAttribute()
     cand_guides = MetaAttribute(is_kwarg=False)
 
     @property

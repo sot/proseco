@@ -8,8 +8,10 @@ import numpy as np
 import mica.starcheck
 
 from .test_common import STD_INFO, mod_std_info
+from .test_acq import DARK40
 from ..core import StarsTable, ACACatalogTable
 from ..catalog import get_aca_catalog
+from .. import characteristics as CHAR
 
 
 HAS_SC_ARCHIVE = Path(mica.starcheck.starcheck.FILES['data_root']).exists()
@@ -212,3 +214,32 @@ def test_call_args_attr():
 def test_bad_obsid():
     aca = get_aca_catalog(obsid='blah blah')  # Expects this to be starcheck catalog
     assert 'ValueError: text does not have OBSID' in aca.exception
+
+
+def test_bad_pixel_dark_current():
+    """
+    Test avoidance of bad_pixels = [[-245, 0, 454, 454]]
+
+    - Put a bright star near this bad column and confirm it is not picked at
+      all.
+    - Put a bright star at col = 454 - 20 / 5 - 105 / 5 (dither and search box
+      size) and confirm it is picked with search box = 100 arcsec.
+
+    """
+    dark = DARK40.copy()
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(mag=np.linspace(8.0, 8.1, 4), n_stars=4)
+    stars.add_fake_star(row=-205, col=450, mag=6.0, id=1)
+    stars.add_fake_star(row=-205, col=454 - 20 / 5 - 105 / 5, mag=6.0, id=2)
+
+    kwargs = mod_std_info(stars=stars, dark=dark, dither=20,
+                          n_guide=8, n_fid=0, n_acq=8, man_angle=90)
+    aca = get_aca_catalog(**kwargs)
+
+    # Make sure bad pixels have expected value
+    assert np.all(aca.acqs.dark.aca[-245:0, 454] == CHAR.bad_pixel_dark_current)
+
+    exp_ids = [2, 100, 101, 102, 103]
+    assert sorted(aca.guides['id']) == exp_ids
+    assert aca.acqs['id'].tolist() == exp_ids
+    assert aca.acqs['halfw'].tolist() == [100, 160, 160, 160, 160]

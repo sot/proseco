@@ -51,7 +51,9 @@ man_errs = p_man_errs['man_err_hi']
 # Minimal set of columns to store for spoiler stars
 spoiler_star_cols = ['id', 'yang', 'zang', 'row', 'col', 'mag', 'mag_err']
 
-
+# Dark current that corresponds to a 5.0 mag star in a single pixel.  Apply
+# this value to the region specified by bad_pixels.
+bad_pixel_dark_current = 700_000
 bad_pixels = [[-245, 0, 454, 454]]
 
 bad_star_list = [36178592,
