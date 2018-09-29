@@ -41,14 +41,6 @@ def get_guide_catalog(obsid=0, **kwargs):
     guides.set_attrs_from_kwargs(obsid=obsid, **kwargs)
     guides.set_stars()
 
-    if guides.dark is None:
-        from mica.archive.aca_dark import get_dark_cal_image
-        guides.log(f'getting dark cal image at date={guides.date} t_ccd={guides.t_ccd:.1f}')
-        guides.dark = get_dark_cal_image(date=guides.date, select='before',
-                                         t_ccd_ref=guides.t_ccd, aca_image=True)
-    else:
-        guides.log('Using supplied dark map (ignores t_ccd)')
-
     # Do a first cut of the stars to get a set of reasonable candidates
     guides.cand_guides = guides.get_initial_guide_candidates()
 

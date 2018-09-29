@@ -87,7 +87,7 @@ class FidTable(ACACatalogTable):
     allowed_kwargs = ACACatalogTable.allowed_kwargs | set(['acqs'])
 
     required_attrs = ('att', 'detector', 'sim_offset', 'focus_offset',
-                      't_ccd_acq', 't_ccd_guide', 'date',
+                      't_ccd_guide', 'date',
                       'dither_acq', 'dither_guide')
 
     @property

@@ -80,6 +80,9 @@ def _get_aca_catalog(**kwargs):
     aca.call_args = kwargs.copy()
     aca.set_attrs_from_kwargs(**kwargs)
 
+    # Share a common dark map for memory / processing
+    kwargs['dark'] = aca.dark
+
     aca.log('Starting get_acq_catalog')
     aca.acqs = get_acq_catalog(**kwargs)
     aca.log('Starting get_fid_catalog')

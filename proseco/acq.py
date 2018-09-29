@@ -67,15 +67,6 @@ def get_acq_catalog(obsid=0, **kwargs):
 
     acqs.log(f'getting dark cal image at date={acqs.date} t_ccd={acqs.t_ccd:.1f}')
 
-    # If dark map not provided via input kwarg then get from dark cal archive
-    if acqs.dark is None:
-        acqs.dark = get_dark_cal_image(date=acqs.date, select='before',
-                                       t_ccd_ref=acqs.t_ccd, aca_image=True)
-
-    # Set pixel regions from CHAR.bad_pixels to have acqs.dark=700000 (5.0 mag
-    # star) per pixel.
-    acqs.set_bad_pixels_in_dark()
-
     # Probability of man_err for this observation with a given man_angle.  Used
     # for marginalizing probabilities over different man_errs.
     acqs.p_man_errs = np.array([get_p_man_err(man_err, acqs.man_angle)
@@ -224,15 +215,6 @@ class AcqTable(ACACatalogTable):
             return min(max(self.box_sizes), 120)
         except AttributeError:
             return 120
-
-    def set_bad_pixels_in_dark(self):
-        """
-        Set pixel regions from CHAR.bad_pixels to have acqs.dark=700000 (5.0 mag
-        star) per pixel.  This will effectively spoil any star or fid.
-
-        """
-        for r0, r1, c0, c1 in CHAR.bad_pixels:
-            self.dark.aca[r0:r1 + 1, c0:c1 + 1] = CHAR.bad_pixel_dark_current
 
     def update_p_acq_column(self):
         """
