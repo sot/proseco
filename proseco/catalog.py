@@ -316,7 +316,7 @@ def merge_cats(fids=None, guides=None, acqs=None):
     def filt(tbl, id_set):
         return [row['id'] for row in tbl if row['id'] in id_set]
 
-    bot_ids = filt(guides, set(guides['id']) & set(acqs['id']))
+    bot_ids = sorted(filt(guides, set(guides['id']) & set(acqs['id'])))
     gui_ids = filt(guides, set(guides['id']) - set(acqs['id']))
     acq_ids = filt(acqs, set(acqs['id']) - set(guides['id']))
 
