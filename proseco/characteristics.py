@@ -135,3 +135,18 @@ def _get_fid_acq_stages():
     return out
 
 fid_acq_stages = _get_fid_acq_stages()
+
+# For a given box size, set the mag limit to the magnitude where one expects
+# (statistically) N imposters brighter than that limit. The idea is
+# that statistically on-board you always have imposters fainter than this limit
+# impacting acquisition, and thus they are already accounted for in the
+# acquisition probability model.  See:
+#
+# Here the limit is set to 2.5 imposters per 120" box at -10C based on
+# the plot in cell 89 of:
+#
+#   http://nbviewer.jupyter.org/url/cxc.cfa.harvard.edu/mta/ASPECT/ipynb/
+#         star_selection/imposter-stars.ipynb
+
+imposter_mag_lim_ref_mag = 10.0
+imposter_mag_lim_ref_t_ccd = -10.0

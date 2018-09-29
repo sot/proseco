@@ -12,7 +12,8 @@ from scipy.interpolate import interp1d
 from astropy.table import Table
 
 from chandra_aca.star_probs import acq_success_prob, prob_n_acq
-from chandra_aca.transform import (pixels_to_yagzag, mag_to_count_rate)
+from chandra_aca.transform import (pixels_to_yagzag, mag_to_count_rate,
+                                   snr_mag_for_t_ccd)
 from mica.archive.aca_dark.dark_cal import get_dark_cal_image
 
 from . import characteristics as CHAR
@@ -56,6 +57,13 @@ def get_acq_catalog(obsid=0, **kwargs):
     acqs = AcqTable()
     acqs.set_attrs_from_kwargs(obsid=obsid, **kwargs)
     acqs.set_stars()
+
+    # Only allow imposters that are statistical outliers and are brighter than
+    # this (temperature-dependent) threshold.  See characterisics.py for more
+    # explanation.
+    acqs.imposters_mag_limit = snr_mag_for_t_ccd(acqs.t_ccd,
+                                                 ref_mag=CHAR.imposter_mag_lim_ref_mag,
+                                                 ref_t_ccd=CHAR.imposter_mag_lim_ref_t_ccd)
 
     acqs.log(f'getting dark cal image at date={acqs.date} t_ccd={acqs.t_ccd:.1f}')
 
@@ -133,6 +141,7 @@ class AcqTable(ACACatalogTable):
     cand_acqs = MetaAttribute(is_kwarg=False)
     p_safe = MetaAttribute(is_kwarg=False)
     _fid_set = MetaAttribute(is_kwarg=False, default=())
+    imposters_mag_limit = MetaAttribute(is_kwarg=False, default=20.0)
 
     @classmethod
     def empty(cls):
@@ -487,6 +496,52 @@ class AcqTable(ACACatalogTable):
         for name, col in acqs_init.columns.items():
             self[name] = col
 
+    def calc_p_brightest(self, acq, box_size, man_err=0, bgd=0):
+        """
+        Calculate the probability that the `acq` star is the brightest
+        candidate in the search box.
+
+        This caches the spoiler and imposter stars in the acqs table (the row
+        corresponding to ``acq``).  It is required that the first time this is
+        called that the box_size and man_err be the maximum, and this is checked.
+
+        :param acq: acq stars (AcqTable Row)
+        :param box_size: box size (float, arcsec)
+        :param man_err: maneuver error (float, arcsec, default=0)
+        :param bgd: assume background for imposters (float, e-sec, default=0)
+
+        :returns: probability that acq is the brightest (float)
+        """
+        stars = self.stars
+        dark = self.dark
+        dither = self.dither
+
+        # Spoilers
+        ext_box_size = box_size + man_err
+        kwargs = dict(stars=stars, acq=acq, box_size=ext_box_size)
+        spoilers = get_intruders(acq, ext_box_size, 'spoilers',
+                                 n_sigma=2.0,  # TO DO: put to characteristics
+                                 get_func=get_spoiler_stars, kwargs=kwargs)
+
+        # Imposters
+        ext_box_size = box_size + dither
+        kwargs = dict(star_row=acq['row'], star_col=acq['col'],
+                      maxmag=acq['mag'] + acq['mag_err'],  # + 1.5, TO DO: put to characteristics
+                      box_size=ext_box_size,
+                      dark=dark,
+                      bgd=bgd,  # TO DO deal with this
+                      mag_limit=self.imposters_mag_limit
+                      )
+        imposters = get_intruders(acq, ext_box_size, 'imposters',
+                                  n_sigma=1.0,  # TO DO: put to characteristics
+                                  get_func=get_imposter_stars, kwargs=kwargs)
+
+        mags = np.concatenate([spoilers['mag'], imposters['mag']])
+        mag_errs = np.concatenate([spoilers['mag_err'], imposters['mag_err']])
+        prob = calc_p_brightest_compare(acq, mags, mag_errs)
+
+        return prob
+
     def calc_p_safe(self, verbose=False):
         """
         Calculate the probability of a safing action resulting from failure
@@ -736,7 +791,7 @@ def get_spoiler_stars(stars, acq, box_size):
 
 
 def get_imposter_stars(dark, star_row, star_col, thresh=None,
-                       maxmag=11.5, box_size=120, bgd=40, test=False):
+                       maxmag=11.5, box_size=120, bgd=40, mag_limit=20.0, test=False):
     """
     Note: current alg purposely avoids using the actual flight background
     calculation because this is unstable to small fluctuations in values
@@ -748,9 +803,10 @@ def get_imposter_stars(dark, star_row, star_col, thresh=None,
     :param star_row: row of acq star (float)
     :param star_col: col of acq star (float)
     :param thresh: PEA search hit threshold for a 2x2 block (e-/sec)
-    :param maxmag: Max mag (alternate way to specify ``thresh``)
+    :param maxmag: Max mag (alternate way to specify search hit ``thresh``)
     :param box_size: box size (arcsec)
     :param bgd: assumed flat background (float, e-/sec)
+    :param mag_limit: Max mag for imposter (using 6x6 readout)
     :param test: hook for convenience in algorithm testing
 
     :returns: numpy structured array of imposter stars
@@ -830,6 +886,9 @@ def get_imposter_stars(dark, star_row, star_col, thresh=None,
             continue
 
         img, img_sum, mag, row, col = get_image_props(dark, c_row, c_col, bgd)
+
+        if mag > mag_limit:
+            continue
 
         if pea_reject_image(img):
             continue
@@ -948,52 +1007,6 @@ def get_intruders(acq, box_size, name, n_sigma, get_func, kwargs):
     return intruders
 
 
-def calc_p_brightest(acq, box_size, stars, dark, man_err=0,
-                     dither=20, bgd=0):
-    """
-    Calculate the probability that the `acq` star is the brightest
-    candidate in the search box.
-
-    This caches the spoiler and imposter stars in the acqs table (the row
-    corresponding to ``acq``).  It is required that the first time this is
-    called that the box_size and man_err be the maximum, and this is checked.
-
-    :param acq: acq stars (AcqTable Row)
-    :param box_size: box size (float, arcsec)
-    :param stars: StarsTable of stars in or near the ACA FOV
-    :param dark: dark current image (ndarray, e-/sec)
-    :param man_err: maneuver error (float, arcsec, default=0)
-    :param dither: dither (float, arsec, default=20)
-    :param bgd: assume background for imposters (float, e-sec, default=0)
-
-    :returns: probability that acq is the brightest (float)
-    """
-    # Spoilers
-    ext_box_size = box_size + man_err
-    kwargs = dict(stars=stars, acq=acq, box_size=ext_box_size)
-    spoilers = get_intruders(acq, ext_box_size, 'spoilers',
-                             n_sigma=2.0,  # TO DO: put to characteristics
-                             get_func=get_spoiler_stars, kwargs=kwargs)
-
-    # Imposters
-    ext_box_size = box_size + dither
-    kwargs = dict(star_row=acq['row'], star_col=acq['col'],
-                  maxmag=acq['mag'] + acq['mag_err'],  # + 1.5, TO DO: put to characteristics
-                  box_size=ext_box_size,
-                  dark=dark,
-                  bgd=bgd,  # TO DO deal with this
-                  )
-    imposters = get_intruders(acq, ext_box_size, 'imposters',
-                              n_sigma=1.0,  # TO DO: put to characteristics
-                              get_func=get_imposter_stars, kwargs=kwargs)
-
-    mags = np.concatenate([spoilers['mag'], imposters['mag']])
-    mag_errs = np.concatenate([spoilers['mag_err'], imposters['mag_err']])
-    prob = calc_p_brightest_compare(acq, mags, mag_errs)
-
-    return prob
-
-
 def calc_p_on_ccd(row, col, box_size):
     """
     Calculate the probability that star and initial tracked readout box
@@ -1096,8 +1109,8 @@ class AcqProbs:
                     # man_err, independently because imposter prob is just a
                     # function of box_size not man_err).  Technically also a
                     # function of dither, but that does not vary here.
-                    p_brightest = calc_p_brightest(acq, box_size=box_size, stars=stars,
-                                                   dark=dark, man_err=man_err, dither=dither)
+                    p_brightest = acqs.calc_p_brightest(acq, box_size=box_size,
+                                                        man_err=man_err)
                     self._p_brightest[box_size, man_err] = p_brightest
 
         # Acquisition probability model value (function of box_size only)
