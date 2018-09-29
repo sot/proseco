@@ -561,13 +561,17 @@ def get_imposter_mags(cand_stars, dark, dither):
         pixmax = 0
         max_r = None
         max_c = None
-        for i in range(0, pix.shape[0] - 1):
-            for j in range(0, pix.shape[1] - 1):
-                pixsum = np.sum(pix[i:i+2, j:j+2])
-                if pixsum > pixmax:
-                    pixmax = pixsum
-                    max_r = rminus + i
-                    max_c = cminus + j
+        # Check the 2x2 bins for the max 2x2 region.  Search the "offset" versions as well
+        for pix_chunk, row_off, col_off in zip((pix, pix[1:-1, :], pix[:, 1:-1], pix[1:-1, 1:-1]),
+                                               (0, 1, 0, 1),
+                                               (0, 0, 1, 1)):
+            bin_image = bin2x2(pix_chunk)
+            pixsum = np.max(bin_image)
+            if pixsum > pixmax:
+                pixmax = pixsum
+                idx = np.unravel_index(np.argmax(bin_image), bin_image.shape)
+                max_r = rminus + row_off + idx[0] * 2
+                max_c = cminus + col_off + idx[1] * 2
         pixmax_mag = count_rate_to_mag(pixmax)
         pixmags.append(pixmax_mag)
         pix_r.append(max_r)
