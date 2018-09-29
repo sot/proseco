@@ -313,6 +313,9 @@ class AcqTable(ACACatalogTable):
         # max_candidates.
         goods = []
         for ii, acq in enumerate(cand_acqs):
+            if acq['id'] in CHAR.bad_star_set:
+                self.log(f'Rejecting star {acq["id"]} which is in bad star list')
+                continue
             bad = ((np.abs(acq['yang'] - stars['yang']) < 30) &
                    (np.abs(acq['zang'] - stars['zang']) < 30) &
                    (stars['mag'] - acq['mag'] < 3))

@@ -502,10 +502,8 @@ def in_bad_star_list(cand_guides):
     :param cand_guides: Table of candidate stars
     :returns: boolean mask where True means star is in bad star list
     """
-    bad = np.zeros(len(cand_guides)).astype(bool)
-    for star in CHAR.bad_star_list:
-        bad[cand_guides['id'] == star] = True
-    return bad
+    bad = [cand_guide['id'] in CHAR.bad_star_set for cand_guide in cand_guides]
+    return np.array(bad)
 
 
 def spoiled_by_bad_pixel(cand_guides, dither):

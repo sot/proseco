@@ -1003,3 +1003,15 @@ def test_0_5_degree_man_angle_bin():
     acqs = get_acq_catalog(**kwargs)
     assert acqs['halfw'].tolist() == [60, 60, 60, 60, 60]
     assert acqs.box_sizes.tolist() == [60]
+
+
+def test_bad_star_list():
+    bad_id = 39980640
+    dark = DARK40.copy()
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(mag=np.linspace(9, 10.3, 5), n_stars=5)
+    stars.add_fake_star(yang=100, zang=100, mag=6.5, id=bad_id)
+    kwargs = mod_std_info(stars=stars, dark=dark,
+                          n_guide=0, n_fid=0, n_acq=8, man_angle=4.8)
+    acqs = get_acq_catalog(**kwargs)
+    assert bad_id not in acqs['id']
