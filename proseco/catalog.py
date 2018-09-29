@@ -316,7 +316,10 @@ def merge_cats(fids=None, guides=None, acqs=None):
     def filt(tbl, id_set):
         return [row['id'] for row in tbl if row['id'] in id_set]
 
+    # Sort the BOTs in agasc id order to match what will happen within the MATLAB code
     bot_ids = sorted(filt(guides, set(guides['id']) & set(acqs['id'])))
+
+    # Do not sort the GUI and ACQ stars (leave in selected order)
     gui_ids = filt(guides, set(guides['id']) - set(acqs['id']))
     acq_ids = filt(acqs, set(acqs['id']) - set(guides['id']))
 
