@@ -1,5 +1,10 @@
 import numpy as np
 
+# Fid trap effect
+fid_trap = {'row': -374,
+            'col': 347,
+            'margin': 8}
+
 # Minimum scaled guide count for thumbs_up
 min_guide_count = 4.0
 

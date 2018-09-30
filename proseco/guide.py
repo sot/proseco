@@ -30,6 +30,7 @@ def get_guide_catalog(obsid=0, **kwargs):
     :param date: date of acquisition (any DateTime-compatible format)
     :param dither: dither size 2-element tuple: (dither_y, dither_z) (float, arcsec)
     :param n_guide: number of guide stars to attempt to get
+    :param fids: selected fids (used for guide star exclusion)
     :param stars: astropy.Table of AGASC stars (will be fetched from agasc if None)
     :param dark: ACAImage of dark map (fetched based on time and t_ccd if None)
     :param print_log: print the run log to stdout (default=False)
@@ -70,8 +71,10 @@ class GuideTable(ACACatalogTable):
     # (e.g. `obs19387/guide.pkl`).
     name = 'guide'
 
+    allowed_kwargs = ACACatalogTable.allowed_kwargs | set(['fids'])
+
     # Required attributes
-    required_attrs = ('att', 't_ccd_guide', 'date', 'dither_guide')
+    required_attrs = ('att', 't_ccd_guide', 'date', 'dither_guide', 'n_guide')
 
     cand_guides = MetaAttribute(is_kwarg=False)
     reject_info = MetaAttribute(default=[], is_kwarg=False)
@@ -329,6 +332,13 @@ class GuideTable(ACACatalogTable):
         self.log(f'Reduced star list from {len(box_spoiled)} to '
                  f'{len(cand_guides)} candidate guide stars')
 
+        fid_trap_spoilers, fid_rej = check_fid_trap(cand_guides, fids=self.fids,
+                                                    dither=self.dither)
+        for rej in fid_rej:
+            rej['stage'] = 0
+            self.reject(rej)
+        cand_guides = cand_guides[~fid_trap_spoilers]
+
         # Get the brightest 2x2 in the dark map for each candidate and save value and location
         imp_mag, imp_row, imp_col = get_imposter_mags(cand_guides, dark, self.dither)
         cand_guides['imp_mag'] = imp_mag
@@ -337,6 +347,45 @@ class GuideTable(ACACatalogTable):
         self.log('Getting pseudo-mag of brightest pixel 2x2 in candidate region')
 
         return cand_guides
+
+
+
+def check_fid_trap(cand_stars, fids, dither):
+    """
+    Search for guide stars that would cause the fid trap issue and mark as spoilers.
+    """
+
+    spoilers = np.zeros(len(cand_stars)).astype(bool)
+    rej = []
+
+    if fids is None or len(fids) == 0:
+        return spoilers, []
+
+    if not isinstance(dither, ACABox):
+        dither = ACABox(dither)
+    bad_row = GUIDE_CHAR.fid_trap['row']
+    bad_col= GUIDE_CHAR.fid_trap['col']
+    fid_margin = GUIDE_CHAR.fid_trap['margin']
+
+    # Check to see if the fid is in the zone that's a problem for the trap and if there's
+    # a star that can cause the effect in the readout regiser
+    for fid in fids:
+        incol = abs(fid['col'] - bad_col) < fid_margin
+        inrow = (fid['row'] < 0) & (fid['row'] > bad_row)
+        if (incol & inrow):
+            fid2trap = fid['row'] - bad_row
+            star2reg = 512 - abs(cand_stars['row'])
+            spoils = abs(fid2trap - star2reg) < (fid_margin + dither.row)
+            spoilers = spoilers | spoils
+            for idx in np.flatnonzero(spoils):
+                cand = cand_stars[idx]
+                rej.append({'id': cand['id'],
+                            'type': 'fid trap effect',
+                            'fid_id': fid['id'],
+                            'pixdist_fid_to_trap_row': fid2trap,
+                            'pixdist_star_to_register': star2reg[idx],
+                            'text': f'Cand {cand["id"]} in trap zone for fid {fid["id"]}'})
+    return spoilers, rej
 
 
 def check_spoil_contrib(cand_stars, ok, stars, regfrac, bgthresh):
