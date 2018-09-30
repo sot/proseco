@@ -243,3 +243,26 @@ def test_bad_pixel_dark_current():
     assert sorted(aca.guides['id']) == exp_ids
     assert aca.acqs['id'].tolist() == exp_ids
     assert aca.acqs['halfw'].tolist() == [100, 160, 160, 160, 160]
+
+
+configs = [(8.5, 1, 1, 1),
+           (10.1, 0, 0, 1),
+           (10.25, 0, 0, 0)]
+
+
+@pytest.mark.parametrize('config', configs)
+def test_aca_acq_gui_thumbs_up(config):
+    """
+    Test the thumbs_up property of aca, acq, and guide selection.
+    Fid thumbs up is tested separately.
+    """
+    mag, acat, guit, acqt = config
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(mag=mag, n_stars=8)
+    aca = get_aca_catalog(**mod_std_info(stars=stars, raise_exc=True,
+                                         n_acq=8, n_guide=5))
+
+    assert aca.thumbs_up == acat
+    assert aca.acqs.thumbs_up == acqt
+    assert aca.guides.thumbs_up == guit
+    assert aca.fids.thumbs_up == 1
