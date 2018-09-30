@@ -25,6 +25,7 @@ TEST_DATE = '2018:144'  # Fixed date for doing tests
 ATT = [10, 20, 3]  # Arbitrary test attitude
 CACHE = {}  # Cache stuff for speed
 TEST_COLS = ('idx', 'slot', 'id', 'yang', 'zang', 'halfw')
+DARK40 = ACAImage(np.full(shape=(1024, 1024), fill_value=40), row0=-512, col0=-512)
 
 
 def calc_p_brightest(acq, box_size, stars, dark, man_err=0, dither=20, bgd=0):
@@ -401,11 +402,11 @@ def test_get_acq_catalog_19387():
            '    1     1 37879960  -567.34  -632.27    60',
            '    2     2 37882072  2197.62  1608.89    60',
            '    3     3 37879992   318.47 -1565.92    60',
-           '    4     4 37882416   481.80  2204.44    60',
-           '    5     5 37880176   121.33 -1068.25    60',
-           '    6     6 37881728  2046.89  1910.79    60',
-           '    7     7 37880376 -1356.71  1071.32    60',
-           '    8   -99 38276824 -1822.26 -1813.66    60',
+           '    4   -99 37882416   481.80  2204.44    60',
+           '    5     4 37880176   121.33 -1068.25    60',
+           '    6     5 37881728  2046.89  1910.79    60',
+           '    7     6 37880376 -1356.71  1071.32    60',
+           '    8     7 38276824 -1822.26 -1813.66    60',
            '    9   -99 37882776  1485.00   127.97    60',
            '   10   -99 37880152 -1542.43   970.39    60',
            '   11   -99 37880584 -2005.80  2449.74    60',
@@ -414,20 +415,7 @@ def test_get_acq_catalog_19387():
     repr(acqs.cand_acqs)
     assert repr(acqs.cand_acqs[TEST_COLS]).splitlines() == exp
 
-    exp = ['<AcqTable length=8>',
-           ' idx   slot    id      yang     zang   halfw',
-           'int64 int64  int32   float64  float64  int64',
-           '----- ----- -------- -------- -------- -----',
-           '    0     0 38280776 -2254.09 -2172.43    60',
-           '    1     1 37879960  -567.34  -632.27    60',
-           '    2     2 37882072  2197.62  1608.89    60',
-           '    3     3 37879992   318.47 -1565.92    60',
-           '    4     4 37882416   481.80  2204.44    60',
-           '    5     5 37880176   121.33 -1068.25    60',
-           '    6     6 37881728  2046.89  1910.79    60',
-           '    7     7 37880376 -1356.71  1071.32    60']
-
-    assert repr(acqs[TEST_COLS]).splitlines() == exp
+    assert np.all(acqs['halfw'] == 60)
 
 
 def test_get_acq_catalog_21007():
@@ -727,7 +715,7 @@ def get_dark_stars_simple(box_size_thresh, dither):
     """
     offset = box_size_thresh + FID.spoiler_margin + dither
 
-    dark = ACAImage(np.full(shape=(1024, 1024), fill_value=40), row0=-512, col0=-512)
+    dark = DARK40.copy()
     stars = StarsTable.empty()
     stars.add_fake_constellation(mag=[9.5, 9.6, 9.7, 10], n_stars=4)
 
@@ -760,7 +748,7 @@ def test_acq_fid_catalog_probs_low_level():
     aca = get_aca_catalog(**kwargs)
     acqs = aca.acqs
 
-    assert np.all(acqs.dark == 40)
+    assert np.all(acqs.dark.aca[-512:0, -512:0] == 40)
 
     # Initial fid set is empty () and we check baseline p_safe
     assert acqs.fid_set == ()
@@ -884,7 +872,7 @@ def test_acq_fid_catalog_zero_cand_fid():
     dither = 20
     stars = StarsTable.empty()
     stars.add_fake_constellation(n_stars=5)
-    dark = ACAImage(np.full(shape=(1024, 1024), fill_value=40), row0=-512, col0=-512)
+    dark = DARK40.copy()
 
     kwargs = mod_std_info(stars=stars, dark=dark, dither=dither, raise_exc=True,
                           n_guide=0, n_fid=3, n_acq=5,
@@ -918,7 +906,7 @@ def test_acq_fid_catalog_one_cand_fid():
     sim_offset = -55000
     offset = box_size_thresh + FID.spoiler_margin + dither
 
-    dark = ACAImage(np.full(shape=(1024, 1024), fill_value=40), row0=-512, col0=-512)
+    dark = DARK40.copy()
     stars = StarsTable.empty()
     stars.add_fake_constellation(mag=[9.5, 9.6, 9.7, 10], n_stars=4)
 
@@ -970,7 +958,7 @@ def test_acq_fid_catalog_two_cand_fid(n_fid):
     sim_offset = 29829
     offset = box_size_thresh + FID.spoiler_margin + dither
 
-    dark = ACAImage(np.full(shape=(1024, 1024), fill_value=40), row0=-512, col0=-512)
+    dark = DARK40.copy()
     stars = StarsTable.empty()
     stars.add_fake_constellation(mag=[9.5, 9.6, 9.7, 10], n_stars=4)
 
@@ -1007,7 +995,7 @@ def test_0_5_degree_man_angle_bin():
     that.
 
     """
-    dark = ACAImage(np.full(shape=(1024, 1024), fill_value=40), row0=-512, col0=-512)
+    dark = DARK40.copy()
     stars = StarsTable.empty()
     stars.add_fake_constellation(mag=np.linspace(9, 10.3, 5), n_stars=5)
     kwargs = mod_std_info(stars=stars, dark=dark,
@@ -1015,3 +1003,15 @@ def test_0_5_degree_man_angle_bin():
     acqs = get_acq_catalog(**kwargs)
     assert acqs['halfw'].tolist() == [60, 60, 60, 60, 60]
     assert acqs.box_sizes.tolist() == [60]
+
+
+def test_bad_star_list():
+    bad_id = 39980640
+    dark = DARK40.copy()
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(mag=np.linspace(9, 10.3, 5), n_stars=5)
+    stars.add_fake_star(yang=100, zang=100, mag=6.5, id=bad_id)
+    kwargs = mod_std_info(stars=stars, dark=dark,
+                          n_guide=0, n_fid=0, n_acq=8, man_angle=4.8)
+    acqs = get_acq_catalog(**kwargs)
+    assert bad_id not in acqs['id']

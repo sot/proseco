@@ -14,7 +14,6 @@ from astropy.table import Table
 from chandra_aca.star_probs import acq_success_prob, prob_n_acq
 from chandra_aca.transform import (pixels_to_yagzag, mag_to_count_rate,
                                    snr_mag_for_t_ccd)
-from mica.archive.aca_dark.dark_cal import get_dark_cal_image
 
 from . import characteristics as CHAR
 from .core import (get_mag_std, ACACatalogTable, bin2x2,
@@ -66,10 +65,6 @@ def get_acq_catalog(obsid=0, **kwargs):
                                                  ref_t_ccd=CHAR.imposter_mag_lim_ref_t_ccd)
 
     acqs.log(f'getting dark cal image at date={acqs.date} t_ccd={acqs.t_ccd:.1f}')
-
-    # If dark map not provided via input kwarg then get from dark cal archive
-    if acqs.dark is None:
-        acqs.dark = get_dark_cal_image(date=acqs.date, select='before', t_ccd_ref=acqs.t_ccd)
 
     # Probability of man_err for this observation with a given man_angle.  Used
     # for marginalizing probabilities over different man_errs.
@@ -133,7 +128,6 @@ class AcqTable(ACACatalogTable):
     # Required attributes
     required_attrs = ('att', 'man_angle', 't_ccd_acq', 'date', 'dither_acq')
 
-    dark = MetaAttribute()
     optimize = MetaAttribute(default=True)
     verbose = MetaAttribute(default=False)
 
@@ -319,6 +313,9 @@ class AcqTable(ACACatalogTable):
         # max_candidates.
         goods = []
         for ii, acq in enumerate(cand_acqs):
+            if acq['id'] in CHAR.bad_star_set:
+                self.log(f'Rejecting star {acq["id"]} which is in bad star list')
+                continue
             bad = ((np.abs(acq['yang'] - stars['yang']) < 30) &
                    (np.abs(acq['zang'] - stars['zang']) < 30) &
                    (stars['mag'] - acq['mag'] < 3))

@@ -11,10 +11,12 @@ from scipy.interpolate import interp1d
 from astropy.table import Table, Column
 
 from chandra_aca.transform import yagzag_to_pixels, count_rate_to_mag, pixels_to_yagzag
+from chandra_aca.aca_image import ACAImage
 from Ska.quatutil import radec2yagzag, yagzag2radec
 import agasc
 from Quaternion import Quat
 
+from . import characteristics as CHAR
 
 # For testing this is used to cache fid tables for a detector
 FIDS_CACHE = {}
@@ -194,6 +196,7 @@ class ACACatalogTable(Table):
     detector = MetaAttribute()
     sim_offset = MetaAttribute()
     focus_offset = MetaAttribute()
+    dark = MetaAttribute()
     stars = MetaAttribute()
     include_ids = MetaAttribute(default=[])
     include_halfws = MetaAttribute(default=[])
@@ -277,6 +280,29 @@ class ACACatalogTable(Table):
             if not isinstance(dither, ACABox):
                 setattr(self, dither_attr, ACABox(dither))
 
+        # Dark current map handling.  Either get from mica archive or from
+        # kwarg input.
+        if self.dark is None:
+            from mica.archive.aca_dark import get_dark_cal_image
+            self.log(f'Getting dark cal image at date={self.date} t_ccd={self.t_ccd:.1f}')
+            self.dark = get_dark_cal_image(date=self.date, select='before',
+                                           t_ccd_ref=self.t_ccd, aca_image=True)
+        elif not isinstance(self.dark, ACAImage):
+            self.dark = ACAImage(self.dark, row0=-512, col0=-512, copy=False)
+
+        # Set pixel regions from CHAR.bad_pixels to have acqs.dark=700000 (5.0 mag
+        # star) per pixel.
+        self.set_bad_pixels_in_dark()
+
+    def set_bad_pixels_in_dark(self):
+        """
+        Set pixel regions from CHAR.bad_pixels to have acqs.dark=700000 (5.0 mag
+        star) per pixel.  This will effectively spoil any star or fid.
+
+        """
+        for r0, r1, c0, c1 in CHAR.bad_pixels:
+            self.dark.aca[r0:r1 + 1, c0:c1 + 1] = CHAR.bad_pixel_dark_current
+
     def set_stars(self, acqs=None):
         """Set the object ``stars`` attribute to an appropriate StarsTable object.
 
@@ -321,11 +347,10 @@ class ACACatalogTable(Table):
 
     @property
     def t_ccd(self):
-        return None
+        return self.t_ccd_guide
 
     @t_ccd.setter
     def t_ccd(self, value):
-        self.t_ccd_acq = value
         self.t_ccd_guide = value
 
     @classmethod

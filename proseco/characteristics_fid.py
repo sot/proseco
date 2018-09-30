@@ -259,3 +259,9 @@ ccd_edge_margin = 11  # pixels
 # This includes 20" (4 pix) positional err + 4 pixel readout halfw +
 # 2 pixel PSF of spoiler star = 10 pixels
 spoiler_margin = 50  # arcsec
+
+# Maximum hot pixel dark current which corresponds to a 1.5 arcsec FM centroid
+# offset for a 7.0 mag fid with hot pixel location at the edge of the 8x8 box.
+# This is the limit at which fid is rejected as a candidate if a pixel brighter
+# than this limit is within the spoiler_margin.
+hot_pixel_spoiler_limit = 10_500  # e-/sec

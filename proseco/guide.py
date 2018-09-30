@@ -41,14 +41,6 @@ def get_guide_catalog(obsid=0, **kwargs):
     guides.set_attrs_from_kwargs(obsid=obsid, **kwargs)
     guides.set_stars()
 
-    if guides.dark is None:
-        from mica.archive.aca_dark import get_dark_cal_image
-        guides.log(f'getting dark cal image at date={guides.date} t_ccd={guides.t_ccd:.1f}')
-        guides.dark = get_dark_cal_image(date=guides.date, select='before',
-                                         t_ccd_ref=guides.t_ccd, aca_image=True)
-    else:
-        guides.log('Using supplied dark map (ignores t_ccd)')
-
     # Do a first cut of the stars to get a set of reasonable candidates
     guides.cand_guides = guides.get_initial_guide_candidates()
 
@@ -82,7 +74,6 @@ class GuideTable(ACACatalogTable):
     # Required attributes
     required_attrs = ('att', 't_ccd_guide', 'date', 'dither_guide')
 
-    dark = MetaAttribute()
     cand_guides = MetaAttribute(is_kwarg=False)
 
     @property
@@ -511,10 +502,8 @@ def in_bad_star_list(cand_guides):
     :param cand_guides: Table of candidate stars
     :returns: boolean mask where True means star is in bad star list
     """
-    bad = np.zeros(len(cand_guides)).astype(bool)
-    for star in CHAR.bad_star_list:
-        bad[cand_guides['id'] == star] = True
-    return bad
+    bad = [cand_guide['id'] in CHAR.bad_star_set for cand_guide in cand_guides]
+    return np.array(bad)
 
 
 def spoiled_by_bad_pixel(cand_guides, dither):
