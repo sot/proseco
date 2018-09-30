@@ -129,13 +129,30 @@ class ACABox:
 
 
 class MetaAttribute:
-    def __init__(self, default=None, is_kwarg=True):
+    def __init__(self, default=None, is_kwarg=True, pickle=True):
+        """
+        Descriptor to define ACACatalogTable class attributes which get stored in
+        the table meta dict and have defined defaults.  Also includes a flag to
+        specify whether the attribute will be included when pickling.  Some
+        attributes (like dark current map) are too big and not necessary.
+
+        :param default: default value
+        :param is_kwarg: include in list of allow kwargs to class init
+        :param pickle: store correspoding meta attribute in pickle
+
+        """
         self.default = default
         self.is_kwarg = is_kwarg
+        self.pickle = pickle
 
     def __get__(self, instance, owner):
         try:
             return instance.meta[self.name]
+        except AttributeError:
+            # When called without an instance, return self to allow access
+            # to descriptor attributes.
+            # AttributeError: 'NoneType' object has no attribute 'meta'
+            return self
         except KeyError:
             if self.default is not None:
                 instance.meta[self.name] = copy(self.default)
@@ -148,6 +165,10 @@ class MetaAttribute:
         self.name = name
         if self.is_kwarg:
             owner.allowed_kwargs.add(name)
+
+    def __repr__(self):
+        return (f'<{self.__class__.__name__} name={self.name} default={self.default} '
+                f'pickle={self.pickle}>')
 
 
 class IntMetaAttribute(MetaAttribute):
@@ -166,11 +187,6 @@ class ACACatalogTable(Table):
     - Serialization to/from pickle
     - Predefined formatting for nicer representations
     """
-    # Elements of meta that should not be directly serialized to pickle (either
-    # too big or requires special handling) or pickle.  Should be set by
-    # subclass.
-    pickle_exclude = ()
-
     # Name of table.  Use to define default file names where applicable.
     # Should be set by subclass, e.g. ``name = 'acqs'`` for AcqTable.
     name = 'aca_cat'
@@ -194,13 +210,12 @@ class ACACatalogTable(Table):
     detector = MetaAttribute()
     sim_offset = MetaAttribute()
     focus_offset = MetaAttribute()
-    dark = MetaAttribute()
-    stars = MetaAttribute()
+    dark = MetaAttribute(pickle=False)
+    stars = MetaAttribute(pickle=False)
     include_ids = MetaAttribute(default=[])
     include_halfws = MetaAttribute(default=[])
     exclude_ids = MetaAttribute(default=[])
     print_log = MetaAttribute(default=False)
-
     log_info = MetaAttribute(default={}, is_kwarg=False)
 
     def __init__(self, data=None, **kwargs):
@@ -501,9 +516,19 @@ class ACACatalogTable(Table):
     def __getstate__(self):
         columns, meta = super().__getstate__()
         meta = meta.copy()
-        for attr in self.pickle_exclude:
-            if attr in meta:
-                del meta[attr]
+        cls = self.__class__
+
+        # For everything in meta that is a MetaAttribute, check if it should
+        # be pickled.
+        pickle_excludes = []
+        for attr in meta:
+            descr = getattr(cls, attr, None)
+            if isinstance(descr, MetaAttribute) and not descr.pickle:
+                pickle_excludes.append(attr)
+
+        for attr in pickle_excludes:
+            del meta[attr]
+
         return columns, meta
 
     def to_pickle(self, rootdir='.'):
