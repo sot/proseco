@@ -72,7 +72,8 @@ def test_box_mag_spoiler():
     assert 688523960 in selected1['id']
 
     # Set the spoiler to be 10th mag and closer to the second star
-    stars.get_id(688522000)['mag'] = 10.0
+    stars.get_id(688522000)['mag'] = 9
+    stars.get_id(688522000)['row'] = 50
 
     # Confirm the 688523960 star is not selected if the spoiler is brighter
     selected2 = get_guide_catalog(att=att, date=date, t_ccd=-20, dither=(8, 8), n_guide=5,
@@ -189,7 +190,7 @@ def test_check_spoil_contrib():
     stars = StarsTable.empty()
     stars.add_fake_star(row=0, col=0, mag=8.0, id=1, ASPQ1=1)
     stars.add_fake_star(row=0, col=-5, mag=6.0, id=2, ASPQ1=0)
-    bg_spoil, reg_spoil = check_spoil_contrib(stars, np.array([True, True]), stars, .05, 25)
+    bg_spoil, reg_spoil, rej = check_spoil_contrib(stars, np.array([True, True]), stars, .05, 25)
     assert reg_spoil[0]
 
     # Construct a case where a star spoils just a background pixel
@@ -197,7 +198,7 @@ def test_check_spoil_contrib():
     stars.add_fake_star(row=0, col=0, mag=8.0, id=1, ASPQ1=1)
     stars.add_fake_star(row=-5.5, col=-5.5, mag=9.5, id=2, ASPQ1=0)
 
-    bg_spoil, reg_spoil = check_spoil_contrib(stars, np.array([True, True]), stars, .05, 25)
+    bg_spoil, reg_spoil, rej = check_spoil_contrib(stars, np.array([True, True]), stars, .05, 25)
     assert bg_spoil[0]
 
 
@@ -220,7 +221,7 @@ def test_check_mag_spoilers():
                  'MAG_ACA_ERR': 0, 'id': 2}
         dist = np.sqrt(r_dist ** 2 + c_dist ** 2)
         stars = Table([star1, star2])
-        spoiled = check_mag_spoilers(stars, np.array([True, True]), stars, 0)
+        spoiled, rej = check_mag_spoilers(stars, np.array([True, True]), stars, 0)
         req_sep = intercept + magdiff * spoilslope
         assert (dist < req_sep) == spoiled[0]
 

@@ -75,6 +75,14 @@ class GuideTable(ACACatalogTable):
     required_attrs = ('att', 't_ccd_guide', 'date', 'dither_guide')
 
     cand_guides = MetaAttribute(is_kwarg=False)
+    reject_info = MetaAttribute(default=[], is_kwarg=False)
+
+    def reject(self, reject):
+        """
+        Add a reject dict to self.reject_info
+        """
+        reject_info = self.reject_info
+        reject_info.append(reject)
 
     @property
     def t_ccd(self):
@@ -168,11 +176,26 @@ class GuideTable(ACACatalogTable):
         faint_lim = stage['MagLimit'][1]
         bad_mag = (((cand_guides['mag'] - n_sigma * cand_guides['mag_err']) < bright_lim) |
                    ((cand_guides['mag'] + n_sigma * cand_guides['mag_err']) > faint_lim))
+        for idx in np.flatnonzero(bad_mag):
+            self.reject({'id': cand_guides['id'][idx],
+                         'type': 'mag outside range',
+                         'stage': stage['Stage'],
+                         'bright_lim': bright_lim,
+                         'faint_lim': faint_lim,
+                         'cand_mag': cand_guides['mag'][idx],
+                         'cand_mag_err_times_sigma': n_sigma * cand_guides['mag_err'][idx],
+                         'text': f'Cand {cand_guides["id"][idx]} rejected with mag outside range for stage'})
         cand_guides[scol][bad_mag] += GUIDE_CHAR.errs['mag range']
         ok = ok & ~bad_mag
 
         # Check stage ASPQ1
         bad_aspq1 = cand_guides['ASPQ1'] > stage['ASPQ1Lim']
+        for idx in np.flatnonzero(bad_aspq1):
+            self.reject({'id': cand_guides['id'][idx],
+                         'type': 'aspq1 outside range',
+                         'stage': stage['Stage'],
+                         'aspq1_lim': stage['ASPQ1Lim'],
+                         'text': f'Cand {cand_guides["id"][idx]} rejected with aspq1 > {stage["ASPQ1Lim"]}'})
         cand_guides[scol][bad_aspq1] += GUIDE_CHAR.errs['aspq1']
         ok = ok & ~bad_aspq1
 
@@ -181,11 +204,28 @@ class GuideTable(ACACatalogTable):
                                             stage['Imposter']['CentroidOffsetLim'])
         # Which candidates have an 'imposter' brighter than the limit for this stage
         imp_spoil = cand_guides['imp_mag'] < pixmag_lims
+        for idx in np.flatnonzero(imp_spoil):
+            cand = cand_guides[idx]
+            cen_limit = stage['Imposter']['CentroidOffsetLim']
+            self.reject({
+                'id': cand['id'],
+                'stage': stage['Stage'],
+                'type': 'hot pixel',
+                'centroid_offset_thresh': cen_limit,
+                'pseudo_mag_for_thresh': pixmag_lims[idx],
+                'imposter_mag': cand['imp_mag'],
+                'imp_row_start': cand['imp_r'],
+                'imp_col_start': cand['imp_c'],
+                'text': (f'Cand {cand["id"]} mag {cand["mag"]:.1f} imposter with "mag" {cand["imp_mag"]:.1f} '
+                         f'limit {pixmag_lims[idx]:.2f} with offset lim {cen_limit} at stage')})
         cand_guides[scol][imp_spoil] += GUIDE_CHAR.errs['hot pix']
         ok = ok & ~imp_spoil
 
         # Check for 'direct catalog search' spoilers
-        mag_spoil = check_mag_spoilers(cand_guides, ok, stars, n_sigma)
+        mag_spoil, mag_rej = check_mag_spoilers(cand_guides, ok, stars, n_sigma)
+        for rej in mag_rej:
+            rej['stage'] = stage['Stage']
+            self.reject(rej)
         cand_guides[scol][mag_spoil] += GUIDE_CHAR.errs['spoiler (line)']
         ok = ok & ~mag_spoil
 
@@ -193,19 +233,30 @@ class GuideTable(ACACatalogTable):
         if stage['ASPQ1Lim'] > 0:
             bg_pix_thresh = np.percentile(dark, stage['Spoiler']['BgPixThresh'])
             reg_frac = stage['Spoiler']['RegionFrac']
-            bg_spoil, reg_spoil = check_spoil_contrib(cand_guides, ok, stars,
-                                                      reg_frac, bg_pix_thresh)
+            bg_spoil, reg_spoil, light_rej = check_spoil_contrib(cand_guides, ok, stars,
+                                                                 reg_frac, bg_pix_thresh)
+            for rej in light_rej:
+                rej['stage'] = stage['Stage']
+                self.reject(rej)
             cand_guides[scol][bg_spoil] += GUIDE_CHAR.errs['spoiler (bgd)']
             cand_guides[scol][reg_spoil] += GUIDE_CHAR.errs['spoiler (frac)']
             ok = ok & ~bg_spoil & ~reg_spoil
 
         # Check for column spoiler
-        col_spoil = check_column_spoilers(cand_guides, ok, stars, n_sigma)
+        col_spoil, col_rej = check_column_spoilers(cand_guides, ok, stars, n_sigma)
+        for rej in col_rej:
+            rej['stage'] = stage['Stage']
+            self.reject(rej)
         cand_guides[scol][col_spoil] += GUIDE_CHAR.errs['col spoiler']
         ok = ok & ~col_spoil
 
         if stage['DoBminusVcheck'] == 1:
             bad_color = np.isclose(cand_guides['COLOR1'], 0.7, atol=1e-6, rtol=0)
+            for idx in np.flatnonzero(bad_color):
+                self.reject({'id': cand_guides['id'][idx],
+                             'type': 'bad color',
+                             'stage': stage['Stage'],
+                             'text': f'Cand {cand_guides["id"][idx]} has bad color (0.7)'})
             cand_guides[scol][bad_color] += GUIDE_CHAR.errs['bad color']
             ok = ok & ~bad_color
         return ok
@@ -248,28 +299,43 @@ class GuideTable(ACACatalogTable):
         self.log(f'Reduced star list from {len(stars)} to '
                  f'{len(cand_guides)} candidate guide stars')
 
-        bp = spoiled_by_bad_pixel(cand_guides, self.dither)
+        bp, bp_rej = spoiled_by_bad_pixel(cand_guides, self.dither)
+        for rej in bp_rej:
+            rej['stage'] = 0
+            self.reject(rej)
         cand_guides = cand_guides[~bp]
         self.log('Filtering on candidates near bad (not just bright/hot) pixels')
         self.log(f'Reduced star list from {len(bp)} to '
                  f'{len(cand_guides)} candidate guide stars')
 
         bs = in_bad_star_list(cand_guides)
+        for idx in np.flatnonzero(bs):
+            self.reject({'id': cand_guides['id'][idx],
+                         'stage': 0,
+                         'type': 'bad star list',
+                         'text': f'Cand {cand_guides["id"][idx]} in bad star list'})
         cand_guides = cand_guides[~bs]
         self.log('Filtering stars on bad star list')
         self.log(f'Reduced star list from {len(bs)} to '
                  f'{len(cand_guides)} candidate guide stars')
 
-        box_spoiled = has_spoiler_in_box(cand_guides, stars,
-                                         halfbox=GUIDE_CHAR.box_spoiler['halfbox'],
-                                         magdiff=GUIDE_CHAR.box_spoiler['magdiff'])
+        box_spoiled, box_rej = has_spoiler_in_box(cand_guides, stars,
+                                                  halfbox=GUIDE_CHAR.box_spoiler['halfbox'],
+                                                  magdiff=GUIDE_CHAR.box_spoiler['magdiff'])
+        for rej in box_rej:
+            rej['stage'] = 0
+            self.reject(rej)
         cand_guides = cand_guides[~box_spoiled]
         self.log('Filtering stars that have bright spoilers with centroids near/in 8x8')
         self.log(f'Reduced star list from {len(box_spoiled)} to '
                  f'{len(cand_guides)} candidate guide stars')
 
-        cand_guides['imp_mag'] = get_imposter_mags(cand_guides, dark, self.dither)
-        self.log('Getting pseudo-mag of brightest pixel in candidate region')
+        # Get the brightest 2x2 in the dark map for each candidate and save value and location
+        imp_mag, imp_row, imp_col = get_imposter_mags(cand_guides, dark, self.dither)
+        cand_guides['imp_mag'] = imp_mag
+        cand_guides['imp_r'] = imp_row
+        cand_guides['imp_c'] = imp_col
+        self.log('Getting pseudo-mag of brightest pixel 2x2 in candidate region')
 
         return cand_guides
 
@@ -294,6 +360,7 @@ def check_spoil_contrib(cand_stars, ok, stars, regfrac, bgthresh):
     bg_spoiled = np.zeros_like(ok)
     reg_spoiled = np.zeros_like(ok)
     bgpix = CCD['bgpix']
+    rej = []
     for cand in cand_stars[ok]:
         if cand['ASPQ1'] == 0:
             continue
@@ -318,8 +385,16 @@ def check_spoil_contrib(cand_stars, ok, stars, regfrac, bgthresh):
             on_region = on_region + spoil_img.aca
 
         # Consider it spoiled if the star contribution on the 8x8 is over a fraction
-        if np.sum(on_region) > (cand_counts * fraction):
+        frac_limit = cand_counts * fraction
+        sum_in_region = np.sum(on_region)
+        if sum_in_region > frac_limit:
             reg_spoiled[cand_stars['id'] == cand['id']] = True
+            rej.append({'id': cand_stars['id'],
+                        'type': 'region sum spoiled',
+                        'limit_for_star': frac_limit,
+                        'fraction': fraction,
+                        'sum_in_region': sum_in_region,
+                        'text': f'Cand {cand_stars["id"]} has too much contribution to region from spoilers'})
             continue
 
         # Or consider it spoiled if the star contribution to any background pixel
@@ -328,8 +403,15 @@ def check_spoil_contrib(cand_stars, ok, stars, regfrac, bgthresh):
             val = on_region[pixlabel == chandra_aca.aca_image.EIGHT_LABELS][0]
             if val > bgthresh:
                 bg_spoiled[cand_stars['id'] == cand['id']] = True
+                rej.append({'id': cand['id'],
+                            'type': 'region background spoiled',
+                            'bg_thresh': bgthresh,
+                            'bg_pix_val': val,
+                            'pix_id': pixlabel,
+                            'text': f'Cand {cand["id"]} has bg pix spoiled by spoilers'})
+                continue
 
-    return bg_spoiled, reg_spoiled
+    return bg_spoiled, reg_spoiled, rej
 
 
 def check_mag_spoilers(cand_stars, ok, stars, n_sigma):
@@ -353,10 +435,10 @@ def check_mag_spoilers(cand_stars, ok, stars, n_sigma):
 
     # If there are already no candidates, there isn't anything to do
     if not np.any(ok):
-        return np.zeros(len(ok)).astype(bool)
+        return np.zeros(len(ok)).astype(bool), []
 
     mag_spoiled = np.zeros(len(ok)).astype(bool)
-
+    rej = []
     for cand in cand_stars[ok]:
         pix_dist = np.sqrt(((cand['row'] - stars['row']) ** 2) +
                            ((cand['col'] - stars['col']) ** 2))
@@ -377,10 +459,19 @@ def check_mag_spoilers(cand_stars, ok, stars, n_sigma):
             delmag = cand['mag'] - spoil['mag'] + n_sigma * mag_err_sum
             thsep = intercept + delmag * spoilslope
             if dist < thsep:
+                rej.append({'id': cand['id'],
+                            'spoiler': spoil['id'],
+                            'spoiler_mag': spoil['mag'],
+                            'dmag_with_err': delmag,
+                            'min_dist_for_dmag': thsep,
+                            'actual_dist': dist,
+                            'type': 'spoiler by distance-mag line',
+                            'text': (f'Cand {cand["id"]} spoiled by {spoil["id"]}, '
+                                     f'too close ({dist:.1f}) pix for magdiff ({delmag:.1f})')})
                 mag_spoiled[cand['id'] == cand_stars['id']] = True
                 continue
 
-    return mag_spoiled
+    return mag_spoiled, rej
 
 
 def check_column_spoilers(cand_stars, ok, stars, n_sigma):
@@ -395,6 +486,7 @@ def check_column_spoilers(cand_stars, ok, stars, n_sigma):
     :returns: bool mask on cand_stars marking column spoiled stars
     """
     column_spoiled = np.zeros_like(ok)
+    rej = []
     for idx, cand in enumerate(cand_stars):
         if not ok[idx]:
             continue
@@ -408,9 +500,20 @@ def check_column_spoilers(cand_stars, ok, stars, n_sigma):
                     np.sqrt((cand['MAG_ACA_ERR'] * 0.01) ** 2 +
                             (stars['MAG_ACA_ERR'][~stars['offchip']][pos_spoil] * 0.01) ** 2))
         dm = (cand['mag'] - stars['mag'][~stars['offchip']][pos_spoil] + mag_errs)
-        if np.any(dm > GUIDE_CHAR.col_spoiler['MagDiff']):
+        spoils = dm > GUIDE_CHAR.col_spoiler['MagDiff']
+        if np.any(spoils):
             column_spoiled[idx] = True
-    return column_spoiled
+            spoiler = stars[~stars['offchip']][pos_spoil][spoils][0]
+            rej.append({'id': cand['id'],
+                        'type': 'column spoiled',
+                        'spoiler': spoiler['id'],
+                        'spoiler_mag': spoiler['mag'],
+                        'dmag_with_err': dm[spoils][0],
+                        'dmag_lim': GUIDE_CHAR.col_spoiler['MagDiff'],
+                        'dcol': cand['col'] - spoiler['col'],
+                        'text': (f'Cand {cand["id"]} has column spoiler {spoiler["id"]} '
+                                 f'at ({spoiler["row"]:.1f}, {spoiler["row"]:.1f}), mag {spoiler["mag"]:.2f}')})
+    return column_spoiled, rej
 
 
 def get_imposter_mags(cand_stars, dark, dither):
@@ -436,6 +539,8 @@ def get_imposter_mags(cand_stars, dark, dither):
         return rminus, rplus
 
     pixmags = []
+    pix_r = []
+    pix_c = []
 
     # Define the 1/2 pixel region as half the 8x8 plus dither
     row_extent = np.ceil(4 + dither.row)
@@ -444,13 +549,25 @@ def get_imposter_mags(cand_stars, dark, dither):
         rminus, rplus = get_ax_range(cand['row'], row_extent)
         cminus, cplus = get_ax_range(cand['col'], col_extent)
         pix = np.array(dark.aca[rminus:rplus, cminus:cplus])
-        pixmax = max(np.max(bin2x2(pix)),
-                     np.max(bin2x2(pix[1:-1])),
-                     np.max(bin2x2(pix[:, 1:-1])),
-                     np.max(bin2x2(pix[1:-1, 1:-1])))
+        pixmax = 0
+        max_r = None
+        max_c = None
+        # Check the 2x2 bins for the max 2x2 region.  Search the "offset" versions as well
+        for pix_chunk, row_off, col_off in zip((pix, pix[1:-1, :], pix[:, 1:-1], pix[1:-1, 1:-1]),
+                                               (0, 1, 0, 1),
+                                               (0, 0, 1, 1)):
+            bin_image = bin2x2(pix_chunk)
+            pixsum = np.max(bin_image)
+            if pixsum > pixmax:
+                pixmax = pixsum
+                idx = np.unravel_index(np.argmax(bin_image), bin_image.shape)
+                max_r = rminus + row_off + idx[0] * 2
+                max_c = cminus + col_off + idx[1] * 2
         pixmax_mag = count_rate_to_mag(pixmax)
         pixmags.append(pixmax_mag)
-    return np.array(pixmags)
+        pix_r.append(max_r)
+        pix_c.append(max_c)
+    return np.array(pixmags), np.array(pix_r), np.array(pix_c)
 
 
 def get_pixmag_for_offset(cand_mag, offset):
@@ -484,6 +601,7 @@ def has_spoiler_in_box(cand_guides, stars, halfbox=5, magdiff=-4):
     :returns: mask on cand_guides set to True if star spoiled by another star in the pixel box
     """
     box_spoiled = np.zeros(len(cand_guides)).astype(bool)
+    rej = []
     for idx, cand in enumerate(cand_guides):
         dr = np.abs(cand['row'] - stars['row'])
         dc = np.abs(cand['col'] - stars['col'])
@@ -492,7 +610,21 @@ def has_spoiler_in_box(cand_guides, stars, halfbox=5, magdiff=-4):
         box_spoilers = ~itself & inbox & (cand['mag'] - stars['mag'] > magdiff)
         if np.any(box_spoilers):
             box_spoiled[idx] = True
-    return box_spoiled
+            n = np.count_nonzero(box_spoilers)
+            boxsize = halfbox * 2
+            bright = np.argmin(stars[box_spoilers]['mag'])
+            spoiler = stars[box_spoilers][bright]
+            rej.append({'id': cand['id'],
+                        'type': 'in-box spoiler star',
+                        'boxsize': boxsize,
+                        'magdiff_thresh': magdiff,
+                        'spoiler': spoiler['id'],
+                        'dmag': cand['mag'] - spoiler['mag'],
+                        'n': n,
+                        'text': (f'Cand {cand["id"]} spoiled by {n} stars in {boxsize}x{boxsize} '
+                                 f' including {spoiler["id"]}')
+                    })
+    return box_spoiled, rej
 
 
 def in_bad_star_list(cand_guides):
@@ -535,6 +667,8 @@ def spoiled_by_bad_pixel(cand_guides, dither):
     # Then for the pixel region of each candidate, see if there is a bad
     # pixel in the region.
     spoiled = np.zeros(len(cand_guides)).astype(bool)
+    # Also save an array of rejects to pass back
+    rej = []
     row_extent = np.ceil(4 + dither.row)
     col_extent = np.ceil(4 + dither.col)
     for idx, cand in enumerate(cand_guides):
@@ -544,6 +678,13 @@ def spoiled_by_bad_pixel(cand_guides, dither):
         cplus = int(np.ceil(cand['col'] + col_extent + 1))
 
         # If any bad pixel is in the guide star pixel region, mark as spoiled
-        if np.any((bp_row >= rminus) & (bp_row <= rplus) & (bp_col >= cminus) & (bp_col <= cplus)):
+        bps = ((bp_row >= rminus) & (bp_row <= rplus) & (bp_col >= cminus) & (bp_col <= cplus))
+        if np.any(bps):
             spoiled[idx] = True
-    return spoiled
+            rej.append({'id': cand['id'],
+                        'type': 'bad pixel',
+                        'pixel': (bp_row[bps][0], bp_col[bps][0]),
+                        'n_bad': np.count_nonzero(bps),
+                        'text': (f'Cand {cand["id"]} spoiled by {np.count_nonzero(bps)} bad pixels '
+                                 f'including {(bp_row[bps][0], bp_col[bps][0])}')})
+    return spoiled, rej
