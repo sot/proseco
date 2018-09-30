@@ -116,13 +116,12 @@ class AcqTable(ACACatalogTable):
     """
     Catalog of acquisition stars
     """
-    # Elements of meta that should not be directly serialized to YAML
+    # Elements of meta that should not be directly serialized to pickle
     # (either too big or requires special handling).
-    yaml_exclude = ('stars', 'cand_acqs', 'dark', 'bad_stars')
     pickle_exclude = ('stars', 'dark', 'bad_stars')
 
     # Name of table.  Use to define default file names where applicable.
-    # (e.g. `obs19387/acqs.yaml`).
+    # (e.g. `obs19387/acqs.pkl`).
     name = 'acqs'
 
     # Required attributes
@@ -717,29 +716,6 @@ class AcqTable(ACACatalogTable):
                 self.log(f'  accepted, new p_safe = {p_safe:.5f}', id=cand_id)
             else:
                 self[idx] = orig_acq
-
-    def to_yaml_custom(self, out):
-        """
-        Defined by subclass to do custom process prior to YAML serialization
-        and possible writing to file.  This method is called by self.to_yaml()
-        and should modify the ``out`` dict in place.
-
-        :param out: dict of pure-Python output to be serialized to YAML
-        """
-        # Convert cand_acqs table to a pure-Python structure
-        out['cand_acqs'] = self.cand_acqs.to_struct()
-
-    def from_yaml_custom(self, obj):
-        """
-        Custom processing on the dict ``obj`` which is the raw result of
-        loading the YAML representation.  This gets called from the class method
-        ``ACACatalogTable.from_yaml()``.
-
-        :param obj: dict of pure-Python input from YAML to construct AcqTable
-        """
-        # Create candidate acqs AcqTable from pure-Python structure
-        cand_acqs = obj.pop('cand_acqs')
-        self.cand_acqs = self.__class__.from_struct(cand_acqs)
 
 
 def get_spoiler_stars(stars, acq, box_size):

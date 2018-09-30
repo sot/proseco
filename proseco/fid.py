@@ -73,12 +73,8 @@ def get_fid_catalog(obsid=0, **kwargs):
 
 
 class FidTable(ACACatalogTable):
-    # Elements of meta that should not be directly serialized to YAML
-    # (either too big or requires special handling).
-    yaml_exclude = ('cand_fids', 'stars', 'dark')
-
     # Name of table.  Use to define default file names where applicable.
-    # (e.g. `obs19387/fids.yaml`).
+    # (e.g. `obs19387/fids.pkl`).
     name = 'fids'
 
     cand_fids = MetaAttribute(is_kwarg=False)

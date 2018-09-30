@@ -6,7 +6,6 @@ from copy import copy
 from pathlib import Path
 
 import numpy as np
-import yaml
 from scipy.interpolate import interp1d
 from astropy.table import Table, Column
 
@@ -164,13 +163,12 @@ class ACACatalogTable(Table):
     Features:
     - Inherits from astropy Table
     - Logging
-    - Serialization to/from YAML
+    - Serialization to/from pickle
     - Predefined formatting for nicer representations
     """
-    # Elements of meta that should not be directly serialized to YAML (either
+    # Elements of meta that should not be directly serialized to pickle (either
     # too big or requires special handling) or pickle.  Should be set by
     # subclass.
-    yaml_exclude = ()
     pickle_exclude = ()
 
     # Name of table.  Use to define default file names where applicable.
@@ -537,137 +535,6 @@ class ACACatalogTable(Table):
         infile = rootdir / f'obs{obsid:05}' / f'{cls.name}.pkl'
         with open(infile, 'rb') as fh:
             return pickle.load(fh)
-
-    def to_yaml_custom(self, out):
-        """
-        Defined by subclass to do custom process prior to YAML serialization
-        and possible writing to file.  This method should modify the ``out``
-        dict in place.
-        """
-        pass
-
-    def to_yaml(self, rootdir=None):
-        """
-        Serialize table as YAML and return string.  If ``rootdir`` is set then
-        the table YAML is output to ``<rootdir>/obs<obsid>/acqs.yaml``.
-        """
-        out = {}
-        for par in self.meta:
-            if par not in self.yaml_exclude:
-                out[par] = to_python(self.meta[par])
-
-        # Store table itself and log info
-        out[self.name] = self.to_struct()
-        out['log_info'] = self.log_info
-
-        # Custom processing
-        self.to_yaml_custom(out)
-
-        yml = yaml.dump(out)
-
-        if rootdir is not None:
-            rootdir = Path(rootdir)
-            outdir = rootdir / f'obs{self.meta["obsid"]:05}'
-            if not outdir.exists():
-                outdir.mkdir()
-            outfile = outdir / f'{self.name}.yaml'
-            with open(outfile, 'w') as fh:
-                fh.write(yml)
-
-        return yml
-
-    def from_yaml_custom(self, obj):
-        """
-        Custom processing on the dict ``obj`` which is the raw result of
-        loading the YAML representation.  ``self`` is the ACACatalogTable
-        subclass that is receiving info from ``obj``, so this method allows
-        custom processing of that.
-        """
-        pass
-
-    @classmethod
-    def from_yaml(cls, obsid, rootdir='.'):
-        """
-        Construct table from YAML string
-        """
-        rootdir = Path(rootdir)
-        infile = rootdir / f'obs{obsid:05}' / f'{cls.name}.yaml'
-        with open(infile, 'r') as fh:
-            yaml_str = fh.read()
-
-        obj = yaml.load(yaml_str)
-
-        # Construct the table itself and log info
-        tbl = cls.from_struct(obj.pop(cls.name))
-        tbl.log_info.update(obj.pop('log_info'))
-
-        # Custom stuff
-        tbl.from_yaml_custom(obj)
-
-        # Anything else gets dumped into meta dict
-        for par in obj:
-            tbl.meta[par] = copy(obj[par])
-        return tbl
-
-    def to_struct(self):
-        """Turn table ``tbl`` into a dict structure with keys:
-
-        - names: column names in order
-        - dtype: column dtypes as strings
-        - rows: list of dict with row values
-
-        This takes pains to remove any numpy objects so the YAML serialization
-        is tidy (pure-Python only).
-        """
-        rows = []
-        colnames = self.colnames
-        dtypes = [col.dtype.str for col in self.itercols()]
-        out = {'names': colnames, 'dtype': dtypes}
-
-        for row in self:
-            outrow = {}
-            for name in colnames:
-                val = row[name]
-                if isinstance(val, np.ndarray) and val.dtype.names:
-                    val = Table(val)
-
-                if isinstance(val, Table):
-                    val = ACACatalogTable.to_struct(val)
-
-                elif isinstance(val, dict):
-                    new_val = {}
-                    for key, item in val.items():
-                        if isinstance(key, tuple):
-                            key = tuple(to_python(k) for k in key)
-                        else:
-                            key = to_python(key)
-                        item = to_python(item)
-                        new_val[key] = item
-                    val = new_val
-
-                else:
-                    val = to_python(val)
-
-                outrow[name] = val
-            rows.append(outrow)
-
-        # Only include rows=[..] kwarg if there are rows.  Table initializer is unhappy
-        # with a zero-length list for rows, but is OK with just names=[..] dtype=[..].
-        if rows:
-            out['rows'] = rows
-
-        return out
-
-    @classmethod
-    def from_struct(cls, struct):
-        out = cls(**struct)
-        for name in out.colnames:
-            col = out[name]
-            if col.dtype.kind == 'O':
-                for idx, val in enumerate(col):
-                    if isinstance(val, dict) and 'dtype' in val.keys():
-                        col[idx] = Table(**val)
-        return out
 
 
 # AGASC columns not needed (at this moment) for acq star selection.

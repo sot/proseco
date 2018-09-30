@@ -62,13 +62,12 @@ def get_guide_catalog(obsid=0, **kwargs):
 
 class GuideTable(ACACatalogTable):
 
-    # Elements of meta that should not be directly serialized to YAML
+    # Elements of meta that should not be directly serialized to pickle.
     # (either too big or requires special handling).
-    yaml_exclude = ('stars', 'cand_guides', 'dark')
     pickle_exclude = ('stars', 'dark')
 
     # Name of table.  Use to define default file names where applicable.
-    # (e.g. `obs19387/guide.yaml`).
+    # (e.g. `obs19387/guide.pkl`).
     name = 'guide'
 
     # Required attributes
