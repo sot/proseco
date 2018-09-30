@@ -55,6 +55,9 @@ def test_get_aca_catalog_20603():
     repr(aca)  # Apply default formats
     assert aca[TEST_COLS].pformat(max_width=-1) == exp
 
+    aca_pkl = pickle.dumps(aca)
+    assert len(aca_pkl) < 180_000  # Nominally ~170k, warn if size grows
+
 
 @pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
 def test_get_aca_catalog_20259():
