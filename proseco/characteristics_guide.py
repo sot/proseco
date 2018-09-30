@@ -1,6 +1,7 @@
 import numpy as np
 
 # Fid trap effect
+# http://cxc.cfa.harvard.edu/mta/ASPECT/aca_weird_pixels/
 fid_trap = {'row': -374,
             'col': 347,
             'margin': 8}
