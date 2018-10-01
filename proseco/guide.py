@@ -404,7 +404,7 @@ def check_spoil_contrib(cand_stars, ok, stars, regfrac, bgthresh):
                     A sum above this fraction will mark the cand_star as spoiled
     :param bgthresh: background pixel threshold (in e-/sec).  If spoilers contribute more
                     than this value to any background pixel, mark the cand_star as spoiled.
-    :returns: reg_spoiled, bg_spoiled - two masks on cand_stars.
+    :returns: reg_spoiled, bg_spoiled, rej - two masks on cand_stars and a list of reject debug dicts
     """
     fraction = regfrac
     APL = AcaPsfLibrary()
@@ -478,7 +478,7 @@ def check_mag_spoilers(cand_stars, ok, stars, n_sigma):
     :param ok: mask on cand_stars describing those that are still "ok"
     :param stars: Table of AGASC stars in this field
     :param n_sigma: multiplier use for MAG_ACA_ERR when reviewing spoilers
-    :returns: bool mask of length cand_stars marking mag_spoiled stars
+    :returns: bool mask of length cand_stars marking mag_spoiled stars, list of reject debug dicts
     """
     intercept = GUIDE_CHAR.mag_spoiler['Intercept']
     spoilslope = GUIDE_CHAR.mag_spoiler['Slope']
@@ -534,7 +534,7 @@ def check_column_spoilers(cand_stars, ok, stars, n_sigma):
     :param ok: mask on cand_stars describing still "ok" candidates
     :param stars: Table of AGASC stars
     :param n_sigma: multiplier used when checking mag with MAG_ACA_ERR
-    :returns: bool mask on cand_stars marking column spoiled stars
+    :returns: bool mask on cand_stars marking column spoiled stars, list of debug reject dicts
     """
     column_spoiled = np.zeros_like(ok)
     rej = []
@@ -574,7 +574,7 @@ def get_imposter_mags(cand_stars, dark, dither):
     :param cand_stars: Table of candidate stars
     :param dark: full CCD dark map
     :param dither: observation dither to be used to determine pixels a star could use
-    :returns: array of magnitudes of length cand_stars
+    :returns: np.array pixmags, np.array pix_r, np.array pix_c all of length cand_stars
     """
     def get_ax_range(r, extent):
 
@@ -649,7 +649,8 @@ def has_spoiler_in_box(cand_guides, stars, halfbox=5, magdiff=-4):
     :param stars: Table of AGASC stars in the field
     :param halfbox: half of the length of a side of the box used for check (pixels)
     :param magdiff: magnitude difference threshold
-    :returns: mask on cand_guides set to True if star spoiled by another star in the pixel box
+    :returns: mask on cand_guides set to True if star spoiled by another star in the pixel box,
+              and a list of dicts with reject debug info
     """
     box_spoiled = np.zeros(len(cand_guides)).astype(bool)
     rej = []
@@ -696,7 +697,8 @@ def spoiled_by_bad_pixel(cand_guides, dither):
     :param cand_guides: Table of candidate stars
     :param dither: tuple or list of dither where dither[0] is Y dither peak ampl
                    in arcsecs and dither[1] is Z dither peak ampl in arcsecs
-    :returns: boolean mask on cand_guides where True means star is spoiled by bad pixel
+    :returns: boolean mask on cand_guides where True means star is spoiled by bad pixel,
+              list of dicts of reject debug info
     """
     if not isinstance(dither, ACABox):
         dither = ACABox(dither)
