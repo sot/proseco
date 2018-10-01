@@ -366,8 +366,6 @@ def check_fid_trap(cand_stars, fids, dither):
     if fids is None or len(fids) == 0:
         return spoilers, []
 
-    if not isinstance(dither, ACABox):
-        dither = ACABox(dither)
     bad_row = GUIDE_CHAR.fid_trap['row']
     bad_col= GUIDE_CHAR.fid_trap['col']
     fid_margin = GUIDE_CHAR.fid_trap['margin']
