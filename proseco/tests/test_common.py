@@ -1,6 +1,8 @@
+import numpy as np
+from chandra_aca.aca_image import ACAImage
+
 # Vanilla observation info
-STD_INFO = dict(obsid=1,
-                att=(0, 0, 0),
+STD_INFO = dict(att=(0, 0, 0),
                 detector='ACIS-S',
                 sim_offset=0,
                 focus_offset=0,
@@ -15,6 +17,11 @@ def mod_std_info(**kwargs):
     std_info = STD_INFO.copy()
     std_info.update(kwargs)
     return std_info
+
+
+# Flat dark current map
+DARK40 = ACAImage(np.full(shape=(1024, 1024), fill_value=40), row0=-512, col0=-512)
+
 
 # Parameters for test cases (to avoid starcheck.db3 dependence)
 OBS_INFO = {}

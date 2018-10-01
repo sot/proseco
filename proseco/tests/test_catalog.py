@@ -7,10 +7,10 @@ from pathlib import Path
 import numpy as np
 import mica.starcheck
 
-from .test_common import STD_INFO, mod_std_info
-from .test_acq import DARK40
+from .test_common import STD_INFO, mod_std_info, DARK40
 from ..core import StarsTable, ACACatalogTable
 from ..catalog import get_aca_catalog
+from ..fid import get_fid_catalog
 from .. import characteristics as CHAR
 
 
@@ -208,7 +208,7 @@ def test_call_args_attr():
                              'n_acq': 0,
                              'n_fid': 0,
                              'n_guide': 0,
-                             'obsid': 1,
+                             'obsid': 0,
                              'optimize': False,
                              'sim_offset': 0,
                              't_ccd': -11}
