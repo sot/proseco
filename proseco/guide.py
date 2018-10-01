@@ -695,13 +695,10 @@ def spoiled_by_bad_pixel(cand_guides, dither):
     Mark star bad if spoiled by a bad pixel in the bad pixel list (not hot)
 
     :param cand_guides: Table of candidate stars
-    :param dither: tuple or list of dither where dither[0] is Y dither peak ampl
-                   in arcsecs and dither[1] is Z dither peak ampl in arcsecs
+    :param dither: dither ACABox
     :returns: boolean mask on cand_guides where True means star is spoiled by bad pixel,
               list of dicts of reject debug info
     """
-    if not isinstance(dither, ACABox):
-        dither = ACABox(dither)
 
     raw_bp = np.array(CHAR.bad_pixels)
     bp_row = []
