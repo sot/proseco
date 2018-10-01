@@ -353,6 +353,11 @@ class GuideTable(ACACatalogTable):
 def check_fid_trap(cand_stars, fids, dither):
     """
     Search for guide stars that would cause the fid trap issue and mark as spoilers.
+
+    :param cand_stars: candidate star Table
+    :param fids: fid Table
+    :param dither: dither ACABox
+    :returns: mask on cand_stars of fid trap spoiled stars, list of rejection info dicts
     """
 
     spoilers = np.zeros(len(cand_stars)).astype(bool)
@@ -371,19 +376,19 @@ def check_fid_trap(cand_stars, fids, dither):
     # a star that can cause the effect in the readout regiser
     for fid in fids:
         incol = abs(fid['col'] - bad_col) < fid_margin
-        inrow = (fid['row'] < 0) & (fid['row'] > bad_row)
-        if (incol & inrow):
-            fid2trap = fid['row'] - bad_row
-            star2reg = 512 - abs(cand_stars['row'])
-            spoils = abs(fid2trap - star2reg) < (fid_margin + dither.row)
+        inrow = fid['row'] < 0 and fid['row'] > bad_row
+        if incol and inrow:
+            fid_dist_to_trap = fid['row'] - bad_row
+            star_dist_to_register = 512 - abs(cand_stars['row'])
+            spoils = abs(fid_dist_to_trap - star_dist_to_register) < (fid_margin + dither.row)
             spoilers = spoilers | spoils
             for idx in np.flatnonzero(spoils):
                 cand = cand_stars[idx]
                 rej.append({'id': cand['id'],
                             'type': 'fid trap effect',
                             'fid_id': fid['id'],
-                            'pixdist_fid_to_trap_row': fid2trap,
-                            'pixdist_star_to_register': star2reg[idx],
+                            'fid_dist_to_trap': fid_dist_to_trap,
+                            'star_dist_to_register': star_dist_to_register[idx],
                             'text': f'Cand {cand["id"]} in trap zone for fid {fid["id"]}'})
     return spoilers, rej
 
