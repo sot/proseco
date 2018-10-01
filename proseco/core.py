@@ -240,7 +240,8 @@ class ACACatalogTable(Table):
         # then all other params must be supplied.
         all_pars = all(getattr(self, x) is not None for x in self.required_attrs)
         if self.obsid == 0 and not all_pars:
-            raise ValueError('if `obsid` not supplied then all other params are required')
+            missing = [attr for attr in self.required_attrs if getattr(self, attr) is None]
+            raise ValueError(f'missing required parameters {missing}')
 
         # If not all params supplied then get via mica for the obsid.
         if not all_pars:
