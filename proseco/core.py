@@ -561,6 +561,30 @@ class ACACatalogTable(Table):
         with open(infile, 'rb') as fh:
             return pickle.load(fh)
 
+    def has_column_spoiler(self, cand, stars):
+        """
+        Returns True if ``cand`` has a column spoiler downstream toward readout
+        register which is:
+        - at least 4.5 mag brighter (CHAR.col_spoiler_mag_diff)
+        - within 10 pixels in column (CHAR.col_spoiler_pix_sep)
+
+        Also records a log entry for detected spoilers
+
+        :param cand: object with 'row', 'col', and 'mag' items
+        :param stars: StarsTable
+        :returns: bool
+        """
+        bads = ((np.abs(cand['row']) < abs(stars['row'])) &  # Further from readout register
+                (np.sign(cand['row']) == np.sign(stars['row'])) &  # Same side of CCD
+                (np.abs(cand['col'] - stars['col']) < CHAR.col_spoiler_pix_sep) &
+                (cand['mag'] - stars['mag'] > CHAR.col_spoiler_mag_diff))
+
+        if np.any(bads):
+            self.log(f'Candidate acq star {cand["id"]} rejected due to column spoiler(s) '
+                     f'{stars["id"][bads].tolist()}')
+            return True
+        else:
+            return False
 
 # AGASC columns not needed (at this moment) for acq star selection.
 # Change as needed.

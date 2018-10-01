@@ -306,20 +306,17 @@ class AcqTable(ACACatalogTable):
         self.log(f'Reduced star list from {len(stars)} to '
                  f'{len(cand_acqs)} candidate acq stars')
 
-        # Reject any candidate with a spoiler that is within a 30" HW box
-        # and is within 3 mag of the candidate in brightness.  Collect a
+        # Reject any candidate with a spoiler or bad star.  Collect a
         # list of good (not rejected) candidates and stop when there are
         # max_candidates.
         goods = []
         for ii, acq in enumerate(cand_acqs):
-            if acq['id'] in CHAR.bad_star_set:
-                self.log(f'Rejecting star {acq["id"]} which is in bad star list')
+            if (self.in_bad_star_set(acq) or
+                    self.has_nearby_spoiler(acq, stars) or
+                    self.has_column_spoiler(acq, stars)):
                 continue
-            bad = ((np.abs(acq['yang'] - stars['yang']) < 30) &
-                   (np.abs(acq['zang'] - stars['zang']) < 30) &
-                   (stars['mag'] - acq['mag'] < 3))
-            if np.count_nonzero(bad) == 1:  # Self always matches
-                goods.append(ii)
+
+            goods.append(ii)
             if len(goods) == max_candidates:
                 break
 
@@ -355,6 +352,40 @@ class AcqTable(ACACatalogTable):
         cand_acqs['imposters_box'] = np.full(n_cand, None)
 
         return cand_acqs, bads
+
+    def in_bad_star_set(self, acq):
+        """
+        Returns True if ``acq`` is in the bad star set.
+
+        :param acq: AcqTable Row
+        :returns: bool
+        """
+        if acq['id'] in CHAR.bad_star_set:
+            self.log(f'Rejecting star {acq["id"]} which is in bad star list')
+            return True
+        else:
+            return False
+
+    def has_nearby_spoiler(self, acq, stars):
+        """
+        Returns True if ``acq`` has another star up to 3 mags fainter and within 30
+        arcsec.
+
+        :param acq: AcqTable Row
+        :param stars: StarsTable
+        :returns: bool
+        """
+        bads = ((np.abs(acq['yang'] - stars['yang']) < 30) &
+                (np.abs(acq['zang'] - stars['zang']) < 30) &
+                (stars['mag'] - acq['mag'] < 3) &
+                (stars['id'] != acq['id']))
+
+        if np.any(bads):
+            self.log(f'Candidate acq star {acq["id"]} rejected due to nearby spoiler(s) '
+                     f'{stars["id"][bads].tolist()}')
+            return True
+        else:
+            return False
 
     def process_include_ids(self, cand_acqs, stars):
         """Ensure that the cand_acqs table has stars that were forced to be included.

@@ -46,11 +46,6 @@ mag_spoiler = {
     "MagDiffLimit": -1 * np.inf,
     }
 
-# Column spoiler rules
-col_spoiler = {"MagDiff": 4.5,
-               "Separation": 10}
-
-
 # Search Stages
 stages = [{"Stage": 1,
            "SigErrMultiplier": 3,

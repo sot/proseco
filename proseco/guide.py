@@ -543,7 +543,7 @@ def check_column_spoilers(cand_stars, ok, stars, n_sigma):
             continue
         dcol = cand['col'] - stars['col'][~stars['offchip']]
         direction = stars['row'][~stars['offchip']] / cand['row']
-        pos_spoil = ((np.abs(dcol) <= (GUIDE_CHAR.col_spoiler['Separation'])) &
+        pos_spoil = ((np.abs(dcol) <= (CHAR.col_spoiler_pix_sep)) &
                      (direction > 1.0))
         if not np.count_nonzero(pos_spoil) >= 1:
             continue
@@ -551,7 +551,7 @@ def check_column_spoilers(cand_stars, ok, stars, n_sigma):
                     np.sqrt((cand['MAG_ACA_ERR'] * 0.01) ** 2 +
                             (stars['MAG_ACA_ERR'][~stars['offchip']][pos_spoil] * 0.01) ** 2))
         dm = (cand['mag'] - stars['mag'][~stars['offchip']][pos_spoil] + mag_errs)
-        spoils = dm > GUIDE_CHAR.col_spoiler['MagDiff']
+        spoils = dm > CHAR.col_spoiler_mag_diff
         if np.any(spoils):
             column_spoiled[idx] = True
             spoiler = stars[~stars['offchip']][pos_spoil][spoils][0]
@@ -560,10 +560,11 @@ def check_column_spoilers(cand_stars, ok, stars, n_sigma):
                         'spoiler': spoiler['id'],
                         'spoiler_mag': spoiler['mag'],
                         'dmag_with_err': dm[spoils][0],
-                        'dmag_lim': GUIDE_CHAR.col_spoiler['MagDiff'],
+                        'dmag_lim': CHAR.col_spoiler_mag_diff,
                         'dcol': cand['col'] - spoiler['col'],
                         'text': (f'Cand {cand["id"]} has column spoiler {spoiler["id"]} '
-                                 f'at ({spoiler["row"]:.1f}, {spoiler["row"]:.1f}), mag {spoiler["mag"]:.2f}')})
+                                 f'at ({spoiler["row"]:.1f}, {spoiler["row"]:.1f}), '
+                                 f'mag {spoiler["mag"]:.2f}')})
     return column_spoiled, rej
 
 
