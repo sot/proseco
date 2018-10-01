@@ -306,14 +306,16 @@ class AcqTable(ACACatalogTable):
         self.log(f'Reduced star list from {len(stars)} to '
                  f'{len(cand_acqs)} candidate acq stars')
 
-        # Reject any candidate with a spoiler or bad star.  Collect a
-        # list of good (not rejected) candidates and stop when there are
-        # max_candidates.
+        # Reject any candidate with a spoiler or bad star.  Collect a list of
+        # good (not rejected) candidates and stop when there are
+        # max_candidates.  Check for col spoilers only against stars that are
+        # bright enough and on CCD
         goods = []
+        stars_mask = stars['mag'] < 11.5 - CHAR.col_spoiler_mag_diff
         for ii, acq in enumerate(cand_acqs):
             if (self.in_bad_star_set(acq) or
                     self.has_nearby_spoiler(acq, stars) or
-                    self.has_column_spoiler(acq, stars)):
+                    self.has_column_spoiler(acq, stars, stars_mask)):
                 continue
 
             goods.append(ii)

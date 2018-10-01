@@ -561,7 +561,7 @@ class ACACatalogTable(Table):
         with open(infile, 'rb') as fh:
             return pickle.load(fh)
 
-    def has_column_spoiler(self, cand, stars):
+    def has_column_spoiler(self, cand, stars, mask=None):
         """
         Returns True if ``cand`` has a column spoiler downstream toward readout
         register which is:
@@ -572,16 +572,20 @@ class ACACatalogTable(Table):
 
         :param cand: object with 'row', 'col', and 'mag' items
         :param stars: StarsTable
+        :param mask: boolean mask of stars to check (default=None => no mask)
         :returns: bool
         """
-        bads = ((np.abs(cand['row']) < abs(stars['row'])) &  # Further from readout register
-                (np.sign(cand['row']) == np.sign(stars['row'])) &  # Same side of CCD
-                (np.abs(cand['col'] - stars['col']) < CHAR.col_spoiler_pix_sep) &
-                (cand['mag'] - stars['mag'] > CHAR.col_spoiler_mag_diff))
+        if mask is None:
+            mask = ()  # No mask
+
+        bads = ((np.abs(cand['row']) < abs(stars['row'][mask])) &  # Further from readout register
+                (np.sign(cand['row']) == np.sign(stars['row'][mask])) &  # Same side of CCD
+                (np.abs(cand['col'] - stars['col'][mask]) < CHAR.col_spoiler_pix_sep) &
+                (cand['mag'] - stars['mag'][mask] > CHAR.col_spoiler_mag_diff))
 
         if np.any(bads):
             self.log(f'Candidate acq star {cand["id"]} rejected due to column spoiler(s) '
-                     f'{stars["id"][bads].tolist()}')
+                     f'{stars["id"][mask][bads].tolist()}')
             return True
         else:
             return False
