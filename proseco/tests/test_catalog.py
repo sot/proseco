@@ -269,3 +269,22 @@ def test_aca_acq_gui_thumbs_up(config):
     assert aca.acqs.thumbs_up == acqt
     assert aca.guides.thumbs_up == guit
     assert aca.fids.thumbs_up == 1
+
+
+def test_fid_trap_effect():
+    # Obsid 1576
+    agasc_ids = [367148872, 367139768, 367144424, 367674552, 367657896]
+    date = '2001:275'
+    att = [10.659376, 40.980028, 181.012903]
+    stars = StarsTable.from_agasc_ids(att, agasc_ids)
+    cat = get_aca_catalog(obsid=1576, stars=stars, raise_exc=True)
+    assert 367674552 not in cat.guides['id']
+
+    # Obsid 2365
+    agasc_ids = [1184926344, 1184902704, 1184897704, 1184905208, 1185050656]
+    date = '2001:294'
+    att = [243.552030, -63.091108, 224.513314]
+    stars = StarsTable.from_agasc_ids(att, agasc_ids)
+    cat = get_aca_catalog(obsid=2365, stars=stars, raise_exc=True)
+    assert 1184897704 not in cat.guides['id']
+

@@ -30,6 +30,7 @@ def get_guide_catalog(obsid=0, **kwargs):
     :param date: date of acquisition (any DateTime-compatible format)
     :param dither: dither size 2-element tuple: (dither_y, dither_z) (float, arcsec)
     :param n_guide: number of guide stars to attempt to get
+    :param fids: selected fids (used for guide star exclusion)
     :param stars: astropy.Table of AGASC stars (will be fetched from agasc if None)
     :param dark: ACAImage of dark map (fetched based on time and t_ccd if None)
     :param print_log: print the run log to stdout (default=False)
@@ -70,8 +71,10 @@ class GuideTable(ACACatalogTable):
     # (e.g. `obs19387/guide.pkl`).
     name = 'guide'
 
+    allowed_kwargs = ACACatalogTable.allowed_kwargs | set(['fids'])
+
     # Required attributes
-    required_attrs = ('att', 't_ccd_guide', 'date', 'dither_guide')
+    required_attrs = ('att', 't_ccd_guide', 'date', 'dither_guide', 'n_guide')
 
     cand_guides = MetaAttribute(is_kwarg=False)
     reject_info = MetaAttribute(default=[], is_kwarg=False)
@@ -329,6 +332,13 @@ class GuideTable(ACACatalogTable):
         self.log(f'Reduced star list from {len(box_spoiled)} to '
                  f'{len(cand_guides)} candidate guide stars')
 
+        fid_trap_spoilers, fid_rej = check_fid_trap(cand_guides, fids=self.fids,
+                                                    dither=self.dither)
+        for rej in fid_rej:
+            rej['stage'] = 0
+            self.reject(rej)
+        cand_guides = cand_guides[~fid_trap_spoilers]
+
         # Get the brightest 2x2 in the dark map for each candidate and save value and location
         imp_mag, imp_row, imp_col = get_imposter_mags(cand_guides, dark, self.dither)
         cand_guides['imp_mag'] = imp_mag
@@ -337,6 +347,48 @@ class GuideTable(ACACatalogTable):
         self.log('Getting pseudo-mag of brightest pixel 2x2 in candidate region')
 
         return cand_guides
+
+
+
+def check_fid_trap(cand_stars, fids, dither):
+    """
+    Search for guide stars that would cause the fid trap issue and mark as spoilers.
+
+    :param cand_stars: candidate star Table
+    :param fids: fid Table
+    :param dither: dither ACABox
+    :returns: mask on cand_stars of fid trap spoiled stars, list of rejection info dicts
+    """
+
+    spoilers = np.zeros(len(cand_stars)).astype(bool)
+    rej = []
+
+    if fids is None or len(fids) == 0:
+        return spoilers, []
+
+    bad_row = GUIDE_CHAR.fid_trap['row']
+    bad_col= GUIDE_CHAR.fid_trap['col']
+    fid_margin = GUIDE_CHAR.fid_trap['margin']
+
+    # Check to see if the fid is in the zone that's a problem for the trap and if there's
+    # a star that can cause the effect in the readout regiser
+    for fid in fids:
+        incol = abs(fid['col'] - bad_col) < fid_margin
+        inrow = fid['row'] < 0 and fid['row'] > bad_row
+        if incol and inrow:
+            fid_dist_to_trap = fid['row'] - bad_row
+            star_dist_to_register = 512 - abs(cand_stars['row'])
+            spoils = abs(fid_dist_to_trap - star_dist_to_register) < (fid_margin + dither.row)
+            spoilers = spoilers | spoils
+            for idx in np.flatnonzero(spoils):
+                cand = cand_stars[idx]
+                rej.append({'id': cand['id'],
+                            'type': 'fid trap effect',
+                            'fid_id': fid['id'],
+                            'fid_dist_to_trap': fid_dist_to_trap,
+                            'star_dist_to_register': star_dist_to_register[idx],
+                            'text': f'Cand {cand["id"]} in trap zone for fid {fid["id"]}'})
+    return spoilers, rej
 
 
 def check_spoil_contrib(cand_stars, ok, stars, regfrac, bgthresh):
@@ -352,7 +404,7 @@ def check_spoil_contrib(cand_stars, ok, stars, regfrac, bgthresh):
                     A sum above this fraction will mark the cand_star as spoiled
     :param bgthresh: background pixel threshold (in e-/sec).  If spoilers contribute more
                     than this value to any background pixel, mark the cand_star as spoiled.
-    :returns: reg_spoiled, bg_spoiled - two masks on cand_stars.
+    :returns: reg_spoiled, bg_spoiled, rej - two masks on cand_stars and a list of reject debug dicts
     """
     fraction = regfrac
     APL = AcaPsfLibrary()
@@ -426,7 +478,7 @@ def check_mag_spoilers(cand_stars, ok, stars, n_sigma):
     :param ok: mask on cand_stars describing those that are still "ok"
     :param stars: Table of AGASC stars in this field
     :param n_sigma: multiplier use for MAG_ACA_ERR when reviewing spoilers
-    :returns: bool mask of length cand_stars marking mag_spoiled stars
+    :returns: bool mask of length cand_stars marking mag_spoiled stars, list of reject debug dicts
     """
     intercept = GUIDE_CHAR.mag_spoiler['Intercept']
     spoilslope = GUIDE_CHAR.mag_spoiler['Slope']
@@ -482,7 +534,7 @@ def check_column_spoilers(cand_stars, ok, stars, n_sigma):
     :param ok: mask on cand_stars describing still "ok" candidates
     :param stars: Table of AGASC stars
     :param n_sigma: multiplier used when checking mag with MAG_ACA_ERR
-    :returns: bool mask on cand_stars marking column spoiled stars
+    :returns: bool mask on cand_stars marking column spoiled stars, list of debug reject dicts
     """
     column_spoiled = np.zeros_like(ok)
     rej = []
@@ -522,7 +574,7 @@ def get_imposter_mags(cand_stars, dark, dither):
     :param cand_stars: Table of candidate stars
     :param dark: full CCD dark map
     :param dither: observation dither to be used to determine pixels a star could use
-    :returns: array of magnitudes of length cand_stars
+    :returns: np.array pixmags, np.array pix_r, np.array pix_c all of length cand_stars
     """
     def get_ax_range(r, extent):
 
@@ -597,7 +649,8 @@ def has_spoiler_in_box(cand_guides, stars, halfbox=5, magdiff=-4):
     :param stars: Table of AGASC stars in the field
     :param halfbox: half of the length of a side of the box used for check (pixels)
     :param magdiff: magnitude difference threshold
-    :returns: mask on cand_guides set to True if star spoiled by another star in the pixel box
+    :returns: mask on cand_guides set to True if star spoiled by another star in the pixel box,
+              and a list of dicts with reject debug info
     """
     box_spoiled = np.zeros(len(cand_guides)).astype(bool)
     rej = []
@@ -642,12 +695,10 @@ def spoiled_by_bad_pixel(cand_guides, dither):
     Mark star bad if spoiled by a bad pixel in the bad pixel list (not hot)
 
     :param cand_guides: Table of candidate stars
-    :param dither: tuple or list of dither where dither[0] is Y dither peak ampl
-                   in arcsecs and dither[1] is Z dither peak ampl in arcsecs
-    :returns: boolean mask on cand_guides where True means star is spoiled by bad pixel
+    :param dither: dither ACABox
+    :returns: boolean mask on cand_guides where True means star is spoiled by bad pixel,
+              list of dicts of reject debug info
     """
-    if not isinstance(dither, ACABox):
-        dither = ACABox(dither)
 
     raw_bp = np.array(CHAR.bad_pixels)
     bp_row = []
