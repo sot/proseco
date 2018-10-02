@@ -335,3 +335,34 @@ def test_reject_column_spoilers():
     assert 100 not in aca.acqs.cand_acqs['id']
     assert aca.guides['id'].tolist() == [101, 102, 103, 104]
     assert aca.acqs['id'].tolist() == [101, 102, 103, 104]
+
+
+def test_dense_star_field_regress():
+    """
+    Test getting stars at the most dense star field in the sky.
+    Taken from:
+    https://github.com/sot/skanb/blob/master/star_selection/dense_sparse_cats.ipynb
+
+    """
+    att = (167.0672, -59.1235, 0)
+    aca = get_aca_catalog(**mod_std_info(att=att, n_fid=3, n_guide=5, n_acq=8))
+    exp = ['slot idx     id     type  sz   yang     zang   dim res halfw mag ',
+           '---- --- ---------- ---- --- -------- -------- --- --- ----- ----',
+           '   0   1          3  FID 8x8    40.01 -1871.10   1   1    25 7.00',
+           '   1   2          4  FID 8x8  2140.23   166.63   1   1    25 7.00',
+           '   2   3          5  FID 8x8 -1826.28   160.17   1   1    25 7.00',
+           '   3   4 1130889232  BOT 6x6  -251.98 -1971.97  20   1   160 6.99',
+           '   4   5 1130893664  BOT 6x6  1530.07 -2149.38  20   1   160 7.62',
+           '   5   6 1130899056  GUI 6x6  2386.83 -1808.51   1   1    25 6.24',
+           '   6   7 1130898232  GUI 6x6  1244.84  2399.68   1   1    25 7.38',
+           '   7   8 1130773616  GUI 6x6 -1713.06  1312.10   1   1    25 7.50',
+           '   5   9 1130770696  ACQ 6x6 -1900.42  2359.33  20   1   160 7.35',
+           '   6  10 1130897408  ACQ 6x6  -723.63  1937.72  20   1   160 7.62',
+           '   7  11 1130890288  ACQ 6x6  2030.55 -2011.89  20   1   160 7.67',
+           '   0  12 1130890616  ACQ 6x6  1472.68  -376.72  20   1   160 7.77',
+           '   1  13 1130893640  ACQ 6x6    64.32 -1040.81  20   1   160 7.77',
+           '   2  14 1130894376  ACQ 6x6  -633.90  1186.80  20   1   160 7.78']
+
+    repr(aca)  # Apply default formats
+    assert aca[TEST_COLS + ['mag']].pformat(max_width=-1) == exp
+    
