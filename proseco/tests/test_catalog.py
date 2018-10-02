@@ -332,7 +332,6 @@ def test_reject_column_spoilers():
     aca = get_aca_catalog(**kwargs)
 
     assert aca.fids['id'].tolist() == [2, 3]
-    assert 100 not in aca.guides.cand_guides
-    assert 100 not in aca.acqs.cand_acqs
+    assert 100 not in aca.acqs.cand_acqs['id']
     assert aca.guides['id'].tolist() == [101, 102, 103, 104]
     assert aca.acqs['id'].tolist() == [101, 102, 103, 104]
