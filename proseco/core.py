@@ -579,13 +579,17 @@ class ACACatalogTable(Table):
         if mask is None:
             mask = ()  # No mask
 
-        bads = ((np.abs(cand['row']) < abs(stars['row'][mask])) &  # Further from readout register
-                (np.sign(cand['row']) == np.sign(stars['row'][mask])) &  # Same side of CCD
+        # Star further from readout register than candidate
+        # AND on same side of CCD
+        # AND within column separation limit
+        # AND within mag limit
+        bads = ((np.abs(cand['row']) < abs(stars['row'][mask])) &
+                (np.sign(cand['row']) == np.sign(stars['row'][mask])) &
                 (np.abs(cand['col'] - stars['col'][mask]) < CHAR.col_spoiler_pix_sep) &
                 (cand['mag'] - stars['mag'][mask] > CHAR.col_spoiler_mag_diff))
 
         if np.any(bads):
-            self.log(f'Candidate acq star {cand["id"]} rejected due to column spoiler(s) '
+            self.log(f'Candidate object id={cand["id"]} rejected due to column spoiler(s) '
                      f'{stars["id"][mask][bads].tolist()}')
             return True
         else:
