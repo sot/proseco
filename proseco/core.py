@@ -215,6 +215,8 @@ class ACACatalogTable(Table):
     include_ids = MetaAttribute(default=[])
     include_halfws = MetaAttribute(default=[])
     exclude_ids = MetaAttribute(default=[])
+    optimize = MetaAttribute(default=True)
+    verbose = MetaAttribute(default=False)
     print_log = MetaAttribute(default=False)
     log_info = MetaAttribute(default={}, is_kwarg=False)
 
@@ -240,7 +242,8 @@ class ACACatalogTable(Table):
         # then all other params must be supplied.
         all_pars = all(getattr(self, x) is not None for x in self.required_attrs)
         if self.obsid == 0 and not all_pars:
-            raise ValueError('if `obsid` not supplied then all other params are required')
+            missing = [attr for attr in self.required_attrs if getattr(self, attr) is None]
+            raise ValueError(f'missing required parameters {missing}')
 
         # If not all params supplied then get via mica for the obsid.
         if not all_pars:
@@ -561,6 +564,38 @@ class ACACatalogTable(Table):
         with open(infile, 'rb') as fh:
             return pickle.load(fh)
 
+    def has_column_spoiler(self, cand, stars, mask=None):
+        """
+        Returns True if ``cand`` has a column spoiler downstream toward readout
+        register which is:
+        - at least 4.5 mag brighter (CHAR.col_spoiler_mag_diff)
+        - within 10 pixels in column (CHAR.col_spoiler_pix_sep)
+
+        Also records a log entry for detected spoilers
+
+        :param cand: object with 'row', 'col', and 'mag' items
+        :param stars: StarsTable
+        :param mask: boolean mask of stars to check (default=None => no mask)
+        :returns: bool
+        """
+        if mask is None:
+            mask = ()  # No mask
+
+        # Star further from readout register than candidate
+        # AND on same side of CCD
+        # AND within column separation limit
+        # AND within mag limit
+        bads = ((np.abs(cand['row']) < abs(stars['row'][mask])) &
+                (np.sign(cand['row']) == np.sign(stars['row'][mask])) &
+                (np.abs(cand['col'] - stars['col'][mask]) < CHAR.col_spoiler_pix_sep) &
+                (cand['mag'] - stars['mag'][mask] > CHAR.col_spoiler_mag_diff))
+
+        if np.any(bads):
+            self.log(f'Candidate object id={cand["id"]} rejected due to column spoiler(s) '
+                     f'{stars["id"][mask][bads].tolist()}')
+            return True
+        else:
+            return False
 
 # AGASC columns not needed (at this moment) for acq star selection.
 # Change as needed.

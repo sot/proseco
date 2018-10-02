@@ -541,17 +541,23 @@ def check_column_spoilers(cand_stars, ok, stars, n_sigma):
     for idx, cand in enumerate(cand_stars):
         if not ok[idx]:
             continue
-        dcol = cand['col'] - stars['col'][~stars['offchip']]
-        direction = stars['row'][~stars['offchip']] / cand['row']
-        pos_spoil = ((np.abs(dcol) <= (GUIDE_CHAR.col_spoiler['Separation'])) &
-                     (direction > 1.0))
+
+        # Get possible column spoiling stars by position that are that are
+        # on the same side of the CCD as the candidate
+        # AND between the candidate star and readout register
+        # AND in the column "band" for the candidate
+        pos_spoil = (
+            (np.sign(cand['row']) == np.sign(stars['row'][~stars['offchip']])) &
+            (np.abs(cand['row']) < np.abs(stars['row'][~stars['offchip']])) &
+            (np.abs(cand['col'] - stars['col'][~stars['offchip']]) <= CHAR.col_spoiler_pix_sep))
         if not np.count_nonzero(pos_spoil) >= 1:
             continue
+
         mag_errs = (n_sigma *
                     np.sqrt((cand['MAG_ACA_ERR'] * 0.01) ** 2 +
                             (stars['MAG_ACA_ERR'][~stars['offchip']][pos_spoil] * 0.01) ** 2))
         dm = (cand['mag'] - stars['mag'][~stars['offchip']][pos_spoil] + mag_errs)
-        spoils = dm > GUIDE_CHAR.col_spoiler['MagDiff']
+        spoils = dm > CHAR.col_spoiler_mag_diff
         if np.any(spoils):
             column_spoiled[idx] = True
             spoiler = stars[~stars['offchip']][pos_spoil][spoils][0]
@@ -560,10 +566,11 @@ def check_column_spoilers(cand_stars, ok, stars, n_sigma):
                         'spoiler': spoiler['id'],
                         'spoiler_mag': spoiler['mag'],
                         'dmag_with_err': dm[spoils][0],
-                        'dmag_lim': GUIDE_CHAR.col_spoiler['MagDiff'],
+                        'dmag_lim': CHAR.col_spoiler_mag_diff,
                         'dcol': cand['col'] - spoiler['col'],
                         'text': (f'Cand {cand["id"]} has column spoiler {spoiler["id"]} '
-                                 f'at ({spoiler["row"]:.1f}, {spoiler["row"]:.1f}), mag {spoiler["mag"]:.2f}')})
+                                 f'at ({spoiler["row"]:.1f}, {spoiler["row"]:.1f}), '
+                                 f'mag {spoiler["mag"]:.2f}')})
     return column_spoiled, rej
 
 

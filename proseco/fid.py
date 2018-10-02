@@ -278,16 +278,28 @@ class FidTable(ACACatalogTable):
         # columns.
         cand_fids = FidTable([ids, yang, zang, row, col],
                              names=['id', 'yang', 'zang', 'row', 'col'])
-        self.log(f'Initial candidate fid ids are {cand_fids["id"].tolist()}')
-
-        # Reject (entirely) candidates that are off CCD or have a bad pixel
-        self.reject_off_ccd(cand_fids)
-        self.reject_hot_or_bad_pixel(cand_fids)
-
         shape = (len(cand_fids),)
         cand_fids['mag'] = np.full(shape, FID.fid_mag)  # 7.000
         cand_fids['spoilers'] = np.full(shape, None)  # Filled in with Table of spoilers
         cand_fids['spoiler_score'] = np.full(shape, 0, dtype=np.int64)
+
+        self.log(f'Initial candidate fid ids are {cand_fids["id"].tolist()}')
+
+        # Reject candidates that are off CCD, have a bad pixel, or are spoiled
+        # Check for spoilers only against stars that are bright enough and on CCD
+        # (within dither).
+        idx_bads = []
+        stars_mask = ((self.stars['mag'] < FID.fid_mag - ACQ.col_spoiler_mag_diff) &
+                      (np.abs(self.stars['row']) < 512 + self.dither_guide.row))
+        for idx, fid in enumerate(cand_fids):
+            if (self.off_ccd(fid) or
+                    self.near_hot_or_bad_pixel(fid) or
+                    self.has_column_spoiler(fid, self.stars, stars_mask)):
+                idx_bads.append(idx)
+
+        if idx_bads:
+            cand_fids.remove_rows(idx_bads)
+
         cand_fids['idx'] = np.arange(len(cand_fids), dtype=np.int64)
 
         # If stars are available then find stars that are bad for fid.
@@ -297,51 +309,42 @@ class FidTable(ACACatalogTable):
 
         return cand_fids
 
-    def reject_off_ccd(self, cand_fids):
-        """Filter out candidates that are outside allowed CCD region.
+    def off_ccd(self, fid):
+        """Return True if ``fid`` is outside allowed CCD region.
 
-        This updates ``cand_fids`` in place.
-
-        :param cand_fids: table of candidate fid lights (on CCD)
+        :param fid: FidTable Row of candidate fid
         """
-        idx_bads = []
+        if ((np.abs(fid['row']) + FID.ccd_edge_margin > ACQ.max_ccd_row) or
+                (np.abs(fid['col']) + FID.ccd_edge_margin > ACQ.max_ccd_col)):
+            self.log(f'Rejecting fid id={fid["id"]} row,col='
+                     f'({fid["row"]:.1f}, {fid["col"]:.1f}) off CCD',
+                     level=1)
+            return True
+        else:
+            return False
 
-        for idx, fid in enumerate(cand_fids):
-            if ((np.abs(fid['row']) + FID.ccd_edge_margin > ACQ.max_ccd_row) or
-                    (np.abs(fid['col']) + FID.ccd_edge_margin > ACQ.max_ccd_col)):
-                self.log(f'Rejecting fid id={fid["id"]} row,col='
-                         f'({fid["row"]:.1f}, {fid["col"]:.1f}) off CCD',
-                         level=1)
-                idx_bads.append(idx)
+    def near_hot_or_bad_pixel(self, fid):
+        """Return True if fid has a bad pixel too close
 
-        if idx_bads:
-            cand_fids.remove_rows(idx_bads)
-
-    def reject_hot_or_bad_pixel(self, cand_fids):
-        """Filter out candidates that have a bad pixel too close
-
-        :param cand_fids: table of candidate fid lights (on CCD)
+        :param fid: FidTable Row of candidate fid light
         """
-        idx_bads = []
-        for idx, fid in enumerate(cand_fids):
-            dp = FID.spoiler_margin / 5
-            r0 = int(fid['row'] - dp)
-            c0 = int(fid['col'] - dp)
-            r1 = int(fid['row'] + dp) + 1
-            c1 = int(fid['col'] + dp) + 1
-            dark = self.dark.aca[r0:r1, c0:c1]
+        dp = FID.spoiler_margin / 5
+        r0 = int(fid['row'] - dp)
+        c0 = int(fid['col'] - dp)
+        r1 = int(fid['row'] + dp) + 1
+        c1 = int(fid['col'] + dp) + 1
+        dark = self.dark.aca[r0:r1, c0:c1]
 
-            bad = dark > FID.hot_pixel_spoiler_limit
-            if np.any(bad):
-                idxs = np.flatnonzero(bad)
-                rows, cols = np.unravel_index(idxs, dark.shape)
-                vals = dark[rows, cols]
-                self.log(f'Rejecting fid {fid["id"]}: near hot or bad pixel(s) '
-                         f'rows={rows + r0} cols={cols + c0} vals={vals}')
-                idx_bads.append(idx)
-
-        if idx_bads:
-            cand_fids.remove_rows(idx_bads)
+        bad = dark > FID.hot_pixel_spoiler_limit
+        if np.any(bad):
+            idxs = np.flatnonzero(bad)
+            rows, cols = np.unravel_index(idxs, dark.shape)
+            vals = dark[rows, cols]
+            self.log(f'Rejecting fid {fid["id"]}: near hot or bad pixel(s) '
+                     f'rows={rows + r0} cols={cols + c0} vals={vals}')
+            return True
+        else:
+            return False
 
     def set_spoilers_score(self, fid):
         """Get stars within FID.spoiler_margin (50 arcsec) + dither.  Starcheck uses

@@ -156,3 +156,7 @@ fid_acq_stages = _get_fid_acq_stages()
 
 imposter_mag_lim_ref_mag = 10.0
 imposter_mag_lim_ref_t_ccd = -10.0
+
+# Column spoiler rules
+col_spoiler_mag_diff = 4.5
+col_spoiler_pix_sep = 10  # pixels

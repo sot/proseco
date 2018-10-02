@@ -7,10 +7,10 @@ from pathlib import Path
 import numpy as np
 import mica.starcheck
 
-from .test_common import STD_INFO, mod_std_info
-from .test_acq import DARK40
+from .test_common import STD_INFO, mod_std_info, DARK40
 from ..core import StarsTable, ACACatalogTable
 from ..catalog import get_aca_catalog
+from ..fid import get_fid_catalog
 from .. import characteristics as CHAR
 
 
@@ -208,7 +208,7 @@ def test_call_args_attr():
                              'n_acq': 0,
                              'n_fid': 0,
                              'n_guide': 0,
-                             'obsid': 1,
+                             'obsid': 0,
                              'optimize': False,
                              'sim_offset': 0,
                              't_ccd': -11}
@@ -288,3 +288,50 @@ def test_fid_trap_effect():
     cat = get_aca_catalog(obsid=2365, stars=stars, raise_exc=True)
     assert 1184897704 not in cat.guides['id']
 
+
+def test_reject_column_spoilers():
+    """
+    Test that column spoiler handling is correct for guide, acq and fid selection.
+    Also tests not selecting stars that are too bright.
+    """
+    stars = StarsTable.empty()
+    fids = get_fid_catalog(**mod_std_info(stars=stars, detector='HRC-I')).cand_fids
+    stars.add_fake_constellation(mag=8.0, n_stars=5)
+
+    def offset(id, drow, dcol, dmag, rmult=1):
+        if id < 10:
+            star = fids.get_id(id)
+        else:
+            star = stars.get_id(id)
+
+        return dict(row=(star['row'] + drow * np.sign(star['row'])) * rmult,
+                    col=star['col'] + dcol,
+                    mag=star['mag'] - dmag)
+
+    # Spoil first star with downstream spoiler that is just in limits
+    stars.add_fake_star(**offset(100, drow=70, dcol=9, dmag=4.6))
+
+    # Just miss four others by mag, col, and row
+    stars.add_fake_star(**offset(101, drow=70, dcol=11, dmag=4.6))  # Outside column
+    stars.add_fake_star(**offset(102, drow=70, dcol=9, dmag=4.4))  # Not bright enough
+    stars.add_fake_star(**offset(103, drow=70, dcol=9, dmag=4.6, rmult=-1))  # Wrong side
+    stars.add_fake_star(**offset(104, drow=-70, dcol=9, dmag=4.6))  # Upstream
+
+    # Fid spoilers: spoil fid_id=1, 4
+    stars.add_fake_star(**offset(1, drow=30, dcol=9, dmag=4.6))
+    stars.add_fake_star(**offset(4, drow=30, dcol=9, dmag=4.6))
+
+    # Put in near-miss spoilers for fid_id=2, 3
+    stars.add_fake_star(**offset(2, drow=30, dcol=9, dmag=4.4))  # Not bright enough
+    stars.add_fake_star(**offset(2, drow=30, dcol=11, dmag=4.6))  # Outside column
+    stars.add_fake_star(**offset(3, drow=30, dcol=9, dmag=4.6, rmult=-1))  # Wrong side
+    stars.add_fake_star(**offset(3, drow=-30, dcol=9, dmag=4.6))  # Upstream
+
+    kwargs = mod_std_info(stars=stars, n_guide=8, n_fid=3, n_acq=8,
+                          dark=DARK40.copy(), detector='HRC-I')
+    aca = get_aca_catalog(**kwargs)
+
+    assert aca.fids['id'].tolist() == [2, 3]
+    assert 100 not in aca.acqs.cand_acqs['id']
+    assert aca.guides['id'].tolist() == [101, 102, 103, 104]
+    assert aca.acqs['id'].tolist() == [101, 102, 103, 104]

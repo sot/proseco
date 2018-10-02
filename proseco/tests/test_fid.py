@@ -4,9 +4,8 @@ import numpy as np
 from ..fid import get_fid_positions, get_fid_catalog
 from ..acq import get_acq_catalog
 from ..core import StarsTable
-from .test_common import OBS_INFO, STD_INFO, mod_std_info
+from .test_common import OBS_INFO, STD_INFO, mod_std_info, DARK40
 from .. import characteristics_fid as FID
-from .test_acq import DARK40
 
 
 # Reference fid positions for spoiling tests

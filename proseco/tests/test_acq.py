@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from pathlib import Path
 
-from chandra_aca.aca_image import AcaPsfLibrary, ACAImage
+from chandra_aca.aca_image import AcaPsfLibrary
 from chandra_aca.transform import mag_to_count_rate, yagzag_to_pixels
 
 from ..report import make_report
@@ -16,7 +16,7 @@ from ..acq import (get_p_man_err, bin2x2, CHAR,
                    )
 from ..catalog import get_aca_catalog
 from ..core import ACABox, StarsTable
-from .test_common import OBS_INFO, STD_INFO, mod_std_info
+from .test_common import OBS_INFO, STD_INFO, mod_std_info, DARK40
 from .. import characteristics_fid as FID
 from .. import characteristics as ACQ
 
@@ -25,7 +25,6 @@ TEST_DATE = '2018:144'  # Fixed date for doing tests
 ATT = [10, 20, 3]  # Arbitrary test attitude
 CACHE = {}  # Cache stuff for speed
 TEST_COLS = ('idx', 'slot', 'id', 'yang', 'zang', 'halfw')
-DARK40 = ACAImage(np.full(shape=(1024, 1024), fill_value=40), row0=-512, col0=-512)
 
 
 def calc_p_brightest(acq, box_size, stars, dark, man_err=0, dither=20, bgd=0):
