@@ -1,3 +1,42 @@
+"""
+Do three steps to run starcheck on proseco-generated catalogs for one or more flight weekly loads:
+
+- Copy the flight load products into a local working dir
+- Generate proseco catalogs and update products in place to reflect the new cats
+- Run starcheck
+
+It is assumed the flight load products are in a structure like::
+
+  <load_root>/2018/JUL0218/oflsa  <==  For <load_name> = JUL0218A
+
+The outputs go into a directory like::
+
+  <out_root>/JUL0218A/
+
+Typically this is going to be run from the proseco git repo, using::
+
+  $ ska3
+  $ cd ~/git/proseco
+  $ git checkout <branch/tag>  # If doing run-for-record, be sure to use the release tag
+  $ cd validate
+  $ env PYTHONPATH=$PWD/.. ipython
+  >>> from starcheck_proseco import *
+  >>> run_all()
+  >>> exit()
+
+Publish the results with:
+
+  $ rsync -zarv --prune-empty-dirs --include "*/"  --include="starcheck*" --include="starcheck/*" \
+    --exclude="*" loads/proseco/ /proj/sot/ska/www/ASPECT/proseco/loads/
+
+This whole process is set up to not repeat existing steps (since it is generally slow).
+To re-do things, either completely delete the proseco load directory (probably your best bet),
+or remove:
+
+- 000-proseco   : to re-do updating products
+- starcheck.txt : to re-do starcheck
+"""
+
 from pathlib import Path
 import subprocess
 import shutil
@@ -8,11 +47,50 @@ from proseco.core import get_kwargs_from_starcheck_text
 import Ska.File
 
 
-def copy_load_products(load_name, out_root, load_root=None):
-    # Default location of loads on HEAD network
-    if load_root is None:
-        load_root = '/data/mpcrit1/mplogs'
+def run_starcheck_proseco(load_name='JUL0218A',
+                          out_root=Path('loads', 'proseco'),
+                          load_root=Path('/data', 'mpcrit1', 'mplogs')):
+    """
+    Do three steps to run starcheck on proseco-generated catalogs for a flight weekly load:
 
+    - Copy the flight load products into a local working dir
+    - Generate proseco catalogs and update products in place to reflect the new cats
+    - Run starcheck
+
+    It is assumed the flight load products are in a structure like::
+
+      <load_root>/2018/JUL0218/oflsa  <==  For JUL0218A
+
+    :param load_name: Load name like JUL0218A
+    :param out_root: Output root, where results go into <out_door>/<load_name>
+    :param load_root: Source root for load products (default=/data/mpcrit1/mplogs)
+    """
+    copy_load_products(load_name, out_root, load_root)
+    update_products(load_name, out_root)
+    run_starcheck(load_name, out_root)
+
+
+def run_all(out_root=Path('loads', 'proseco')):
+    """
+    Convenience function to run starcheck_proseco on a standard set of 10 weekly loads
+    for run-for-record validation testing.
+    """
+    load_names = ['JUL0918A',  # dark cals
+                  'JUL0218A',
+                  'JUN2318A',
+                  'JUN1118A',
+                  'JUN0418A',
+                  'MAY2118A',
+                  'MAY1418A',
+                  'MAY0718A',
+                  'APR3018A',
+                  'APR1618A',
+                  'APR2318C']
+    for load_name in load_names:
+        run_starcheck_proseco(load_name)
+
+
+def copy_load_products(load_name, out_root, load_root):
     out_dir = Path(out_root, load_name)
     if out_dir.exists():
         print(f'Skipping copy_load_products {out_dir} already exists')
@@ -118,27 +196,3 @@ def run_starcheck(load_name, out_root):
     print(f'Running starcheck in {load_dir}')
     with Ska.File.chdir(str(load_dir)):
         subprocess.run(['bash', '/proj/sot/ska/bin/starcheck'])
-
-
-def run_starcheck_proseco(load_name='JUL0218A',
-                          out_root=Path('loads', 'proseco'),
-                          load_root=None):
-    copy_load_products(load_name, out_root, load_root)
-    update_products(load_name, out_root)
-    run_starcheck(load_name, out_root)
-
-
-def run_all(out_root='loads'):
-    load_names = ['JUL0918A',  # dark cals
-                  'JUL0218A',
-                  'JUN2318A',
-                  'JUN1118A',
-                  'JUN0418A',
-                  'MAY2118A',
-                  'MAY1418A',
-                  'MAY0718A',
-                  'APR3018A',
-                  'APR1618A',
-                  'APR2318C']
-    for load_name in load_names:
-        run_starcheck_proseco(load_name)
