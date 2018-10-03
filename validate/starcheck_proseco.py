@@ -189,9 +189,9 @@ def update_products(load_name, out_root):
 
 def run_starcheck(load_name, out_root):
     load_dir = Path(out_root, load_name)
-    starcheck_txt = load_dir / 'starcheck.txt'
-    if starcheck_txt.exists():
-        print(f'Skipping because {starcheck_txt} already exists')
+    starcheck_html = load_dir / 'starcheck.html'
+    if starcheck_html.exists():
+        print(f'Skipping because {starcheck_html} already exists')
         return
     print(f'Running starcheck in {load_dir}')
     with Ska.File.chdir(str(load_dir)):
