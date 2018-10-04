@@ -700,16 +700,16 @@ def test_no_candidates():
 
 def get_dark_stars_simple(box_size_thresh, dither):
     """
-    Set-up for tests of optimized acq and fid selection.
+    Set-up for tests of optimized acq and fid selection::
 
-    id    mag  status
-    100   9.5  ok
-    101   9.6  ok
-    102   9.7  ok
-    103    10  ok
-      2   8.2  spoiled by fid 2 for box > 90
-      3  11.5  yellow spoiler for fid 3
-      4  11.5  yellow spoiler for fid 4
+      id    mag  status
+      100   9.5  ok
+      101   9.6  ok
+      102   9.7  ok
+      103    10  ok
+        2   8.2  spoiled by fid 2 for box > 90
+        3  11.5  yellow spoiler for fid 3
+        4  11.5  yellow spoiler for fid 4
 
     All fid sets have spoiler sum = 1 or 2.
     """
@@ -819,16 +819,16 @@ def test_acq_fid_catalog_probs_low_level():
 def test_acq_fid_catalog_n_fid(n_fid_exp_fid_ids):
     """
     Test optimizing acq and fid in a simple case (which does exercise acq-fid
-    optimization) with n_fid=1, 2, 3.
+    optimization) with n_fid=1, 2, 3::
 
-    id    mag  status
-    100   9.5  ok
-    101   9.6  ok
-    102   9.7  ok
-    103    10  ok
-      2   8.2  spoiled by fid 2 for box > 90
-      3  11.5  yellow spoiler for fid 3
-      4  11.5  yellow spoiler for fid 4
+      id    mag  status
+      100   9.5  ok
+      101   9.6  ok
+      102   9.7  ok
+      103    10  ok
+        2   8.2  spoiled by fid 2 for box > 90
+        3  11.5  yellow spoiler for fid 3
+        4  11.5  yellow spoiler for fid 4
 
     For n_fid=1, this chooses fid_set=[1] because that is not spoiled and is
     not a spoiler.

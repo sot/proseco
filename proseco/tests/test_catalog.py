@@ -339,8 +339,8 @@ def test_reject_column_spoilers():
 
 def test_dense_star_field_regress():
     """
-    Test getting stars at the most dense star field in the sky.
-    Taken from:
+    Test getting stars at the most dense star field in the sky.  Taken from:
+
     https://github.com/sot/skanb/blob/master/star_selection/dense_sparse_cats.ipynb
 
     """
