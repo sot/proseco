@@ -290,9 +290,6 @@ class AcqTable(ACACatalogTable):
               (stars['POS_ERR'] < 3000) &  # Position error < 3.0 arcsec
               ((stars['VAR'] == -9999) | (stars['VAR'] == 5))  # Not known to vary > 0.2 mag
               )
-        # TO DO: column and row-readout spoilers (BONUS points: Mars and Jupiter)
-        # Note see email with subject including "08220 (Jupiter)" about an
-        # *upstream* spoiler from Jupiter.
 
         bads = ~ok
         cand_acqs = stars[ok]
@@ -360,7 +357,7 @@ class AcqTable(ACACatalogTable):
         :returns: bool
         """
         if acq['id'] in CHAR.bad_star_set:
-            self.log(f'Rejecting star {acq["id"]} which is in bad star list')
+            self.log(f'Rejecting star {acq["id"]} which is in bad star list', id=acq['id'])
             return True
         else:
             return False
@@ -381,7 +378,7 @@ class AcqTable(ACACatalogTable):
 
         if np.any(bads):
             self.log(f'Candidate acq star {acq["id"]} rejected due to nearby spoiler(s) '
-                     f'{stars["id"][bads].tolist()}')
+                     f'{stars["id"][bads].tolist()}', id=acq['id'])
             return True
         else:
             return False
