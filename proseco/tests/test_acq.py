@@ -179,6 +179,7 @@ def get_test_stars():
 def get_test_cand_acqs():
     if 'cand_acqs' not in CACHE:
         acqs = AcqTable()
+        acqs.p_man_errs = CHAR.p_man_errs['120-180']
         stars = get_test_stars()
         CACHE['cand_acqs'], bads = acqs.get_acq_candidates(stars)
         # Don't care about bads for testing
@@ -1001,7 +1002,7 @@ def test_0_5_degree_man_angle_bin():
                           n_guide=0, n_fid=0, n_acq=8, man_angle=4.8)
     acqs = get_acq_catalog(**kwargs)
     assert acqs['halfw'].tolist() == [60, 60, 60, 60, 60]
-    assert acqs.box_sizes.tolist() == [60]
+    assert all(acq['box_sizes'] == [60] for acq in acqs)
 
 
 def test_bad_star_list():

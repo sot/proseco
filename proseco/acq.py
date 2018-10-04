@@ -71,13 +71,6 @@ def get_acq_catalog(obsid=0, **kwargs):
     acqs.p_man_errs = np.array([get_p_man_err(man_err, acqs.man_angle)
                                 for man_err in CHAR.man_errs])
 
-    # Get the available box sizes as all those with size <= the largest
-    # man_error with non-zero probability.  E.g. in the 5-20 deg man angle
-    # bin the 80-100" row is 0.1 and the 100-120" row is 0.0.  So this will
-    # will limit the box sizes to 60, 80, and 100.
-    max_man_err = np.max(CHAR.man_errs[acqs.p_man_errs > 0])
-    acqs.box_sizes = CHAR.box_sizes[CHAR.box_sizes <= max_man_err]
-
     acqs.cand_acqs, acqs.bad_stars = acqs.get_acq_candidates(acqs.stars)
 
     # Fill in the entire acq['probs'].p_acqs table (which is actual a dict of keyed by
@@ -204,13 +197,6 @@ class AcqTable(ACACatalogTable):
             out = int(self.get_log_p_2_or_fewer() <= np.log10(CHAR.acq_prob))
         return out
 
-    @property
-    def default_halfw(self):
-        try:
-            return min(max(self.box_sizes), 120)
-        except AttributeError:
-            return 120
-
     def update_p_acq_column(self):
         """
         Update (in-place) the marginalized acquisition probability column
@@ -331,11 +317,14 @@ class AcqTable(ACACatalogTable):
         names = [name for name in cand_acqs.colnames if not name.isupper()]
         cand_acqs = AcqTable(cand_acqs[names])
 
+        box_sizes_list = self.get_box_sizes(cand_acqs)
+        halfws = [box_sizes[0] for box_sizes in box_sizes_list]
+
         # Make this suitable for plotting
         n_cand = len(cand_acqs)
         cand_acqs['idx'] = np.arange(n_cand, dtype=np.int64)
         cand_acqs['type'] = np.full(n_cand, 'ACQ')
-        cand_acqs['halfw'] = np.full(n_cand, self.default_halfw, dtype=np.int64)
+        cand_acqs['halfw'] = np.array(halfws, dtype=np.int64)
 
         # Acq prob for box_size=halfw, marginalized over man_err
         cand_acqs['p_acq'] = np.full(n_cand, -999.0)
@@ -346,8 +335,24 @@ class AcqTable(ACACatalogTable):
         cand_acqs['spoilers_box'] = np.full(n_cand, None)
         # Cached value of box_size + dither for imposters
         cand_acqs['imposters_box'] = np.full(n_cand, None)
+        cand_acqs['box_sizes'] = box_sizes_list
 
         return cand_acqs, bads
+
+    def get_box_sizes(self, cand_acqs):
+        """
+        Get the available box sizes for each cand_acq as all those with size <= the
+        largest man_error with non-zero probability.  E.g. in the 5-20 deg man
+        angle bin the 80-100" row is 0.1 and the 100-120" row is 0.0.  So this
+        will will limit the box sizes to 60, 80, and 100.
+
+        """
+        box_sizes_list = []
+        max_man_err = np.max(CHAR.man_errs[self.p_man_errs > 0])
+        for cand_acq in cand_acqs:
+            box_sizes = CHAR.box_sizes[CHAR.box_sizes <= max_man_err]
+            box_sizes_list.append(box_sizes)
+        return box_sizes_list
 
     def in_bad_star_set(self, acq):
         """
@@ -437,12 +442,22 @@ class AcqTable(ACACatalogTable):
         self.log(f'Find stars with best acq prob for min_p_acq={min_p_acq}')
         self.log(f'Current catalog: acq_indices={acq_indices} box_sizes={box_sizes}')
 
-        for box_size in self.box_sizes:
+        for box_size in CHAR.box_sizes:
             # Get array of marginalized (over man_err) p_acq values corresponding
-            # to box_size for each of the candidate acq stars.
-            p_acqs_for_box = np.array([acq['probs'].p_acq_marg(box_size) for acq in cand_acqs])
+            # to box_size for each of the candidate acq stars.  For acq's where
+            # the current box_size is not in the available list then set the
+            # probability to zero.  This happens for small maneuver angles where
+            # acq.box_sizes might be only [60] or [60, 80].
+            p_acqs_for_box = np.zeros(len(cand_acqs))
+            for idx, acq in enumerate(cand_acqs):
+                if box_size in acq['box_sizes']:
+                    p_acqs_for_box[idx] = acq['probs'].p_acq_marg(box_size)
 
             self.log(f'Trying search box size {box_size} arcsec', level=1)
+
+            if np.all(p_acqs_for_box < min_p_acq):
+                self.log(f'No acceptable candidates (probably small man angle)', level=2)
+                continue
 
             indices = np.argsort(-p_acqs_for_box, kind='mergesort')
             for acq_idx in indices:
@@ -508,7 +523,7 @@ class AcqTable(ACACatalogTable):
         # Make all the not-accepted candidate acqs have halfw=120 as a reasonable
         # default and then set the accepted acqs to the best box_size.  Then set
         # p_acq to the marginalized acquisition probability.
-        cand_acqs['halfw'] = self.default_halfw
+        cand_acqs['halfw'] = np.minimum(120, cand_acqs['halfw'])
         cand_acqs['halfw'][acq_indices] = box_sizes
         cand_acqs.update_p_acq_column()
 
@@ -613,7 +628,8 @@ class AcqTable(ACACatalogTable):
 
         # Compute p_safe for each possible halfw for the current star
         p_safes = []
-        for box_size in self.box_sizes:
+        box_sizes = acq['box_sizes']
+        for box_size in box_sizes:
             new_p_acq = acq['probs'].p_acq_marg(box_size)
             # Do not reduce marginalized p_acq to below 0.1.  It can happen that p_safe
             # goes down very slightly with an increase in box size from the original,
@@ -630,7 +646,7 @@ class AcqTable(ACACatalogTable):
         # Find best p_safe
         min_idx = np.argmin(p_safes)
         min_p_safe = p_safes[min_idx]
-        min_halfw = self.box_sizes[min_idx]
+        min_halfw = box_sizes[min_idx]
 
         # If p_safe went down, then consider this an improvement if either:
         #   - acq halfw is increased (bigger boxes are better)
@@ -640,7 +656,7 @@ class AcqTable(ACACatalogTable):
                     ((min_halfw > orig_halfw) or (min_p_safe / p_safe < 0.9)))
 
         p_safes_strs = [f'{np.log10(p):.2f} ({box_size}")'
-                        for p, box_size in zip(p_safes, self.box_sizes)]
+                        for p, box_size in zip(p_safes, box_sizes)]
         self.log('p_safes={}'.format(', '.join(p_safes_strs)), level=1, id=acq['id'])
         self.log('min_p_safe={:.2f} p_safe={:.2f} min_halfw={} orig_halfw={} improved={}'
                  .format(np.log10(min_p_safe), np.log10(p_safe),
