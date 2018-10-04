@@ -211,3 +211,11 @@ API docs
    :maxdepth: 3
 
    api
+
+Unit Testing
+------------
+
+.. toctree::
+   :maxdepth: 3
+
+   unit_tests
