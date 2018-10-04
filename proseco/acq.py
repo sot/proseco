@@ -340,18 +340,43 @@ class AcqTable(ACACatalogTable):
         return cand_acqs, bads
 
     def get_box_sizes(self, cand_acqs):
-        """
-        Get the available box sizes for each cand_acq as all those with size <= the
+        """Get the available box sizes for each cand_acq as all those with size <= the
         largest man_error with non-zero probability.  E.g. in the 5-20 deg man
         angle bin the 80-100" row is 0.1 and the 100-120" row is 0.0.  So this
         will will limit the box sizes to 60, 80, and 100.
 
+        An exception to the box size limit is for bright stars.  For stars
+        brighter than 8.0 mag (referenced to t_ccd=-10), the box size is
+        allowed to go up to at least 100 arcsec.  For stars brighter than 9.0
+        mag it can go up to at least 80 arcsec.  At these bright mags the
+        larger search boxes have no impact on acquisition probability.
+
+        This is particularly relevant to man_angle < 5 deg, where the max
+        maneuver error is 60 arcsec.  In this case, bright stars can still have
+        80 or 100 arcsec boxes.  In the case of a creep-away observation where
+        the initial bias might be bad, this gives a bit more margin.
+
+        :param cand_acqs: AcqTable of candidate acq stars
+        :return: list of box-size arrays corresponding to cand_acqs table
         """
         box_sizes_list = []
         max_man_err = np.max(CHAR.man_errs[self.p_man_errs > 0])
+
+        # Get the effective equivalent of 8.0 and 9.0 mag for the current t_ccd
+        mag_8 = snr_mag_for_t_ccd(self.t_ccd, ref_mag=8.0, ref_t_ccd=-10.0)
+        mag_9 = snr_mag_for_t_ccd(self.t_ccd, ref_mag=9.0, ref_t_ccd=-10.0)
+
         for cand_acq in cand_acqs:
-            box_sizes = CHAR.box_sizes[CHAR.box_sizes <= max_man_err]
+            mag = cand_acq['mag']
+            if mag < mag_8:
+                max_box_size = max(max_man_err, 100)
+            elif mag < mag_9:
+                max_box_size = max(max_man_err, 80)
+            else:
+                max_box_size = max_man_err
+            box_sizes = CHAR.box_sizes[CHAR.box_sizes <= max_box_size]
             box_sizes_list.append(box_sizes)
+
         return box_sizes_list
 
     def in_bad_star_set(self, acq):
