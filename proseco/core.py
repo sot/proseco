@@ -592,7 +592,7 @@ class ACACatalogTable(Table):
 
         if np.any(bads):
             self.log(f'Candidate object id={cand["id"]} rejected due to column spoiler(s) '
-                     f'{stars["id"][mask][bads].tolist()}')
+                     f'{stars["id"][mask][bads].tolist()}', id=cand['id'])
             return True
         else:
             return False

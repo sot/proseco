@@ -33,6 +33,7 @@ def calc_p_brightest(acq, box_size, stars, dark, man_err=0, dither=20, bgd=0):
     turned into an AcqTable method.
     """
     acqs = AcqTable()
+    acqs.t_ccd = -10.0
     acqs.stars = stars
     acqs.dark = dark
     acqs.dither = dither
@@ -179,6 +180,8 @@ def get_test_stars():
 def get_test_cand_acqs():
     if 'cand_acqs' not in CACHE:
         acqs = AcqTable()
+        acqs.p_man_errs = CHAR.p_man_errs['120-180']
+        acqs.t_ccd = -10.0
         stars = get_test_stars()
         CACHE['cand_acqs'], bads = acqs.get_acq_candidates(stars)
         # Don't care about bads for testing
@@ -397,8 +400,8 @@ def test_get_acq_catalog_19387():
            ' idx   slot    id      yang     zang   halfw',
            'int64 int64  int32   float64  float64  int64',
            '----- ----- -------- -------- -------- -----',
-           '    0     0 38280776 -2254.09 -2172.43    60',
-           '    1     1 37879960  -567.34  -632.27    60',
+           '    0     0 38280776 -2254.09 -2172.43    80',
+           '    1     1 37879960  -567.34  -632.27    80',
            '    2     2 37882072  2197.62  1608.89    60',
            '    3     3 37879992   318.47 -1565.92    60',
            '    4   -99 37882416   481.80  2204.44    60',
@@ -413,8 +416,6 @@ def test_get_acq_catalog_19387():
 
     repr(acqs.cand_acqs)
     assert repr(acqs.cand_acqs[TEST_COLS]).splitlines() == exp
-
-    assert np.all(acqs['halfw'] == 60)
 
 
 def test_get_acq_catalog_21007():
@@ -996,12 +997,34 @@ def test_0_5_degree_man_angle_bin():
     """
     dark = DARK40.copy()
     stars = StarsTable.empty()
-    stars.add_fake_constellation(mag=np.linspace(9, 10.3, 5), n_stars=5)
-    kwargs = mod_std_info(stars=stars, dark=dark,
+    stars.add_fake_constellation(mag=[7.99, 8.01, 8.99, 9.01, 10.2], n_stars=5)
+    kwargs = mod_std_info(stars=stars, dark=dark, t_ccd=-10.0,
                           n_guide=0, n_fid=0, n_acq=8, man_angle=4.8)
     acqs = get_acq_catalog(**kwargs)
-    assert acqs['halfw'].tolist() == [60, 60, 60, 60, 60]
-    assert acqs.box_sizes.tolist() == [60]
+    assert acqs['halfw'].tolist() == [100, 80, 80, 60, 60]
+    assert acqs[0]['box_sizes'].tolist() == [100, 80, 60]
+    assert acqs[1]['box_sizes'].tolist() == [80, 60]
+    assert acqs[2]['box_sizes'].tolist() == [80, 60]
+    assert acqs[3]['box_sizes'].tolist() == [60]
+    assert acqs[4]['box_sizes'].tolist() == [60]
+
+
+def test_0_5_degree_man_angle_bin_diff_t_ccd():
+    """
+    It was decided at the 2018-09-26 SSAWG to set the probability of
+    man_err > 60 to 0.0 for the 0-5 degree maneuver angle bin.  This tests
+    that.
+
+    """
+    dark = DARK40.copy()
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(mag=[7.99, 8.01, 8.99, 9.01, 10.2], n_stars=5)
+    for t_ccd, halfws in [(-9, [80, 80, 60, 60, 60]),
+                          (-11, [100, 100, 80, 80, 60])]:
+        kwargs = mod_std_info(stars=stars, dark=dark, t_ccd=t_ccd,
+                              n_guide=0, n_fid=0, n_acq=8, man_angle=4.8)
+        acqs = get_acq_catalog(**kwargs)
+        assert acqs['halfw'].tolist() == halfws
 
 
 def test_bad_star_list():
