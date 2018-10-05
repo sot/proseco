@@ -99,7 +99,8 @@ class FidTable(ACACatalogTable):
         if self.n_fid == 0:
             out = 1
         else:
-            out = int(len(self) == self.n_fid)
+            out = int(len(self) == self.n_fid and  # Requested number of fids
+                      self['spoiler_score'].sum() < 4)  # No red fid warnings
         return out
 
     def set_fid_set(self, fid_ids):
