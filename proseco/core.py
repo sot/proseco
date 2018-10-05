@@ -71,7 +71,7 @@ def _get_bgd(img):
     return bgd
 
 
-def calc_spoiler_impact(star, stars):
+def calc_spoiler_impact(star, stars, dark_bgd=40, debug=False):
     """
     Calculate the centroid shift and relative image brightness change
     for ``star`` when nearby ``stars`` are included.  The assumption
@@ -87,7 +87,7 @@ def calc_spoiler_impact(star, stars):
     """
     row = star['row']
     col = star['col']
-    norm = mag_to_count_rate(star['mag'])
+    mag = star['mag']
 
     s_rows = stars['row']
     s_cols = stars['col']
@@ -101,23 +101,39 @@ def calc_spoiler_impact(star, stars):
         return 0.0, 0.0, 1.0
 
     # Make an image of the candidate star
-    img = APL.get_psf_image(row=row, col=col, norm=norm)
+    norm = mag_to_count_rate(mag)
+    img = APL.get_psf_image(row=row, col=col, norm=norm, pix_zero_loc='edge')
+    img += dark_bgd
 
     # Centroid the candidate star image, using an upper-limit to the
     # flight background algorithm.
     bgd = _get_bgd(img)
     row0, col0, norm0 = img.centroid_fm(bgd=bgd)
 
+    # Select spoilers
+    s_rows = s_rows[ok]
+    s_cols = s_cols[ok]
+    s_mags = s_mags[ok]
+
+    # If there are multiple spoilers, put them all in the same quadrant
+    # to guard against canceling centroid offsets.
+    s_rows = np.sign(s_rows[0]) * np.abs(s_rows)
+    s_cols = np.sign(s_cols[0]) * np.abs(s_cols)
+
     # Shine spoiler stars onto image
-    for s_row, s_col, s_norm in zip(s_rows[ok], s_cols[ok],
-                                    mag_to_count_rate(s_mags[ok])):
-        s_img = APL.get_psf_image(row=s_row, col=s_col, norm=s_norm)
+    for s_row, s_col, s_mag in zip(s_rows, s_cols, s_mags):
+        s_norm = mag_to_count_rate(s_mag)
+        s_img = APL.get_psf_image(row=s_row, col=s_col, norm=s_norm,
+                                  pix_zero_loc='edge')
         img += s_img.aca
 
     # Centroid the candidate + spoilers image.  This might raise an exception
     # if the background is high enough to result in a negative norm.  In that
     # case return values that will certainly exceed any spoiler thresholds.
     bgd = _get_bgd(img)
+    if debug:
+        print('bgd', bgd, count_rate_to_mag(bgd * 32))
+        print(repr(img))
     try:
         row1, col1, norm1 = img.centroid_fm(bgd=bgd)
     except ValueError as err:
