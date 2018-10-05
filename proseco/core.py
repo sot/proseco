@@ -59,7 +59,7 @@ COLB = np.array([0, 1, 6, 7, 0, 1, 6, 7])
 
 
 def get_bgd(img):
-    bgds = np.sort(img[ROWB, COLB])
+    bgds = np.sort(np.array(img)[ROWB, COLB])
     bgd = (bgds[6] + bgds[7]) / 2
     return bgd
 
@@ -82,16 +82,17 @@ def calc_spoiler_impact(star, stars):
     s_cols = stars['col']
     s_mags = stars['mag']
 
+    # Find potential spoilers with centroid within a 9-pixel halfw box
     ok = ((np.abs(s_rows - row) < 9) &
           (np.abs(s_cols - col) < 9) &
           (star['id'] != stars['id']))
     if not np.any(ok):
         return 0.0, 0.0, 1.0
 
+    # Make an image of the candidate star
     img = APL.get_psf_image(row=row, col=col, norm=norm)
-    np_img = np.array(img, copy=False)
 
-    bgd = get_bgd(np_img)
+    bgd = get_bgd(img)
     row0, col0, norm0 = img.centroid_fm(bgd=bgd)
 
     for s_row, s_col, s_norm in zip(s_rows[ok], s_cols[ok],
@@ -99,7 +100,7 @@ def calc_spoiler_impact(star, stars):
         s_img = APL.get_psf_image(row=s_row, col=s_col, norm=s_norm)
         img += s_img.aca
 
-    bgd = get_bgd(np_img)
+    bgd = get_bgd(img)
     try:
         row1, col1, norm1 = img.centroid_fm(bgd=bgd)
     except ValueError as err:
