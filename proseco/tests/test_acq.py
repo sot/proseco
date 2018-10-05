@@ -567,7 +567,8 @@ def test_cand_acqs_include_exclude():
 
     # Put in a neighboring star that will keep star 9 out of the cand_acqs table
     star9 = stars.get_id(9)
-    stars.add_fake_star(yang=star9['yang'] + 20, zang=star9['zang'],
+    star9['ASPQ1'] = 20
+    stars.add_fake_star(yang=star9['yang'] + 20, zang=star9['zang'] + 20,
                         mag=star9['mag'] + 2.5, id=90)
 
     # Make sure baseline catalog is working like expected

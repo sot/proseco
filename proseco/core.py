@@ -54,12 +54,19 @@ def to_python(val):
     return val
 
 
-ROWB = np.array([0, 0, 0, 0, 7, 7, 7, 7])
-COLB = np.array([0, 1, 6, 7, 0, 1, 6, 7])
+# Row and column indices of ACA image background pixels
+_ROWB = np.array([0, 0, 0, 0, 7, 7, 7, 7])
+_COLB = np.array([0, 1, 6, 7, 0, 1, 6, 7])
 
 
-def get_bgd(img):
-    bgds = np.sort(np.array(img)[ROWB, COLB])
+def _get_bgd(img):
+    """
+    Helper function to compute the mean of the two largest values in
+    the background pixels.  This is a very conservative upper limit and
+    imagines that there are other warm/hot pixels that allow the top-2
+    seen here to not get rejected in the flight background algorithm.
+    """
+    bgds = np.sort(np.array(img)[_ROWB, _COLB])
     bgd = (bgds[6] + bgds[7]) / 2
     return bgd
 
@@ -70,9 +77,13 @@ def calc_spoiler_impact(star, stars):
     for ``star`` when nearby ``stars`` are included.  The assumption
     is that ``star`` has ASPQ1 > 0 so it is known to have some spoiler.
 
+    The returned norm_frac is the ratio of the summed (mouse-bitten)
+    counts in the original image over the spoiled image, so a value less
+    than 1.0 is a problem since it indicates a high background.
+
     :param star: object with row, col, mag keys/cols
     :param stars: StarsTable
-    :returns: d_row, d_col, norm_frac
+    :returns: d_yang, d_zang, norm_frac
     """
     row = star['row']
     col = star['col']
@@ -92,26 +103,35 @@ def calc_spoiler_impact(star, stars):
     # Make an image of the candidate star
     img = APL.get_psf_image(row=row, col=col, norm=norm)
 
-    bgd = get_bgd(img)
+    # Centroid the candidate star image, using an upper-limit to the
+    # flight background algorithm.
+    bgd = _get_bgd(img)
     row0, col0, norm0 = img.centroid_fm(bgd=bgd)
 
+    # Shine spoiler stars onto image
     for s_row, s_col, s_norm in zip(s_rows[ok], s_cols[ok],
                                     mag_to_count_rate(s_mags[ok])):
         s_img = APL.get_psf_image(row=s_row, col=s_col, norm=s_norm)
         img += s_img.aca
 
-    bgd = get_bgd(img)
+    # Centroid the candidate + spoilers image.  This might raise an exception
+    # if the background is high enough to result in a negative norm.  In that
+    # case return values that will certainly exceed any spoiler thresholds.
+    bgd = _get_bgd(img)
     try:
         row1, col1, norm1 = img.centroid_fm(bgd=bgd)
     except ValueError as err:
         if "non-positive image norm" in str(err):
             return 99, 99, -99
         else:
+            # Some other code other, not expected
             raise
 
+    # Final results
     dy = (row1 - row0) * 5
     dz = (col1 - col0) * 5
     frac_norm = norm1 / norm0
+
     return dy, dz, frac_norm
 
 
