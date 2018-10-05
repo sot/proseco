@@ -9,8 +9,9 @@ import numpy as np
 from scipy.interpolate import interp1d
 from astropy.table import Table, Column
 
-from chandra_aca.transform import yagzag_to_pixels, count_rate_to_mag, pixels_to_yagzag
-from chandra_aca.aca_image import ACAImage
+from chandra_aca.transform import (yagzag_to_pixels, pixels_to_yagzag,
+                                   count_rate_to_mag, mag_to_count_rate)
+from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
 from Ska.quatutil import radec2yagzag, yagzag2radec
 import agasc
 from Quaternion import Quat
@@ -19,6 +20,7 @@ from . import characteristics as CHAR
 
 # For testing this is used to cache fid tables for a detector
 FIDS_CACHE = {}
+APL = AcaPsfLibrary()
 
 
 def yagzag_to_radec(yag, zag, att):
@@ -50,6 +52,60 @@ def to_python(val):
     except AttributeError:
         pass
     return val
+
+
+def calc_spoiler_impact(star, stars):
+    """
+    Calculate the centroid shift and relative image brightness change
+    for ``star`` when nearby ``stars`` are included.  The assumption
+    is that ``star`` has ASPQ1 > 0 so it is known to have some spoiler.
+
+    :param star: object with row, col, mag keys/cols
+    :param stars: StarsTable
+    :returns: d_row, d_col, norm_frac
+    """
+    rowb = np.array([0, 0, 0, 0, 7, 7, 7, 7])
+    colb = np.array([0, 1, 6, 7, 0, 1, 6, 7])
+
+    def get_bgd(img):
+        bgds = np.sort(img[rowb, colb])
+        bgd = (bgds[6] + bgds[7]) / 2
+        return bgd
+
+    row = star['row']
+    col = star['col']
+    norm = mag_to_count_rate(star['mag'])
+
+    s_rows = stars['row']
+    s_cols = stars['col']
+    s_norms = mag_to_count_rate(stars['mag'])
+
+    ok = ((np.abs(s_rows - row) < 7) &
+          (np.abs(s_cols - col) < 7) &
+          (star['id'] != stars['id']))
+    if not np.any(ok):
+        return 0.0, 0.0, 1.0
+
+    img = APL.get_psf_image(row=row, col=col, norm=norm)
+    np_img = np.array(img, copy=False)
+
+    bgd = get_bgd(np_img)
+    row0, col0, norm0 = img.centroid_fm(bgd=bgd)
+
+    for s_row, s_col, s_norm in zip(s_rows[ok], s_cols[ok], s_norms[ok]):
+        s_img = APL.get_psf_image(row=s_row, col=s_col, norm=s_norm)
+        img += s_img.aca
+
+    bgd = get_bgd(np_img)
+    try:
+        row1, col1, norm1 = img.centroid_fm(bgd=bgd)
+    except ValueError:
+        return 99, 99, -99
+
+    dy = (row1 - row0) * 5
+    dz = (col1 - col0) * 5
+    frac_norm = norm1 / norm0
+    return dy, dz, frac_norm
 
 
 @functools.lru_cache(maxsize=8)
