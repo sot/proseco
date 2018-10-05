@@ -80,7 +80,7 @@ def calc_spoiler_impact(star, stars):
 
     s_rows = stars['row']
     s_cols = stars['col']
-    s_norms = mag_to_count_rate(stars['mag'])
+    s_mags = stars['mag']
 
     ok = ((np.abs(s_rows - row) < 7) &
           (np.abs(s_cols - col) < 7) &
@@ -94,7 +94,8 @@ def calc_spoiler_impact(star, stars):
     bgd = get_bgd(np_img)
     row0, col0, norm0 = img.centroid_fm(bgd=bgd)
 
-    for s_row, s_col, s_norm in zip(s_rows[ok], s_cols[ok], s_norms[ok]):
+    for s_row, s_col, s_norm in zip(s_rows[ok], s_cols[ok],
+                                    mag_to_count_rate(s_mags[ok])):
         s_img = APL.get_psf_image(row=s_row, col=s_col, norm=s_norm)
         img += s_img.aca
 
