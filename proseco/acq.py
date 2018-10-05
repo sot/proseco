@@ -18,7 +18,7 @@ from chandra_aca.transform import (pixels_to_yagzag, mag_to_count_rate,
 from . import characteristics as CHAR
 from .core import (get_mag_std, ACACatalogTable, bin2x2,
                    get_image_props, pea_reject_image, ACABox,
-                   MetaAttribute)
+                   MetaAttribute, calc_spoiler_impact)
 
 
 def get_acq_catalog(obsid=0, **kwargs):
@@ -271,7 +271,7 @@ class AcqTable(ACACatalogTable):
               (np.abs(stars['row']) < CHAR.max_ccd_row) &  # Max usable row
               (np.abs(stars['col']) < CHAR.max_ccd_col) &  # Max usable col
               (stars['mag_err'] < 1.0) &  # Mag err < 1.0 mag
-              (stars['ASPQ1'] < 20) &  # Less than 1 arcsec offset from nearby spoiler
+              (stars['ASPQ1'] < 40) &  # Less than 2 arcsec offset from nearby spoiler
               (stars['ASPQ2'] == 0) &  # Proper motion less than 0.5 arcsec/yr
               (stars['POS_ERR'] < 3000) &  # Position error < 3.0 arcsec
               ((stars['VAR'] == -9999) | (stars['VAR'] == 5))  # Not known to vary > 0.2 mag
@@ -394,21 +394,20 @@ class AcqTable(ACACatalogTable):
 
     def has_nearby_spoiler(self, acq, stars):
         """
-        Returns True if ``acq`` has another star up to 3 mags fainter and within 30
-        arcsec.
+        Returns True if ``acq`` has a nearby star that could spoil acquisition.
 
         :param acq: AcqTable Row
         :param stars: StarsTable
         :returns: bool
         """
-        bads = ((np.abs(acq['yang'] - stars['yang']) < 30) &
-                (np.abs(acq['zang'] - stars['zang']) < 30) &
-                (stars['mag'] - acq['mag'] < 3) &
-                (stars['id'] != acq['id']))
+        if acq['ASPQ1'] == 0:
+            return False
 
-        if np.any(bads):
+        dy, dz, frac_norm = calc_spoiler_impact(acq, stars)
+        if np.abs(dy) > 1.5 or np.abs(dz) > 1.5 or frac_norm < 0.95:
             self.log(f'Candidate acq star {acq["id"]} rejected due to nearby spoiler(s) '
-                     f'{stars["id"][bads].tolist()}', id=acq['id'])
+                     f'dy={dy:.1f} dz={dz:.1f} frac_norm={frac_norm:.2f}',
+                     id=acq['id'])
             return True
         else:
             return False

@@ -9,8 +9,9 @@ import numpy as np
 from scipy.interpolate import interp1d
 from astropy.table import Table, Column
 
-from chandra_aca.transform import yagzag_to_pixels, count_rate_to_mag, pixels_to_yagzag
-from chandra_aca.aca_image import ACAImage
+from chandra_aca.transform import (yagzag_to_pixels, pixels_to_yagzag,
+                                   count_rate_to_mag, mag_to_count_rate)
+from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
 from Ska.quatutil import radec2yagzag, yagzag2radec
 import agasc
 from Quaternion import Quat
@@ -19,6 +20,7 @@ from . import characteristics as CHAR
 
 # For testing this is used to cache fid tables for a detector
 FIDS_CACHE = {}
+APL = AcaPsfLibrary()
 
 
 def yagzag_to_radec(yag, zag, att):
@@ -50,6 +52,103 @@ def to_python(val):
     except AttributeError:
         pass
     return val
+
+
+# Row and column indices of ACA image background pixels
+_ROWB = np.array([0, 0, 0, 0, 7, 7, 7, 7])
+_COLB = np.array([0, 1, 6, 7, 0, 1, 6, 7])
+
+
+def _get_bgd(img):
+    """
+    Helper function to compute the mean of the two largest values in
+    the background pixels.  This is a very conservative upper limit and
+    imagines that there are other warm/hot pixels that allow the top-2
+    seen here to not get rejected in the flight background algorithm.
+    """
+    bgds = np.sort(np.array(img)[_ROWB, _COLB])
+    bgd = (bgds[6] + bgds[7]) / 2
+    return bgd
+
+
+def calc_spoiler_impact(star, stars, dark_bgd=40, debug=False):
+    """
+    Calculate the centroid shift and relative image brightness change
+    for ``star`` when nearby ``stars`` are included.  The assumption
+    is that ``star`` has ASPQ1 > 0 so it is known to have some spoiler.
+
+    The returned norm_frac is the ratio of the summed (mouse-bitten)
+    counts in the original image over the spoiled image, so a value less
+    than 1.0 is a problem since it indicates a high background.
+
+    :param star: object with row, col, mag keys/cols
+    :param stars: StarsTable
+    :returns: d_yang, d_zang, norm_frac
+    """
+    row = star['row']
+    col = star['col']
+    mag = star['mag']
+
+    s_rows = stars['row']
+    s_cols = stars['col']
+    s_mags = stars['mag']
+
+    # Find potential spoilers with centroid within a 9-pixel halfw box
+    ok = ((np.abs(s_rows - row) < 9) &
+          (np.abs(s_cols - col) < 9) &
+          (star['id'] != stars['id']))
+    if not np.any(ok):
+        return 0.0, 0.0, 1.0
+
+    # Make an image of the candidate star
+    norm = mag_to_count_rate(mag)
+    img = APL.get_psf_image(row=row, col=col, norm=norm, pix_zero_loc='edge')
+    img += dark_bgd
+
+    # Centroid the candidate star image, using an upper-limit to the
+    # flight background algorithm.
+    bgd = _get_bgd(img)
+    row0, col0, norm0 = img.centroid_fm(bgd=bgd)
+
+    # Select spoilers
+    s_rows = s_rows[ok]
+    s_cols = s_cols[ok]
+    s_mags = s_mags[ok]
+
+    # If there are multiple spoilers, put them all in the same quadrant
+    # to guard against canceling centroid offsets.
+    s_rows = np.sign(s_rows[0]) * np.abs(s_rows)
+    s_cols = np.sign(s_cols[0]) * np.abs(s_cols)
+
+    # Shine spoiler stars onto image
+    for s_row, s_col, s_mag in zip(s_rows, s_cols, s_mags):
+        s_norm = mag_to_count_rate(s_mag)
+        s_img = APL.get_psf_image(row=s_row, col=s_col, norm=s_norm,
+                                  pix_zero_loc='edge')
+        img += s_img.aca
+
+    # Centroid the candidate + spoilers image.  This might raise an exception
+    # if the background is high enough to result in a negative norm.  In that
+    # case return values that will certainly exceed any spoiler thresholds.
+    bgd = _get_bgd(img)
+    if debug:
+        print('bgd', bgd, count_rate_to_mag(bgd * 32))
+        print(repr(img))
+    try:
+        row1, col1, norm1 = img.centroid_fm(bgd=bgd)
+    except ValueError as err:
+        if "non-positive image norm" in str(err):
+            return 99, 99, -99
+        else:
+            # Some other code other, not expected
+            raise
+
+    # Final results
+    dy = (row1 - row0) * 5
+    dz = (col1 - col0) * 5
+    frac_norm = norm1 / norm0
+
+    return dy, dz, frac_norm
 
 
 @functools.lru_cache(maxsize=8)

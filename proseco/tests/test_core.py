@@ -1,9 +1,12 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 import pytest
+import numpy as np
+from astropy.io import ascii
 
 import agasc
-from ..core import ACABox, get_kwargs_from_starcheck_text
+from ..core import (ACABox, get_kwargs_from_starcheck_text, calc_spoiler_impact,
+                    StarsTable)
 
 
 def test_agasc_1p7():
@@ -156,3 +159,43 @@ def test_get_kwargs_from_starcheck_text():
            'sim_offset': 0,
            'focus_offset': 0}
     assert kwargs == exp
+
+cases = [dict(row=4, col=0, mag0=8, mag1=10.5, exp=(0.16, -0.01, 1.00)),
+         dict(row=1, col=0, mag0=8, mag1=10.5, exp=(0.43, -0.00, 1.10)),
+         dict(row=1, col=0, mag0=8, mag1=8, exp=(2.37, -0.01, 1.98)),
+         dict(row=-3, col=3, mag0=8, mag1=8, exp=(99, 99, -99)),
+         dict(row=-3, col=3, mag0=8, mag1=10, exp=(-0.54, 0.49, 0.35)),
+         dict(row=-3, col=3, mag0=8, mag1=11, exp=(-0.10, 0.09, 0.74)),
+         dict(row=3, col=-3, mag0=10, mag1=12, exp=(0.34, -0.31, 0.50)),
+         dict(row=3, col=-3, mag0=10, mag1=13, exp=(0.08, -0.08, 0.81))]
+
+
+@pytest.mark.parametrize('case', cases)
+def test_calc_spoiler_impact(case):
+    """
+    Test that calc_spoiler_impact gives reasonable answer.  See also:
+    http://nbviewer.jupyter.org/url/asc.harvard.edu/mta/ASPECT/proseco/spoiler-impact.ipynb
+    """
+    stars = StarsTable.empty()
+    stars.add_fake_star(row=0, col=0, mag=case['mag0'])
+    stars.add_fake_star(row=case['row'], col=case['col'], mag=case['mag1'])
+    dy, dz, f = calc_spoiler_impact(stars[0], stars)
+    # print(f'({dy:.2f}, {dz:.2f}, {f:.2f})')
+    assert np.isclose(dy, case['exp'][0], rtol=0, atol=0.01)
+    assert np.isclose(dz, case['exp'][1], rtol=0, atol=0.01)
+    assert np.isclose(f, case['exp'][2], rtol=0, atol=0.01)
+
+
+def test_calc_spoiler_impact_21068():
+    """
+    Confirm that for the Dragonfly-44 field that the impact of the spoiler
+    is acceptable and the star can be used as a candidate.
+    """
+    # These values are taken from the stars table for 21068.
+    stars = ascii.read(['row col mag id',
+                        '-366.63 -92.75  8.73 1',
+                        '-365.14 -92.93 10.52 2'])
+    dy, dz, f = calc_spoiler_impact(stars[0], stars)
+    assert np.abs(dy) < 1.5
+    assert np.abs(dz) < 1.5
+    assert np.abs(f) > 0.95
