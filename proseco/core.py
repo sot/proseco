@@ -82,8 +82,8 @@ def calc_spoiler_impact(star, stars):
     s_cols = stars['col']
     s_mags = stars['mag']
 
-    ok = ((np.abs(s_rows - row) < 7) &
-          (np.abs(s_cols - col) < 7) &
+    ok = ((np.abs(s_rows - row) < 9) &
+          (np.abs(s_cols - col) < 9) &
           (star['id'] != stars['id']))
     if not np.any(ok):
         return 0.0, 0.0, 1.0
