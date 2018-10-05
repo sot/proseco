@@ -54,6 +54,16 @@ def to_python(val):
     return val
 
 
+ROWB = np.array([0, 0, 0, 0, 7, 7, 7, 7])
+COLB = np.array([0, 1, 6, 7, 0, 1, 6, 7])
+
+
+def get_bgd(img):
+    bgds = np.sort(img[ROWB, COLB])
+    bgd = (bgds[6] + bgds[7]) / 2
+    return bgd
+
+
 def calc_spoiler_impact(star, stars):
     """
     Calculate the centroid shift and relative image brightness change
@@ -64,14 +74,6 @@ def calc_spoiler_impact(star, stars):
     :param stars: StarsTable
     :returns: d_row, d_col, norm_frac
     """
-    rowb = np.array([0, 0, 0, 0, 7, 7, 7, 7])
-    colb = np.array([0, 1, 6, 7, 0, 1, 6, 7])
-
-    def get_bgd(img):
-        bgds = np.sort(img[rowb, colb])
-        bgd = (bgds[6] + bgds[7]) / 2
-        return bgd
-
     row = star['row']
     col = star['col']
     norm = mag_to_count_rate(star['mag'])
@@ -99,8 +101,11 @@ def calc_spoiler_impact(star, stars):
     bgd = get_bgd(np_img)
     try:
         row1, col1, norm1 = img.centroid_fm(bgd=bgd)
-    except ValueError:
-        return 99, 99, -99
+    except ValueError as err:
+        if "non-positive image norm" in str(err):
+            return 99, 99, -99
+        else:
+            raise
 
     dy = (row1 - row0) * 5
     dz = (col1 - col0) * 5
