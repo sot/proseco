@@ -1,3 +1,4 @@
+import os
 import functools
 import pickle
 import inspect
@@ -816,7 +817,9 @@ class StarsTable(ACACatalogTable):
         :returns: StarsTable of stars
         """
         q_att = Quat(att)
-        agasc_stars = agasc.get_agasc_cone(q_att.ra, q_att.dec, radius=radius, date=date)
+        agasc_file = Path(os.environ['SKA'], 'data', 'agasc', 'proseco_agasc_1p7.h5')
+        agasc_stars = agasc.get_agasc_cone(q_att.ra, q_att.dec, radius=radius, date=date,
+                                           agasc_file=agasc_file)
         stars = StarsTable.from_stars(att, agasc_stars, copy=False)
 
         logger = StarsTable.get_logger(logger)
@@ -877,7 +880,8 @@ class StarsTable(ACACatalogTable):
         zag *= 3600
         row, col = yagzag_to_pixels(yag, zag, allow_bad=True, pix_zero_loc='edge')
 
-        stars.remove_columns(AGASC_COLS_DROP)
+        stars.remove_columns([name for name in AGASC_COLS_DROP
+                              if name in stars.colnames])
 
         stars.rename_column('AGASC_ID', 'id')
         stars.add_column(Column(stars['RA_PMCORR'], name='ra'), index=1)
@@ -1010,7 +1014,8 @@ class StarsTable(ACACatalogTable):
         defaults = {'id': len(self) + 100,
                     'mag_err': 0.1,
                     'VAR': -9999}
-        out = {name: star.get(name, defaults.get(name, 0)) for name in names}
+        out = {name: star.get(name, defaults.get(name, 0)) for name in names
+               if name in self.colnames}
 
         q_att = self.meta['q_att']
         if 'ra' in star and 'dec' in star:
