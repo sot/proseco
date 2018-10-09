@@ -110,8 +110,10 @@ def star_track(guide, dither_rs, dither_cs, dark, stars):
         for star_row0, star_col0, star_norm in zip(star_row0s, star_col0s, star_norms):
             star_row = star_row0 + dither_r
             star_col = star_col0 + dither_c
-            img_star = APL.get_psf_image(star_row, star_col, star_norm, pix_zero_loc='edge')
-            add_imgs(img, img_row0, img_col0, np.asarray(img_star), img_star.row0, img_star.col0)
+            img_star, img_star_row0, img_star_col0 = APL.get_psf_image(
+                star_row, star_col, star_norm, pix_zero_loc='edge',
+                interpolation='bilinear', aca_image=False)
+            add_imgs(img, img_row0, img_col0, np.asarray(img_star), img_star_row0, img_star_col0)
 
         bgd = calc_flight_background(img)
         cent_rows[idx], cent_cols[idx], norms[idx] = centroid_fm(img, img_row0, img_col0, bgd)
