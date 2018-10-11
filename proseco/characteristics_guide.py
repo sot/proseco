@@ -89,8 +89,8 @@ stages = [{"Stage": 1,
            "MagLimit": [5.9, 10.3],
            "DoBminusVcheck": 1,
            "Spoiler": {
-            "BgPixThresh": 25,
-            "RegionFrac": .05,
+            "BgPixThresh": 40,
+            "RegionFrac": .07,
             },
            "Imposter": {
             "CentroidOffsetLim": 2.5,
@@ -101,8 +101,8 @@ stages = [{"Stage": 1,
            "MagLimit": [5.9, 10.3],
            "DoBminusVcheck": 0,
            "Spoiler": {
-            "BgPixThresh": 25,
-            "RegionFrac": .05,
+            "BgPixThresh": 50,
+            "RegionFrac": .10,
             },
            "Imposter": {
             "CentroidOffsetLim": 4.5,
