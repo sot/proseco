@@ -93,7 +93,7 @@ def test_exception_handling():
                           t_ccd_acq=-10, t_ccd_guide=-10,
                           detector='ACIS-S', sim_offset=0, focus_offset=0,
                           n_guide=8, n_fid=3, n_acq=8,
-                          include_ids=[1])  # Fail
+                          include_ids_acq=[1])  # Fail
     assert 'include_ids and include_halfws must have same length' in aca.exception
 
     for obj in (aca, aca.acqs, aca.guides, aca.fids):
@@ -365,4 +365,62 @@ def test_dense_star_field_regress():
 
     repr(aca)  # Apply default formats
     assert aca[TEST_COLS + ['mag']].pformat(max_width=-1) == exp
-    
+
+
+def test_aca_acqs_include_exclude():
+    """
+    Test include and exclude stars.  This uses a catalog with 11 stars:
+    - 8 bright stars from 7.0 to 7.7 mag, where the 7.0 is EXCLUDED
+    - 2 faint (but OK) stars 10.0, 10.1 where the 10.0 is INCLUDED
+    - 1 very faint (bad) stars 12.0 mag is INCLUDED
+
+    Both the 7.0 and 10.1 would normally get picked either initially
+    or swapped in during optimization, and 12.0 would never get picked.
+    Check that the final catalog is [7.1 .. 7.7, 10.0, 12.0]
+
+    This is a stripped down version of test_cand_acqs_include_exclude
+    in test_acq.py along with test_guides_include_exclude in test_guide.py.
+    """
+    stars = StarsTable.empty()
+
+    stars.add_fake_constellation(mag=[7.0, 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7],
+                                 id=[1, 2, 3, 4, 5, 6, 7, 8],
+                                 size=2000, n_stars=8)
+    stars.add_fake_constellation(mag=[10.0, 10.1, 12.0],
+                                 id=[9, 10, 11],
+                                 size=1500, n_stars=3)
+
+    # Put in a neighboring star that will keep star 9 out of the cand_acqs table
+    star9 = stars.get_id(9)
+    star9['ASPQ1'] = 20
+    stars.add_fake_star(yang=star9['yang'] + 20, zang=star9['zang'] + 20,
+                        mag=star9['mag'] + 2.5, id=90)
+
+    # Define includes and excludes. id=9 is in nominal cand_acqs but not in acqs.
+    include_ids = [9, 11]
+    include_halfws = [45, 89]
+    exp_include_halfws = [60, 80]
+    exclude_ids = [1]
+
+    aca = get_aca_catalog(**STD_INFO, stars=stars,
+                          include_ids_acq=include_ids,
+                          include_halfws_acq=include_halfws,
+                          exclude_ids_acq=exclude_ids,
+                          include_ids_guide=include_ids,
+                          exclude_ids_guide=exclude_ids)
+    acqs = aca.acqs
+    assert acqs.include_ids == include_ids
+    assert acqs.include_halfws == exp_include_halfws
+    assert acqs.exclude_ids == exclude_ids
+    assert all(id_ in acqs.cand_acqs['id'] for id_ in include_ids)
+
+    assert all(id_ in acqs['id'] for id_ in include_ids)
+    assert all(id_ not in acqs['id'] for id_ in exclude_ids)
+
+    assert np.all(acqs['id'] == [2, 3, 4, 5, 6, 7, 9, 11])
+    assert np.all(acqs['halfw'] == [160, 160, 160, 160, 160, 160, 60, 80])
+    assert np.allclose(acqs['mag'], [7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 10.0, 12.0])
+
+    guides = aca.guides
+    assert guides.include_ids == include_ids
+    assert guides.exclude_ids == exclude_ids
