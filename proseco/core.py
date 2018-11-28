@@ -291,7 +291,8 @@ class ACACatalogTable(Table):
     name = 'aca_cat'
 
     # Catalog attributes, gets set in MetaAttribute
-    allowed_kwargs = set(['dither', 't_ccd'])
+    allowed_kwargs = set(['dither', 't_ccd',
+                          'include_ids', 'include_halfws', 'exclude_ids'])
 
     required_attrs = ('dither_acq', 'dither_guide', 'date')
 
@@ -311,9 +312,9 @@ class ACACatalogTable(Table):
     focus_offset = MetaAttribute()
     dark = MetaAttribute(pickle=False)
     stars = MetaAttribute(pickle=False)
-    include_ids = MetaAttribute(default=[])
-    include_halfws = MetaAttribute(default=[])
-    exclude_ids = MetaAttribute(default=[])
+    include_ids_acq = MetaAttribute(default=[])
+    include_halfws_acq = MetaAttribute(default=[])
+    exclude_ids_acq = MetaAttribute(default=[])
     optimize = MetaAttribute(default=True)
     verbose = MetaAttribute(default=False)
     print_log = MetaAttribute(default=False)

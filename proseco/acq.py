@@ -155,6 +155,30 @@ class AcqTable(ACACatalogTable):
         self.dither_acq = value
 
     @property
+    def include_ids(self):
+        return self.include_ids_acq
+
+    @include_ids.setter
+    def include_ids(self, value):
+        self.include_ids_acq = value
+
+    @property
+    def include_halfws(self):
+        return self.include_halfws_acq
+
+    @include_halfws.setter
+    def include_halfws(self, value):
+        self.include_halfws_acq = value
+
+    @property
+    def exclude_ids(self):
+        return self.exclude_ids_acq
+
+    @exclude_ids.setter
+    def exclude_ids(self, value):
+        self.exclude_ids_acq = value
+
+    @property
     def fid_set(self):
         if not hasattr(self, '_fid_set'):
             self._fid_set = ()
