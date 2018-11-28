@@ -315,6 +315,8 @@ class ACACatalogTable(Table):
     include_ids_acq = MetaAttribute(default=[])
     include_halfws_acq = MetaAttribute(default=[])
     exclude_ids_acq = MetaAttribute(default=[])
+    include_ids_guide = MetaAttribute(default=[])
+    exclude_ids_guide = MetaAttribute(default=[])
     optimize = MetaAttribute(default=True)
     verbose = MetaAttribute(default=False)
     print_log = MetaAttribute(default=False)

@@ -103,6 +103,22 @@ class GuideTable(ACACatalogTable):
         self.dither_guide = value
 
     @property
+    def include_ids(self):
+        return self.include_ids_guide
+
+    @include_ids.setter
+    def include_ids(self, value):
+        self.include_ids_guide = value
+
+    @property
+    def exclude_ids(self):
+        return self.exclude_ids_guide
+
+    @exclude_ids.setter
+    def exclude_ids(self, value):
+        self.exclude_ids_guide = value
+
+    @property
     def thumbs_up(self):
         if self.n_guide == 0:
             # If no guides were requested then always OK

@@ -37,6 +37,8 @@ def get_aca_catalog(obsid=0, **kwargs):
     :param include_ids_acq: list of AGASC IDs of stars to include in acq catalog
     :param include_halfws_acq: list of acq halfwidths corresponding to ``include_ids``
     :param exclude_ids_acq: list of AGASC IDs of stars to exclude from acq catalog
+    :param include_ids_guide: list of AGASC IDs of stars to include in guide catalog
+    :param exclude_ids_guide: list of AGASC IDs of stars to exclude from guide catalog
     :param optimize: optimize star catalog after initial selection (default=True)
     :param verbose: provide extra logging info (mostly calc_p_safe) (default=False)
     :param print_log: print the run log to stdout (default=False)
