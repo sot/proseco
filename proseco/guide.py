@@ -32,6 +32,8 @@ def get_guide_catalog(obsid=0, **kwargs):
     :param n_guide: number of guide stars to attempt to get
     :param fids: selected fids (used for guide star exclusion)
     :param stars: astropy.Table of AGASC stars (will be fetched from agasc if None)
+    :param include_ids: list of AGASC IDs of stars to include in guide catalog
+    :param exclude_ids: list of AGASC IDs of stars to exclude from guide catalog
     :param dark: ACAImage of dark map (fetched based on time and t_ccd if None)
     :param print_log: print the run log to stdout (default=False)
 

@@ -51,14 +51,16 @@ focus_offset  SIM focus offset [steps] (default=0)
 
 **Optional**
 
-============== =========================================================
-Argument       Description
-============== =========================================================
-include_ids    list of AGASC IDs of stars to include in selected catalog
-include_halfws list of acq halfwidths corresponding to ``include_ids``
-exclude_ids    list of AGASC IDs of stars to exclude from selected catalog
-stars          table of AGASC stars (will be fetched from agasc if None)
-============== =========================================================
+=================== =========================================================
+Argument            Description
+=================== =========================================================
+include_ids_acq     list of AGASC IDs of stars to include in acq catalog
+include_halfws_acq  list of acq halfwidths corresponding to ``include_ids``
+exclude_ids_acq     list of AGASC IDs of stars to exclude from acq catalog
+include_ids_guide   list of AGASC IDs of stars to include in guide catalog
+exclude_ids_guide   list of AGASC IDs of stars to exclude from guide catalog
+stars               table of AGASC stars (will be fetched from agasc if None)
+=================== =========================================================
 
 **Debug**
 
