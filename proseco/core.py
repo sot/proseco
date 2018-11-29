@@ -227,6 +227,43 @@ class ACABox:
         return f'<ACABox y={self.y} z={self.z}>'
 
 
+class AliasAttribute:
+    """Descriptor to define class attributes which can be accessed via
+    either <name> or <name>_<subclass>.
+
+    For instance the ``dither`` attribute is found in both AcqTable and
+    GuideTable, but in general these can be different for the two cases.
+
+    The ``get_aca_catalog()`` function handles this by accepting ``dither_acq``
+    and ``dither_guide``.  In order to be able to generically pass the
+    same commmon kwargs to ``get_acq_catalog`` and ``get_guide_catalog``,
+    we define the AliasAttribute to allow set/get of either ``dither``
+    or ``dither_acq`` (or ``dither_guide``).
+
+    The <subclass> name is the lower case version of everything before
+    ``Table`` in the subclass name, so GuideTable => 'guide'.
+    """
+    def __get__(self, instance, owner):
+        if instance is None:
+            # When called without an instance, return self to allow access
+            # to descriptor attributes.
+            return self
+        else:
+            return getattr(instance, self.alias)
+
+    def __set__(self, instance, value):
+        setattr(instance, self.alias, value)
+
+    def __set_name__(self, owner, name):
+        if owner.__name__.endswith('Table'):
+            self.alias = name + '_' + owner.__name__[:-5].lower()
+        else:
+            raise ValueError('can only be used in classes named *Table')
+
+    def __repr__(self):
+        return (f'<{self.__class__.__name__} alias={self.alias}')
+
+
 class MetaAttribute:
     def __init__(self, default=None, is_kwarg=True, pickle=True):
         """
