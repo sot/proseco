@@ -14,6 +14,7 @@ from ..guide import (get_guide_catalog, check_spoil_contrib, get_pixmag_for_offs
                      check_mag_spoilers)
 from ..characteristics_guide import mag_spoiler
 from ..core import StarsTable
+from .test_common import STD_INFO
 
 
 HAS_SC_ARCHIVE = Path(mica.starcheck.starcheck.FILES['data_root']).exists()
@@ -236,3 +237,50 @@ def test_warnings():
     guides = get_guide_catalog(att=(0, 0, 0), date='2018:001', t_ccd=-10, dither=(8, 8),
                                stars=stars, n_guide=8)
     assert guides.warnings == ['WARNING: Selected only 6 guide stars versus requested 8']
+
+
+def test_guides_include_exclude():
+    """
+    Test include and exclude stars for guide.  This uses a catalog with 11 stars:
+    - 8 bright stars from 7.0 to 7.7 mag, where the 7.0 is EXCLUDED
+    - 2 faint (but OK) stars 10.0, 10.1 where the 10.0 is INCLUDED
+    - 1 very faint (bad) stars 12.0 mag is INCLUDED
+
+    Both the 7.0 and 10.1 would normally get picked either initially
+    or swapped in during optimization, and 12.0 would never get picked.
+
+    NOTE: right now this is a stub that just checks that the include_ids
+    and exclude_ids get set accordingly.  Later the include/exclude
+    functionality will be implemented and this test can be substantive.
+    """
+    stars = StarsTable.empty()
+
+    stars.add_fake_constellation(mag=[7.0, 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7],
+                                 id=[1, 2, 3, 4, 5, 6, 7, 8],
+                                 size=2000, n_stars=8)
+    stars.add_fake_constellation(mag=[10.0, 10.1, 12.0],
+                                 id=[9, 10, 11],
+                                 size=1500, n_stars=3)
+
+    # Make sure baseline catalog is working like expected
+    guides = get_guide_catalog(**STD_INFO, stars=stars)
+    assert np.all(guides['id'] == np.arange(1, 6))
+
+    # Define includes and excludes.
+    include_ids = [9, 11]
+    exclude_ids = [1]
+
+    guides = get_guide_catalog(**STD_INFO, stars=stars,
+                               include_ids=include_ids,
+                               exclude_ids=exclude_ids)
+
+    assert guides.include_ids == include_ids
+    assert guides.exclude_ids == exclude_ids
+
+    # assert all(id_ in guides.cand_guides['id'] for id_ in include_ids)
+
+    # assert all(id_ in guides['id'] for id_ in include_ids)
+    # assert all(id_ not in guides['id'] for id_ in exclude_ids)
+
+    # assert np.all(guides['id'] == [2, 3, 4, 5, 6, 7, 9, 11])
+    # assert np.allclose(guides['mag'], [7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 10.0, 12.0])

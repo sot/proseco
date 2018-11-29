@@ -227,6 +227,44 @@ class ACABox:
         return f'<ACABox y={self.y} z={self.z}>'
 
 
+class AliasAttribute:
+    """Descriptor to define class attributes which can be accessed via
+    either <name> or <name>_<subclass>.
+
+    For instance the ``dither`` attribute is found in both AcqTable and
+    GuideTable, but in general these can be different for the two cases.
+
+    The ``get_aca_catalog()`` function handles this by accepting ``dither_acq``
+    and ``dither_guide``.  In order to be able to generically pass the
+    same commmon kwargs to ``get_acq_catalog`` and ``get_guide_catalog``,
+    we define the AliasAttribute to allow set/get of either ``dither``
+    or ``dither_acq`` (or ``dither_guide``).
+
+    The <subclass> name is the lower case version of everything before
+    ``Table`` in the subclass name, so GuideTable => 'guide'.
+    """
+    def __get__(self, instance, owner):
+        if instance is None:
+            # When called without an instance, return self to allow access
+            # to descriptor attributes.
+            return self
+        else:
+            return getattr(instance, self.alias)
+
+    def __set__(self, instance, value):
+        setattr(instance, self.alias, value)
+
+    def __set_name__(self, owner, name):
+        if owner.__name__.endswith('Table'):
+            self.alias = name + '_' + owner.__name__[:-5].lower()
+            owner.allowed_kwargs.add(name)
+        else:
+            raise ValueError('can only be used in classes named *Table')
+
+    def __repr__(self):
+        return (f'<{self.__class__.__name__} alias={self.alias}')
+
+
 class MetaAttribute:
     def __init__(self, default=None, is_kwarg=True, pickle=True):
         """
@@ -290,8 +328,8 @@ class ACACatalogTable(Table):
     # Should be set by subclass, e.g. ``name = 'acqs'`` for AcqTable.
     name = 'aca_cat'
 
-    # Catalog attributes, gets set in MetaAttribute
-    allowed_kwargs = set(['dither', 't_ccd'])
+    # Catalog attributes, gets set in MetaAttribute or AliasAttribute
+    allowed_kwargs = set()
 
     required_attrs = ('dither_acq', 'dither_guide', 'date')
 
@@ -311,9 +349,11 @@ class ACACatalogTable(Table):
     focus_offset = MetaAttribute()
     dark = MetaAttribute(pickle=False)
     stars = MetaAttribute(pickle=False)
-    include_ids = MetaAttribute(default=[])
-    include_halfws = MetaAttribute(default=[])
-    exclude_ids = MetaAttribute(default=[])
+    include_ids_acq = MetaAttribute(default=[])
+    include_halfws_acq = MetaAttribute(default=[])
+    exclude_ids_acq = MetaAttribute(default=[])
+    include_ids_guide = MetaAttribute(default=[])
+    exclude_ids_guide = MetaAttribute(default=[])
     optimize = MetaAttribute(default=True)
     verbose = MetaAttribute(default=False)
     print_log = MetaAttribute(default=False)

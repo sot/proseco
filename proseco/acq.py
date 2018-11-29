@@ -18,7 +18,7 @@ from chandra_aca.transform import (pixels_to_yagzag, mag_to_count_rate,
 from . import characteristics as CHAR
 from .core import (get_mag_std, ACACatalogTable, bin2x2,
                    get_image_props, pea_reject_image, ACABox,
-                   MetaAttribute, calc_spoiler_impact)
+                   MetaAttribute, AliasAttribute, calc_spoiler_impact)
 
 
 def get_acq_catalog(obsid=0, **kwargs):
@@ -138,21 +138,11 @@ class AcqTable(ACACatalogTable):
         out['halfw'] = np.full(fill_value=0, shape=(0,), dtype=np.int64)
         return out
 
-    @property
-    def t_ccd(self):
-        return self.t_ccd_acq
-
-    @t_ccd.setter
-    def t_ccd(self, value):
-        self.t_ccd_acq = value
-
-    @property
-    def dither(self):
-        return self.dither_acq
-
-    @dither.setter
-    def dither(self, value):
-        self.dither_acq = value
+    t_ccd = AliasAttribute()
+    dither = AliasAttribute()
+    include_ids = AliasAttribute()
+    include_halfws = AliasAttribute()
+    exclude_ids = AliasAttribute()
 
     @property
     def fid_set(self):

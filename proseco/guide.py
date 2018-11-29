@@ -11,7 +11,7 @@ from chandra_aca.star_probs import guide_count
 from . import characteristics as CHAR
 from . import characteristics_guide as GUIDE_CHAR
 
-from .core import bin2x2, ACACatalogTable, ACABox, MetaAttribute
+from .core import bin2x2, ACACatalogTable, MetaAttribute, AliasAttribute
 
 CCD = GUIDE_CHAR.CCD
 
@@ -32,6 +32,8 @@ def get_guide_catalog(obsid=0, **kwargs):
     :param n_guide: number of guide stars to attempt to get
     :param fids: selected fids (used for guide star exclusion)
     :param stars: astropy.Table of AGASC stars (will be fetched from agasc if None)
+    :param include_ids: list of AGASC IDs of stars to include in guide catalog
+    :param exclude_ids: list of AGASC IDs of stars to exclude from guide catalog
     :param dark: ACAImage of dark map (fetched based on time and t_ccd if None)
     :param print_log: print the run log to stdout (default=False)
 
@@ -86,21 +88,10 @@ class GuideTable(ACACatalogTable):
         reject_info = self.reject_info
         reject_info.append(reject)
 
-    @property
-    def t_ccd(self):
-        return self.t_ccd_guide
-
-    @t_ccd.setter
-    def t_ccd(self, value):
-        self.t_ccd_guide = value
-
-    @property
-    def dither(self):
-        return self.dither_guide
-
-    @dither.setter
-    def dither(self, value):
-        self.dither_guide = value
+    t_ccd = AliasAttribute()
+    dither = AliasAttribute()
+    include_ids = AliasAttribute()
+    exclude_ids = AliasAttribute()
 
     @property
     def thumbs_up(self):
@@ -349,7 +340,6 @@ class GuideTable(ACACatalogTable):
         return cand_guides
 
 
-
 def check_fid_trap(cand_stars, fids, dither):
     """
     Search for guide stars that would cause the fid trap issue and mark as spoilers.
@@ -367,7 +357,7 @@ def check_fid_trap(cand_stars, fids, dither):
         return spoilers, []
 
     bad_row = GUIDE_CHAR.fid_trap['row']
-    bad_col= GUIDE_CHAR.fid_trap['col']
+    bad_col = GUIDE_CHAR.fid_trap['col']
     fid_margin = GUIDE_CHAR.fid_trap['margin']
 
     # Check to see if the fid is in the zone that's a problem for the trap and if there's
