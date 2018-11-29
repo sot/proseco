@@ -257,6 +257,7 @@ class AliasAttribute:
     def __set_name__(self, owner, name):
         if owner.__name__.endswith('Table'):
             self.alias = name + '_' + owner.__name__[:-5].lower()
+            owner.allowed_kwargs.add(name)
         else:
             raise ValueError('can only be used in classes named *Table')
 
@@ -327,9 +328,8 @@ class ACACatalogTable(Table):
     # Should be set by subclass, e.g. ``name = 'acqs'`` for AcqTable.
     name = 'aca_cat'
 
-    # Catalog attributes, gets set in MetaAttribute
-    allowed_kwargs = set(['dither', 't_ccd',
-                          'include_ids', 'include_halfws', 'exclude_ids'])
+    # Catalog attributes, gets set in MetaAttribute or AliasAttribute
+    allowed_kwargs = set()
 
     required_attrs = ('dither_acq', 'dither_guide', 'date')
 
