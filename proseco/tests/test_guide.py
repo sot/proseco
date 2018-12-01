@@ -279,10 +279,10 @@ def test_guides_include_exclude():
     assert guides.include_ids == include_ids
     assert guides.exclude_ids == exclude_ids
 
-    # assert all(id_ in guides.cand_guides['id'] for id_ in include_ids)
+    assert all(id_ in guides.cand_guides['id'] for id_ in include_ids)
 
-    # assert all(id_ in guides['id'] for id_ in include_ids)
-    # assert all(id_ not in guides['id'] for id_ in exclude_ids)
+    assert all(id_ in guides['id'] for id_ in include_ids)
+    assert all(id_ not in guides['id'] for id_ in exclude_ids)
 
-    # assert np.all(guides['id'] == [2, 3, 4, 5, 6, 7, 9, 11])
-    # assert np.allclose(guides['mag'], [7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 10.0, 12.0])
+    assert np.all(guides['id'] == [9, 11, 2, 3, 4, 5, 6, 7])
+    assert np.allclose(guides['mag'], [10.0, 12.0, 7.1, 7.2, 7.3, 7.4, 7.5, 7.6])
