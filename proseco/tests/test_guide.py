@@ -263,14 +263,16 @@ def test_guides_include_exclude():
                                  size=1500, n_stars=3)
 
     # Make sure baseline catalog is working like expected
-    guides = get_guide_catalog(**STD_INFO, stars=stars)
-    assert np.all(guides['id'] == np.arange(1, 6))
+    std_info = STD_INFO.copy()
+    std_info.update(n_guide=8)
+    guides = get_guide_catalog(**std_info, stars=stars)
+    assert np.all(guides['id'] == np.arange(1, 9))
 
     # Define includes and excludes.
     include_ids = [9, 11]
     exclude_ids = [1]
 
-    guides = get_guide_catalog(**STD_INFO, stars=stars,
+    guides = get_guide_catalog(**std_info, stars=stars,
                                include_ids=include_ids,
                                exclude_ids=exclude_ids)
 
