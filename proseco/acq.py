@@ -589,7 +589,8 @@ class AcqTable(ACACatalogTable):
 
         mags = np.concatenate([spoilers['mag'], imposters['mag']])
         mag_errs = np.concatenate([spoilers['mag_err'], imposters['mag_err']])
-        prob = calc_p_brightest_compare(acq, mags, mag_errs)
+        colors = np.concatenate([spoilers['color'], imposters['color']])
+        prob = calc_p_brightest_compare(acq, mags, mag_errs, colors)
 
         return prob
 
@@ -944,6 +945,7 @@ def get_imposter_stars(dark, star_row, star_col, thresh=None,
                'img_sum': img_sum,
                'mag': mag,
                'mag_err': get_mag_std(mag).item(),
+               'color': 1.0,
                }
         outs.append(out)
 
@@ -954,7 +956,84 @@ def get_imposter_stars(dark, star_row, star_col, thresh=None,
     return outs
 
 
-def calc_p_brightest_compare(acq, mags, mag_errs):
+# Define three statistic methods that get used below in mag_stat() for color=1.5 stars.
+
+def expon2_ppf(x, loc=0.0, scale=1.0):
+    """
+    Compute the ppf for a 2-side expon distribution.
+    """
+    out = np.empty_like(x)
+    pos = x >= 0.5
+    out[pos] = stats.expon.ppf((x[pos] - 0.5) / 0.5)
+    out[~pos] = -stats.expon.ppf((0.5 - x[~pos]) / 0.5)
+
+    ppf = out * scale + loc
+    return ppf
+
+
+def expon2_pdf(x, loc=0.0, scale=1.0):
+    """
+    Compute the pdf for a 2-side expon distribution.
+    """
+    y = (x - loc) / scale
+    out = stats.expon.pdf(np.abs(y)) * 0.5
+    return out
+
+
+def expon2_cdf(x, loc=0.0, scale=1.0):
+    """
+    Compute the cdf for a 2-side expon distribution.
+    """
+    y = (x - loc) / scale
+    out = np.empty_like(y)
+    pos = y >= 0
+    out[pos] = stats.expon.cdf(y[pos]) * 0.5 + 0.5
+    out[~pos] = 0.5 - stats.expon.cdf(-y[~pos]) * 0.5
+    return out
+
+
+def stats_mag(method, x, mag, mag_err, color):
+    """Compute the probability distribution ``method`` at points ``x`` for
+    a star with ``mag``, ``mag_err`` and ``color``.
+
+    ``method`` is either 'pdf', 'cdf', or 'ppf' and corresponds to methods
+    documented in scipy.stats (e.g. scipy.stats.norm).
+
+    The probability distribution used depends on the star ``color``.  For
+    color != 1.5 stars, a normal distribution centered at ``mag`` with
+    ``sigma = mag_error`` is used.
+
+    For color=1.5 stars an exponential mag error distribution is used with a
+    PDF(x, mag) = exp(-abs(x - mag) / 0.32).  Note that ``mag_err`` is ignored
+    in this case.  This was derived in the aca_stats repo in
+    fit_acq_model-2018-11-binned-poly-binom-floor.ipynb.  See cells 33-37.
+    Translating the language in that notebook to the above PDF equation is::
+
+      PDF = 10 ** (3.8 * (1 - x / 2.8))
+          = C * exp(log(10)) ** (-x / (2.8/3.8))
+          = C * exp(log(10) * (-x / (2.8/3.8))
+          = C * exp(-x / scale)
+      where scale = 2.8 / 3.8 / log(10) = 0.32
+
+    :param method: statistic method ('pdf' | 'cdf' | 'ppf')
+    """
+    if color != 1.5:
+        out = getattr(stats.norm, method)(x, loc=mag, scale=mag_err)
+
+    else:
+        is_scalar = np.array(x).ndim == 0
+        func = globals()[f'expon2_{method}']
+        out = func(np.atleast_1d(x), loc=mag, scale=0.32)
+        if is_scalar:
+            out = out[0]
+
+    if not np.all(np.isfinite(out)):
+        print(out)
+        raise ValueError()
+    return out
+
+
+def calc_p_brightest_compare(acq, mags, mag_errs, colors):
     """
     For given ``acq`` star and intruders mag, mag_err,
     do the probability calculation to see if the acq star is brighter
@@ -963,6 +1042,7 @@ def calc_p_brightest_compare(acq, mags, mag_errs):
     :param acq: acquisition star (AcqTable Row)
     :param mags: iterable of mags
     :param mag_errs: iterable of mag errors
+    :param colors: iterable of color (for color=1.5 stars)
 
     :returns: probability that acq stars is brighter than all mags
     """
@@ -970,17 +1050,17 @@ def calc_p_brightest_compare(acq, mags, mag_errs):
         return 1.0
 
     n_pts = 100
-    x0, x1 = stats.norm.ppf([0.001, 0.999], loc=acq['mag'], scale=acq['mag_err'])
+    x0, x1 = stats_mag('ppf', [0.001, 0.999], acq['mag'], acq['mag_err'], acq['color'])
     x = np.linspace(x0, x1, n_pts)
     dx = (x1 - x0) / (n_pts - 1)
 
-    acq_pdf = stats.norm.pdf(x, loc=acq['mag'], scale=acq['mag_err'])
+    acq_pdf = stats_mag('pdf', x, acq['mag'], acq['mag_err'], acq['color'])
 
     sp_cdfs = []
-    for mag, mag_err in zip(mags, mag_errs):
+    for mag, mag_err, color in zip(mags, mag_errs, colors):
         # Compute prob intruder is fainter than acq (so sp_mag > x).
         # CDF is prob that sp_mag < x, so take 1-CDF.
-        sp_cdf = stats.norm.cdf(x, loc=mag, scale=mag_err)
+        sp_cdf = stats_mag('cdf', x, mag, mag_err, color)
         sp_cdfs.append(1 - sp_cdf)
     prod_sp_cdf = np.prod(sp_cdfs, axis=0).clip(1e-30)
 
@@ -1025,13 +1105,13 @@ def get_intruders(acq, box_size, name, n_sigma, get_func, kwargs):
         if box_size > acq[name_box]:
             raise ValueError(f'box_size is greater than {name_box}')
 
-    colnames = ['yang', 'zang', 'mag', 'mag_err']
+    colnames = ['yang', 'zang', 'mag', 'mag_err', 'color']
     if len(intruders) == 0:
         intruders = {name: np.array([], dtype=np.float64) for name in colnames}
     else:
         ok = ((np.abs(intruders['yang'] - acq['yang']) < box_size.y) &
               (np.abs(intruders['zang'] - acq['zang']) < box_size.z))
-        intruders = {name: intruders[name][ok] for name in ['mag', 'mag_err']}
+        intruders = {name: intruders[name][ok] for name in ['mag', 'mag_err', 'color']}
 
     return intruders
 
