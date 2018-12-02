@@ -302,7 +302,6 @@ class AcqTable(ACACatalogTable):
             self.process_include_ids(cand_acqs, stars)
             cand_acqs.sort('mag')
 
-        cand_acqs.rename_column('COLOR1', 'color')
         # Drop all the other AGASC columns.  No longer useful.
         names = [name for name in cand_acqs.colnames if not name.isupper()]
         cand_acqs = AcqTable(cand_acqs[names])

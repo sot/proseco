@@ -888,6 +888,7 @@ class StarsTable(ACACatalogTable):
         stars.add_column(Column(col, name='col'), index=6)
 
         stars.add_column(Column(stars['MAG_ACA'], name='mag'), index=7)  # For convenience
+        stars.add_column(Column(stars['COLOR1'], name='color'), index=8)  # For convenience
 
         # Mag_err column is the RSS of the catalog mag err (i.e. systematic error in
         # the true star mag) and the sample uncertainty in the ACA readout mag
@@ -993,7 +994,7 @@ class StarsTable(ACACatalogTable):
 
         :param **star: keyword arg attributes corresponding to StarTable columns
         """
-        names = ['id', 'ra', 'dec', 'yang', 'zang', 'row', 'col', 'mag', 'mag_err',
+        names = ['id', 'ra', 'dec', 'yang', 'zang', 'row', 'col', 'mag', 'mag_err', 'color',
                  'POS_ERR', 'PM_RA', 'PM_DEC', 'MAG_ACA',
                  'MAG_ACA_ERR', 'CLASS', 'COLOR1', 'COLOR1_ERR', 'VAR', 'ASPQ1',
                  'ASPQ2', 'ASPQ3', 'RA_PMCORR', 'DEC_PMCORR']
@@ -1027,6 +1028,7 @@ class StarsTable(ACACatalogTable):
         out['RA_PMCORR'] = out['ra']
         out['DEC_PMCORR'] = out['dec']
         out['MAG_ACA'] = out['mag']
+        out['COLOR1'] = out['color']
 
         self.add_row(out)
 
