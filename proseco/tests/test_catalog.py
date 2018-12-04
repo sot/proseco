@@ -36,7 +36,7 @@ def test_get_aca_catalog_20603():
     """Put it all together.  Regression test for selected stars.
     """
     # Force not using a bright star so there is a GUI-only (not BOT) star
-    aca = get_aca_catalog(20603, exclude_ids=[40113544], n_fid=2, n_guide=6, n_acq=7,
+    aca = get_aca_catalog(20603, exclude_ids_acq=[40113544], n_fid=2, n_guide=6, n_acq=7,
                           raise_exc=True)
     # Expected 2 fids, 6 guide, 7 acq
     exp = ['slot idx     id    type  sz   yang     zang   dim res halfw',
