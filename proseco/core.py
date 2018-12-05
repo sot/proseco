@@ -897,8 +897,8 @@ class StarsTable(ACACatalogTable):
         # For color=1.5 stars set a lower limit of 0.3 on the catalog mag error.
         # This is based on analysis in ipynb/star_selection/star-mag-std-dev.ipynb
         # which shows that for color=1.5 stars the observed mag error is
-        # does not correlate well with mag_err below around 0.3 and so capping
-        # at 0.3 is a reasonable way to capture the uncertainty.
+        # does not correlate well with mag_err below around 0.3 and so setting a
+        # floor of 0.3 is a reasonable way to capture the uncertainty.
         ok = stars['COLOR1'] == 1.5
         mag_aca_err[ok] = mag_aca_err[ok].clip(0.3)
 
