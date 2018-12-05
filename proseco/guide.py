@@ -117,6 +117,10 @@ class GuideTable(ACACatalogTable):
             # cand_guides as the 'selected' stars.
             return cand_guides
         cand_guides['stage'] = -1
+        # Force stars in include_ids to be selected at stage 0
+        for star_id in self.include_ids:
+            cand_guides['stage'][cand_guides['id'] == star_id] = 0
+            self.log(f'{star_id} selected in stage 0 via include_ids', level=1)
         n_guide = self.n_guide
         for idx, stage in enumerate(GUIDE_CHAR.stages, 1):
             already_selected = np.count_nonzero(cand_guides['stage'] != -1)
@@ -254,6 +258,30 @@ class GuideTable(ACACatalogTable):
             ok = ok & ~bad_color
         return ok
 
+    def process_include_ids(self, cand_guides, stars):
+        """Ensure that the cand_guides table has stars that were forced to be included.
+
+        Also do validation of include_ids
+
+        :param cand_guides: candidate guide stars table
+        :param stars: stars table
+
+        """
+        for include_id in self.include_ids:
+            if include_id not in cand_guides['id']:
+                try:
+                    star = stars.get_id(include_id)
+                    if ((star['CLASS'] != 0) |
+                        (np.abs(star['row']) >= CHAR.max_ccd_row) |
+                        (np.abs(star['col']) >= CHAR.max_ccd_col)):
+                        raise ValueError("Not a valid candidate")
+                except (ValueError, KeyError):
+                    raise ValueError(f'cannot include star id={include_id} that is not '
+                                     f'a valid star in the ACA field of view')
+                else:
+                    cand_guides.add_row(star)
+                    self.log(f'Included star id={include_id} put in cand_guides')
+
     def get_initial_guide_candidates(self):
         """
         Create a candidate list from the available stars in the field.
@@ -329,6 +357,18 @@ class GuideTable(ACACatalogTable):
             rej['stage'] = 0
             self.reject(rej)
         cand_guides = cand_guides[~fid_trap_spoilers]
+
+        # Deal with include_ids by putting them back in candidate table if necessary
+        self.process_include_ids(cand_guides, stars)
+
+        # Deal with exclude_ids by cutting from the candidate list
+        for star_id in self.exclude_ids:
+            if star_id in cand_guides['id']:
+                self.reject({'stage': 0,
+                             'type': 'exclude_id',
+                             'id': star_id,
+                             'text': f'Cand {star_id} rejected.  In exclude_ids'})
+                cand_guides = cand_guides[cand_guides['id'] != star_id]
 
         # Get the brightest 2x2 in the dark map for each candidate and save value and location
         imp_mag, imp_row, imp_col = get_imposter_mags(cand_guides, dark, self.dither)

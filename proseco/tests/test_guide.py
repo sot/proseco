@@ -263,24 +263,26 @@ def test_guides_include_exclude():
                                  size=1500, n_stars=3)
 
     # Make sure baseline catalog is working like expected
-    guides = get_guide_catalog(**STD_INFO, stars=stars)
-    assert np.all(guides['id'] == np.arange(1, 6))
+    std_info = STD_INFO.copy()
+    std_info.update(n_guide=8)
+    guides = get_guide_catalog(**std_info, stars=stars)
+    assert np.all(guides['id'] == np.arange(1, 9))
 
     # Define includes and excludes.
     include_ids = [9, 11]
     exclude_ids = [1]
 
-    guides = get_guide_catalog(**STD_INFO, stars=stars,
+    guides = get_guide_catalog(**std_info, stars=stars,
                                include_ids=include_ids,
                                exclude_ids=exclude_ids)
 
     assert guides.include_ids == include_ids
     assert guides.exclude_ids == exclude_ids
 
-    # assert all(id_ in guides.cand_guides['id'] for id_ in include_ids)
+    assert all(id_ in guides.cand_guides['id'] for id_ in include_ids)
 
-    # assert all(id_ in guides['id'] for id_ in include_ids)
-    # assert all(id_ not in guides['id'] for id_ in exclude_ids)
+    assert all(id_ in guides['id'] for id_ in include_ids)
+    assert all(id_ not in guides['id'] for id_ in exclude_ids)
 
-    # assert np.all(guides['id'] == [2, 3, 4, 5, 6, 7, 9, 11])
-    # assert np.allclose(guides['mag'], [7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 10.0, 12.0])
+    assert np.all(guides['id'] == [9, 11, 2, 3, 4, 5, 6, 7])
+    assert np.allclose(guides['mag'], [10.0, 12.0, 7.1, 7.2, 7.3, 7.4, 7.5, 7.6])
