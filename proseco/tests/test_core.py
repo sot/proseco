@@ -199,3 +199,18 @@ def test_calc_spoiler_impact_21068():
     assert np.abs(dy) < 1.5
     assert np.abs(dz) < 1.5
     assert np.abs(f) > 0.95
+
+
+def test_mag_err_clip():
+    # Clipping case for star
+    s1 = StarsTable.from_agasc_ids(att=[6.88641501, 16.8899464, 0],
+                                   agasc_ids=[154667024])
+    # s1['MAG_ACA_ERR'] = 77 (0.77)
+    assert s1['COLOR1'] == 1.5
+    assert np.isclose(s1['mag_err'], 0.77, rtol=0, atol=0.01)
+
+    s1 = StarsTable.from_agasc_ids(att=[7.01214503, 17.8931235, 0],
+                                   agasc_ids=[155072616])
+    # s1['MAG_ACA_ERR'] = 9  (0.09)
+    assert s1['COLOR1'] == 1.5
+    assert np.isclose(s1['mag_err'], 0.3, rtol=0, atol=0.01)

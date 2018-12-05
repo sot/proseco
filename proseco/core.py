@@ -893,6 +893,15 @@ class StarsTable(ACACatalogTable):
         # the true star mag) and the sample uncertainty in the ACA readout mag
         # for a star with mag=MAG_ACA.  The latter typically dominates above 9th mag.
         mag_aca_err = stars['MAG_ACA_ERR'] * 0.01
+
+        # For color=1.5 stars set a lower limit of 0.3 on the catalog mag error.
+        # This is based on analysis in ipynb/star_selection/star-mag-std-dev.ipynb
+        # which shows that for color=1.5 stars the observed mag error is
+        # does not correlate well with mag_err below around 0.3 and so setting a
+        # floor of 0.3 is a reasonable way to capture the uncertainty.
+        ok = stars['COLOR1'] == 1.5
+        mag_aca_err[ok] = mag_aca_err[ok].clip(0.3)
+
         mag_std_dev = get_mag_std(stars['MAG_ACA'])
         mag_err = np.sqrt(mag_aca_err ** 2 + mag_std_dev ** 2)
         stars.add_column(Column(mag_err, name='mag_err'), index=8)
