@@ -46,6 +46,14 @@ def get_aca_catalog(obsid=0, **kwargs):
     :returns: ACATable of stars and fids
 
     """
+    # NOTE on API:
+    #
+    # Keywords that have ``_acq`` and/or ``_guide`` suffixes are handled with
+    # the AliasAttribute in core.py.  If one calls get_aca_catalog() with e.g.
+    # ``t_ccd=-10`` then that will set the CCD temperature for both acq and
+    # guide selection.  This is not part of the public API but is a private
+    # feature of the implementation that works for now.
+
     raise_exc = kwargs.pop('raise_exc', None)  # This cannot credibly fail
 
     try:
