@@ -1091,8 +1091,7 @@ def calc_p_on_ccd(row, col, box_size):
 
 class AcqProbs:
     def __init__(self, acqs, acq, dither, stars, dark, t_ccd, date):
-        """
-        Calculate probabilities related to acquisition, in particular an element
+        """Calculate probabilities related to acquisition, in particular an element
         in the ``p_acqs`` matrix which specifies star acquisition probability
         for given search box size and maneuver error.
 
@@ -1106,6 +1105,14 @@ class AcqProbs:
             of ``man_err`` and ``dither``)
         - ``p_acqs``: product of the above three
 
+        Since chandra_aca 4.24 with the grid-floor model, the acquisition
+        probability model value is multiplied here by 0.985 in order to help
+        the optimization algorithm converge to a good solution.  The grid-floor
+        model has accurate p_fail values for bright stars, in the range of
+        0.005, but for catalogs with some bright stars this ends up skewing the
+        p_safe calculation to where the box size of fainter stars does not make
+        enough impact to get optimized.
+
         :param acqs: acqs table (AcqTable)
         :param acq: acq star (AcqTable Row) in the candidate acqs table
         :param dither: dither (float, arcsec)
@@ -1113,6 +1120,7 @@ class AcqProbs:
         :param dark: dark current map
         :param t_ccd: CCD temperature (float, degC)
         :param date: observation date
+
         """
         self._p_brightest = {}
         self._p_acq_model = {}
@@ -1148,7 +1156,7 @@ class AcqProbs:
             p_acq_model = acq_success_prob(date=date, t_ccd=t_ccd,
                                            mag=acq['mag'], color=acq['color'],
                                            spoiler=False, halfwidth=box_size)
-            self._p_acq_model[box_size] = p_acq_model
+            self._p_acq_model[box_size] = p_acq_model * 0.985
 
         # Probability star is in acq box (function of man_err and dither only)
         for man_err in CHAR.man_errs:
