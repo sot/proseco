@@ -436,10 +436,10 @@ def test_get_acq_catalog_21007():
            '    1     1 189410928   -62.52  1763.04   160',
            '    2     2 189409160 -2223.75  1998.69   160',
            '    3     3 189417920  1482.94   243.72   160',
-           '    4     4 189015480  2222.47  -580.99   100',
+           '    4     4 189015480  2222.47  -580.99   160',
            '    5     5 189417752  1994.07   699.55    60',
            '    6     6 189406216 -2311.90  -240.18   120',
-           '    7     7 189416328  1677.88   137.11    60',
+           '    7     7 189416328  1677.88   137.11    80',
            '    8   -99 189416496   333.11   -63.30   120',
            '    9   -99 189410280  -495.21  1712.02   120',
            '   10   -99 189416808  2283.31  2007.54   120',
@@ -460,7 +460,7 @@ def test_get_acq_catalog_21007():
            '    4     4 189015480  2222.47  -580.99    80',
            '    5     5 189417752  1994.07   699.55    60',
            '    6     6 189406216 -2311.90  -240.18   120',
-           '    7     7 189416328  1677.88   137.11    60']
+           '    7     7 189416328  1677.88   137.11    80']
 
     assert repr(acqs[TEST_COLS]).splitlines() == exp
 
@@ -482,7 +482,7 @@ def test_box_strategy_20603():
            '    4     4  40112304 -1644.35  2032.47    80',
            '    5     5 116923528 -2418.65  1088.40   160',
            '    6     6 116791744   985.38 -1210.19   100',
-           '    7     7  40108048     2.21  1619.17   100',
+           '    7     7  40108048     2.21  1619.17   140',
            '    8   -99 116785920  -673.94 -1575.87   120',
            '    9   -99 116923744  -853.18   937.73   120',
            '   10   -99 116792320   941.59 -1784.10   120',
@@ -658,12 +658,12 @@ def test_n_acq():
            ' idx   slot   id    yang     zang   halfw',
            'int64 int64 int32 float64  float64  int64',
            '----- ----- ----- -------- -------- -----',
-           '    0     0   100  2000.00     0.00   160',
-           '    1     1   108  1500.00     0.00   160',
-           '    2     2   101     0.00  2000.00   160',
-           '    3     3   109     0.00  1500.00   160',
-           '    4     4   102 -2000.00     0.00   160',
-           '    5     5   110 -1500.00     0.00   160',
+           '    0     0   100  2000.00     0.00   140',
+           '    1     1   108  1500.00     0.00   140',
+           '    2     2   101     0.00  2000.00   140',
+           '    3     3   109     0.00  1500.00   140',
+           '    4     4   102 -2000.00     0.00   120',
+           '    5     5   110 -1500.00     0.00   120',
            '    6   -99   103     0.00 -2000.00   120',
            '    7   -99   111     0.00 -1500.00   120',
            '    8   -99   104  1000.00  1000.00   120',
@@ -753,7 +753,7 @@ def test_acq_fid_catalog_probs_low_level():
 
     # Initial fid set is empty () and we check baseline p_safe
     assert acqs.fid_set == ()
-    assert np.allclose(np.log10(acqs.calc_p_safe()), -3.75,
+    assert np.allclose(np.log10(acqs.calc_p_safe()), -4.0,
                        rtol=0, atol=0.1)
 
     # This is the acq star spoiled by fid_id=2
@@ -777,7 +777,7 @@ def test_acq_fid_catalog_probs_low_level():
     # spoils an acq star.  This makes the p_safe value much worse.
     acqs.fid_set = (4, 3, 2)
     assert acqs.fid_set == (2, 3, 4)  # gets sorted when set
-    assert np.allclose(np.log10(acqs.calc_p_safe()), -2.4,
+    assert np.allclose(np.log10(acqs.calc_p_safe()), -2.6,
                        rtol=0, atol=0.1)
 
     # With fid_set = (1, 2, 4), the probability multiplier for catalog
@@ -790,7 +790,7 @@ def test_acq_fid_catalog_probs_low_level():
     # set does not spoil an acq star.
     for fid_set in ((1, 3, 4), ()):
         acqs.fid_set = fid_set
-        assert np.allclose(np.log10(acqs.calc_p_safe()), -3.75,
+        assert np.allclose(np.log10(acqs.calc_p_safe()), -4.0,
                            rtol=0, atol=0.1)
 
     # Check that p_acqs() method responds to fid_set in expected way
