@@ -2,6 +2,7 @@ import functools
 import pickle
 import inspect
 import time
+import collections
 from copy import copy
 from pathlib import Path
 
@@ -371,11 +372,23 @@ class ACACatalogTable(Table):
             self._default_formats[name] = '.6f'
 
     def set_attrs_from_kwargs(self, **kwargs):
+
+        # The include/exclude kwargs appear to need to be undefined or lists of ints
+        for name in ['include_ids_acq', 'include_halfws_acq', 'include_ids_guide',
+                    'exclude_ids_acq', 'exclude_ids_guide']:
+            if name in kwargs:
+                if not isinstance(kwargs[name], collections.Iterable):
+                    kwargs[name] = [int(kwargs[name])]
+                else:
+                    kwargs[name] = [int(i) for i in kwargs[name]]
+
+
         for name, val in kwargs.items():
             if name in self.allowed_kwargs:
                 setattr(self, name, val)
             else:
                 raise ValueError(f'unexpected keyword argument "{name}"')
+
 
         # If an explicit obsid is not provided to all getting parameters via mica
         # then all other params must be supplied.
