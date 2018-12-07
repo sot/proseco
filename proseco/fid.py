@@ -98,6 +98,8 @@ class FidTable(ACACatalogTable):
     def thumbs_up(self):
         if self.n_fid == 0:
             out = 1
+        elif len(self) == 0:
+            out = 0
         else:
             out = int(len(self) == self.n_fid and  # Requested number of fids
                       self['spoiler_score'].sum() < 4)  # No red fid warnings

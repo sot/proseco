@@ -182,6 +182,8 @@ class AcqTable(ACACatalogTable):
     def thumbs_up(self):
         if self.n_acq == 0:
             out = 1
+        elif len(self) < 2:
+            out = 0
         else:
             self.update_p_acq_column()
             out = int(self.get_log_p_2_or_fewer() <= np.log10(CHAR.acq_prob))
