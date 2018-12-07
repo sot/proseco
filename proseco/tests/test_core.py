@@ -7,6 +7,8 @@ from astropy.io import ascii
 import agasc
 from ..core import (ACABox, get_kwargs_from_starcheck_text, calc_spoiler_impact,
                     StarsTable)
+from ..acq import AcqTable
+from ..guide import GuideTable
 
 
 def test_agasc_1p7():
@@ -214,3 +216,23 @@ def test_mag_err_clip():
     # s1['MAG_ACA_ERR'] = 9  (0.09)
     assert s1['COLOR1'] == 1.5
     assert np.isclose(s1['mag_err'], 0.3, rtol=0, atol=0.01)
+
+
+@pytest.mark.parametrize('cls', [AcqTable, GuideTable])
+@pytest.mark.parametrize('attr', ['include_ids', 'exclude_ids'])
+def test_alias_attributes(cls, attr):
+    """
+    Unit testing of descriptors, in particular the alias attributes
+    """
+    suffix = '_' + cls.__name__[:-5].lower()
+    for val, exp in ((2.2, [2]),
+                     (np.array([2.2, 3]), [2, 3])):
+        obj = cls()
+        setattr(obj, attr, val)
+        assert getattr(obj, attr) == exp
+        assert getattr(obj, attr + suffix) == exp
+
+        obj = cls()
+        setattr(obj, attr + suffix, val)
+        assert getattr(obj, attr) == exp
+        assert getattr(obj, attr + suffix) == exp
