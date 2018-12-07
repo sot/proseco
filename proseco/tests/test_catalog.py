@@ -134,6 +134,11 @@ def test_no_candidates():
     assert 'id' in acas.guides.colnames
     assert 'id' in acas.fids.colnames
 
+    assert acas.thumbs_up == 0
+    assert acas.acqs.thumbs_up == 0
+    assert acas.guides.thumbs_up == 0
+    assert acas.fids.thumbs_up == 0
+
 
 @pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
 def test_big_dither_from_mica_starcheck():
@@ -217,6 +222,11 @@ def test_call_args_attr():
 def test_bad_obsid():
     aca = get_aca_catalog(obsid='blah blah')  # Expects this to be starcheck catalog
     assert 'ValueError: text does not have OBSID' in aca.exception
+
+    assert aca.thumbs_up == 0
+    assert aca.acqs.thumbs_up == 0
+    assert aca.guides.thumbs_up == 0
+    assert aca.fids.thumbs_up == 0
 
 
 def test_bad_pixel_dark_current():

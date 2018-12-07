@@ -98,6 +98,8 @@ class GuideTable(ACACatalogTable):
         if self.n_guide == 0:
             # If no guides were requested then always OK
             out = 1
+        elif len(self) == 0:
+            out = 0
         else:
             # Evaluate guide catalog quality for thumbs_up
             count = guide_count(self['mag'], self.t_ccd)
