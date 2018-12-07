@@ -313,6 +313,11 @@ class IntMetaAttribute(MetaAttribute):
         instance.meta[self.name] = int(value)
 
 
+class IntListMetaAttribute(MetaAttribute):
+    def __set__(self, instance, value):
+        instance.meta[self.name] = np.atleast_1d(value).astype(np.int64).tolist()
+
+
 class ACACatalogTable(Table):
     """
     Base class for representing ACA catalogs in star selection.  This
@@ -349,11 +354,11 @@ class ACACatalogTable(Table):
     focus_offset = MetaAttribute()
     dark = MetaAttribute(pickle=False)
     stars = MetaAttribute(pickle=False)
-    include_ids_acq = MetaAttribute(default=[])
-    include_halfws_acq = MetaAttribute(default=[])
-    exclude_ids_acq = MetaAttribute(default=[])
-    include_ids_guide = MetaAttribute(default=[])
-    exclude_ids_guide = MetaAttribute(default=[])
+    include_ids_acq = IntListMetaAttribute(default=[])
+    include_halfws_acq = IntListMetaAttribute(default=[])
+    exclude_ids_acq = IntListMetaAttribute(default=[])
+    include_ids_guide = IntListMetaAttribute(default=[])
+    exclude_ids_guide = IntListMetaAttribute(default=[])
     optimize = MetaAttribute(default=True)
     verbose = MetaAttribute(default=False)
     print_log = MetaAttribute(default=False)
