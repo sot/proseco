@@ -502,7 +502,7 @@ def test_box_strategy_20603():
            '    4     4  40112304 -1644.35  2032.47   160',
            '    5     5 116923528 -2418.65  1088.40   160',
            '    6     6 116791744   985.38 -1210.19   160',
-           '    7     7  40108048     2.21  1619.17   160']
+           '    7     7  40108048     2.21  1619.17    60']
 
     assert repr(acqs[TEST_COLS]).splitlines() == exp
 
@@ -753,7 +753,7 @@ def test_acq_fid_catalog_probs_low_level():
 
     # Initial fid set is empty () and we check baseline p_safe
     assert acqs.fid_set == ()
-    assert np.allclose(np.log10(acqs.calc_p_safe()), -4.0,
+    assert np.allclose(np.log10(acqs.calc_p_safe()), -2.4,
                        rtol=0, atol=0.1)
 
     # This is the acq star spoiled by fid_id=2
@@ -777,7 +777,7 @@ def test_acq_fid_catalog_probs_low_level():
     # spoils an acq star.  This makes the p_safe value much worse.
     acqs.fid_set = (4, 3, 2)
     assert acqs.fid_set == (2, 3, 4)  # gets sorted when set
-    assert np.allclose(np.log10(acqs.calc_p_safe()), -2.6,
+    assert np.allclose(np.log10(acqs.calc_p_safe()), -1.3,
                        rtol=0, atol=0.1)
 
     # With fid_set = (1, 2, 4), the probability multiplier for catalog
@@ -790,7 +790,7 @@ def test_acq_fid_catalog_probs_low_level():
     # set does not spoil an acq star.
     for fid_set in ((1, 3, 4), ()):
         acqs.fid_set = fid_set
-        assert np.allclose(np.log10(acqs.calc_p_safe()), -4.0,
+        assert np.allclose(np.log10(acqs.calc_p_safe()), -2.4,
                            rtol=0, atol=0.1)
 
     # Check that p_acqs() method responds to fid_set in expected way
@@ -925,7 +925,7 @@ def test_acq_fid_catalog_one_cand_fid():
     aca = get_aca_catalog(**kwargs)
 
     assert aca.acqs['id'].tolist() == [1, 100, 101, 102, 103]
-    assert aca.acqs['halfw'].tolist() == [80, 160, 160, 160, 140]
+    assert aca.acqs['halfw'].tolist() == [80, 160, 160, 160, 120]
 
     assert aca.n_fid == 3
     assert aca.fids['id'].tolist() == [6]
@@ -976,7 +976,7 @@ def test_acq_fid_catalog_two_cand_fid(n_fid):
     aca = get_aca_catalog(**kwargs)
 
     assert aca.acqs['id'].tolist() == [1, 100, 101, 102, 103]
-    assert aca.acqs['halfw'].tolist() == [80, 160, 160, 160, 140]
+    assert aca.acqs['halfw'].tolist() == [80, 160, 160, 160, 120]
 
     assert aca.n_fid == n_fid
     assert aca.fids['id'].tolist() == [1, 2]

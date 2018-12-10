@@ -616,8 +616,8 @@ class AcqTable(ACACatalogTable):
             if verbose:
                 self.log(f'man_err = {man_err}, p_man_err = {p_man_err}')
                 self.log('p_acqs =' + ' '.join(['{:.3f}'.format(val) for val in p_acqs]))
-                self.log('log10(p 1_or_fewer) = {:.2f}'.format(np.log10(p_n_cum[1])))
-            p_01 = p_n_cum[1]  # 1 or fewer => p_fail at this man_err
+                self.log('log10(p 2_or_fewer) = {:.2f}'.format(np.log10(p_n_cum[2])))
+            p_01 = p_n_cum[2]  # 2 or fewer => p_fail at this man_err
 
             p_no_safe *= (1 - p_man_err * p_01)
 
