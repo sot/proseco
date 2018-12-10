@@ -601,7 +601,14 @@ class AcqTable(ACACatalogTable):
         Calculate the probability of a safing action resulting from failure
         to acquire at least two (2) acquisition stars.
 
+        This uses the probability of 2 or fewer stars => "conservative" p_fail at this
+        man_err.  This uses 2 stars instead of 1 or fewer (which is the actual criteria
+        for a safing action).  This allows for one star to be dropped for reasons not
+        reflected in the acq model probability and makes the optimization dig a bit deeper
+        in to the catalog beyond the brightest stars.
+
         :returns: p_safe (float)
+
         """
 
         p_no_safe = 1.0
@@ -612,14 +619,17 @@ class AcqTable(ACACatalogTable):
 
             p_acqs = [acq['probs'].p_acqs(acq['halfw'], man_err) for acq in self]
 
-            p_n_cum = prob_n_acq(p_acqs)[1]
+            p_n_cum = prob_n_acq(p_acqs)[1]  # This returns (p_n, p_n_cum)
+
+            # Probability of 2 or fewer stars => conservative fail criteria
+            p2 = p_n_cum[2]
+
             if verbose:
                 self.log(f'man_err = {man_err}, p_man_err = {p_man_err}')
                 self.log('p_acqs =' + ' '.join(['{:.3f}'.format(val) for val in p_acqs]))
-                self.log('log10(p 1_or_fewer) = {:.2f}'.format(np.log10(p_n_cum[1])))
-            p_01 = p_n_cum[1]  # 1 or fewer => p_fail at this man_err
+                self.log('log10(p 2_or_fewer) = {:.2f}'.format(np.log10(p2)))
 
-            p_no_safe *= (1 - p_man_err * p_01)
+            p_no_safe *= (1 - p_man_err * p2)
 
         p_safe = 1 - p_no_safe
         self.p_safe = p_safe
