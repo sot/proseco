@@ -11,7 +11,7 @@ from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
 from chandra_aca.transform import mag_to_count_rate, count_rate_to_mag
 
 from ..guide import (get_guide_catalog, check_spoil_contrib, get_pixmag_for_offset,
-                     check_mag_spoilers)
+                     check_mag_spoilers, get_ax_range)
 from ..characteristics_guide import mag_spoiler
 from ..core import StarsTable
 from .test_common import STD_INFO
@@ -286,3 +286,22 @@ def test_guides_include_exclude():
 
     assert np.all(guides['id'] == [9, 11, 2, 3, 4, 5, 6, 7])
     assert np.allclose(guides['mag'], [10.0, 12.0, 7.1, 7.2, 7.3, 7.4, 7.5, 7.6])
+
+
+def test_get_ax_range():
+    # Confirm that the ranges from get_ax_range are reasonable for a variety of
+    # center pixel locations and extents (extent = 4 + pix_dither)
+    ns = [0, 0.71, 495.3, -200.2]
+    extents = [4.0, 5.6, 4.8, 9.0]
+    for (n, extent) in itertools.product(ns, extents):
+        minus, plus = get_ax_range(n, extent)
+        # Confirm range divisable by 2
+        assert (plus - minus) % 2 == 0
+        # Confirm return order
+        assert plus > minus
+        # Confirm the range contains the full extent
+        assert n + extent <= plus
+        assert n - extent >= minus
+        # Confirm the range does not contain more than 2 pix extra on either side
+        assert n + extent + 2 > plus
+        assert n - extent - 2 < minus
