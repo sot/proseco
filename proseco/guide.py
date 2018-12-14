@@ -606,6 +606,25 @@ def check_column_spoilers(cand_stars, ok, stars, n_sigma):
     return column_spoiled, rej
 
 
+def get_ax_range(n, extent):
+    """
+    Given a float pixel row or col value and an integer pixel "extent",
+    return a range for the row or col that is divisible by 2 and contains
+    at least the requested extent
+    :param n: row or col float value
+    :param extent: half of desired range from n
+    :returns: tuple of range as (minus, plus)
+    """
+    minus = int(np.floor(n - extent))
+    plus = int(np.ceil(n + extent))
+    if (np.floor(n) != np.ceil(n)):
+        if n - np.floor(n) > .5:
+            plus += 1
+        else:
+            minus -= 1
+    return minus, plus
+
+
 def get_imposter_mags(cand_stars, dark, dither):
     """
     Get "pseudo-mag" of max pixel value in each candidate star region
@@ -615,18 +634,6 @@ def get_imposter_mags(cand_stars, dark, dither):
     :param dither: observation dither to be used to determine pixels a star could use
     :returns: np.array pixmags, np.array pix_r, np.array pix_c all of length cand_stars
     """
-    def get_ax_range(r, extent):
-
-        # Should come back to this and do something smarter
-        # but right now I just want things that bin nicely 2x2
-        rminus = int(np.floor(r - row_extent))
-        rplus = int(np.ceil(r + row_extent))
-        if (np.floor(r) != np.ceil(r)):
-            if r - np.floor(r) > .5:
-                rplus += 1
-            else:
-                rminus -= 1
-        return rminus, rplus
 
     pixmags = []
     pix_r = []
@@ -635,7 +642,7 @@ def get_imposter_mags(cand_stars, dark, dither):
     # Define the 1/2 pixel region as half the 8x8 plus dither
     row_extent = np.ceil(4 + dither.row)
     col_extent = np.ceil(4 + dither.col)
-    for idx, cand in enumerate(cand_stars):
+    for cand in cand_stars:
         rminus, rplus = get_ax_range(cand['row'], row_extent)
         cminus, cplus = get_ax_range(cand['col'], col_extent)
         pix = np.array(dark.aca[rminus:rplus, cminus:cplus])
