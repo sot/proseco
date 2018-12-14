@@ -608,7 +608,8 @@ def check_column_spoilers(cand_stars, ok, stars, n_sigma):
 
 def get_ax_range(n, extent):
     """
-    Given a float pixel row or col value and an integer pixel "extent",
+    Given a float pixel row or col value and an "extent" in float pixels,
+    generally 4 + 1.6 for 8" dither and 4 + 5.0 for 20" dither,
     return a range for the row or col that is divisible by 2 and contains
     at least the requested extent.
 
