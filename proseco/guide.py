@@ -610,15 +610,18 @@ def get_ax_range(n, extent):
     """
     Given a float pixel row or col value and an integer pixel "extent",
     return a range for the row or col that is divisible by 2 and contains
-    at least the requested extent
+    at least the requested extent.
+
     :param n: row or col float value
     :param extent: half of desired range from n
     :returns: tuple of range as (minus, plus)
     """
     minus = int(np.floor(n - extent))
     plus = int(np.ceil(n + extent))
+    # Use this floor != ceil logic to skip doing anything if the float
+    # n is equivalent to an integer.  This only comes up in test/constructed cases
     if (np.floor(n) != np.ceil(n)):
-        if n - np.floor(n) > .5:
+        if n - np.floor(n) > 0.5:
             plus += 1
         else:
             minus -= 1
