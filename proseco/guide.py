@@ -618,9 +618,7 @@ def get_ax_range(n, extent):
     """
     minus = int(np.floor(n - extent))
     plus = int(np.ceil(n + extent))
-    # Use this floor != ceil logic to skip doing anything if the float
-    # n is equivalent to an integer.  This only comes up in test/constructed cases
-    if (np.floor(n) != np.ceil(n)):
+    if (plus - minus) % 2 != 0:
         if n - np.floor(n) > 0.5:
             plus += 1
         else:
