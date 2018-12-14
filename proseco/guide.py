@@ -612,8 +612,8 @@ def get_ax_range(n, extent):
     return a range for the row or col that is divisible by 2 and contains
     at least the requested extent.
 
-    :param n: row or col float value
-    :param extent: half of desired range from n
+    :param n: row or col float value (edge pixel coords)
+    :param extent: half of desired range from n (should include pixel dither)
     :returns: tuple of range as (minus, plus)
     """
     minus = int(np.floor(n - extent))
