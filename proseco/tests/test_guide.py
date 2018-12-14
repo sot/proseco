@@ -288,6 +288,29 @@ def test_guides_include_exclude():
     assert np.allclose(guides['mag'], [10.0, 12.0, 7.1, 7.2, 7.3, 7.4, 7.5, 7.6])
 
 
+def test_edge_star():
+    """
+    Add stars right at row and col max for 8" dither.
+    This test both confirms that the dark map extraction doesn't break and that
+    the stars can still be selected.
+    """
+    stars = StarsTable.empty()
+
+    stars.add_fake_constellation(mag=[7.0, 7.1, 7.2, 7.3],
+                                 id=[1, 2, 3, 4],
+                                 size=2000, n_stars=4)
+    # Add a stars exactly at col and row max for 8" dither
+    stars.add_fake_star(row=495.3, col=502.4, mag=6.0)
+    stars.add_fake_star(row=-495.3, col=502.4, mag=6.0)
+    stars.add_fake_star(row=-495.3, col=-502.4, mag=6.0)
+    stars.add_fake_star(row=495.3, col=-502.4, mag=6.0)
+
+    std_info = STD_INFO.copy()
+    std_info.update(n_guide=8)
+    guides = get_guide_catalog(**std_info, stars=stars)
+    assert len(guides) == 8
+
+
 def test_get_ax_range():
     # Confirm that the ranges from get_ax_range are reasonable for a variety of
     # center pixel locations and extents (extent = 4 + pix_dither)
