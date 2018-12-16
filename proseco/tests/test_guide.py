@@ -203,6 +203,36 @@ def test_check_spoil_contrib():
     assert bg_spoil[0]
 
 
+pix_cases = [{'dither': (8, 8), 'offset_row': 4, 'offset_col': 4, 'spoils': True},
+             {'dither': (64, 8), 'offset_row': 16, 'offset_col': 0, 'spoils': True},
+             {'dither': (64, 8), 'offset_row': 20, 'offset_col': 0, 'spoils': False},
+             {'dither': (64, 8), 'offset_row': 0, 'offset_col': 16, 'spoils': False},
+             {'dither': (8, 64), 'offset_row': 0, 'offset_col': 16, 'spoils': True},
+             {'dither': (8, 64), 'offset_row': 0, 'offset_col': 20, 'spoils': False}]
+
+
+@pytest.mark.parametrize('case', pix_cases)
+def test_pix_spoiler(case):
+    """
+    Check that for various dither configurations, a hot pixel near a star will
+    result in that star not being selected.
+    """
+    stars = StarsTable.empty()
+    stars.add_fake_star(row=0, col=0, mag=7.0, id=1, ASPQ1=0)
+    stars.add_fake_constellation(n_stars=4)
+    dark = ACAImage(np.zeros((1024, 1024)), row0=-512, col0=-512)
+    pix_config = {'att': (0, 0, 0),
+                  'date': '2018:001',
+                  't_ccd': -10,
+                  'n_guide': 5,
+                  'stars': stars}
+    # Use the "case" to try to spoil the first star with a bad pixel
+    dark.aca[case['offset_row'] + int(stars[0]['row']),
+             case['offset_col'] + int(stars[0]['col'])] = mag_to_count_rate(stars[0]['mag'])
+    selected = get_guide_catalog(**pix_config, dither=case['dither'], dark=dark)
+    assert (1 not in selected['id']) == case['spoils']
+
+
 def test_check_mag_spoilers():
     """
     Check that stars that should fail the mag/line test actually fail
