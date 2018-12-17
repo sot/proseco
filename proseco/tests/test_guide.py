@@ -12,9 +12,9 @@ from chandra_aca.transform import mag_to_count_rate, count_rate_to_mag
 
 from ..guide import (get_guide_catalog, check_spoil_contrib, get_pixmag_for_offset,
                      check_mag_spoilers, get_ax_range)
-from ..characteristics_guide import mag_spoiler
+from ..characteristics_guide import mag_spoiler, CCD
 from ..core import StarsTable
-from .test_common import STD_INFO
+from .test_common import STD_INFO, mod_std_info
 
 
 HAS_SC_ARCHIVE = Path(mica.starcheck.starcheck.FILES['data_root']).exists()
@@ -318,9 +318,12 @@ def test_guides_include_exclude():
     assert np.allclose(guides['mag'], [10.0, 12.0, 7.1, 7.2, 7.3, 7.4, 7.5, 7.6])
 
 
-def test_edge_star():
+dither_cases = [(8, 8), (64, 8), (8, 64), (20, 20), (30, 20)]
+
+@pytest.mark.parametrize('dither', dither_cases)
+def test_edge_star(dither):
     """
-    Add stars right at row and col max for 8" dither.
+    Add stars right at row and col max for various dithers.
     This test both confirms that the dark map extraction doesn't break and that
     the stars can still be selected.
     """
@@ -329,15 +332,19 @@ def test_edge_star():
     stars.add_fake_constellation(mag=[7.0, 7.1, 7.2, 7.3],
                                  id=[1, 2, 3, 4],
                                  size=2000, n_stars=4)
-    # Add a stars exactly at col and row max for 8" dither
-    stars.add_fake_star(row=495.3, col=502.4, mag=6.0)
-    stars.add_fake_star(row=-495.3, col=502.4, mag=6.0)
-    stars.add_fake_star(row=-495.3, col=-502.4, mag=6.0)
-    stars.add_fake_star(row=495.3, col=-502.4, mag=6.0)
 
-    std_info = STD_INFO.copy()
-    std_info.update(n_guide=8)
-    guides = get_guide_catalog(**std_info, stars=stars)
+    # Add stars exactly at 4 corners of allowed "in bounds" area for this dither
+    row_dither = dither[0] / 5.
+    col_dither = dither[1] / 5.
+    row_max = CCD['row_max'] - (CCD['row_pad'] + CCD['window_pad'] + row_dither)
+    col_max = CCD['col_max'] - (CCD['col_pad'] + CCD['window_pad'] + col_dither)
+    stars.add_fake_star(row=row_max, col=col_max, mag=6.0)
+    stars.add_fake_star(row=row_max * -1, col=col_max, mag=6.0)
+    stars.add_fake_star(row=row_max * -1, col=col_max * -1, mag=6.0)
+    stars.add_fake_star(row=row_max, col=col_max * -1, mag=6.0)
+    info = mod_std_info(n_guide=8, dither_guide=(row_dither * 5, col_dither * 5), stars=stars)
+    guides = get_guide_catalog(**info)
+    # Confirm 4 generic stars plus for corner stars are selected
     assert len(guides) == 8
 
 
