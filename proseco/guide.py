@@ -665,7 +665,9 @@ def get_imposter_mags(cand_stars, dark, dither):
                 idx = np.unravel_index(np.argmax(bin_image), bin_image.shape)
                 max_r = rminus + row_off + idx[0] * 2
                 max_c = cminus + col_off + idx[1] * 2
-        pixmax_mag = count_rate_to_mag(pixmax)
+        # Get the mag equivalent to pixmax.  If pixmax is zero (for a synthetic dark map)
+        # clip lower bound at 1.0 to avoid 'inf' mag and warnings from chandra_aca.transform
+        pixmax_mag = count_rate_to_mag(np.clip(pixmax, 1.0, None))
         pixmags.append(pixmax_mag)
         pix_r.append(max_r)
         pix_c.append(max_c)
