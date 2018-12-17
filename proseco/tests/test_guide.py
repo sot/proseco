@@ -349,8 +349,10 @@ def test_edge_star(dither):
 
 
 def test_get_ax_range():
-    # Confirm that the ranges from get_ax_range are reasonable for a variety of
-    # center pixel locations and extents (extent = 4 + pix_dither)
+    """
+    Confirm that the ranges from get_ax_range are reasonable for a variety of
+    center pixel locations and extents (extent = 4 + pix_dither)
+    """
     ns = [0, 0.71, 495.3, -200.2]
     extents = [4.0, 5.6, 4.8, 9.0]
     for (n, extent) in itertools.product(ns, extents):
