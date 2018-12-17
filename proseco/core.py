@@ -353,7 +353,7 @@ class ACACatalogTable(Table):
     detector = MetaAttribute()
     sim_offset = MetaAttribute()
     focus_offset = MetaAttribute()
-    dark = MetaAttribute(pickle=False)
+    dark = MetaAttribute()
     stars = MetaAttribute(pickle=False)
     include_ids_acq = IntListMetaAttribute(default=[])
     include_halfws_acq = IntListMetaAttribute(default=[])
@@ -446,10 +446,21 @@ class ACACatalogTable(Table):
         if self.dark is None:
             from mica.archive.aca_dark import get_dark_cal_image
             self.log(f'Getting dark cal image at date={self.date} t_ccd={self.t_ccd:.1f}')
-            self.dark = get_dark_cal_image(date=self.date, select='before',
-                                           t_ccd_ref=self.t_ccd, aca_image=True)
-        elif not isinstance(self.dark, ACAImage):
-            self.dark = ACAImage(self.dark, row0=-512, col0=-512, copy=False)
+            args = ()
+            kwargs = dict(date=self.date, select='before', t_ccd_ref=self.t_ccd, aca_image=True)
+            func = get_dark_cal_image
+        else:
+            args = (self.dark.view(np.ndarray),)
+            kwargs = dict(row0=-512, col0=-512, copy=False)
+            func = ACAImage
+
+        if not isinstance(self.dark, ACAImage):
+            self.dark = func(*args, **kwargs)
+
+        # Put the provenance of how dark was created into meta where so it can be stored to
+        # the pickle.
+        if '__create_func_args_kwargs__' not in self.dark.meta:
+            self.dark.meta['__create_func_args_kwargs__'] = (func, args, kwargs)
 
         # Set pixel regions from CHAR.bad_pixels to have acqs.dark=700000 (5.0 mag
         # star) per pixel.
@@ -663,21 +674,23 @@ class ACACatalogTable(Table):
 
     def __getstate__(self):
         columns, meta = super().__getstate__()
-        meta = meta.copy()
         cls = self.__class__
 
         # For everything in meta that is a MetaAttribute, check if it should
-        # be pickled.
-        pickle_excludes = []
+        # be pickled.  Everything else gets pickled (one way or another).
+        new_meta = {}
         for attr in meta:
             descr = getattr(cls, attr, None)
             if isinstance(descr, MetaAttribute) and not descr.pickle:
-                pickle_excludes.append(attr)
+                continue
 
-        for attr in pickle_excludes:
-            del meta[attr]
+            val = meta[attr]
+            try:
+                new_meta[attr] = val.meta['__create_func_args_kwargs__']
+            except (AttributeError, KeyError):
+                new_meta[attr] = val
 
-        return columns, meta
+        return columns, new_meta
 
     def to_pickle(self, rootdir='.'):
         """
