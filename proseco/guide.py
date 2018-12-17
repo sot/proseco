@@ -606,22 +606,25 @@ def check_column_spoilers(cand_stars, ok, stars, n_sigma):
     return column_spoiled, rej
 
 
-def get_ax_range(n, extent):
+def get_ax_range(rc, extent):
     """
     Given a float pixel row or col value and an "extent" in float pixels,
     generally 4 + 1.6 for 8" dither and 4 + 5.0 for 20" dither,
     return a range for the row or col that is divisible by 2 and contains
     at least the requested extent.
 
-    :param n: row or col float value (edge pixel coords)
+    :param rc: row or col float value (edge pixel coords)
     :param extent: half of desired range from n (should include pixel dither)
     :returns: tuple of range as (minus, plus)
     """
-    minus = int(np.floor(n - extent))
-    plus = int(np.ceil(n + extent))
+    minus = int(np.floor(rc - extent))
+    plus = int(np.ceil(rc + extent))
+    # If there isn't an even range of pixels, add or subtract one from the range
     if (plus - minus) % 2 != 0:
-        if n - np.floor(n) > 0.5:
+        # If the "rc" value in on the 'right' side of a pixel, add one to the plus
+        if rc - np.floor(rc) > 0.5:
             plus += 1
+        # Otherwise subtract one from the minus
         else:
             minus -= 1
     return minus, plus
