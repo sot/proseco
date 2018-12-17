@@ -644,9 +644,9 @@ def get_imposter_mags(cand_stars, dark, dither):
     pix_r = []
     pix_c = []
 
-    # Define the 1/2 pixel region as half the 8x8 plus dither
-    row_extent = np.ceil(4 + dither.row)
-    col_extent = np.ceil(4 + dither.col)
+    # Define the 1/2 pixel region as half the 8x8 plus a pad plus dither
+    row_extent = 4 + GUIDE_CHAR.dither_pix_pad + dither.row
+    col_extent = 4 + GUIDE_CHAR.dither_pix_pad + dither.col
     for cand in cand_stars:
         rminus, rplus = get_ax_range(cand['row'], row_extent)
         cminus, cplus = get_ax_range(cand['col'], col_extent)
