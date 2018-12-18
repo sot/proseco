@@ -11,10 +11,10 @@ from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
 from chandra_aca.transform import mag_to_count_rate, count_rate_to_mag
 
 from ..guide import (get_guide_catalog, check_spoil_contrib, get_pixmag_for_offset,
-                     check_mag_spoilers)
-from ..characteristics_guide import mag_spoiler
+                     check_mag_spoilers, get_ax_range)
+from ..characteristics_guide import mag_spoiler, CCD
 from ..core import StarsTable
-from .test_common import STD_INFO
+from .test_common import STD_INFO, mod_std_info
 
 
 HAS_SC_ARCHIVE = Path(mica.starcheck.starcheck.FILES['data_root']).exists()
@@ -203,6 +203,36 @@ def test_check_spoil_contrib():
     assert bg_spoil[0]
 
 
+pix_cases = [{'dither': (8, 8), 'offset_row': 4, 'offset_col': 4, 'spoils': True},
+             {'dither': (64, 8), 'offset_row': 16, 'offset_col': 0, 'spoils': True},
+             {'dither': (64, 8), 'offset_row': 20, 'offset_col': 0, 'spoils': False},
+             {'dither': (64, 8), 'offset_row': 0, 'offset_col': 16, 'spoils': False},
+             {'dither': (8, 64), 'offset_row': 0, 'offset_col': 16, 'spoils': True},
+             {'dither': (8, 64), 'offset_row': 0, 'offset_col': 20, 'spoils': False}]
+
+
+@pytest.mark.parametrize('case', pix_cases)
+def test_pix_spoiler(case):
+    """
+    Check that for various dither configurations, a hot pixel near a star will
+    result in that star not being selected.
+    """
+    stars = StarsTable.empty()
+    stars.add_fake_star(row=0, col=0, mag=7.0, id=1, ASPQ1=0)
+    stars.add_fake_constellation(n_stars=4)
+    dark = ACAImage(np.zeros((1024, 1024)), row0=-512, col0=-512)
+    pix_config = {'att': (0, 0, 0),
+                  'date': '2018:001',
+                  't_ccd': -10,
+                  'n_guide': 5,
+                  'stars': stars}
+    # Use the "case" to try to spoil the first star with a bad pixel
+    dark.aca[case['offset_row'] + int(stars[0]['row']),
+             case['offset_col'] + int(stars[0]['col'])] = mag_to_count_rate(stars[0]['mag'])
+    selected = get_guide_catalog(**pix_config, dither=case['dither'], dark=dark)
+    assert (1 not in selected['id']) == case['spoils']
+
+
 def test_check_mag_spoilers():
     """
     Check that stars that should fail the mag/line test actually fail
@@ -286,3 +316,54 @@ def test_guides_include_exclude():
 
     assert np.all(guides['id'] == [9, 11, 2, 3, 4, 5, 6, 7])
     assert np.allclose(guides['mag'], [10.0, 12.0, 7.1, 7.2, 7.3, 7.4, 7.5, 7.6])
+
+
+dither_cases = [(8, 8), (64, 8), (8, 64), (20, 20), (30, 20)]
+
+@pytest.mark.parametrize('dither', dither_cases)
+def test_edge_star(dither):
+    """
+    Add stars right at row and col max for various dithers.
+    This test both confirms that the dark map extraction doesn't break and that
+    the stars can still be selected.
+    """
+    stars = StarsTable.empty()
+
+    stars.add_fake_constellation(mag=[7.0, 7.1, 7.2, 7.3],
+                                 id=[1, 2, 3, 4],
+                                 size=2000, n_stars=4)
+
+    # Add stars exactly at 4 corners of allowed "in bounds" area for this dither
+    row_dither = dither[0] / 5.
+    col_dither = dither[1] / 5.
+    row_max = CCD['row_max'] - (CCD['row_pad'] + CCD['window_pad'] + row_dither)
+    col_max = CCD['col_max'] - (CCD['col_pad'] + CCD['window_pad'] + col_dither)
+    stars.add_fake_star(row=row_max, col=col_max, mag=6.0)
+    stars.add_fake_star(row=row_max * -1, col=col_max, mag=6.0)
+    stars.add_fake_star(row=row_max * -1, col=col_max * -1, mag=6.0)
+    stars.add_fake_star(row=row_max, col=col_max * -1, mag=6.0)
+    info = mod_std_info(n_guide=8, dither_guide=(row_dither * 5, col_dither * 5), stars=stars)
+    guides = get_guide_catalog(**info)
+    # Confirm 4 generic stars plus for corner stars are selected
+    assert len(guides) == 8
+
+
+def test_get_ax_range():
+    """
+    Confirm that the ranges from get_ax_range are reasonable for a variety of
+    center pixel locations and extents (extent = 4 + pix_dither)
+    """
+    ns = [0, 0.71, 495.3, -200.2]
+    extents = [4.0, 5.6, 4.8, 9.0]
+    for (n, extent) in itertools.product(ns, extents):
+        minus, plus = get_ax_range(n, extent)
+        # Confirm range divisable by 2
+        assert (plus - minus) % 2 == 0
+        # Confirm return order
+        assert plus > minus
+        # Confirm the range contains the full extent
+        assert n + extent <= plus
+        assert n - extent >= minus
+        # Confirm the range does not contain more than 2 pix extra on either side
+        assert n + extent + 2 > plus
+        assert n - extent - 2 < minus

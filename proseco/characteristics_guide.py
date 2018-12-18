@@ -9,6 +9,9 @@ fid_trap = {'row': -374,
 # Minimum scaled guide count for thumbs_up
 min_guide_count = 4.0
 
+# Add this padding to region checked for bad pixels (in addition to dither)
+dither_pix_pad = 0.4
+
 CCD = {'row_min': -512.0,
        'row_max': 512.0,
        'col_min': -512.0,

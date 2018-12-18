@@ -606,6 +606,30 @@ def check_column_spoilers(cand_stars, ok, stars, n_sigma):
     return column_spoiled, rej
 
 
+def get_ax_range(rc, extent):
+    """
+    Given a float pixel row or col value and an "extent" in float pixels,
+    generally 4 + 1.6 for 8" dither and 4 + 5.0 for 20" dither,
+    return a range for the row or col that is divisible by 2 and contains
+    at least the requested extent.
+
+    :param rc: row or col float value (edge pixel coords)
+    :param extent: half of desired range from n (should include pixel dither)
+    :returns: tuple of range as (minus, plus)
+    """
+    minus = int(np.floor(rc - extent))
+    plus = int(np.ceil(rc + extent))
+    # If there isn't an even range of pixels, add or subtract one from the range
+    if (plus - minus) % 2 != 0:
+        # If the "rc" value in on the 'right' side of a pixel, add one to the plus
+        if rc - np.floor(rc) > 0.5:
+            plus += 1
+        # Otherwise subtract one from the minus
+        else:
+            minus -= 1
+    return minus, plus
+
+
 def get_imposter_mags(cand_stars, dark, dither):
     """
     Get "pseudo-mag" of max pixel value in each candidate star region
@@ -615,27 +639,15 @@ def get_imposter_mags(cand_stars, dark, dither):
     :param dither: observation dither to be used to determine pixels a star could use
     :returns: np.array pixmags, np.array pix_r, np.array pix_c all of length cand_stars
     """
-    def get_ax_range(r, extent):
-
-        # Should come back to this and do something smarter
-        # but right now I just want things that bin nicely 2x2
-        rminus = int(np.floor(r - row_extent))
-        rplus = int(np.ceil(r + row_extent))
-        if (np.floor(r) != np.ceil(r)):
-            if r - np.floor(r) > .5:
-                rplus += 1
-            else:
-                rminus -= 1
-        return rminus, rplus
 
     pixmags = []
     pix_r = []
     pix_c = []
 
-    # Define the 1/2 pixel region as half the 8x8 plus dither
-    row_extent = np.ceil(4 + dither.row)
-    col_extent = np.ceil(4 + dither.col)
-    for idx, cand in enumerate(cand_stars):
+    # Define the 1/2 pixel region as half the 8x8 plus a pad plus dither
+    row_extent = 4 + GUIDE_CHAR.dither_pix_pad + dither.row
+    col_extent = 4 + GUIDE_CHAR.dither_pix_pad + dither.col
+    for cand in cand_stars:
         rminus, rplus = get_ax_range(cand['row'], row_extent)
         cminus, cplus = get_ax_range(cand['col'], col_extent)
         pix = np.array(dark.aca[rminus:rplus, cminus:cplus])
@@ -653,7 +665,9 @@ def get_imposter_mags(cand_stars, dark, dither):
                 idx = np.unravel_index(np.argmax(bin_image), bin_image.shape)
                 max_r = rminus + row_off + idx[0] * 2
                 max_c = cminus + col_off + idx[1] * 2
-        pixmax_mag = count_rate_to_mag(pixmax)
+        # Get the mag equivalent to pixmax.  If pixmax is zero (for a synthetic dark map)
+        # clip lower bound at 1.0 to avoid 'inf' mag and warnings from chandra_aca.transform
+        pixmax_mag = count_rate_to_mag(np.clip(pixmax, 1.0, None))
         pixmags.append(pixmax_mag)
         pix_r.append(max_r)
         pix_c.append(max_c)
