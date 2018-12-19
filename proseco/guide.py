@@ -260,6 +260,18 @@ class GuideTable(ACACatalogTable):
             ok = ok & ~bad_color
         return ok
 
+    def process_include_ids(self, cand_guides, stars):
+        """Ensure that the cand_guides table has stars that were forced to be included.
+
+        :param cand_guides: candidate guide stars table
+        :param stars: stars table
+
+        """
+        ok = ((np.abs(stars['row']) < CHAR.max_ccd_row) &
+              (np.abs(stars['col']) < CHAR.max_ccd_col))
+
+        super().process_include_ids(cand_guides, stars[ok])
+
     def get_initial_guide_candidates(self):
         """
         Create a candidate list from the available stars in the field.
