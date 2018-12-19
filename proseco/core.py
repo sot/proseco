@@ -590,6 +590,26 @@ class ACACatalogTable(Table):
     def guides(self, val):
         self.meta['guides'] = val
 
+    def process_include_ids(self, cand_stars, stars):
+        """Ensure that the candidate acqs/guides table has stars that were forced to be included.
+
+        Updates ``cand_stars`` in place.
+
+        :param cand_stars: candidate acquisition or guide stars table
+        :param stars: stars table
+
+        """
+        for include_id in self.include_ids:
+            if include_id not in cand_stars['id']:
+                try:
+                    star = stars.get_id(include_id)
+                except KeyError:
+                    raise ValueError(f'cannot include star id={include_id} that is not '
+                                     f'a valid star in the ACA field of view')
+                else:
+                    cand_stars.add_row(star)
+                    self.log(f'Included star id={include_id} in candidates table')
+
     def log(self, data, **kwargs):
         """
         Add a log event to self.log_info['events'] include ``data`` (which
