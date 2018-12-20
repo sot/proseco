@@ -328,6 +328,9 @@ def test_guides_include_bad():
     - Including a star (otherwise acceptable) just off the CCD is not allowed.
 
     """
+    row_max = CCD['row_max'] - CCD['row_pad'] - CCD['window_pad']
+    col_max = CCD['col_max'] - CCD['col_pad'] - CCD['window_pad']
+
     stars = StarsTable.empty()
 
     stars.add_fake_constellation(mag=[7.0, 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7],
@@ -335,10 +338,10 @@ def test_guides_include_bad():
                                  size=2000, n_stars=8)
 
     # Bright star but class 1, not picked
-    stars.add_fake_star(mag=6.5, row=50, col=50, id=10, CLASS=1)
+    stars.add_fake_star(mag=6.5, row=row_max - 1, col=col_max - 1, id=10, CLASS=1)
 
     # Bright star just off the FOV, not picked
-    stars.add_fake_star(mag=6.5, row=512, col=0, id=20)
+    stars.add_fake_star(mag=6.5, row=row_max + 1, col=col_max + 1, id=20)
 
     # Make sure baseline catalog is working like expected
     guides = get_guide_catalog(**STD_INFO, stars=stars)

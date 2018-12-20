@@ -267,8 +267,11 @@ class GuideTable(ACACatalogTable):
         :param stars: stars table
 
         """
-        ok = ((np.abs(stars['row']) < CHAR.max_ccd_row) &
-              (np.abs(stars['col']) < CHAR.max_ccd_col))
+        row_max = CCD['row_max'] - CCD['row_pad'] - CCD['window_pad']
+        col_max = CCD['col_max'] - CCD['col_pad'] - CCD['window_pad']
+
+        ok = ((np.abs(stars['row']) < row_max) &
+              (np.abs(stars['col']) < col_max))
 
         super().process_include_ids(cand_guides, stars[ok])
 
