@@ -227,13 +227,4 @@ def get_starcheck_proseco_outputs(load_name, out_root='.'):
         proseco_cats[int(str_obsid)] = proseco_cat
         del proseco_cats[str_obsid]
 
-    proseco_cats_obsids = set(proseco_cats)
-    starcheck_obss_obsids = set(starcheck_obss)
-    if proseco_cats_obsids > starcheck_obss_obsids:
-        print(f'Obsids {proseco_cats_obsids - starcheck_obss_obsids}'
-              f' in proseco but not in backstop')
-    if proseco_cats_obsids < starcheck_obss_obsids:
-        print(f'Obsids {starcheck_obss_obsids - proseco_cats_obsids}'
-              f' in backstop but not in proseco')
-
     return proseco_cats, starcheck_obss
