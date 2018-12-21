@@ -1145,7 +1145,7 @@ def pea_reject_image(img):
     return False
 
 
-def get_kwargs_from_starcheck_text(obs_text):
+def get_kwargs_from_starcheck_text(obs_text, include_cat=False):
     """
     Get proseco kwargs using the exact catalog from the starcheck output text
     ``obs_text``.  Mostly copied from annie/annie (should move into mica.starcheck
@@ -1215,6 +1215,8 @@ def get_kwargs_from_starcheck_text(obs_text):
         fid_or_mon = (cat['type'] == 'FID') | (cat['type'] == 'MON')
         kw['n_guide'] = 8 - np.count_nonzero(fid_or_mon)
         kw['n_fid'] = np.count_nonzero(cat['type'] == 'FID')
+        if include_cat:
+            kw['cat'] = cat
     except:
         pass
 

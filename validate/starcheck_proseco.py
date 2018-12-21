@@ -37,6 +37,7 @@ or remove:
 - starcheck.txt : to re-do starcheck
 """
 
+import pickle
 from pathlib import Path
 import subprocess
 import shutil
@@ -143,7 +144,8 @@ def get_starcheck_obs_kwargs(filename):
         if "No star catalog for obsid" in chunk:
             continue
         try:
-            out = get_kwargs_from_starcheck_text(chunk)
+            out = get_kwargs_from_starcheck_text(chunk, include_cat=True)
+
         except ValueError:
             continue
         else:
@@ -196,3 +198,33 @@ def run_starcheck(load_name, out_root):
     print(f'Running starcheck in {load_dir}')
     with Ska.File.chdir(str(load_dir)):
         subprocess.run(['bash', '/proj/sot/ska/bin/starcheck'])
+
+
+def get_starcheck_proseco_outputs(load_name, out_root='.'):
+    """Get the complete set of output proseco pickles for each obsid and the corresponding
+    set of observations parameters and backstop catalogs by parsing starcheck.txt.
+
+    :param load_name: load name e.g. 'AUG2018T'
+    :param out_root: directory containing the <load_name> directory (default='.')
+
+    :returns: proseco_cats, starcheck_obss: dicts by obsid
+    """
+    load_dir = Path(out_root, load_name)
+    starcheck_txt = load_dir / 'starcheck.txt'
+    proseco_pickle = load_dir / f'{load_name}_proseco.pkl'
+
+    # First get all the expected calling arguments for all obsids in starcheck output.
+    # This returns a list of dict with get_aca_catalog calling args.  This also returns
+    # the catalog as a Table in the 'cat' key.
+    starcheck_obss = get_starcheck_obs_kwargs(starcheck_txt)
+
+    # Now load the load products pickle with all catalogs
+    proseco_cats = pickle.load(open(proseco_pickle, 'rb'))
+
+    # Change obsid key from str to int (that's the way MATLAB stores them).
+    for str_obsid in list(proseco_cats):
+        proseco_cat = proseco_cats[str_obsid]
+        proseco_cats[int(str_obsid)] = proseco_cat
+        del proseco_cats[str_obsid]
+
+    return proseco_cats, starcheck_obss
