@@ -1,5 +1,9 @@
 from copy import copy
 from pathlib import Path
+
+import matplotlib
+matplotlib.use('agg')
+
 from jinja2 import Template
 import numpy as np
 import matplotlib.pyplot as plt
@@ -157,8 +161,10 @@ def plot(star, startable, filename=None):
     # Plot spoilers in first subplot
     fig = plt.figure(figsize=(8, 4))
     ax = fig.add_subplot(1, 2, 1)
+    vmax = max(np.max(region), 200)
+    vmax = np.round(vmax / 100) * 100
     ax.imshow(region.transpose(), interpolation='none', cmap='hot', origin='lower',
-                 vmin=1, vmax=5000)
+              vmin=1, vmax=vmax)
     x = hw - 4 - 0.5
     y = hw - 4 - 0.5
     patch = patches.Rectangle((x, y),
@@ -175,7 +181,7 @@ def plot(star, startable, filename=None):
             patch = patches.Rectangle((x, y),
                                       8 - i, 8 - i, edgecolor='y', facecolor='none', lw=1)
             ax.add_patch(patch)
-    plt.title("Spoiler stars")
+    plt.title(f"Spoiler stars (vmax={vmax:.0f})")
     # Borrow Tom's hack for row/column ticks from acq reporting.
     # Hack to fix up ticks to have proper row/col coords.  There must be a
     # correct way to do this.
