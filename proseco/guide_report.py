@@ -8,11 +8,10 @@ from jinja2 import Template
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import patches
-from chandra_aca import plot as plot_aca
-from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
-from chandra_aca.transform import mag_to_count_rate, count_rate_to_mag
-from mica.archive.aca_dark.dark_cal import get_dark_cal_image
 
+from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
+from chandra_aca.transform import mag_to_count_rate
+from mica.archive.aca_dark.dark_cal import get_dark_cal_image
 
 from .core import StarsTable
 from .guide import GuideTable, get_ax_range
@@ -49,7 +48,6 @@ def make_report(obsid, rootdir='.'):
     guides.dark = get_dark_cal_image(date=guides.date, select='before',
                                      t_ccd_ref=guides.t_ccd)
 
-
     # For include/exclude stars, add some bookkeeping (the forced column)
     cand_guides['forced'] = False
     for force_include in guides.include_ids_guide:
@@ -72,7 +70,7 @@ def make_report(obsid, rootdir='.'):
 
     cand_guides_table = cand_guides[COLS]
     cand_guides_table['id'] = ['<a href=#{0}>{0}</a>'.format(cand_guide['id'])
-                             for cand_guide in cand_guides]
+                               for cand_guide in cand_guides]
     context['cand_guides_table'] = table_to_html(cand_guides_table)
     template_file = FILEDIR / 'guide_index_template.html'
     template = Template(open(template_file, 'r').read())
@@ -109,8 +107,8 @@ def make_cand_report(guides, cand_guides, context, obsdir):
         rep['log'] = log
         guide_table = cand_guides[COLS][ii:ii + 1].copy()
         guide_table['id'] = ['<a href="http://kadi.cfa.harvard.edu/star_hist/?agasc_id={0}" '
-                           'target="_blank">{0}</a>'
-                           .format(g['id']) for g in guide_table]
+                             'target="_blank">{0}</a>'
+                             .format(g['id']) for g in guide_table]
         rep['guide_table'] = table_to_html(guide_table)
 
         # Make the star detail plot
@@ -139,12 +137,10 @@ def plot(star, startable, filename=None):
     For a given candidate star, make a plot of with a one subplot of possible spoiler stars
     and another subplot of the region of the dark map that would be dithered over.
     """
-    hw = 10 # pixel halfwidth for spoiler plot
-    star_r = int(round(star['row']))
-    star_c = int(round(star['col']))
+    hw = 10  # pixel halfwidth for spoiler plot
     region = ACAImage(np.zeros((hw * 2, hw * 2)),
-                      row0 = int(round(star['row'])) - hw,
-                      col0 = int(round(star['col'])) - hw)
+                      row0=int(round(star['row'])) - hw,
+                      col0=int(round(star['col'])) - hw)
     # Get spoilers
     stars = startable.stars
     ok = ((np.abs(star['row'] - stars['row']) < hw) &
@@ -167,8 +163,7 @@ def plot(star, startable, filename=None):
               vmin=1, vmax=vmax)
     x = hw - 4 - 0.5
     y = hw - 4 - 0.5
-    patch = patches.Rectangle((x, y),
-                               8, 8, edgecolor='y', facecolor='none', lw=1)
+    patch = patches.Rectangle((x, y), 8, 8, edgecolor='y', facecolor='none', lw=1)
     ax.add_patch(patch)
     if len(spoilers) == 0:
         plt.text(6.5, 9.5, "No Spoilers", color='y', fontweight='bold')
@@ -192,7 +187,6 @@ def plot(star, startable, filename=None):
     ax.set_yticklabels(yticks)
     ax.set_ylabel('Column')
 
-
     # Figure out pixel region for dithered-over-pixels plot
     row_extent = np.ceil(4 + startable.dither.row)
     col_extent = np.ceil(4 + startable.dither.col)
@@ -201,13 +195,13 @@ def plot(star, startable, filename=None):
 
     # Pixel region of the star
     img = ACAImage(np.zeros(shape=(rplus - rminus, cplus - cminus)),
-                            row0=rminus, col0=cminus)
+                   row0=rminus, col0=cminus)
     dark = ACAImage(startable.dark, row0=-512, col0=-512)
     img += dark.aca
 
     # Pixel region of the star plus some space for annotation
     canvas = ACAImage(np.zeros(shape=((rplus - rminus) + 8, (cplus - cminus) + 8)),
-                            row0=rminus - 4, col0=cminus - 4)
+                      row0=rminus - 4, col0=cminus - 4)
     canvas += img.aca
 
     ax = fig.add_subplot(1, 2, 2)
@@ -219,8 +213,7 @@ def plot(star, startable, filename=None):
         # Add max region with "mag"
         x = star['imp_r'] - canvas.row0 - .5
         y = star['imp_c'] - canvas.col0 - .5
-        patch = patches.Rectangle((x, y),
-                                   2, 2, edgecolor='y', facecolor='none', lw=1.5)
+        patch = patches.Rectangle((x, y), 2, 2, edgecolor='y', facecolor='none', lw=1.5)
         ax.add_patch(patch)
         plt.text(row_extent - 2, cplus + 1 - canvas.col0, f"box 'mag' {star['imp_mag']:.1f}",
                  color='y', fontweight='bold')
@@ -242,6 +235,3 @@ def plot(star, startable, filename=None):
 
     plt.tight_layout()
     plt.close(fig)
-
-
-
