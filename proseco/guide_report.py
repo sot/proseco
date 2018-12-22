@@ -46,6 +46,7 @@ def make_report(obsid, rootdir='.'):
     context = copy(guides.meta)
     context['str_include_ids'] = ",".join([str(sid) for sid in guides.include_ids_guide])
     context['str_exclude_ids'] = ",".join([str(sid) for sid in guides.exclude_ids_guide])
+
     # Get information that is not stored in the acqs pickle for space reasons
     guides.stars = StarsTable.from_agasc(guides.att, date=guides.date)
     guides.dark = get_dark_cal_image(date=guides.date, select='before',
@@ -90,13 +91,14 @@ def make_cand_report(guides, cand_guides, context, obsdir):
     for ii, guide in enumerate(cand_guides):
         print('Doing detail for star {}'.format(guide['id']))
         select = 'SELECTED' if guide['id'] in guides['id'] else 'not selected'
+
         # Add debugging information if the star was in include/exclude lists
         if (guide['id'] in guides.include_ids_guide) or (guide['id'] in guides.exclude_ids_guide):
             select = select + ' - forced with include/exclude'
         rep = {
             'id': guide['id'],
             'selected': select
-            }
+        }
         log = reject_info_to_report(guide['id'], guides.reject_info)
         if guide['stage'] != -1:
             if guide['stage'] == 0:
@@ -140,10 +142,17 @@ def plot(star, startable, filename=None):
     For a given candidate star, make a plot of with a one subplot of possible spoiler stars
     and another subplot of the region of the dark map that would be dithered over.
     """
+    # NOTE: all coordinates here are "edge" coordinates.  Indexing an ACAImage
+    # pixel using `.aca` coordinates implies using the row, col coordinate of
+    # the lower-left corner of that pixel.
+
     hw = 10  # pixel halfwidth for spoiler plot
+    row0 = int(round(star['row'])) - hw
+    col0 = int(round(star['col'])) - hw
     region = ACAImage(np.zeros((hw * 2, hw * 2)),
-                      row0=int(round(star['row'])) - hw,
-                      col0=int(round(star['col'])) - hw)
+                      row0=row0,
+                      col0=col0)
+
     # Get spoilers
     stars = startable.stars
     ok = ((np.abs(star['row'] - stars['row']) < hw) &
@@ -162,32 +171,26 @@ def plot(star, startable, filename=None):
     ax = fig.add_subplot(1, 2, 1)
     vmax = max(np.max(region), 200)
     vmax = np.round(vmax / 100) * 100
-    ax.imshow(region.transpose(), interpolation='none', cmap='hot', origin='lower',
-              vmin=1, vmax=vmax)
-    x = hw - 4 - 0.5
-    y = hw - 4 - 0.5
+    ax.imshow(region.transpose(), cmap='hot', origin='lower', vmin=1, vmax=vmax,
+              extent=(row0, row0 + hw * 2, col0, col0 + hw * 2))
+
+    # Plot a box showing the 8x8 image boundaries
+    x = row0 + hw - 4
+    y = col0 + hw - 4
     patch = patches.Rectangle((x, y), 8, 8, edgecolor='y', facecolor='none', lw=1)
     ax.add_patch(patch)
+
     if len(spoilers) == 0:
-        plt.text(6.5, 9.5, "No Spoilers", color='y', fontweight='bold')
+        plt.text(row0 + hw, col0 + hw, "No Spoilers", color='y', fontweight='bold',
+                 ha='center', va='center')
     else:
         # Add a cute 8x8 grid
         for i in range(1, 8):
-            patch = patches.Rectangle((x + i, y + i),
-                                      8 - i, 8 - i, edgecolor='y', facecolor='none', lw=1)
-            ax.add_patch(patch)
-            patch = patches.Rectangle((x, y),
-                                      8 - i, 8 - i, edgecolor='y', facecolor='none', lw=1)
-            ax.add_patch(patch)
+            ax.plot([x, x + 8], [y + i, y + i], color='y', lw=1)
+            ax.plot([x + i, x + i], [y, y + 8], color='y', lw=1)
+
     plt.title(f"Spoiler stars (vmax={vmax:.0f})")
-    # Borrow Tom's hack for row/column ticks from acq reporting.
-    # Hack to fix up ticks to have proper row/col coords.  There must be a
-    # correct way to do this.
-    xticks = [str(int(label) + region.row0) for label in ax.get_xticks().tolist()]
-    ax.set_xticklabels(xticks)
     ax.set_xlabel('Row')
-    yticks = [str(int(label) + region.col0) for label in ax.get_yticks().tolist()]
-    ax.set_yticklabels(yticks)
     ax.set_ylabel('Column')
 
     # Figure out pixel region for dithered-over-pixels plot
@@ -203,32 +206,28 @@ def plot(star, startable, filename=None):
     img += dark.aca
 
     # Pixel region of the star plus some space for annotation
-    canvas = ACAImage(np.zeros(shape=((rplus - rminus) + 8, (cplus - cminus) + 8)),
-                      row0=rminus - 4, col0=cminus - 4)
+    row0 = rminus - 4
+    col0 = cminus - 4
+    drow = (rplus - rminus) + 8
+    dcol = (cplus - cminus) + 8
+    canvas = ACAImage(np.zeros(shape=(drow, dcol)), row0=row0, col0=col0)
     canvas += img.aca
 
     ax = fig.add_subplot(1, 2, 2)
     ax.imshow(canvas.transpose(), interpolation='none', cmap='hot', origin='lower',
-              vmin=50, vmax=3000)
+              vmin=50, vmax=3000, extent=(row0, row0 + drow, col0, col0 + dcol))
 
     # If force excluded, will not have imposter mag
     if not (star['forced'] and star['stage'] == -1):
         # Add max region with "mag"
-        x = star['imp_r'] - canvas.row0 - .5
-        y = star['imp_c'] - canvas.col0 - .5
+        x = star['imp_r']
+        y = star['imp_c']
         patch = patches.Rectangle((x, y), 2, 2, edgecolor='y', facecolor='none', lw=1.5)
         ax.add_patch(patch)
-        plt.text(row_extent - 2, cplus + 1 - canvas.col0, f"box 'mag' {star['imp_mag']:.1f}",
-                 color='y', fontweight='bold')
+        plt.text(row0 + drow / 2, col0 + dcol - 1, f"box 'mag' {star['imp_mag']:.1f}",
+                 ha='center', va='center', color='y', fontweight='bold')
 
-    # Borrow Tom's hack for row/column ticks from acq reporting.
-    # Hack to fix up ticks to have proper row/col coords.  There must be a
-    # correct way to do this.
-    xticks = [str(int(label) + canvas.row0) for label in ax.get_xticks().tolist()]
-    ax.set_xticklabels(xticks)
     ax.set_xlabel('Row')
-    yticks = [str(int(label) + canvas.col0) for label in ax.get_yticks().tolist()]
-    ax.set_yticklabels(yticks)
     ax.set_ylabel('Column')
     plt.title("Dark Current in dither region")
 
