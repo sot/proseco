@@ -263,26 +263,17 @@ class GuideTable(ACACatalogTable):
     def process_include_ids(self, cand_guides, stars):
         """Ensure that the cand_guides table has stars that were forced to be included.
 
-        Also do validation of include_ids
-
         :param cand_guides: candidate guide stars table
         :param stars: stars table
 
         """
-        for include_id in self.include_ids:
-            if include_id not in cand_guides['id']:
-                try:
-                    star = stars.get_id(include_id)
-                    if ((star['CLASS'] != 0) |
-                        (np.abs(star['row']) >= CHAR.max_ccd_row) |
-                        (np.abs(star['col']) >= CHAR.max_ccd_col)):
-                        raise ValueError("Not a valid candidate")
-                except (ValueError, KeyError):
-                    raise ValueError(f'cannot include star id={include_id} that is not '
-                                     f'a valid star in the ACA field of view')
-                else:
-                    cand_guides.add_row(star)
-                    self.log(f'Included star id={include_id} put in cand_guides')
+        row_max = CCD['row_max'] - CCD['row_pad'] - CCD['window_pad']
+        col_max = CCD['col_max'] - CCD['col_pad'] - CCD['window_pad']
+
+        ok = ((np.abs(stars['row']) < row_max) &
+              (np.abs(stars['col']) < col_max))
+
+        super().process_include_ids(cand_guides, stars[ok])
 
     def get_initial_guide_candidates(self):
         """

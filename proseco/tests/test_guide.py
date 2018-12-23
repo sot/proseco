@@ -320,6 +320,42 @@ def test_guides_include_exclude():
 
 dither_cases = [(8, 8), (64, 8), (8, 64), (20, 20), (30, 20)]
 
+def test_guides_include_bad():
+    """
+    Test include stars for guide where star is bad for some reason.
+
+    - Including a class=1 star on the CCD is allowed.
+    - Including a star (otherwise acceptable) just off the CCD is not allowed.
+
+    """
+    row_max = CCD['row_max'] - CCD['row_pad'] - CCD['window_pad']
+    col_max = CCD['col_max'] - CCD['col_pad'] - CCD['window_pad']
+
+    stars = StarsTable.empty()
+
+    stars.add_fake_constellation(mag=[7.0, 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7],
+                                 id=[1, 2, 3, 4, 5, 6, 7, 8],
+                                 size=2000, n_stars=8)
+
+    # Bright star but class 1, not picked
+    stars.add_fake_star(mag=6.5, row=row_max - 1, col=col_max - 1, id=10, CLASS=1)
+
+    # Bright star just off the FOV, not picked
+    stars.add_fake_star(mag=6.5, row=row_max + 1, col=col_max + 1, id=20)
+
+    # Make sure baseline catalog is working like expected
+    guides = get_guide_catalog(**STD_INFO, stars=stars)
+    assert np.all(guides['id'] == [1, 2, 3, 4, 5])
+
+    # Picking the class=1 star is fine
+    guides = get_guide_catalog(**STD_INFO, stars=stars, include_ids=10)
+    assert np.all(sorted(guides['id']) == [1, 2, 3, 4, 10])
+
+    # Picking the star off the CCD generates an exception
+    with pytest.raises(ValueError) as err:
+        get_guide_catalog(**STD_INFO, stars=stars, include_ids=20)
+    assert 'cannot include star id=20' in str(err)
+
 @pytest.mark.parametrize('dither', dither_cases)
 def test_edge_star(dither):
     """

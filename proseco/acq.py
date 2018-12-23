@@ -421,16 +421,7 @@ class AcqTable(ACACatalogTable):
                              kind='nearest', fill_value='extrapolate')
         self.include_halfws = grid_func(self.include_halfws).tolist()
 
-        for include_id in self.include_ids:
-            if include_id not in cand_acqs['id']:
-                try:
-                    star = stars.get_id(include_id)
-                except KeyError:
-                    raise ValueError(f'cannot include star id={include_id} that is not '
-                                     f'a valid star in the ACA field of view')
-                else:
-                    cand_acqs.add_row(star)
-                    self.log(f'Included star id={include_id} in cand_acqs')
+        super().process_include_ids(cand_acqs, stars)
 
     def select_best_p_acqs(self, cand_acqs, min_p_acq, acq_indices, box_sizes):
         """
