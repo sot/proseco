@@ -137,9 +137,9 @@ def reject_info_to_report(starid, reject_info):
     return log
 
 
-def plot(star, startable, filename=None):
+def plot(guide, cand_guides, filename=None):
     """
-    For a given candidate star, make a plot of with a one subplot of possible spoiler stars
+    For a given candidate guide, make a plot of with a one subplot of possible spoiler stars
     and another subplot of the region of the dark map that would be dithered over.
     """
     # NOTE: all coordinates in plot funcs are "edge" coordinates.  Indexing an
@@ -150,11 +150,11 @@ def plot(star, startable, filename=None):
 
     # First plot: star spoilers
     ax = fig.add_subplot(1, 2, 1)
-    plot_spoilers(star, startable, ax)
+    plot_spoilers(guide, cand_guides, ax)
 
     # Second plot: hot pixel imposters
     ax = fig.add_subplot(1, 2, 2)
-    plot_imposters(star, startable, ax)
+    plot_imposters(guide, cand_guides, ax)
 
     plt.tight_layout()
     if filename is not None:
@@ -164,14 +164,14 @@ def plot(star, startable, filename=None):
     plt.close(fig)
 
 
-def plot_spoilers(star, startable, ax):
+def plot_spoilers(guide, cand_guides, ax):
     """
-    Make the spoilers plot for a given `star` candidate.
+    Make the spoilers plot for a given `guide` candidate.
     """
     # Define bounds of spoiler image plot: halfwidth, center, lower-left corner
     hw = 10
-    rowc = int(round(star['row']))
-    colc = int(round(star['col']))
+    rowc = int(round(guide['row']))
+    colc = int(round(guide['col']))
     row0 = rowc - hw
     col0 = colc - hw
 
@@ -181,10 +181,10 @@ def plot_spoilers(star, startable, ax):
                       col0=col0)
 
     # Get spoilers
-    stars = startable.stars
-    ok = ((np.abs(star['row'] - stars['row']) < hw) &
-          (np.abs(star['col'] - stars['col']) < hw) &
-          (stars['id'] != star['id']))
+    stars = cand_guides.stars
+    ok = ((np.abs(guide['row'] - stars['row']) < hw) &
+          (np.abs(guide['col'] - stars['col']) < hw) &
+          (stars['id'] != guide['id']))
     spoilers = stars[ok]
 
     # Add to image
@@ -226,23 +226,23 @@ def plot_spoilers(star, startable, ax):
     ax.set_ylabel('Column')
 
 
-def plot_imposters(star, startable, ax):
+def plot_imposters(guide, cand_guides, ax):
     """
-    Make the hot pixel imposters plot for a given `star` candidate.
+    Make the hot pixel imposters plot for a given `guide` candidate.
     """
     # Figure out pixel region for dithered-over-pixels plot
-    row_extent = np.ceil(4 + startable.dither.row)
-    col_extent = np.ceil(4 + startable.dither.col)
-    rminus, rplus = get_ax_range(star['row'], row_extent)
-    cminus, cplus = get_ax_range(star['col'], col_extent)
+    row_extent = np.ceil(4 + cand_guides.dither.row)
+    col_extent = np.ceil(4 + cand_guides.dither.col)
+    rminus, rplus = get_ax_range(guide['row'], row_extent)
+    cminus, cplus = get_ax_range(guide['col'], col_extent)
 
-    # Pixel region of the star
+    # Pixel region of the guide
     img = ACAImage(np.zeros(shape=(rplus - rminus, cplus - cminus)),
                    row0=rminus, col0=cminus)
-    dark = ACAImage(startable.dark, row0=-512, col0=-512)
+    dark = ACAImage(cand_guides.dark, row0=-512, col0=-512)
     img += dark.aca
 
-    # Pixel region of the star plus some space for annotation
+    # Pixel region of the guide plus some space for annotation
     row0 = rminus - 4
     col0 = cminus - 4
     drow = (rplus - rminus) + 8
@@ -254,13 +254,13 @@ def plot_imposters(star, startable, ax):
               vmin=50, vmax=3000, extent=(row0, row0 + drow, col0, col0 + dcol))
 
     # If force excluded, will not have imposter mag
-    if not (star['forced'] and star['stage'] == -1):
+    if not (guide['forced'] and guide['stage'] == -1):
         # Add max region with "mag"
-        x = star['imp_r']
-        y = star['imp_c']
+        x = guide['imp_r']
+        y = guide['imp_c']
         patch = patches.Rectangle((x, y), 2, 2, edgecolor='y', facecolor='none', lw=1.5)
         ax.add_patch(patch)
-        plt.text(row0 + drow / 2, col0 + dcol - 1, f"box 'mag' {star['imp_mag']:.1f}",
+        plt.text(row0 + drow / 2, col0 + dcol - 1, f"box 'mag' {guide['imp_mag']:.1f}",
                  ha='center', va='center', color='y', fontweight='bold')
 
     # Plot a box showing the 8x8 image boundaries
