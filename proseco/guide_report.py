@@ -25,7 +25,7 @@ MAX_CAND = 50
 COLS = ['id', 'stage', 'forced',
         'mag', 'mag_err',
         'yang', 'zang', 'row', 'col',
-        'COLOR1', 'MAG_ACA_ERR']
+        'COLOR1', 'ASPQ1', 'MAG_ACA_ERR']
 FILEDIR = Path(__file__).parent
 APL = AcaPsfLibrary()
 
