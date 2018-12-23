@@ -23,7 +23,7 @@ from .report import table_to_html
 # Do reporting for at-most MAX_CAND candidates
 MAX_CAND = 50
 COLS = ['id', 'stage', 'forced',
-        'mag', 'mag_err', 'MAG_ACA', 'MAG_ACA_ERR',
+        'mag', 'mag_err',
         'yang', 'zang', 'row', 'col', 'COLOR1']
 FILEDIR = Path(__file__).parent
 APL = AcaPsfLibrary()
