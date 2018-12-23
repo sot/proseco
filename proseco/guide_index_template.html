@@ -1,0 +1,103 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+  <head>
+    <title>Proseco guide star selection summary</title>
+    <link href="/mta/ASPECT/aspect.css" rel="stylesheet" type="text/css" media="all" />
+  <style>
+h1,h2,h3,h4 {
+  color: #990000;
+}
+
+table.table-striped {
+        border-width: thin thin thin thin;
+        border-spacing: 1px;
+        border-style: outset outset outset outset;
+        border-color: gray gray gray gray;
+        border-collapse: separate;
+        background-color: white;
+}
+
+table.table-striped th {
+        border-width: 1px 1px 1px 1px;
+        padding: 1px 3px 1px 3px;
+        border-color: gray;
+        border-style: inset;
+}
+table.table-striped td {
+        border-width: 1px 1px 1px 1px;
+        padding: 1px 3px 1px 3px;
+        border-style: inset;
+        border-color: gray;
+        text-align: right;
+}
+</style>
+  </head>
+
+  <body>
+
+<!--#include virtual="/mta/ASPECT/header.html"-->
+
+<h1> Obsid {{obsid}} at {{date}}</h1>
+
+<table class="table-striped">
+  <tr>  <td> <b>RA</b> </td> <td> {{ att[0] }} </td> </tr>
+  <tr>  <td> <b>Dec</b> </td> <td> {{ att[1] }} </td> </tr>
+  <tr>  <td> <b>Roll</b> </td> <td> {{ att[2] }} </td> </tr>
+  <tr>  <td> <b>t_ccd</b> </td> <td> {{ t_ccd_guide }} </td> </tr>
+  <tr>  <td> <b>dither_y</b> </td> <td> {{ dither_guide.y }} </td> </tr>
+  <tr>  <td> <b>dither_z</b> </td> <td> {{ dither_guide.z }} </td> </tr>
+  <tr>  <td> <b>n_guide</b> </td> <td> {{ n_guide }} </td> </tr>
+  <tr>  <td> <b>include_ids</b> </td> <td> {{ str_include_ids }} </td> </tr>
+  <tr>  <td> <b>exclude_ids</b> </td> <td> {{ str_exclude_ids }} </td> </tr>
+</table>
+
+
+
+<h2> Guide star catalog </h2>
+
+<table>
+  <tr>
+    <td> {{ guides_table | safe }} </td>
+  </tr>
+</table>
+
+
+<h2> Candidates stars summary </h2>
+
+<table>
+  <tr>
+    <td> {{ cand_guides_table | safe }} </td>
+  </tr>
+</table>
+
+
+<h2> Star details </h2>
+<table>
+{% for star in cand_guides %}
+  <hr></hr>
+  <h3 id="{{star['id']}}"> AGASC ID {{ star['id'] }} ({{star['selected']}})</h3>
+
+  <table>
+
+    <tr><td>{{ star['guide_table'] | safe }}</td></tr>
+    <tr><td><img src="{{star['candidate_plot'] | safe}}"></td></tr>
+  </table>
+
+
+  <h4>Progress through star selection stages<h4>
+  <table>
+  {% for line in star['log'] %}
+  <tr>
+    <td><tt> {{line}} </tt></td>
+  </tr>
+  {% endfor %}
+  </table>
+{% endfor %}
+</table>
+
+
+<!--#include virtual="/mta/ASPECT/footer.html"-->
+<!--footer end-->
+
+  </body>
+</html>
