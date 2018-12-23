@@ -142,12 +142,32 @@ def plot(star, startable, filename=None):
     For a given candidate star, make a plot of with a one subplot of possible spoiler stars
     and another subplot of the region of the dark map that would be dithered over.
     """
-    # NOTE: all coordinates here are "edge" coordinates.  Indexing an ACAImage
-    # pixel using `.aca` coordinates implies using the row, col coordinate of
-    # the lower-left corner of that pixel.
+    # NOTE: all coordinates in plot funcs are "edge" coordinates.  Indexing an
+    # ACAImage pixel using `.aca` coordinates implies using the row, col
+    # coordinate of the lower-left corner of that pixel.
+
+    fig = plt.figure(figsize=(8, 4))
 
     # First plot: star spoilers
+    ax = fig.add_subplot(1, 2, 1)
+    plot_spoilers(star, startable, ax)
 
+    # Second plot: hot pixel imposters
+    ax = fig.add_subplot(1, 2, 2)
+    plot_imposters(star, startable, ax)
+
+    plt.tight_layout()
+    if filename is not None:
+        # When Ska3 has matplotlib 2.2+ then just use `filename`
+        plt.savefig(str(filename), pad_inches=0.0)
+
+    plt.close(fig)
+
+
+def plot_spoilers(star, startable, ax):
+    """
+    Make the spoilers plot for a given `star` candidate.
+    """
     # Define bounds of spoiler image plot: halfwidth, center, lower-left corner
     hw = 10
     rowc = int(round(star['row']))
@@ -172,10 +192,6 @@ def plot(star, startable, filename=None):
         spoil_img = APL.get_psf_image(row=spoil['row'], col=spoil['col'], pix_zero_loc='edge',
                                       norm=mag_to_count_rate(spoil['mag']))
         region = region + spoil_img.aca
-
-    # Plot spoilers in first subplot
-    fig = plt.figure(figsize=(8, 4))
-    ax = fig.add_subplot(1, 2, 1)
 
     # Get vmax from max pix value, but round to nearest 100, and create the image
     vmax = np.max(region).clip(100)
@@ -209,8 +225,11 @@ def plot(star, startable, filename=None):
     ax.set_xlabel('Row')
     ax.set_ylabel('Column')
 
-    # Second plot: dark current and imposters
 
+def plot_imposters(star, startable, ax):
+    """
+    Make the hot pixel imposters plot for a given `star` candidate.
+    """
     # Figure out pixel region for dithered-over-pixels plot
     row_extent = np.ceil(4 + startable.dither.row)
     col_extent = np.ceil(4 + startable.dither.col)
@@ -231,7 +250,6 @@ def plot(star, startable, filename=None):
     canvas = ACAImage(np.zeros(shape=(drow, dcol)), row0=row0, col0=col0)
     canvas += img.aca
 
-    ax = fig.add_subplot(1, 2, 2)
     ax.imshow(canvas.transpose(), interpolation='none', cmap='hot', origin='lower',
               vmin=50, vmax=3000, extent=(row0, row0 + drow, col0, col0 + dcol))
 
@@ -259,10 +277,3 @@ def plot(star, startable, filename=None):
     ax.set_xlabel('Row')
     ax.set_ylabel('Column')
     plt.title("Dark Current in dither region")
-
-    plt.tight_layout()
-    if filename is not None:
-        # When Ska3 has matplotlib 2.2+ then just use `filename`
-        plt.savefig(str(filename), pad_inches=0.0)
-
-    plt.close(fig)
