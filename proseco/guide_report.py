@@ -24,7 +24,8 @@ from .report import table_to_html
 MAX_CAND = 50
 COLS = ['id', 'stage', 'forced',
         'mag', 'mag_err',
-        'yang', 'zang', 'row', 'col', 'COLOR1']
+        'yang', 'zang', 'row', 'col',
+        'COLOR1', 'MAG_ACA_ERR']
 FILEDIR = Path(__file__).parent
 APL = AcaPsfLibrary()
 
@@ -75,6 +76,7 @@ def make_report(obsid, rootdir='.'):
     # Guide star table
     cols = COLS.copy()
     cols.remove('forced')
+    cols.remove('MAG_ACA_ERR')
     guides_table = guides[cols]
     guides_table['id'] = ['<a href=#{0}>{0}</a>'.format(guide['id'])
                           for guide in guides_table]
