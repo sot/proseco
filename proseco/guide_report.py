@@ -72,10 +72,21 @@ def make_report(obsid, rootdir='.'):
 
     make_cand_report(guides, cand_guides, context, obsdir)
 
+    # Guide star table
+    cols = COLS.copy()
+    cols.remove('forced')
+    guides_table = guides[cols]
+    guides_table['id'] = ['<a href=#{0}>{0}</a>'.format(guide['id'])
+                          for guide in guides_table]
+    context['guides_table'] = table_to_html(guides_table)
+
+    # Candidate guides table
     cand_guides_table = cand_guides[COLS]
     cand_guides_table['id'] = ['<a href=#{0}>{0}</a>'.format(cand_guide['id'])
                                for cand_guide in cand_guides]
     context['cand_guides_table'] = table_to_html(cand_guides_table)
+
+    # Make the HTML
     template_file = FILEDIR / 'guide_index_template.html'
     template = Template(open(template_file, 'r').read())
     out_html = template.render(context)
