@@ -41,6 +41,7 @@ import pickle
 from pathlib import Path
 import subprocess
 import shutil
+import pickle
 
 import parse_cm
 from proseco import get_aca_catalog
@@ -154,7 +155,7 @@ def get_starcheck_obs_kwargs(filename):
     return outs
 
 
-def update_products(load_name, out_root):
+def update_products(load_name, out_root, orv_pickle=None):
     load_dir = Path(out_root) / load_name
     touch_file = load_dir / '000-proseco'
     if touch_file.exists():
@@ -165,16 +166,25 @@ def update_products(load_name, out_root):
     bspath = list(load_dir.glob('CR*.backstop'))[0]
     dotpath = list(load_dir.glob('mps/md*.dot'))[0]
 
-    obs_kwargs = get_starcheck_obs_kwargs(load_dir / 'starcheck.txt')
-
     gs = parse_cm.read_guide_summary(gspath)
     bs = parse_cm.read_backstop(bspath)
     dt = parse_cm.read_dot_as_list(dotpath)
 
-    cats = {}
-    for obsid, kwargs in obs_kwargs.items():
-        print(f'  Generating proseco catalog for {obsid}')
-        cats[obsid] = get_aca_catalog(raise_exc=True, **kwargs)
+    if orv_pickle is None:
+        obs_kwargs = get_starcheck_obs_kwargs(load_dir / 'starcheck.txt')
+        cats = {}
+        for obsid, kwargs in obs_kwargs.items():
+            print(f'  Generating proseco catalog for {obsid}')
+            cats[obsid] = get_aca_catalog(raise_exc=True, **kwargs)
+    else:
+        orvcats = pickle.load(open(orv_pickle, 'rb'))
+        # The ORV proseco pickle uses strings as the keys, so int them
+        cats = {int(k): v for k, v in orvcats.items()}
+        # It looks like the proseco pickle has catalogs for no-catalog
+        # observations (dark cal), so trim those
+        extras = set(cats.keys()) - set([summ['obsid'] for summ in gs['summs']])
+        for obs in extras:
+            del cats[obs]
 
     print('Updating backstop, DOT and guide summary products')
     gs = parse_cm.replace_starcat_guide_summary(gs, cats)
