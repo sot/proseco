@@ -146,9 +146,16 @@ def plot(star, startable, filename=None):
     # pixel using `.aca` coordinates implies using the row, col coordinate of
     # the lower-left corner of that pixel.
 
-    hw = 10  # pixel halfwidth for spoiler plot
-    row0 = int(round(star['row'])) - hw
-    col0 = int(round(star['col'])) - hw
+    # First plot: star spoilers
+
+    # Define bounds of spoiler image plot: halfwidth, center, lower-left corner
+    hw = 10
+    rowc = int(round(star['row']))
+    colc = int(round(star['col']))
+    row0 = rowc - hw
+    col0 = colc - hw
+
+    # Pixel image canvas for plot
     region = ACAImage(np.zeros((hw * 2, hw * 2)),
                       row0=row0,
                       col0=col0)
@@ -169,29 +176,40 @@ def plot(star, startable, filename=None):
     # Plot spoilers in first subplot
     fig = plt.figure(figsize=(8, 4))
     ax = fig.add_subplot(1, 2, 1)
-    vmax = max(np.max(region), 200)
-    vmax = np.round(vmax / 100) * 100
+
+    # Get vmax from max pix value, but round to nearest 100, and create the image
+    vmax = np.max(region).clip(100)
+    vmax = np.ceil(vmax / 100) * 100
     ax.imshow(region.transpose(), cmap='hot', origin='lower', vmin=1, vmax=vmax,
               extent=(row0, row0 + hw * 2, col0, col0 + hw * 2))
 
     # Plot a box showing the 8x8 image boundaries
-    x = row0 + hw - 4
-    y = col0 + hw - 4
+    x = rowc - 4
+    y = colc - 4
     patch = patches.Rectangle((x, y), 8, 8, edgecolor='y', facecolor='none', lw=1)
     ax.add_patch(patch)
 
+    # Make an empty box (no spoilers) or a cute 8x8 grid
     if len(spoilers) == 0:
-        plt.text(row0 + hw, col0 + hw, "No Spoilers", color='y', fontweight='bold',
+        plt.text(rowc, colc, "No Spoilers", color='y', fontweight='bold',
                  ha='center', va='center')
     else:
-        # Add a cute 8x8 grid
         for i in range(1, 8):
             ax.plot([x, x + 8], [y + i, y + i], color='y', lw=1)
             ax.plot([x + i, x + i], [y, y + 8], color='y', lw=1)
 
+    # Add mag text to each spoiler
+    for spoil in spoilers:
+        # Mag label above or below to ensure the label is in the image
+        dcol = -3 if (spoil['col'] > colc) else 3
+        plt.text(spoil['row'], spoil['col'] + dcol, f"mag={spoil['mag']:.1f}",
+                 color='y', fontweight='bold', ha='center', va='center')
+
     plt.title(f"Spoiler stars (vmax={vmax:.0f})")
     ax.set_xlabel('Row')
     ax.set_ylabel('Column')
+
+    # Second plot: dark current and imposters
 
     # Figure out pixel region for dithered-over-pixels plot
     row_extent = np.ceil(4 + startable.dither.row)
@@ -227,13 +245,24 @@ def plot(star, startable, filename=None):
         plt.text(row0 + drow / 2, col0 + dcol - 1, f"box 'mag' {star['imp_mag']:.1f}",
                  ha='center', va='center', color='y', fontweight='bold')
 
+    # Plot a box showing the 8x8 image boundaries
+    x = row0 + drow / 2 - 4
+    y = col0 + dcol / 2 - 4
+    patch = patches.Rectangle((x, y), 8, 8, edgecolor='y', facecolor='none', lw=1)
+    ax.add_patch(patch)
+
+    # Plot a box showing the 8x8 image boundaries
+    patch = patches.Rectangle((rminus, cminus), rplus - rminus, cplus - cminus,
+                              edgecolor='g', facecolor='none', lw=1)
+    ax.add_patch(patch)
+
     ax.set_xlabel('Row')
     ax.set_ylabel('Column')
     plt.title("Dark Current in dither region")
 
+    plt.tight_layout()
     if filename is not None:
         # When Ska3 has matplotlib 2.2+ then just use `filename`
         plt.savefig(str(filename), pad_inches=0.0)
 
-    plt.tight_layout()
     plt.close(fig)
