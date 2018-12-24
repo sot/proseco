@@ -14,7 +14,7 @@ setup(name='proseco',
       version=__version__,
       zip_safe=False,
       packages=['proseco', 'proseco.tests'],
-      package_data={'proseco': ['*index_template.html']},
+      package_data={'proseco': ['index_template*.html']},
       tests_require=['pytest'],
       cmdclass=cmdclass,
       )

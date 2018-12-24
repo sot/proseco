@@ -1,8 +1,6 @@
 # coding: utf-8
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-from __future__ import division, print_function, absolute_import  # For Py2 compatibility
-
 from copy import copy, deepcopy
 import re
 from pathlib import Path
@@ -17,9 +15,9 @@ from astropy.table import Table, Column
 
 from chandra_aca.aca_image import ACAImage
 
-from . import characteristics as CHAR
+from . import characteristics_acq as ACQ
 from .acq import AcqTable
-from .core import StarsTable
+from .core import StarsTable, table_to_html
 from chandra_aca import plot as plot_aca
 from mica.archive.aca_dark.dark_cal import get_dark_cal_image
 
@@ -27,18 +25,6 @@ from mica.archive.aca_dark.dark_cal import get_dark_cal_image
 FILEDIR = Path(__file__).parent
 ACQ_COLS = ['idx', 'slot', 'id', 'yang', 'zang', 'row', 'col',
             'mag', 'mag_err', 'color', 'halfw', 'p_acq']
-
-
-def table_to_html(tbl):
-    out = tbl._base_repr_(html=True, max_width=-1,
-                          show_dtype=False, descr_vals=[],
-                          max_lines=-1, tableclass='table-striped')
-    # Undo HTML sanitizing to allow raw HTML in table elements
-    out = re.sub(r'&quot;', '"', out)
-    out = re.sub(r'&lt;', '<', out)
-    out = re.sub(r'&gt;', '>', out)
-
-    return out
 
 
 def get_p_acqs_table(acq, p_name):
@@ -53,8 +39,8 @@ def get_p_acqs_table(acq, p_name):
         of ``man_err`` and ``dither``)
     - ``p_acqs``: product of the above three
     """
-    man_errs = CHAR.p_man_errs['man_err_hi']
-    box_sizes = sorted(CHAR.box_sizes)
+    man_errs = ACQ.p_man_errs['man_err_hi']
+    box_sizes = sorted(ACQ.box_sizes)
     names = [r'box \ man_err'] + [f'{man_err}"' for man_err in man_errs]
     cols = {}
     cols[r'box \ man_err'] = [f'{box_size}"' for box_size in box_sizes]
@@ -73,7 +59,7 @@ def get_p_on_ccd_table(acq):
     - ``p_on_ccd``: probability star is on the usable part of the CCD (function
         of ``man_err`` and ``dither``)
     """
-    man_errs = CHAR.p_man_errs['man_err_hi']
+    man_errs = ACQ.p_man_errs['man_err_hi']
     names = ['man_err'] + [f'{man_err}"' for man_err in man_errs]
     cols = {}
     cols['man_err'] = ['']
@@ -91,7 +77,7 @@ def get_p_acq_model_table(acq):
     - ``p_acq_model``: probability of acquisition from the chandra_aca model
         (function of ``box_size``)
     """
-    box_sizes = sorted(CHAR.box_sizes)
+    box_sizes = sorted(ACQ.box_sizes)
     names = ['box size'] + [f'{box_size}"' for box_size in box_sizes]
     cols = {}
     cols['box size'] = ['']
@@ -127,7 +113,7 @@ def make_events(acqs):
 
 
 def make_p_man_errs_report(context):
-    tbl = CHAR.p_man_errs.copy()
+    tbl = ACQ.p_man_errs.copy()
     man_err = [f'<b>{lo}-{hi}"</b>'
                for lo, hi in zip(tbl['man_err_lo'],
                                  tbl['man_err_hi'])]
@@ -331,7 +317,7 @@ def make_report(obsid, rootdir='.'):
     make_acq_star_details_report(acqs, cand_acqs, events, context, obsdir)
     make_optimize_catalog_report(events, context)
 
-    template_file = FILEDIR / 'index_template.html'
+    template_file = FILEDIR / ACQ.index_template_file
     template = Template(open(template_file, 'r').read())
     out_html = template.render(context)
     out_filename = obsdir / 'index.html'
@@ -427,7 +413,7 @@ def plot_imposters(acq, dark, dither, vmin=100, vmax=2000,
     """
     Plot dark current, relevant boxes, imposters and spoilers.
     """
-    drc = int(np.max(CHAR.box_sizes) / 5 + 5 + dither.max() / 5)
+    drc = int(np.max(ACQ.box_sizes) / 5 + 5 + dither.max() / 5)
 
     # Make an image of `dark` centered on acq row, col.  Use ACAImage
     # arithmetic to handle the corner case where row/col are near edge
@@ -464,7 +450,7 @@ def plot_imposters(acq, dark, dither, vmin=100, vmax=2000,
     # Box regions
     rc = img.shape[0] // 2 + 0.5
     cc = img.shape[1] // 2 + 0.5
-    for hw in CHAR.p_man_errs['man_err_hi']:
+    for hw in ACQ.p_man_errs['man_err_hi']:
         hwpr = hw / 5 + dither.row
         hwpc = hw / 5 + dither.col
         patch = patches.Rectangle((rc - hwpr, cc - hwpc), hwpr * 2, hwpc * 2, edgecolor='r',

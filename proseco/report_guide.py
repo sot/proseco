@@ -16,9 +16,8 @@ from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
 from chandra_aca.transform import mag_to_count_rate
 from mica.archive.aca_dark.dark_cal import get_dark_cal_image
 
-from .core import StarsTable
-from .guide import GuideTable, get_ax_range
-from .report import table_to_html
+from .core import StarsTable, table_to_html
+from .guide import GuideTable, get_ax_range, GUIDE
 
 # Do reporting for at-most MAX_CAND candidates
 MAX_CAND = 50
@@ -37,7 +36,7 @@ def make_report(obsid, rootdir='.'):
     obsdir = rootdir / f'obs{obsid:05}'
     guides = GuideTable.from_pickle(obsid, rootdir)
 
-    cand_guides = guides.cand_guides
+    cand_guides = guides.cand_guides.copy()
     cand_guides['sort_stage'] = cand_guides['stage']
     cand_guides['sort_stage'][cand_guides['stage'] == -1] = 1000
     cand_guides.sort(['sort_stage', 'mag'])
@@ -89,12 +88,14 @@ def make_report(obsid, rootdir='.'):
     context['cand_guides_table'] = table_to_html(cand_guides_table)
 
     # Make the HTML
-    template_file = FILEDIR / 'guide_index_template.html'
+    template_file = FILEDIR / GUIDE.index_template_file
     template = Template(open(template_file, 'r').read())
     out_html = template.render(context)
     out_filename = obsdir / 'guide_index.html'
     with open(out_filename, 'w') as fh:
         fh.write(out_html)
+
+    return guides
 
 
 def make_cand_report(guides, cand_guides, context, obsdir):

@@ -8,7 +8,7 @@ from .core import ACACatalogTable, get_kwargs_from_starcheck_text, MetaAttribute
 from .guide import get_guide_catalog, GuideTable
 from .acq import get_acq_catalog, AcqTable
 from .fid import get_fid_catalog, FidTable
-from . import characteristics as ACQ
+from . import characteristics_acq as ACQ
 
 
 def get_aca_catalog(obsid=0, **kwargs):

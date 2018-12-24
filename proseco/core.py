@@ -1,3 +1,4 @@
+import re
 import os
 import functools
 import pickle
@@ -17,7 +18,7 @@ from Ska.quatutil import radec2yagzag, yagzag2radec
 import agasc
 from Quaternion import Quat
 
-from . import characteristics as CHAR
+from . import characteristics as ACA
 
 # For testing this is used to cache fid tables for a detector
 FIDS_CACHE = {}
@@ -58,6 +59,24 @@ def to_python(val):
 # Row and column indices of ACA image background pixels
 _ROWB = np.array([0, 0, 0, 0, 7, 7, 7, 7])
 _COLB = np.array([0, 1, 6, 7, 0, 1, 6, 7])
+
+
+def table_to_html(tbl):
+    """
+    Make an HTML representation of a table
+
+    :param tbl: astropy Table
+    :returns: str
+    """
+    out = tbl._base_repr_(html=True, max_width=-1,
+                          show_dtype=False, descr_vals=[],
+                          max_lines=-1, tableclass='table-striped')
+    # Undo HTML sanitizing to allow raw HTML in table elements
+    out = re.sub(r'&quot;', '"', out)
+    out = re.sub(r'&lt;', '<', out)
+    out = re.sub(r'&gt;', '>', out)
+
+    return out
 
 
 def _get_bgd(img):
@@ -451,18 +470,18 @@ class ACACatalogTable(Table):
         elif not isinstance(self.dark, ACAImage):
             self.dark = ACAImage(self.dark, row0=-512, col0=-512, copy=False)
 
-        # Set pixel regions from CHAR.bad_pixels to have acqs.dark=700000 (5.0 mag
+        # Set pixel regions from ACA.bad_pixels to have acqs.dark=700000 (5.0 mag
         # star) per pixel.
         self.set_bad_pixels_in_dark()
 
     def set_bad_pixels_in_dark(self):
         """
-        Set pixel regions from CHAR.bad_pixels to have acqs.dark=700000 (5.0 mag
+        Set pixel regions from ACA.bad_pixels to have acqs.dark=700000 (5.0 mag
         star) per pixel.  This will effectively spoil any star or fid.
 
         """
-        for r0, r1, c0, c1 in CHAR.bad_pixels:
-            self.dark.aca[r0:r1 + 1, c0:c1 + 1] = CHAR.bad_pixel_dark_current
+        for r0, r1, c0, c1 in ACA.bad_pixels:
+            self.dark.aca[r0:r1 + 1, c0:c1 + 1] = ACA.bad_pixel_dark_current
 
     def set_stars(self, acqs=None):
         """Set the object ``stars`` attribute to an appropriate StarsTable object.
@@ -733,8 +752,8 @@ class ACACatalogTable(Table):
         """
         Returns True if ``cand`` has a column spoiler downstream toward readout
         register which is:
-        - at least 4.5 mag brighter (CHAR.col_spoiler_mag_diff)
-        - within 10 pixels in column (CHAR.col_spoiler_pix_sep)
+        - at least 4.5 mag brighter (ACA.col_spoiler_mag_diff)
+        - within 10 pixels in column (ACA.col_spoiler_pix_sep)
 
         Also records a log entry for detected spoilers
 
@@ -752,8 +771,8 @@ class ACACatalogTable(Table):
         # AND within mag limit
         bads = ((np.abs(cand['row']) < abs(stars['row'][mask])) &
                 (np.sign(cand['row']) == np.sign(stars['row'][mask])) &
-                (np.abs(cand['col'] - stars['col'][mask]) < CHAR.col_spoiler_pix_sep) &
-                (cand['mag'] - stars['mag'][mask] > CHAR.col_spoiler_mag_diff))
+                (np.abs(cand['col'] - stars['col'][mask]) < ACA.col_spoiler_pix_sep) &
+                (cand['mag'] - stars['mag'][mask] > ACA.col_spoiler_mag_diff))
 
         if np.any(bads):
             self.log(f'Candidate object id={cand["id"]} rejected due to column spoiler(s) '
