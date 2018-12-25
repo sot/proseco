@@ -521,12 +521,13 @@ def test_make_report(tmpdir):
 
     tmpdir = Path(tmpdir)
     obsdir = tmpdir / f'obs{obsid:05}'
+    outdir = obsdir / 'acq'
 
     acqs.to_pickle(rootdir=tmpdir)
 
     acqs2 = make_report(obsid, rootdir=tmpdir)
 
-    assert (obsdir / 'index.html').exists()
+    assert (outdir / 'index.html').exists()
     assert len(list(obsdir.glob('*.png'))) > 0
 
     assert repr(acqs) == repr(acqs2)

@@ -294,12 +294,32 @@ def make_obsid_summary(acqs, events, context, obsdir):
 
 
 def make_report(obsid, rootdir='.'):
+    """
+    Make summary HTML report for acq star selection.
+
+    The first arg ``obsid`` can be an obsid (int) or a ``AcqTable`` object.
+    For ``int`` the acq table is read from ``<rootdir>/obs<obsid>/acq.pkl``.
+
+    Output is in ``<rootdir>/obs<obsid>/acq/index.html`` plus related images
+    in that directory.
+
+    :param obsid: int obsid or AcqTable instance
+    :param rootdir: root directory for outputs
+
+    :returns: AcqTable object (mostly for testing)
+    """
     rootdir = Path(rootdir)
     print(f'Processing obsid {obsid}')
-
-    obsdir = rootdir / f'obs{obsid:05}'
-    acqs = AcqTable.from_pickle(obsid, rootdir)
+    if isinstance(obsid, AcqTable):
+        acqs = obsid
+    else:
+        acqs = AcqTable.from_pickle(obsid, rootdir)
     cand_acqs = acqs.cand_acqs
+
+    # Define and make directories as needed
+    obsdir = rootdir / f'obs{obsid:05}'
+    outdir = obsdir / 'acq'
+    outdir.mkdir(exist_ok=True, parents=True)
 
     context = copy(acqs.meta)
 
@@ -312,15 +332,15 @@ def make_report(obsid, rootdir='.'):
 
     make_obsid_summary(acqs, events, context, obsdir)
     make_p_man_errs_report(context)
-    make_cand_acqs_report(acqs, cand_acqs, events, context, obsdir)
+    make_cand_acqs_report(acqs, cand_acqs, events, context, outdir)
     make_initial_cat_report(events, context)
-    make_acq_star_details_report(acqs, cand_acqs, events, context, obsdir)
+    make_acq_star_details_report(acqs, cand_acqs, events, context, outdir)
     make_optimize_catalog_report(events, context)
 
     template_file = FILEDIR / ACQ.index_template_file
     template = Template(open(template_file, 'r').read())
     out_html = template.render(context)
-    out_filename = obsdir / 'index.html'
+    out_filename = outdir / 'index.html'
     with open(out_filename, 'w') as fh:
         fh.write(out_html)
 

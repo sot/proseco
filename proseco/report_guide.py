@@ -30,11 +30,32 @@ APL = AcaPsfLibrary()
 
 
 def make_report(obsid, rootdir='.'):
+    """
+    Make summary HTML report for guide star selection.
+
+    The first arg ``obsid`` can be an obsid (int) or a ``GuideTable`` object.
+    For ``int`` the guide table is read from ``<rootdir>/obs<obsid>/guide.pkl``.
+
+    Output is in ``<rootdir>/obs<obsid>/guide/index.html`` plus related images
+    in that directory.
+
+    :param obsid: int obsid or GuideTable instance
+    :param rootdir: root directory for outputs
+
+    :returns: GuideTable object (mostly for testing)
+    """
     rootdir = Path(rootdir)
     print(f'Processing obsid {obsid}')
 
+    if isinstance(obsid, GuideTable):
+        guides = obsid
+    else:
+        guides = GuideTable.from_pickle(obsid, rootdir)
+
+    # Define and make directories as needed
     obsdir = rootdir / f'obs{obsid:05}'
-    guides = GuideTable.from_pickle(obsid, rootdir)
+    outdir = obsdir / 'guide'
+    outdir.mkdir(exist_ok=True, parents=True)
 
     cand_guides = guides.cand_guides.copy()
     cand_guides['sort_stage'] = cand_guides['stage']
@@ -70,7 +91,7 @@ def make_report(obsid, rootdir='.'):
         cand_guides['stage'][-1] = -1
         cand_guides['forced'][-1] = True
 
-    make_cand_report(guides, cand_guides, context, obsdir)
+    make_cand_report(guides, cand_guides, context, outdir)
 
     # Guide star table
     cols = COLS.copy()
@@ -91,7 +112,7 @@ def make_report(obsid, rootdir='.'):
     template_file = FILEDIR / GUIDE.index_template_file
     template = Template(open(template_file, 'r').read())
     out_html = template.render(context)
-    out_filename = obsdir / 'guide_index.html'
+    out_filename = outdir / 'index.html'
     with open(out_filename, 'w') as fh:
         fh.write(out_html)
 
