@@ -409,7 +409,7 @@ def test_get_ax_range():
 
 def test_make_report_guide(tmpdir):
     """
-    Test making an acquisition report.  Use a big-box dither here
+    Test making a guide report.  Use a big-box dither here
     to test handling of that in report (after passing through pickle).
     """
     obsid = 19387
