@@ -45,10 +45,10 @@ def make_report(obsid, rootdir='.'):
     :returns: GuideTable object (mostly for testing)
     """
     rootdir = Path(rootdir)
-    print(f'Processing obsid {obsid}')
 
     if isinstance(obsid, GuideTable):
         guides = obsid
+        obsid = guides.obsid
     else:
         guides = GuideTable.from_pickle(obsid, rootdir)
 
@@ -124,7 +124,6 @@ def make_cand_report(guides, cand_guides, context, obsdir):
     n_stages = np.max(cand_guides['stage'])
     context['cand_guides'] = []
     for ii, guide in enumerate(cand_guides):
-        print('Doing detail for star {}'.format(guide['id']))
         select = 'SELECTED' if guide['id'] in guides['id'] else 'not selected'
 
         # Add debugging information if the star was in include/exclude lists

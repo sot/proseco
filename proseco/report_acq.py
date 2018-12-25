@@ -2,7 +2,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 from copy import copy, deepcopy
-import re
 from pathlib import Path
 
 import matplotlib
@@ -149,7 +148,6 @@ def make_cand_acqs_report(acqs, cand_acqs, events, context, obsdir):
     # Now plot figure
     filename = obsdir / 'candidate_stars.png'
     if not filename.exists():
-        print(f'Making candidate stars plot {filename}')
 
         # Pull a fast-one and mark the final selected ACQ stars as BOT so they
         # get a circle in the plot.  This might be confusing and need fixing
@@ -184,7 +182,6 @@ def make_acq_star_details_report(acqs, cand_acqs, events, context, obsdir):
     context['cand_acqs'] = []
 
     for ii, acq in enumerate(cand_acqs):
-        print('Doing detail for star {}'.format(acq['id']))
         # Local context dict for each cand_acq star
         cca = {'id': acq['id'],
                'selected': 'SELECTED' if acq['id'] in acqs['id'] else 'not selected'}
@@ -290,7 +287,7 @@ def make_obsid_summary(acqs, events, context, obsdir):
                             bad_stars=acqs.bad_stars, ax=ax)
         # When Ska3 has matplotlib 2.2+ then just use `filename`
         plt.savefig(str(filename))
-        plt.close()
+        plt.close(fig)
 
 
 def make_report(obsid, rootdir='.'):
@@ -309,9 +306,9 @@ def make_report(obsid, rootdir='.'):
     :returns: AcqTable object (mostly for testing)
     """
     rootdir = Path(rootdir)
-    print(f'Processing obsid {obsid}')
     if isinstance(obsid, AcqTable):
         acqs = obsid
+        obsid = acqs.obsid
     else:
         acqs = AcqTable.from_pickle(obsid, rootdir)
     cand_acqs = acqs.cand_acqs
@@ -492,5 +489,6 @@ def plot_imposters(acq, dark, dither, vmin=100, vmax=2000,
     if filename is not None:
         # When Ska3 has matplotlib 2.2+ then just use `filename`
         plt.savefig(str(filename), pad_inches=0.0)
+    plt.close(fig)
 
     return img, ax

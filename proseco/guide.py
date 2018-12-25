@@ -106,6 +106,19 @@ class GuideTable(ACACatalogTable):
             out = int(count >= GUIDE.min_guide_count)
         return out
 
+    def make_report(self, rootdir='.'):
+        """
+        Make summary HTML report for guide selection process and outputs.
+
+        Output is in ``<rootdir>/obs<obsid>/guide/index.html`` plus related images
+        in that directory.
+
+        :param rootdir: root directory for outputs
+
+        """
+        from .report_guide import make_report
+        make_report(self, rootdir=rootdir)
+
     def run_search_stages(self):
         """
         Run through search stages to select stars with priority given to "better"
