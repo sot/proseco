@@ -7,8 +7,8 @@ from pathlib import Path
 from chandra_aca.aca_image import AcaPsfLibrary
 from chandra_aca.transform import mag_to_count_rate, yagzag_to_pixels
 
-from ..report import make_report
-from ..acq import (get_p_man_err, bin2x2, CHAR,
+from ..report_acq import make_report
+from ..acq import (get_p_man_err, bin2x2,
                    get_imposter_stars,
                    get_image_props,
                    AcqTable, calc_p_on_ccd,
@@ -17,8 +17,10 @@ from ..acq import (get_p_man_err, bin2x2, CHAR,
 from ..catalog import get_aca_catalog
 from ..core import ACABox, StarsTable
 from .test_common import OBS_INFO, STD_INFO, mod_std_info, DARK40
+
+from .. import characteristics as ACA
 from .. import characteristics_fid as FID
-from .. import characteristics as ACQ
+from .. import characteristics_acq as ACQ
 
 
 TEST_DATE = '2018:144'  # Fixed date for doing tests
@@ -180,7 +182,7 @@ def get_test_stars():
 def get_test_cand_acqs():
     if 'cand_acqs' not in CACHE:
         acqs = AcqTable()
-        acqs.p_man_errs = CHAR.p_man_errs['120-180']
+        acqs.p_man_errs = ACQ.p_man_errs['120-180']
         acqs.t_ccd = -10.0
         stars = get_test_stars()
         CACHE['cand_acqs'], bads = acqs.get_acq_candidates(stars)
@@ -212,7 +214,7 @@ def test_calc_p_brightest_same_bright():
     stars_sp = add_spoiler(stars, acq, dyang=65, dzang=65, dmag=0.0, mag_err=mag_err)
     stars_sp = add_spoiler(stars_sp, acq, dyang=85, dzang=0, dmag=0.0, mag_err=mag_err)
     probs = [calc_p_brightest(acq, box_size, stars_sp, dark_imp, dither=ACABox(0), bgd=bgd)
-             for box_size in CHAR.box_sizes]
+             for box_size in ACQ.box_sizes]
 
     #  Box size:                160   140   120    100   80   60  arcsec
     assert np.allclose(probs, [0.25, 0.25, 0.25, 0.3334, 0.5, 1.0], rtol=0, atol=0.01)
@@ -243,7 +245,7 @@ def test_calc_p_brightest_same_bright_asymm_dither():
     stars_sp = add_spoiler(stars, acq, dyang=-105, dzang=105, dmag=0.0, mag_err=mag_err)
     probs = [calc_p_brightest(acq, box_size, stars=stars_sp, dark=dark, dither=dither,
                               bgd=bgd, man_err=0)
-             for box_size in CHAR.box_sizes]
+             for box_size in ACQ.box_sizes]
 
     #  Box size:               160  140  120  100   80   60  arcsec
     assert np.allclose(probs, [0.5, 0.5, 0.5, 1.0, 1.0, 1.0], rtol=0, atol=0.01)
@@ -256,7 +258,7 @@ def test_calc_p_brightest_same_bright_asymm_dither():
     dark_imp = add_imposter(dark, acq, dyang=105, dzang=145, dmag=0.0)
     probs = [calc_p_brightest(acq, box_size, stars=stars, dark=dark_imp, dither=dither,
                               bgd=bgd, man_err=0)
-             for box_size in CHAR.box_sizes]
+             for box_size in ACQ.box_sizes]
 
     #  Box size:               160  140  120  100  80   60  arcsec
     assert np.allclose(probs, [0.5, 0.5, 0.5, 0.5, 1.0, 1.0], rtol=0, atol=0.01)
@@ -266,7 +268,7 @@ def test_calc_p_brightest_same_bright_asymm_dither():
     acq['spoilers'] = None
     probs = [calc_p_brightest(acq, box_size, stars=stars_sp, dark=dark_imp, dither=dither,
                               bgd=bgd, man_err=0)
-             for box_size in CHAR.box_sizes]
+             for box_size in ACQ.box_sizes]
 
     #  Box size:                160    140    120  100   80   60  arcsec
     assert np.allclose(probs, [0.333, 0.333, 0.333, 0.5, 1.0, 1.0], rtol=0, atol=0.01)
@@ -309,8 +311,8 @@ def test_calc_p_on_ccd():
     """
     # These lines mimic the code in calc_p_on_ccd() which requires that
     # track readout box is fully within the usable part of CCD.
-    max_ccd_row = CHAR.max_ccd_row - 5
-    max_ccd_col = CHAR.max_ccd_col - 4
+    max_ccd_row = ACA.max_ccd_row - 5
+    max_ccd_col = ACA.max_ccd_col - 4
 
     # Halfway off in both row and col, (1/4 of area remaining)
     p_in_box = calc_p_on_ccd(max_ccd_row, max_ccd_col, ACABox(60))
@@ -339,8 +341,8 @@ def test_calc_p_on_ccd_asymmetric_dither():
     """
     # These lines mimic the code in calc_p_on_ccd() which requires that
     # track readout box is fully within the usable part of CCD.
-    max_ccd_row = CHAR.max_ccd_row - 5
-    max_ccd_col = CHAR.max_ccd_col - 4
+    max_ccd_row = ACA.max_ccd_row - 5
+    max_ccd_col = ACA.max_ccd_col - 4
 
     # Halfway off in both row and col, (1/4 of area remaining).  These checks
     # don't change from symmetric case because of the placement of row, col.
@@ -372,7 +374,7 @@ def test_calc_p_on_ccd_asymmetric_dither():
 
     # First, with dither_y <= 25 or dither_z <= 20, p_in_box is exactly zero
     for dither in ((25, 20), (60, 20), (25, 60)):
-        p_in_box = calc_p_on_ccd(CHAR.max_ccd_row, CHAR.max_ccd_col, ACABox(dither))
+        p_in_box = calc_p_on_ccd(ACA.max_ccd_row, ACA.max_ccd_col, ACABox(dither))
         assert p_in_box == 0
 
     # Now some asymmetric cases.  p_in_ccd increases with larger dither.
@@ -380,7 +382,7 @@ def test_calc_p_on_ccd_asymmetric_dither():
                         ((40, 30), 0.03125),
                         ((40, 200), 0.084375),
                         ((200, 40), 0.109375)]:
-        p_in_box = calc_p_on_ccd(CHAR.max_ccd_row, CHAR.max_ccd_col, ACABox(dither))
+        p_in_box = calc_p_on_ccd(ACA.max_ccd_row, ACA.max_ccd_col, ACABox(dither))
         assert np.isclose(p_in_box, exp)
 
 

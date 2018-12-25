@@ -15,7 +15,8 @@ from chandra_aca.star_probs import acq_success_prob, prob_n_acq
 from chandra_aca.transform import (pixels_to_yagzag, mag_to_count_rate,
                                    snr_mag_for_t_ccd)
 
-from . import characteristics as CHAR
+from . import characteristics as ACA
+from . import characteristics_acq as ACQ
 from .core import (get_mag_std, ACACatalogTable, bin2x2,
                    get_image_props, pea_reject_image, ACABox,
                    MetaAttribute, AliasAttribute, calc_spoiler_impact)
@@ -61,15 +62,15 @@ def get_acq_catalog(obsid=0, **kwargs):
     # this (temperature-dependent) threshold.  See characterisics.py for more
     # explanation.
     acqs.imposters_mag_limit = snr_mag_for_t_ccd(acqs.t_ccd,
-                                                 ref_mag=CHAR.imposter_mag_lim_ref_mag,
-                                                 ref_t_ccd=CHAR.imposter_mag_lim_ref_t_ccd)
+                                                 ref_mag=ACQ.imposter_mag_lim_ref_mag,
+                                                 ref_t_ccd=ACQ.imposter_mag_lim_ref_t_ccd)
 
     acqs.log(f'getting dark cal image at date={acqs.date} t_ccd={acqs.t_ccd:.1f}')
 
     # Probability of man_err for this observation with a given man_angle.  Used
     # for marginalizing probabilities over different man_errs.
     acqs.p_man_errs = np.array([get_p_man_err(man_err, acqs.man_angle)
-                                for man_err in CHAR.man_errs])
+                                for man_err in ACQ.man_errs])
 
     acqs.cand_acqs, acqs.bad_stars = acqs.get_acq_candidates(acqs.stars)
 
@@ -186,7 +187,7 @@ class AcqTable(ACACatalogTable):
             out = 0
         else:
             self.update_p_acq_column()
-            out = int(self.get_log_p_2_or_fewer() <= np.log10(CHAR.acq_prob))
+            out = int(self.get_log_p_2_or_fewer() <= np.log10(ACQ.acq_prob))
         return out
 
     def update_p_acq_column(self):
@@ -260,8 +261,8 @@ class AcqTable(ACACatalogTable):
               (stars['mag'] > 5.9) &
               (stars['mag'] < 11.0) &
               (~np.isclose(stars['COLOR1'], 0.7)) &
-              (np.abs(stars['row']) < CHAR.max_ccd_row) &  # Max usable row
-              (np.abs(stars['col']) < CHAR.max_ccd_col) &  # Max usable col
+              (np.abs(stars['row']) < ACA.max_ccd_row) &  # Max usable row
+              (np.abs(stars['col']) < ACA.max_ccd_col) &  # Max usable col
               (stars['mag_err'] < 1.0) &  # Mag err < 1.0 mag
               (stars['ASPQ1'] < 40) &  # Less than 2 arcsec offset from nearby spoiler
               (stars['ASPQ2'] == 0) &  # Proper motion less than 0.5 arcsec/yr
@@ -283,7 +284,7 @@ class AcqTable(ACACatalogTable):
         # max_candidates.  Check for col spoilers only against stars that are
         # bright enough and on CCD
         goods = []
-        stars_mask = stars['mag'] < 11.5 - CHAR.col_spoiler_mag_diff
+        stars_mask = stars['mag'] < 11.5 - ACA.col_spoiler_mag_diff
         for ii, acq in enumerate(cand_acqs):
             if (self.in_bad_star_set(acq) or
                     self.has_nearby_spoiler(acq, stars) or
@@ -352,7 +353,7 @@ class AcqTable(ACACatalogTable):
         :return: list of box-size arrays corresponding to cand_acqs table
         """
         box_sizes_list = []
-        max_man_err = np.max(CHAR.man_errs[self.p_man_errs > 0])
+        max_man_err = np.max(ACQ.man_errs[self.p_man_errs > 0])
 
         # Get the effective equivalent of 8.0 and 9.0 mag for the current t_ccd
         mag_8 = snr_mag_for_t_ccd(self.t_ccd, ref_mag=8.0, ref_t_ccd=-10.0)
@@ -366,7 +367,7 @@ class AcqTable(ACACatalogTable):
                 max_box_size = max(max_man_err, 80)
             else:
                 max_box_size = max_man_err
-            box_sizes = CHAR.box_sizes[CHAR.box_sizes <= max_box_size]
+            box_sizes = ACQ.box_sizes[ACQ.box_sizes <= max_box_size]
             box_sizes_list.append(box_sizes)
 
         return box_sizes_list
@@ -378,7 +379,7 @@ class AcqTable(ACACatalogTable):
         :param acq: AcqTable Row
         :returns: bool
         """
-        if acq['id'] in CHAR.bad_star_set:
+        if acq['id'] in ACA.bad_star_set:
             self.log(f'Rejecting star {acq["id"]} which is in bad star list', id=acq['id'])
             return True
         else:
@@ -417,7 +418,7 @@ class AcqTable(ACACatalogTable):
             raise ValueError('include_ids and include_halfws must have same length')
 
         # Ensure values are valid box_sizes
-        grid_func = interp1d(CHAR.box_sizes, CHAR.box_sizes,
+        grid_func = interp1d(ACQ.box_sizes, ACQ.box_sizes,
                              kind='nearest', fill_value='extrapolate')
         self.include_halfws = grid_func(self.include_halfws).tolist()
 
@@ -449,7 +450,7 @@ class AcqTable(ACACatalogTable):
         self.log(f'Find stars with best acq prob for min_p_acq={min_p_acq}')
         self.log(f'Current catalog: acq_indices={acq_indices} box_sizes={box_sizes}')
 
-        for box_size in CHAR.box_sizes:
+        for box_size in ACQ.box_sizes:
             # Get array of marginalized (over man_err) p_acq values corresponding
             # to box_size for each of the candidate acq stars.  For acq's where
             # the current box_size is not in the available list then set the
@@ -604,7 +605,7 @@ class AcqTable(ACACatalogTable):
 
         p_no_safe = 1.0
 
-        for man_err, p_man_err in zip(CHAR.man_errs, self.p_man_errs):
+        for man_err, p_man_err in zip(ACQ.man_errs, self.p_man_errs):
             if p_man_err == 0.0:
                 continue
 
@@ -1070,8 +1071,8 @@ def calc_p_on_ccd(row, col, box_size):
     # by the PEA (via a normal 8x8 readout) is fully on the CCD usable area.
     # Do so by reducing the effective CCD usable area by the readout
     # halfwidth (noting that there is a leading row before 8x8).
-    max_ccd_row = CHAR.max_ccd_row - 5
-    max_ccd_col = CHAR.max_ccd_col - 4
+    max_ccd_row = ACA.max_ccd_row - 5
+    max_ccd_col = ACA.max_ccd_col - 4
 
     for rc, max_rc, half_width in ((row, max_ccd_row, box_size.row),
                                    (col, max_ccd_col, box_size.col)):
@@ -1138,11 +1139,11 @@ class AcqProbs:
         # Convert table row to plain dict for persistence
         self.acq = {key: acq[key] for key in ('yang', 'zang')}
 
-        for box_size in CHAR.box_sizes:
+        for box_size in ACQ.box_sizes:
             # Need to iterate over man_errs in reverse order because calc_p_brightest
             # caches interlopers based on first call, so that needs to have the largest
             # box sizes.
-            for man_err in CHAR.man_errs[::-1]:
+            for man_err in ACQ.man_errs[::-1]:
                 if man_err > box_size:
                     p_brightest = self._p_brightest[box_size, man_err] = 0.0
                 else:
@@ -1155,14 +1156,14 @@ class AcqProbs:
                     self._p_brightest[box_size, man_err] = p_brightest
 
         # Acquisition probability model value (function of box_size only)
-        for box_size in CHAR.box_sizes:
+        for box_size in ACQ.box_sizes:
             p_acq_model = acq_success_prob(date=date, t_ccd=t_ccd,
                                            mag=acq['mag'], color=acq['color'],
                                            spoiler=False, halfwidth=box_size)
             self._p_acq_model[box_size] = p_acq_model * 0.985
 
         # Probability star is in acq box (function of man_err and dither only)
-        for man_err in CHAR.man_errs:
+        for man_err in ACQ.man_errs:
             p_on_ccd = calc_p_on_ccd(acq['row'], acq['col'], box_size=man_err + dither)
             self._p_on_ccd[man_err] = p_on_ccd
 
@@ -1193,7 +1194,7 @@ class AcqProbs:
             return self._p_acq_marg[box_size, fid_set]
         except KeyError:
             p_acq_marg = 0.0
-            for man_err, p_man_err in zip(CHAR.man_errs, self.acqs.p_man_errs):
+            for man_err, p_man_err in zip(ACQ.man_errs, self.acqs.p_man_errs):
                 p_acq_marg += self.p_acqs(box_size, man_err) * p_man_err
             self._p_acq_marg[box_size, fid_set] = p_acq_marg
             return p_acq_marg
@@ -1269,8 +1270,8 @@ def get_p_man_err(man_err, man_angle):
 
     :returns: probability of man_error for given man_angle
     """
-    pmea = CHAR.p_man_errs_angles  # [0, 5, 20, 40, 60, 80, 100, 120, 180]
-    pme = CHAR.p_man_errs
+    pmea = ACQ.p_man_errs_angles  # [0, 5, 20, 40, 60, 80, 100, 120, 180]
+    pme = ACQ.p_man_errs
     man_angle_idx = np.searchsorted(pmea, man_angle) if (man_angle > 0) else 1
     name = '{}-{}'.format(pmea[man_angle_idx - 1], pmea[man_angle_idx])
 

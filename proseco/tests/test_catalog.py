@@ -11,7 +11,7 @@ from .test_common import STD_INFO, mod_std_info, DARK40
 from ..core import StarsTable, ACACatalogTable
 from ..catalog import get_aca_catalog
 from ..fid import get_fid_catalog
-from .. import characteristics as CHAR
+from .. import characteristics as ACA
 
 
 HAS_SC_ARCHIVE = Path(mica.starcheck.starcheck.FILES['data_root']).exists()
@@ -250,7 +250,7 @@ def test_bad_pixel_dark_current():
     aca = get_aca_catalog(**kwargs)
 
     # Make sure bad pixels have expected value
-    assert np.all(aca.acqs.dark.aca[-245:0, 454] == CHAR.bad_pixel_dark_current)
+    assert np.all(aca.acqs.dark.aca[-245:0, 454] == ACA.bad_pixel_dark_current)
 
     exp_ids = [2, 100, 101, 102, 103]
     assert sorted(aca.guides['id']) == exp_ids
@@ -284,7 +284,6 @@ def test_aca_acq_gui_thumbs_up(config):
 def test_fid_trap_effect():
     # Obsid 1576
     agasc_ids = [367148872, 367139768, 367144424, 367674552, 367657896]
-    date = '2001:275'
     att = [10.659376, 40.980028, 181.012903]
     stars = StarsTable.from_agasc_ids(att, agasc_ids)
     cat = get_aca_catalog(obsid=1576, stars=stars, raise_exc=True)
@@ -292,7 +291,6 @@ def test_fid_trap_effect():
 
     # Obsid 2365
     agasc_ids = [1184926344, 1184902704, 1184897704, 1184905208, 1185050656]
-    date = '2001:294'
     att = [243.552030, -63.091108, 224.513314]
     stars = StarsTable.from_agasc_ids(att, agasc_ids)
     cat = get_aca_catalog(obsid=2365, stars=stars, raise_exc=True)

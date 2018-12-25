@@ -12,9 +12,11 @@ from chandra_aca.transform import mag_to_count_rate, count_rate_to_mag
 
 from ..guide import (get_guide_catalog, check_spoil_contrib, get_pixmag_for_offset,
                      check_mag_spoilers, get_ax_range)
-from ..characteristics_guide import mag_spoiler, CCD
+from ..report_guide import make_report
+from ..characteristics_guide import mag_spoiler
+from ..characteristics import CCD
 from ..core import StarsTable
-from .test_common import STD_INFO, mod_std_info
+from .test_common import STD_INFO, mod_std_info, OBS_INFO
 
 
 HAS_SC_ARCHIVE = Path(mica.starcheck.starcheck.FILES['data_root']).exists()
@@ -403,3 +405,37 @@ def test_get_ax_range():
         # Confirm the range does not contain more than 2 pix extra on either side
         assert n + extent + 2 > plus
         assert n - extent - 2 < minus
+
+
+def test_make_report_guide(tmpdir):
+    """
+    Test making a guide report.  Use a big-box dither here
+    to test handling of that in report (after passing through pickle).
+    """
+    obsid = 19387
+    kwargs = OBS_INFO[obsid].copy()
+    kwargs['dither'] = (8, 64)
+    guides = get_guide_catalog(**OBS_INFO[obsid])
+
+    tmpdir = Path(tmpdir)
+    obsdir = tmpdir / f'obs{obsid:05}'
+
+    guides.to_pickle(rootdir=tmpdir)
+
+    guides2 = make_report(obsid, rootdir=tmpdir)
+
+    assert (obsdir / 'guide_index.html').exists()
+    assert len(list(obsdir.glob('*.png'))) > 0
+
+    assert repr(guides) == repr(guides2)
+    assert repr(guides.cand_guides) == repr(guides2.cand_guides)
+    for event, event2 in zip(guides.log_info, guides2.log_info):
+        assert event == event2
+
+    for attr in ['att', 'date', 't_ccd', 'man_angle', 'dither']:
+        val = getattr(guides, attr)
+        val2 = getattr(guides2, attr)
+        if isinstance(val, float):
+            assert np.isclose(val, val2)
+        else:
+            assert val == val2

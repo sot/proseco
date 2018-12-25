@@ -11,8 +11,9 @@ import numpy as np
 
 from chandra_aca.transform import yagzag_to_pixels
 
+from . import characteristics as ACA
 from . import characteristics_fid as FID
-from . import characteristics as ACQ
+from . import characteristics_acq as ACQ
 
 from .core import ACACatalogTable, MetaAttribute
 
@@ -292,7 +293,7 @@ class FidTable(ACACatalogTable):
         # Check for spoilers only against stars that are bright enough and on CCD
         # (within dither).
         idx_bads = []
-        stars_mask = ((self.stars['mag'] < FID.fid_mag - ACQ.col_spoiler_mag_diff) &
+        stars_mask = ((self.stars['mag'] < FID.fid_mag - ACA.col_spoiler_mag_diff) &
                       (np.abs(self.stars['row']) < 512 + self.dither_guide.row))
         for idx, fid in enumerate(cand_fids):
             if (self.off_ccd(fid) or
@@ -317,8 +318,8 @@ class FidTable(ACACatalogTable):
 
         :param fid: FidTable Row of candidate fid
         """
-        if ((np.abs(fid['row']) + FID.ccd_edge_margin > ACQ.max_ccd_row) or
-                (np.abs(fid['col']) + FID.ccd_edge_margin > ACQ.max_ccd_col)):
+        if ((np.abs(fid['row']) + FID.ccd_edge_margin > ACA.max_ccd_row) or
+                (np.abs(fid['col']) + FID.ccd_edge_margin > ACA.max_ccd_col)):
             self.log(f'Rejecting fid id={fid["id"]} row,col='
                      f'({fid["row"]:.1f}, {fid["col"]:.1f}) off CCD',
                      level=1)

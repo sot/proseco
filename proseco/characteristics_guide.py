@@ -12,18 +12,6 @@ min_guide_count = 4.0
 # Add this padding to region checked for bad pixels (in addition to dither)
 dither_pix_pad = 0.4
 
-CCD = {'row_min': -512.0,
-       'row_max': 512.0,
-       'col_min': -512.0,
-       'col_max': 512.0,
-       'window_pad': 7,
-       'row_pad': 8,
-       'col_pad': 1,
-       'bgpix': ['A1', 'B1', 'G1', 'H1', 'I4', 'J4', 'O4', 'P4']}
-
-PIX_2_ARC = 4.96289
-ARC_2_PIX = 1.0 / PIX_2_ARC
-
 # Error / check labeling
 errs = {'mag range': 1,
         'aspq1': 2,
@@ -112,3 +100,6 @@ stages = [{"Stage": 1,
             },
            }
           ]
+
+# Index template file name
+index_template_file = 'index_template_guide.html'
