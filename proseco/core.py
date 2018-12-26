@@ -855,6 +855,11 @@ class StarsTable(BaseCatalogTable):
     - empty() : empty catalog, then use add_* methods to add stars
 
     """
+    att = MetaAttribute()
+
+    # StarsTable attributes, gets set in MetaAttribute or AliasAttribute
+    allowed_kwargs = set()
+
     @staticmethod
     def get_logger(logger):
         if logger is not None:
@@ -940,17 +945,29 @@ class StarsTable(BaseCatalogTable):
         :param copy: copy ``stars`` table columns
 
         :returns: StarsTable of stars
+
         """
         logger = StarsTable.get_logger(logger)
 
+        q_att = Quat(att)
+
         if isinstance(stars, StarsTable):
-            logger('stars is a StarsTable, assuming positions are correct for att')
+            # Check for consistency between stars att and supplied att
+            # if att is not the same object as stars.att.
+            if att is not stars.att:
+                q_att_stars = Quat(stars.att)
+                dq = q_att.dq(q_att_stars)
+                lim = 0.001 / 3600  # 0.001 arcsec
+                if any(abs(getattr(dq, attr)) > lim for attr in ('pitch', 'yaw', 'roll0')):
+                    raise ValueError(f'supplied att {att} does not match stars att {stars.att}')
             return stars
 
         stars = cls(stars, copy=copy)
+        stars.att = att
+
         logger(f'Updating star columns for attitude and convenience')
 
-        q_att = stars.meta['q_att'] = Quat(att)
+        stars.meta['q_att'] = q_att
         yag, zag = radec2yagzag(stars['RA_PMCORR'], stars['DEC_PMCORR'], q_att)
         yag *= 3600
         zag *= 3600
@@ -1003,7 +1020,10 @@ class StarsTable(BaseCatalogTable):
         :param att: any Quat-compatible attitude
         :returns: StarsTable of stars (empty)
         """
-        return cls.from_agasc(att, radius=-1)
+        stars = cls.from_agasc(att, radius=-1)
+        stars.att = att
+
+        return stars
 
     def add_agasc_id(self, agasc_id):
         """
