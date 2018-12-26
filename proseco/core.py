@@ -338,7 +338,67 @@ class IntListMetaAttribute(MetaAttribute):
         instance.meta[self.name] = np.atleast_1d(value).astype(np.int64).tolist()
 
 
-class ACACatalogTable(Table):
+class BaseCatalogTable(Table):
+    """Base class for representing star catalogs or ACA (guide/acq/fid) catalogs.
+
+    Features:
+    - Inherits from astropy Table
+    - Predefined formatting for nicer representations
+    - Indexing on 'id' column
+
+    """
+    def __init__(self, data=None, **kwargs):
+        super().__init__(data=data, **kwargs)
+
+        # Make printed table look nicer.  This is defined in advance
+        # and will be applied the first time the table is represented.
+        self._default_formats = {}
+        for name in ('yang', 'zang', 'row', 'col', 'mag', 'maxmag', 'mag_err', 'color', 'COLOR1'):
+            self._default_formats[name] = '.2f'
+        for name in ('ra', 'dec', 'RA_PMCORR', 'DEC_PMCORR'):
+            self._default_formats[name] = '.6f'
+
+    def make_index(self):
+        # Low-tech index to quickly get a row or the row index by `id` column.
+        self._id_index = {}
+
+        for idx, row in enumerate(self):
+            self._id_index[row['id']] = idx
+
+    def get_id(self, id):
+        """
+        Return row corresponding to ``id`` in id column.
+
+        :param id: row ``id`` column value
+        :returns: table Row
+        """
+        return self[self.get_id_idx(id)]
+
+    def get_id_idx(self, id):
+        """
+        Return row corresponding to ``id`` in id column.
+
+        :param id: row ``id`` column value
+        :returns: table row index (int)
+        """
+        if not hasattr(self, '_index'):
+            self.make_index()
+
+        try:
+            idx = self._id_index[id]
+            assert self['id'][idx] == id
+        except (KeyError, IndexError, AssertionError):
+            self.make_index()
+            try:
+                idx = self._id_index[id]
+                assert self['id'][idx] == id
+            except (KeyError, IndexError, AssertionError):
+                raise KeyError(f'{id} is not in table')
+
+        return idx
+
+
+class ACACatalogTable(BaseCatalogTable):
     """
     Base class for representing ACA catalogs in star selection.  This
     can apply to acq, guide and fid entries.
@@ -383,17 +443,6 @@ class ACACatalogTable(Table):
     verbose = MetaAttribute(default=False)
     print_log = MetaAttribute(default=False)
     log_info = MetaAttribute(default={}, is_kwarg=False)
-
-    def __init__(self, data=None, **kwargs):
-        super().__init__(data=data, **kwargs)
-
-        # Make printed table look nicer.  This is defined in advance
-        # and will be applied the first time the table is represented.
-        self._default_formats = {'p_acq': '.3f'}
-        for name in ('yang', 'zang', 'row', 'col', 'mag', 'maxmag', 'mag_err', 'color', 'COLOR1'):
-            self._default_formats[name] = '.2f'
-        for name in ('ra', 'dec', 'RA_PMCORR', 'DEC_PMCORR'):
-            self._default_formats[name] = '.6f'
 
     def set_attrs_from_kwargs(self, **kwargs):
         for name, val in kwargs.items():
@@ -545,45 +594,6 @@ class ACACatalogTable(Table):
         out['id'] = np.full(fill_value=0, shape=(0,), dtype=np.int64)
         out['idx'] = np.full(fill_value=0, shape=(0,), dtype=np.int64)
         return out
-
-    def make_index(self):
-        # Low-tech index to quickly get a row or the row index by `id` column.
-        self._id_index = {}
-
-        for idx, row in enumerate(self):
-            self._id_index[row['id']] = idx
-
-    def get_id(self, id):
-        """
-        Return row corresponding to ``id`` in id column.
-
-        :param id: row ``id`` column value
-        :returns: table Row
-        """
-        return self[self.get_id_idx(id)]
-
-    def get_id_idx(self, id):
-        """
-        Return row corresponding to ``id`` in id column.
-
-        :param id: row ``id`` column value
-        :returns: table row index (int)
-        """
-        if not hasattr(self, '_index'):
-            self.make_index()
-
-        try:
-            idx = self._id_index[id]
-            assert self['id'][idx] == id
-        except (KeyError, IndexError, AssertionError):
-            self.make_index()
-            try:
-                idx = self._id_index[id]
-                assert self['id'][idx] == id
-            except (KeyError, IndexError, AssertionError):
-                raise KeyError(f'{id} is not in table')
-
-        return idx
 
     @property
     def acqs(self):
@@ -834,7 +844,22 @@ get_mag_std = interp1d(x=[-10, 6.7, 7.3, 7.8, 8.3, 8.8, 9.2, 9.7, 10.1, 11, 20],
                        kind='linear')
 
 
-class StarsTable(ACACatalogTable):
+class StarsTable(BaseCatalogTable):
+    """Table of stars for use in proseco.
+
+    This is meant to be created only with available class methods:
+
+    - from_agasc() : calls agasc.get_agasc_cone()
+    - from_stars() : init from the results of a call to get_agasc_cone()
+    - from_agasc_ids() : calls agasc.get_stars()
+    - empty() : empty catalog, then use add_* methods to add stars
+
+    """
+    att = MetaAttribute()
+
+    # StarsTable attributes, gets set in MetaAttribute or AliasAttribute
+    allowed_kwargs = set()
+
     @staticmethod
     def get_logger(logger):
         if logger is not None:
@@ -843,6 +868,18 @@ class StarsTable(ACACatalogTable):
             def null_logger(*args, **kwargs):
                 pass
             return null_logger
+
+    def plot(self, ax=None):
+        """
+        Plot the star field.
+
+        :param ax: matplotlib axes object for plotting to (optional)
+        """
+        from chandra_aca.plot import plot_stars
+        import matplotlib.pyplot as plt
+
+        plot_stars(attitude=self.att, stars=self, ax=ax)
+        plt.show()
 
     @classmethod
     def from_agasc(cls, att, date=None, radius=1.2, logger=None):
@@ -902,23 +939,38 @@ class StarsTable(ACACatalogTable):
         Return a StarsTable from an existing AGASC stars query.  This just updates
         columns in place.
 
+        If ``stars`` is a StarsTable, the attitude of that object ``stars.att`` must
+        match ``att`` to within 0.001 arcsec in pitch, yaw, and roll.
+
         :param att: any Quat-compatible attitude
         :param stars: Table of stars
         :param logger: logger object (default=None)
         :param copy: copy ``stars`` table columns
 
         :returns: StarsTable of stars
+
         """
         logger = StarsTable.get_logger(logger)
 
+        q_att = Quat(att)
+
         if isinstance(stars, StarsTable):
-            logger('stars is a StarsTable, assuming positions are correct for att')
+            # Check for consistency between stars att and supplied att
+            # if att is not the same object as stars.att.
+            if att is not stars.att:
+                q_att_stars = Quat(stars.att)
+                dq = q_att.dq(q_att_stars)
+                lim = 0.001 / 3600  # 0.001 arcsec
+                if any(abs(getattr(dq, attr)) > lim for attr in ('pitch', 'yaw', 'roll0')):
+                    raise ValueError(f'supplied att {att} does not match stars att {stars.att}')
             return stars
 
         stars = cls(stars, copy=copy)
+        stars.att = att
+
         logger(f'Updating star columns for attitude and convenience')
 
-        q_att = stars.meta['q_att'] = Quat(att)
+        stars.meta['q_att'] = q_att
         yag, zag = radec2yagzag(stars['RA_PMCORR'], stars['DEC_PMCORR'], q_att)
         yag *= 3600
         zag *= 3600
@@ -971,7 +1023,10 @@ class StarsTable(ACACatalogTable):
         :param att: any Quat-compatible attitude
         :returns: StarsTable of stars (empty)
         """
-        return cls.from_agasc(att, radius=-1)
+        stars = cls.from_agasc(att, radius=-1)
+        stars.att = att
+
+        return stars
 
     def add_agasc_id(self, agasc_id):
         """

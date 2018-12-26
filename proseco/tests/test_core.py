@@ -236,3 +236,25 @@ def test_alias_attributes(cls, attr):
         setattr(obj, attr + suffix, val)
         assert getattr(obj, attr) == exp
         assert getattr(obj, attr + suffix) == exp
+
+
+def test_starstable_from_stars():
+    """Test initializing a StarsTable from stars where att can be different.
+
+    Tests with an attitude is 0.0005 arsec different (OK) and 0.002 arcsec
+    different (not OK).
+
+    """
+
+    dang = 0.001 / 3600  # limit
+    att = [0, 1, 359]
+    att2 = [0, 1 + dang * 2, 359 - 0.0005 / 2 ]
+    att3 = [0, 1 - dang / 2, 359 - dang / 2]
+    stars = StarsTable.from_agasc(att=att)
+
+    with pytest.raises(ValueError) as err:
+        StarsTable.from_stars(att2, stars)
+    assert 'supplied att' in str(err)
+
+    stars3 = StarsTable.from_stars(att3, stars)
+    assert stars3 is stars
