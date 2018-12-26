@@ -338,7 +338,67 @@ class IntListMetaAttribute(MetaAttribute):
         instance.meta[self.name] = np.atleast_1d(value).astype(np.int64).tolist()
 
 
-class ACACatalogTable(Table):
+class BaseCatalogTable(Table):
+    """Base class for representing star catalogs or ACA (guide/acq/fid) catalogs.
+
+    Features:
+    - Inherits from astropy Table
+    - Predefined formatting for nicer representations
+    - Indexing on 'id' column
+
+    """
+    def __init__(self, data=None, **kwargs):
+        super().__init__(data=data, **kwargs)
+
+        # Make printed table look nicer.  This is defined in advance
+        # and will be applied the first time the table is represented.
+        self._default_formats = {}
+        for name in ('yang', 'zang', 'row', 'col', 'mag', 'maxmag', 'mag_err', 'color', 'COLOR1'):
+            self._default_formats[name] = '.2f'
+        for name in ('ra', 'dec', 'RA_PMCORR', 'DEC_PMCORR'):
+            self._default_formats[name] = '.6f'
+
+    def make_index(self):
+        # Low-tech index to quickly get a row or the row index by `id` column.
+        self._id_index = {}
+
+        for idx, row in enumerate(self):
+            self._id_index[row['id']] = idx
+
+    def get_id(self, id):
+        """
+        Return row corresponding to ``id`` in id column.
+
+        :param id: row ``id`` column value
+        :returns: table Row
+        """
+        return self[self.get_id_idx(id)]
+
+    def get_id_idx(self, id):
+        """
+        Return row corresponding to ``id`` in id column.
+
+        :param id: row ``id`` column value
+        :returns: table row index (int)
+        """
+        if not hasattr(self, '_index'):
+            self.make_index()
+
+        try:
+            idx = self._id_index[id]
+            assert self['id'][idx] == id
+        except (KeyError, IndexError, AssertionError):
+            self.make_index()
+            try:
+                idx = self._id_index[id]
+                assert self['id'][idx] == id
+            except (KeyError, IndexError, AssertionError):
+                raise KeyError(f'{id} is not in table')
+
+        return idx
+
+
+class ACACatalogTable(BaseCatalogTable):
     """
     Base class for representing ACA catalogs in star selection.  This
     can apply to acq, guide and fid entries.
@@ -383,17 +443,6 @@ class ACACatalogTable(Table):
     verbose = MetaAttribute(default=False)
     print_log = MetaAttribute(default=False)
     log_info = MetaAttribute(default={}, is_kwarg=False)
-
-    def __init__(self, data=None, **kwargs):
-        super().__init__(data=data, **kwargs)
-
-        # Make printed table look nicer.  This is defined in advance
-        # and will be applied the first time the table is represented.
-        self._default_formats = {'p_acq': '.3f'}
-        for name in ('yang', 'zang', 'row', 'col', 'mag', 'maxmag', 'mag_err', 'color', 'COLOR1'):
-            self._default_formats[name] = '.2f'
-        for name in ('ra', 'dec', 'RA_PMCORR', 'DEC_PMCORR'):
-            self._default_formats[name] = '.6f'
 
     def set_attrs_from_kwargs(self, **kwargs):
         for name, val in kwargs.items():
@@ -545,45 +594,6 @@ class ACACatalogTable(Table):
         out['id'] = np.full(fill_value=0, shape=(0,), dtype=np.int64)
         out['idx'] = np.full(fill_value=0, shape=(0,), dtype=np.int64)
         return out
-
-    def make_index(self):
-        # Low-tech index to quickly get a row or the row index by `id` column.
-        self._id_index = {}
-
-        for idx, row in enumerate(self):
-            self._id_index[row['id']] = idx
-
-    def get_id(self, id):
-        """
-        Return row corresponding to ``id`` in id column.
-
-        :param id: row ``id`` column value
-        :returns: table Row
-        """
-        return self[self.get_id_idx(id)]
-
-    def get_id_idx(self, id):
-        """
-        Return row corresponding to ``id`` in id column.
-
-        :param id: row ``id`` column value
-        :returns: table row index (int)
-        """
-        if not hasattr(self, '_index'):
-            self.make_index()
-
-        try:
-            idx = self._id_index[id]
-            assert self['id'][idx] == id
-        except (KeyError, IndexError, AssertionError):
-            self.make_index()
-            try:
-                idx = self._id_index[id]
-                assert self['id'][idx] == id
-            except (KeyError, IndexError, AssertionError):
-                raise KeyError(f'{id} is not in table')
-
-        return idx
 
     @property
     def acqs(self):
@@ -834,7 +844,17 @@ get_mag_std = interp1d(x=[-10, 6.7, 7.3, 7.8, 8.3, 8.8, 9.2, 9.7, 10.1, 11, 20],
                        kind='linear')
 
 
-class StarsTable(ACACatalogTable):
+class StarsTable(BaseCatalogTable):
+    """Table of stars for use in proseco.
+
+    This is meant to be created only with available class methods:
+
+    - from_agasc() : calls agasc.get_agasc_cone()
+    - from_stars() : init from the results of a call to get_agasc_cone()
+    - from_agasc_ids() : calls agasc.get_stars()
+    - empty() : empty catalog, then use add_* methods to add stars
+
+    """
     @staticmethod
     def get_logger(logger):
         if logger is not None:
