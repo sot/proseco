@@ -939,6 +939,9 @@ class StarsTable(BaseCatalogTable):
         Return a StarsTable from an existing AGASC stars query.  This just updates
         columns in place.
 
+        If ``stars`` is a StarsTable, the attitude of that object ``stars.att`` must
+        match ``att`` to within 0.001 arcsec in pitch, yaw, and roll.
+
         :param att: any Quat-compatible attitude
         :param stars: Table of stars
         :param logger: logger object (default=None)
