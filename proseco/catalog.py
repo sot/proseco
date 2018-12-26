@@ -153,6 +153,19 @@ class ACATable(ACACatalogTable):
                    self.fids.thumbs_up &
                    self.guides.thumbs_up)
 
+    def make_report(self, rootdir='.'):
+        """
+        Make summary HTML report for acq and guide selection process and outputs.
+
+        Outputs are in ``<rootdir>/obs<obsid>/{acq,guide}/index.html`` plus related
+        images in that directory.
+
+        :param rootdir: root directory for outputs
+
+        """
+        self.acqs.make_report(rootdir=rootdir)
+        self.guides.make_report(rootdir=rootdir)
+
     def optimize_acqs_fids(self):
         """
         Concurrently optimize acqs and fids in the case where there is not
