@@ -282,6 +282,12 @@ def test_aca_acq_gui_thumbs_up(config):
 
 
 def test_fid_trap_effect():
+    """Test that guide stars impacted by fid trap effect are excluded.
+
+    This uses two flight obsids that showed this issue.  See:
+    http://cxc.cfa.harvard.edu/mta/ASPECT/aca_weird_pixels/
+
+    """
     # Obsid 1576
     agasc_ids = [367148872, 367139768, 367144424, 367674552, 367657896]
     att = [10.659376, 40.980028, 181.012903]
@@ -290,10 +296,15 @@ def test_fid_trap_effect():
     assert 367674552 not in cat.guides['id']
 
     # Obsid 2365
+    # NOTE: the att below is in fact the actual 2365 attitude, which differs
+    # from what mica.starcheck reports as [243.598372, -63.123245, 123.674233].
+    # See: https://github.com/sot/mica/issues/184
     agasc_ids = [1184926344, 1184902704, 1184897704, 1184905208, 1185050656]
     att = [243.552030, -63.091108, 224.513314]
     stars = StarsTable.from_agasc_ids(att, agasc_ids)
-    cat = get_aca_catalog(obsid=2365, stars=stars, raise_exc=True)
+
+    # Specify att kwarg explicitly to override what is found in mica.starcheck
+    cat = get_aca_catalog(obsid=2365, stars=stars, raise_exc=True, att=att)
     assert 1184897704 not in cat.guides['id']
 
 
