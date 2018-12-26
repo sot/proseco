@@ -419,13 +419,14 @@ def test_make_report_guide(tmpdir):
 
     tmpdir = Path(tmpdir)
     obsdir = tmpdir / f'obs{obsid:05}'
+    outdir = obsdir / 'guide'
 
     guides.to_pickle(rootdir=tmpdir)
 
     guides2 = make_report(obsid, rootdir=tmpdir)
 
-    assert (obsdir / 'guide_index.html').exists()
-    assert len(list(obsdir.glob('*.png'))) > 0
+    assert (outdir / 'index.html').exists()
+    assert len(list(outdir.glob('*.png'))) > 0
 
     assert repr(guides) == repr(guides2)
     assert repr(guides.cand_guides) == repr(guides2.cand_guides)

@@ -40,15 +40,14 @@ table.table-striped td {
 <h1> Obsid {{obsid}} at {{date}}</h1>
 
 <table class="table-striped">
-  <tr>  <td> <b>RA</b> </td> <td> {{ att[0] }} </td> </tr>
-  <tr>  <td> <b>Dec</b> </td> <td> {{ att[1] }} </td> </tr>
-  <tr>  <td> <b>Roll</b> </td> <td> {{ att[2] }} </td> </tr>
-  <tr>  <td> <b>t_ccd</b> </td> <td> {{ t_ccd_guide }} </td> </tr>
-  <tr>  <td> <b>dither_y</b> </td> <td> {{ dither_guide.y }} </td> </tr>
-  <tr>  <td> <b>dither_z</b> </td> <td> {{ dither_guide.z }} </td> </tr>
+  <tr>  <td> <b>ra</b> </td> <td> {{ att[0] }} </td> </tr>
+  <tr>  <td> <b>dec</b> </td> <td> {{ att[1] }} </td> </tr>
+  <tr>  <td> <b>roll</b> </td> <td> {{ att[2] }} </td> </tr>
+  <tr>  <td> <b>t_ccd</b> </td> <td> {{ t_ccd_guide }} C</td> </tr>
+  <tr>  <td> <b>dither (y, z)</b> </td> <td> {{ dither_guide.y }}, {{ dither_guide.z }} arcsec</td> </tr>
   <tr>  <td> <b>n_guide</b> </td> <td> {{ n_guide }} </td> </tr>
-  <tr>  <td> <b>include_ids</b> </td> <td> {{ str_include_ids }} </td> </tr>
-  <tr>  <td> <b>exclude_ids</b> </td> <td> {{ str_exclude_ids }} </td> </tr>
+  {% if include_ids %} <tr>  <td> <b>include_ids</b> </td> <td> {{ include_ids }} </td> </tr> {% endif %}
+  {% if exclude_ids %} <tr>  <td> <b>exclude_ids</b> </td> <td> {{ exclude_ids }} </td> </tr> {% endif %}
 </table>
 
 

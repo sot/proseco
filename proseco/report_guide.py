@@ -30,11 +30,32 @@ APL = AcaPsfLibrary()
 
 
 def make_report(obsid, rootdir='.'):
-    rootdir = Path(rootdir)
-    print(f'Processing obsid {obsid}')
+    """
+    Make summary HTML report for guide star selection.
 
+    The first arg ``obsid`` can be an obsid (int) or a ``GuideTable`` object.
+    For ``int`` the guide table is read from ``<rootdir>/obs<obsid>/guide.pkl``.
+
+    Output is in ``<rootdir>/obs<obsid>/guide/index.html`` plus related images
+    in that directory.
+
+    :param obsid: int obsid or GuideTable instance
+    :param rootdir: root directory for outputs
+
+    :returns: GuideTable object (mostly for testing)
+    """
+    rootdir = Path(rootdir)
+
+    if isinstance(obsid, GuideTable):
+        guides = obsid
+        obsid = guides.obsid
+    else:
+        guides = GuideTable.from_pickle(obsid, rootdir)
+
+    # Define and make directories as needed
     obsdir = rootdir / f'obs{obsid:05}'
-    guides = GuideTable.from_pickle(obsid, rootdir)
+    outdir = obsdir / 'guide'
+    outdir.mkdir(exist_ok=True, parents=True)
 
     cand_guides = guides.cand_guides.copy()
     cand_guides['sort_stage'] = cand_guides['stage']
@@ -44,8 +65,8 @@ def make_report(obsid, rootdir='.'):
         cand_guides = cand_guides[0:MAX_CAND]
 
     context = copy(guides.meta)
-    context['str_include_ids'] = ",".join([str(sid) for sid in guides.include_ids_guide])
-    context['str_exclude_ids'] = ",".join([str(sid) for sid in guides.exclude_ids_guide])
+    context['include_ids'] = ", ".join([str(val) for val in guides.include_ids])
+    context['exclude_ids'] = ", ".join([str(val) for val in guides.exclude_ids])
 
     # Get information that is not stored in the acqs pickle for space reasons
     guides.stars = StarsTable.from_agasc(guides.att, date=guides.date)
@@ -70,7 +91,7 @@ def make_report(obsid, rootdir='.'):
         cand_guides['stage'][-1] = -1
         cand_guides['forced'][-1] = True
 
-    make_cand_report(guides, cand_guides, context, obsdir)
+    make_cand_report(guides, cand_guides, context, outdir)
 
     # Guide star table
     cols = COLS.copy()
@@ -91,7 +112,7 @@ def make_report(obsid, rootdir='.'):
     template_file = FILEDIR / GUIDE.index_template_file
     template = Template(open(template_file, 'r').read())
     out_html = template.render(context)
-    out_filename = obsdir / 'guide_index.html'
+    out_filename = outdir / 'index.html'
     with open(out_filename, 'w') as fh:
         fh.write(out_html)
 
@@ -103,7 +124,6 @@ def make_cand_report(guides, cand_guides, context, obsdir):
     n_stages = np.max(cand_guides['stage'])
     context['cand_guides'] = []
     for ii, guide in enumerate(cand_guides):
-        print('Doing detail for star {}'.format(guide['id']))
         select = 'SELECTED' if guide['id'] in guides['id'] else 'not selected'
 
         # Add debugging information if the star was in include/exclude lists
