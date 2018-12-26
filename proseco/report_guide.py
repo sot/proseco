@@ -65,8 +65,8 @@ def make_report(obsid, rootdir='.'):
         cand_guides = cand_guides[0:MAX_CAND]
 
     context = copy(guides.meta)
-    context['str_include_ids'] = ",".join([str(sid) for sid in guides.include_ids_guide])
-    context['str_exclude_ids'] = ",".join([str(sid) for sid in guides.exclude_ids_guide])
+    context['include_ids'] = ", ".join([str(val) for val in guides.include_ids])
+    context['exclude_ids'] = ", ".join([str(val) for val in guides.exclude_ids])
 
     # Get information that is not stored in the acqs pickle for space reasons
     guides.stars = StarsTable.from_agasc(guides.att, date=guides.date)

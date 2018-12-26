@@ -40,12 +40,16 @@ table.table-striped td {
 <h1> Obsid {{obsid}} at {{date}}</h1>
 
 <table class="table-striped">
-  <tr>  <td> <b>RA</b> </td> <td> {{ att[0] }} </td> </tr>
-  <tr>  <td> <b>Dec</b> </td> <td> {{ att[1] }} </td> </tr>
-  <tr>  <td> <b>Roll</b> </td> <td> {{ att[2] }} </td> </tr>
-  <tr>  <td> <b>T_ccd</b> </td> <td> {{ t_ccd_acq }} </td> </tr>
-  <tr>  <td> <b>Man angle</b> </td> <td> {{ man_angle }} </td> </tr>
-  <tr>  <td> <b>dither (y,z)</b> </td> <td> {{ dither_acq.y }}, {{ dither_acq.z }} </td> </tr>
+  <tr>  <td> <b>ra</b> </td> <td> {{ att[0] }} </td> </tr>
+  <tr>  <td> <b>dec</b> </td> <td> {{ att[1] }} </td> </tr>
+  <tr>  <td> <b>roll</b> </td> <td> {{ att[2] }} </td> </tr>
+  <tr>  <td> <b>t_ccd</b> </td> <td> {{ t_ccd_acq }} C</td> </tr>
+  <tr>  <td> <b>man angle</b> </td> <td> {{ man_angle }} deg</td> </tr>
+  <tr>  <td> <b>dither (y, z)</b> </td> <td> {{ dither_acq.y }}, {{ dither_acq.z }} arcsec</td> </tr>
+  <tr>  <td> <b>n_acq</b> </td> <td> {{ n_acq }} </td> </tr>
+  {% if include_ids %} <tr>  <td> <b>include_ids</b> </td> <td> {{ include_ids }} </td> </tr> {% endif %}
+  {% if include_halfws %} <tr>  <td> <b>include_halfws</b> </td> <td> {{ include_halfws }} arcsec </td> </tr> {% endif %}
+  {% if exclude_ids %} <tr>  <td> <b>exclude_ids</b> </td> <td> {{ exclude_ids }} </td> </tr> {% endif %}
 </table>
 
 <table>

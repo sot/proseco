@@ -319,6 +319,9 @@ def make_report(obsid, rootdir='.'):
     outdir.mkdir(exist_ok=True, parents=True)
 
     context = copy(acqs.meta)
+    context['include_ids'] = ", ".join([str(val) for val in acqs.include_ids])
+    context['include_halfws'] = ", ".join([str(val) for val in acqs.include_halfws])
+    context['exclude_ids'] = ", ".join([str(val) for val in acqs.exclude_ids])
 
     # Get information that is not stored in the acqs pickle for space reasons
     acqs.stars = StarsTable.from_agasc(acqs.att, date=acqs.date)
