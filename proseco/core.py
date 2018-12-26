@@ -864,6 +864,18 @@ class StarsTable(BaseCatalogTable):
                 pass
             return null_logger
 
+    def plot(self, ax=None):
+        """
+        Plot the star field.
+
+        :param ax: matplotlib axes object for plotting to (optional)
+        """
+        from chandra_aca.plot import plot_stars
+        import matplotlib.pyplot as plt
+
+        plot_stars(attitude=self.att, stars=self, ax=ax)
+        plt.show()
+
     @classmethod
     def from_agasc(cls, att, date=None, radius=1.2, logger=None):
         """
