@@ -276,7 +276,7 @@ def make_obsid_summary(acqs, events, context, obsdir):
     context['acqs_table'] = table_to_html(acqs_table)
 
     basename = 'acq_stars.png'
-    filename = obsdir / basename
+    filename = obsdir / 'acq' / basename
     context['acq_stars_plot'] = basename
     if not filename.exists():
         fig = plt.figure(figsize=(4, 4))

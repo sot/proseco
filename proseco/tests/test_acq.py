@@ -528,7 +528,9 @@ def test_make_report(tmpdir):
     acqs2 = make_report(obsid, rootdir=tmpdir)
 
     assert (outdir / 'index.html').exists()
-    assert len(list(obsdir.glob('*.png'))) > 0
+    assert (outdir / 'acq_stars.png').exists()
+    assert (outdir / 'candidate_stars.png').exists()
+    assert len(list(outdir.glob('*.png'))) > 0
 
     assert repr(acqs) == repr(acqs2)
     assert repr(acqs.cand_acqs) == repr(acqs2.cand_acqs)
