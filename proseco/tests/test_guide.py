@@ -367,3 +367,38 @@ def test_get_ax_range():
         # Confirm the range does not contain more than 2 pix extra on either side
         assert n + extent + 2 > plus
         assert n - extent - 2 < minus
+
+
+def test_make_report_guide(tmpdir):
+    """
+    Test making a guide report.  Use a big-box dither here
+    to test handling of that in report (after passing through pickle).
+    """
+    obsid = 19387
+    kwargs = OBS_INFO[obsid].copy()
+    kwargs['dither'] = (8, 64)
+    guides = get_guide_catalog(**OBS_INFO[obsid])
+
+    tmpdir = Path(tmpdir)
+    obsdir = tmpdir / f'obs{obsid:05}'
+    outdir = obsdir / 'guide'
+
+    guides.to_pickle(rootdir=tmpdir)
+
+    guides2 = make_report(obsid, rootdir=tmpdir)
+
+    assert (outdir / 'index.html').exists()
+    assert len(list(outdir.glob('*.png'))) > 0
+
+    assert repr(guides) == repr(guides2)
+    assert repr(guides.cand_guides) == repr(guides2.cand_guides)
+    for event, event2 in zip(guides.log_info, guides2.log_info):
+        assert event == event2
+
+    for attr in ['att', 'date', 't_ccd', 'man_angle', 'dither']:
+        val = getattr(guides, attr)
+        val2 = getattr(guides2, attr)
+        if isinstance(val, float):
+            assert np.isclose(val, val2)
+        else:
+            assert val == val2
