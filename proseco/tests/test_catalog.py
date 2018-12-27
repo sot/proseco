@@ -24,6 +24,7 @@ def test_get_aca_catalog_49531():
     Test of getting an ER using the mica.starcheck archive for getting the
     obs parameters.  This tests a regression introduced in the acq-fid
     functionality.
+
     """
     aca = get_aca_catalog(49531, raise_exc=True)
     assert len(aca.acqs) == 8
@@ -64,6 +65,9 @@ def test_get_aca_catalog_20259():
     """
     Test obsid 20259 which has two spoiled fids: HRC-2 is yellow and HRC-4 is red.
     Expectation is to choose fids 1, 2, 3 (not 4).
+
+    Also do a test that set_stars() processing is behaving as expected.
+
     """
     aca = get_aca_catalog(20259, raise_exc=True)
     exp = ['slot idx     id    type  sz   yang     zang   dim res halfw',
@@ -82,6 +86,12 @@ def test_get_aca_catalog_20259():
 
     repr(aca)  # Apply default formats
     assert aca[TEST_COLS].pformat(max_width=-1) == exp
+
+    # Check that acqs, guides, and fids are sharing the same stars table
+    # but that it is different from the larger aca stars table.
+    assert aca.stars is not aca.acqs.stars
+    assert aca.fids.stars is aca.acqs.stars
+    assert aca.guides.stars is aca.acqs.stars
 
 
 def test_exception_handling():

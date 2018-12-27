@@ -90,14 +90,22 @@ def _get_aca_catalog(**kwargs):
     aca.call_args = kwargs.copy()
     aca.set_attrs_from_kwargs(**kwargs)
 
+    # Get stars (typically from AGASC) and do not filter for stars near
+    # the ACA FOV.  This leaves the full radial selection available for
+    # later roll optimization.  Use aca.stars or aca.acqs.stars from here.
+    aca.set_stars(filter_near_fov=False)
+    kwargs.pop('stars', None)
+
     # Share a common dark map for memory / processing
     kwargs['dark'] = aca.dark
 
     aca.log('Starting get_acq_catalog')
-    aca.acqs = get_acq_catalog(**kwargs)
-    aca.log('Starting get_fid_catalog')
-    aca.fids = get_fid_catalog(acqs=aca.acqs, **kwargs)
+    aca.acqs = get_acq_catalog(stars=aca.stars, **kwargs)
 
+    # Note that aca.acqs.stars is a filtered version of aca.stars and includes
+    # only stars that are in or near ACA FOV.  Use this for fids and guides stars.
+    aca.log('Starting get_fid_catalog')
+    aca.fids = get_fid_catalog(stars=aca.acqs.stars, acqs=aca.acqs, **kwargs)
     aca.acqs.fids = aca.fids
 
     if aca.optimize:
@@ -106,9 +114,8 @@ def _get_aca_catalog(**kwargs):
 
     aca.acqs.fid_set = aca.fids['id']
 
-    stars = kwargs.pop('stars', aca.acqs.stars)
     aca.log('Starting get_guide_catalog')
-    aca.guides = get_guide_catalog(stars=stars, fids=aca.fids, **kwargs)
+    aca.guides = get_guide_catalog(stars=aca.acqs.stars, fids=aca.fids, **kwargs)
 
     # Make a merged starcheck-like catalog.  Catch any errors at this point to avoid
     # impacting operational work (call from Matlab).
