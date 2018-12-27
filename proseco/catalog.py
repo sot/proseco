@@ -2,8 +2,10 @@ import traceback
 import numpy as np
 from itertools import count
 
-from astropy.table import Column, Table
+from astropy.table import Column, Table, vstack
 from chandra_aca.star_probs import acq_success_prob
+from chandra_aca.transform import radec_to_yagzag, yagzag_to_pixels
+from Quaternion import Quat
 
 from .core import ACACatalogTable, get_kwargs_from_starcheck_text, MetaAttribute
 from .guide import get_guide_catalog, GuideTable
@@ -328,15 +330,10 @@ class ACATable(ACACatalogTable):
             self.log(f'No acq-fid combination was found that met stage requirements',
                      warning=True)
 
-    def get_better_roll_candidates(self, roll_range=None):
-        """Find a list of rolls that might substantially improve guide or acq catalogs.
+    def get_better_roll_candidates(self):
+        """Find stars that might substantially improve guide or acq catalogs.
 
-        The ``roll_range`` is a tuple of (min_roll, max_roll) specifying the absolute
-        (not off-nominal) roll range to explore.  If not specified then the Ska.Sun
-        functions will be used.  These may not precisely match ORviewer results.
-
-        :param roll_range: tuple of (min_roll, max_roll)
-        :returns: list of candidate rolls
+        :returns: StarsTable of stars
         """
         # Get stars that might be candidates at a different roll.  This takes
         # stars outside the original square CCD FOV (but made smaller by 30
@@ -368,6 +365,57 @@ class ACATable(ACACatalogTable):
         cand_idxs = [idx for idx in idxs[ok] if stars['id'][idx] not in acqs_ids]
 
         return stars[cand_idxs]
+
+    def find_roll_ranges(self, cands, roll_range=None, d_roll=1.0):
+        """Find a list of rolls that might substantially improve guide or acq catalogs.
+
+        ** NOT RIGHT NOW **
+        The ``roll_range`` is a tuple of (min_roll, max_roll) specifying the absolute
+        (not off-nominal) roll range to explore.  If not specified then the Ska.Sun
+        functions will be used.  These may not precisely match ORviewer results.
+
+        :param roll_range: tuple of (min_roll, max_roll)
+        :returns: list of candidate rolls
+        """
+        acqs = vstack([Table(self.acqs['id', 'ra', 'dec']), cands['id', 'ra', 'dec']])
+        # guides = vstack([self.guides['id', 'ra', 'dec'], cands['id', 'ra', 'dec']])
+
+        q_att = Quat(self.att)
+        att = list(q_att.equatorial)
+
+        def make_ids_list(roll_offsets):
+            d_roll = roll_offsets[1] - roll_offsets[0]
+            ids_list = []
+            for ii, roll_offset in enumerate(roll_offsets):
+                yag, zag = radec_to_yagzag(acqs['ra'], acqs['dec'],
+                                           Quat([att[0], att[1], att[2] + roll_offset]))
+                row, col = yagzag_to_pixels(yag, zag, allow_bad=True, pix_zero_loc='edge')
+
+                ok = (np.abs(row) < ACA.CCD['row_max']) & (np.abs(col) < ACA.CCD['col_max'])
+                ids = set(acqs['id'][ok])
+                print(f'ii={ii} roll_offset={roll_offset}')
+                if ii == 0:
+                    ids0 = ids
+                    curr_ids = ids
+                elif ids != curr_ids:
+                    print(f'Mismatch at ii={ii}')
+                    if ids_list:
+                        ids_list[-1][-1].append(roll_offset - d_roll)
+                    ids_list.append((ids - ids0, ids0 - ids, [roll_offset]))
+                    curr_ids = ids
+                if ii == len(roll_offsets) - 1:
+                    ids_list[-1][-1].append(roll_offset)
+            return ids_list, ids0
+
+        if roll_range is None:
+            roll_range = (-20, 20)
+        roll_offset_max = max(np.abs(roll_range))
+
+        ids_list_plus, ids0 = make_ids_list(np.arange(0, roll_offset_max, d_roll))
+        ids_list_minus, _ = make_ids_list(np.arange(0, -roll_offset_max, -d_roll))
+        ids_list = ids_list_minus[::-1] + ids_list_plus
+
+        return ids_list, ids0
 
 
 def merge_cats(fids=None, guides=None, acqs=None):
