@@ -507,3 +507,50 @@ def merge_cats(fids=None, guides=None, acqs=None):
     aca.add_column(idx, index=1)
 
     return aca
+
+ROLL_TABLE = Table.read("""
+pitch   rolldev
+46      0
+46.2    1.269
+46.4    2.052
+46.6    2.635
+46.8    3.111
+47      3.517
+47.2    3.942
+47.5    4.501
+48      5.192
+48.5    5.771
+49      6.268
+49.5    6.726
+50      7.142
+55      10.043
+60      11.753
+65      12.894
+70      13.659
+75      14.182
+80      14.523
+85      19.899
+137.08  7.334
+140     7.775
+145     8.697
+150     9.979
+153     11.021
+157     12.785
+160     14.628
+163     17.153
+166     19.999
+170     19.999
+180     19.999""", format='ascii')
+
+
+def allowed_rolldev(pitch):
+    """Get allowed roll deviation (off-nominal roll) for the given ``pitch``.
+
+    This uses the OFLS table and is an approximation to the true planning limit.
+    This is basically the same as https://github.com/sot/Ska.Sun/pull/5.
+
+    :param pitch: Sun pitch angle (deg)
+    :returns: Roll deviation (deg)
+    """
+    idx = np.searchsorted(ROLL_TABLE['pitch'], pitch, side='right')
+    return ROLL_TABLE['rolldev'][idx - 1]
