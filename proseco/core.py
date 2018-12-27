@@ -532,21 +532,30 @@ class ACACatalogTable(BaseCatalogTable):
         for r0, r1, c0, c1 in ACA.bad_pixels:
             self.dark.aca[r0:r1 + 1, c0:c1 + 1] = ACA.bad_pixel_dark_current
 
-    def set_stars(self, acqs=None):
+    def set_stars(self, acqs=None, filter_near_fov=True):
         """Set the object ``stars`` attribute to an appropriate StarsTable object.
 
         If ``acqs`` is defined that will be a previously computed AcqTable with
         ``stars`` already available, so use that.
 
         :param acqs: AcqTable for same observation
+        :param filter_near_fov: include only stars in or near ACA FOV
         """
         if acqs is None:
             if self.stars is None:
-                self.stars = StarsTable.from_agasc(self.att, date=self.date, logger=self.log)
+                stars = StarsTable.from_agasc(self.att, date=self.date, logger=self.log)
             else:
-                self.stars = StarsTable.from_stars(self.att, self.stars, logger=self.log)
+                stars = StarsTable.from_stars(self.att, self.stars, logger=self.log)
         else:
-            self.stars = acqs.stars
+            stars = acqs.stars
+
+        if filter_near_fov:
+            ok = ((np.abs(stars['row']) < ACA.CCD['row_max'] + ACA.CCD['fov_pad']) &
+                  (np.abs(stars['col']) < ACA.CCD['col_max'] + ACA.CCD['fov_pad']))
+            if not np.all(ok):
+                stars = stars[ok]
+
+        self.stars = stars
 
     def plot(self, ax=None):
         """
@@ -886,9 +895,6 @@ class StarsTable(BaseCatalogTable):
         """
         Get AGASC stars in the ACA FOV.  This uses the mini-AGASC, so only stars
         within 3-sigma of 11.5 mag.
-        TO DO: maybe use the full AGASC, for faint candidate acq stars with
-        large uncertainty.
-        TO DO: AGASC version selector?
 
         :param att: any Quat-compatible attitude
         :param date: DateTime compatible date for star proper motion (default=NOW)
@@ -1005,11 +1011,6 @@ class StarsTable(BaseCatalogTable):
         mag_std_dev = get_mag_std(stars['MAG_ACA'])
         mag_err = np.sqrt(mag_aca_err ** 2 + mag_std_dev ** 2)
         stars.add_column(Column(mag_err, name='mag_err'), index=8)
-
-        # Filter stars in or near ACA FOV
-        rcmax = 512.0 + 200 / 5  # 200 arcsec padding around CCD edge
-        ok = (row > -rcmax) & (row < rcmax) & (col > -rcmax) & (col < rcmax)
-        stars = stars[ok]
 
         logger('Finished star processing', level=1)
 

@@ -2,6 +2,7 @@ CCD = {'row_min': -512.0,
        'row_max': 512.0,
        'col_min': -512.0,
        'col_max': 512.0,
+       'fov_pad': 40.0,  # Padding *outside* CCD (filtering AGASC stars in/near FOV in set_stars)
        'window_pad': 7,
        'row_pad': 8,
        'col_pad': 1,
@@ -10,8 +11,9 @@ CCD = {'row_min': -512.0,
 PIX_2_ARC = 4.96289
 ARC_2_PIX = 1.0 / PIX_2_ARC
 
-max_ccd_row = 512 - 8  # Max allowed row for stars (SOURCE?)
-max_ccd_col = 512 - 1  # Max allow col for stars (SOURCE?)
+# Convenience characteristics
+max_ccd_row = CCD['row_max'] - CCD['row_pad']  # Max allowed row for stars (SOURCE?)
+max_ccd_col = CCD['col_max'] - CCD['col_pad']  # Max allow col for stars (SOURCE?)
 
 # Column spoiler rules
 col_spoiler_mag_diff = 4.5
