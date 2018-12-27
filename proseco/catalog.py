@@ -3,12 +3,14 @@ import numpy as np
 from itertools import count
 
 from astropy.table import Column, Table
+from chandra_aca.star_probs import acq_success_prob
 
 from .core import ACACatalogTable, get_kwargs_from_starcheck_text, MetaAttribute
 from .guide import get_guide_catalog, GuideTable
 from .acq import get_acq_catalog, AcqTable
 from .fid import get_fid_catalog, FidTable
 from . import characteristics_acq as ACQ
+from . import characteristics as ACA
 
 
 def get_aca_catalog(obsid=0, **kwargs):
@@ -325,6 +327,47 @@ class ACATable(ACACatalogTable):
         if best_P2 < stage_min_P2:
             self.log(f'No acq-fid combination was found that met stage requirements',
                      warning=True)
+
+    def get_better_roll_candidates(self, roll_range=None):
+        """Find a list of rolls that might substantially improve guide or acq catalogs.
+
+        The ``roll_range`` is a tuple of (min_roll, max_roll) specifying the absolute
+        (not off-nominal) roll range to explore.  If not specified then the Ska.Sun
+        functions will be used.  These may not precisely match ORviewer results.
+
+        :param roll_range: tuple of (min_roll, max_roll)
+        :returns: list of candidate rolls
+        """
+        # Get stars that might be candidates at a different roll.  This takes
+        # stars outside the original square CCD FOV (but made smaller by 30
+        # pixels) and inside a circle corresponding to the box corners (but
+        # made bigger by 30 pixels).  The inward padding ensures any stars that
+        # were originally excluded because of dither size etc are considered.
+        rc_pad = 40
+        stars = self.stars
+        in_fov = ((np.abs(stars['row']) < ACA.CCD['row_max'] - rc_pad) &
+                  (np.abs(stars['col']) < ACA.CCD['col_max'] - rc_pad))
+        radius2 = stars['row'] ** 2 + stars['col'] ** 2
+        # Spatial mask
+        sp_ok = ~in_fov & (radius2 < 2 * (512 + rc_pad) ** 2)
+        acq_ok = self.acqs.get_candidates_filter(stars)
+        # guide_ok = self.guides.get_candidates_filter()
+
+        # Find stars that are noticably better than worst acq star via the
+        # p_acq_model metric, defined as p_acq is at least 0.3 better.
+        acqs = self.acqs
+        idxs = np.flatnonzero(sp_ok & acq_ok)
+        p_acqs = acq_success_prob(date=acqs.date, t_ccd=acqs.t_ccd,
+                                  mag=stars['mag'][idxs], color=stars['COLOR1'][idxs],
+                                  spoiler=False, halfwidth=120)
+        worst_p_acq = min(acq['probs'].p_acq_model(120) for acq in acqs)
+        ok = p_acqs > worst_p_acq + 0.3
+        acqs_ids = acqs['id']
+
+        # Get new candidates that weren't already selected
+        cand_idxs = [idx for idx in idxs[ok] if stars['id'][idx] not in acqs_ids]
+
+        return stars[cand_idxs]
 
 
 def merge_cats(fids=None, guides=None, acqs=None):
