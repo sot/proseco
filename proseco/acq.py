@@ -258,6 +258,28 @@ class AcqTable(ACACatalogTable):
                 'detector', 'sim_offset', 'focus_offset')
         return {key: getattr(self, key) for key in keys}
 
+    @staticmethod
+    def get_candidates_filter(stars):
+        """Get base filter for acceptable candidates.
+
+        This does not include spatial filtering.
+
+        :param stars: StarsTable
+        :returns: bool mask of acceptable stars
+
+        """
+        ok = ((stars['CLASS'] == 0) &
+              (stars['mag'] > 5.9) &
+              (stars['mag'] < 11.0) &
+              (~np.isclose(stars['COLOR1'], 0.7)) &
+              (stars['mag_err'] < 1.0) &  # Mag err < 1.0 mag
+              (stars['ASPQ1'] < 40) &  # Less than 2 arcsec offset from nearby spoiler
+              (stars['ASPQ2'] == 0) &  # Proper motion less than 0.5 arcsec/yr
+              (stars['POS_ERR'] < 3000) &  # Position error < 3.0 arcsec
+              ((stars['VAR'] == -9999) | (stars['VAR'] == 5))  # Not known to vary > 0.2 mag
+              )
+        return ok
+
     def get_acq_candidates(self, stars, max_candidates=20):
         """
         Get candidates for acquisition stars from ``stars`` table.
@@ -270,17 +292,9 @@ class AcqTable(ACACatalogTable):
 
         :returns: Table of candidates, indices of rejected stars
         """
-        ok = ((stars['CLASS'] == 0) &
-              (stars['mag'] > 5.9) &
-              (stars['mag'] < 11.0) &
-              (~np.isclose(stars['COLOR1'], 0.7)) &
+        ok = (self.get_candidates_filter(stars) &
               (np.abs(stars['row']) < ACA.max_ccd_row) &  # Max usable row
-              (np.abs(stars['col']) < ACA.max_ccd_col) &  # Max usable col
-              (stars['mag_err'] < 1.0) &  # Mag err < 1.0 mag
-              (stars['ASPQ1'] < 40) &  # Less than 2 arcsec offset from nearby spoiler
-              (stars['ASPQ2'] == 0) &  # Proper motion less than 0.5 arcsec/yr
-              (stars['POS_ERR'] < 3000) &  # Position error < 3.0 arcsec
-              ((stars['VAR'] == -9999) | (stars['VAR'] == 5))  # Not known to vary > 0.2 mag
+              (np.abs(stars['col']) < ACA.max_ccd_col)  # Max usable col
               )
 
         bads = ~ok
