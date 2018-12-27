@@ -127,10 +127,6 @@ class AcqTable(ACACatalogTable):
     _fid_set = MetaAttribute(is_kwarg=False, default=())
     imposters_mag_limit = MetaAttribute(is_kwarg=False, default=20.0)
 
-    def __init__(self, data=None, **kwargs):
-        super().__init__(data, **kwargs)
-        self._default_formats['p_acq'] = '.3f'
-
     @classmethod
     def empty(cls):
         """
