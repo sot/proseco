@@ -4,7 +4,8 @@ from itertools import count
 
 from astropy.table import Column, Table, vstack
 from chandra_aca.star_probs import acq_success_prob
-from chandra_aca.transform import radec_to_yagzag, yagzag_to_pixels
+from chandra_aca.transform import (radec_to_yagzag, yagzag_to_pixels,
+                                   calc_aca_from_targ, calc_targ_from_aca)
 from Quaternion import Quat
 
 from .core import ACACatalogTable, get_kwargs_from_starcheck_text, MetaAttribute
@@ -374,7 +375,7 @@ class ACATable(ACACatalogTable):
         # Take the union of better stars and return the indexes
         return sorted(set(better_guide_idxs) | set(better_acq_idxs))
 
-    def find_roll_ranges(self, cand_idxs, roll_range=None, d_roll=0.25):
+    def find_roll_ranges(self, cand_idxs, roll_range=None, y_off=0, z_off=0, d_roll=0.25):
         """Find a list of rolls that might substantially improve guide or acq catalogs.
 
         The ``roll_range`` is a tuple of (min_roll, max_roll) specifying the
@@ -382,7 +383,10 @@ class ACATable(ACACatalogTable):
         then an approximate value of max allowed off-nominal roll will be used.
         These will not precisely match ORviewer results.
 
-        :param roll_range: None or tuple of (min_roll, max_roll)
+        :param roll_range: None or tuple of (min_roll, max_roll) (deg)
+        :param y_off: Y offset (deg, sign per OR-list convention)
+        :param z_off: Z offset (deg, sign per OR-list convention)
+        :param d_roll: step size for examining roll range (deg, default=0.25)
         :returns: list of candidate rolls
 
         """
@@ -391,35 +395,24 @@ class ACATable(ACACatalogTable):
         acqs.meta.clear()
         # Mask for guide star IDs that are also in acqs
         overlap = np.in1d(self.guides['id'], acqs['id'])
-        guides = Table(self.guides[cols][~overlap], meta={})
+        guides = Table(self.guides[cols][~overlap])
         guides.meta.clear()
         cands = vstack([acqs, guides, self.stars[cols][cand_idxs]])
 
         q_att = Quat(self.att)
 
-        def make_ids_list(roll_offsets):
-            d_roll = roll_offsets[1] - roll_offsets[0]
+        def get_ids_list(roll_offsets):
             ids_list = []
+            q_targ = calc_targ_from_aca(q_att, y_off, z_off)
             for ii, roll_offset in enumerate(roll_offsets):
-                q_att_roll = Quat([q_att.ra, q_att.dec, q_att.roll + roll_offset])
+                q_targ_roll = Quat([q_targ.ra, q_targ.dec, q_targ.roll + roll_offset])
+                q_att_roll = calc_aca_from_targ(q_targ_roll, y_off, z_off)
                 yag, zag = radec_to_yagzag(cands['ra'], cands['dec'], q_att_roll)
                 row, col = yagzag_to_pixels(yag, zag, allow_bad=True, pix_zero_loc='edge')
 
                 ok = (np.abs(row) < ACA.CCD['row_max']) & (np.abs(col) < ACA.CCD['col_max'])
-                ids = set(cands['id'][ok])
-                print(f'ii={ii} roll_offset={roll_offset}')
-                if ii == 0:
-                    ids0 = ids
-                    curr_ids = ids
-                elif ids != curr_ids:
-                    print(f'Mismatch at ii={ii}')
-                    if ids_list:
-                        ids_list[-1][-1].append(roll_offset - d_roll)
-                    ids_list.append((ids - ids0, ids0 - ids, [roll_offset]))
-                    curr_ids = ids
-                if ii == len(roll_offsets) - 1:
-                    ids_list[-1][-1].append(roll_offset)
-            return ids_list, ids0
+                ids_list.append(set(cands['id'][ok]))
+            return ids_list
 
         if roll_range is None:
             import Ska.Sun
@@ -431,24 +424,21 @@ class ACATable(ACACatalogTable):
         else:
             roll_min, roll_max = roll_range
 
-        # Ensure two things:
-        # (1) If a candidate is best at or beyond the extreme of allowed roll
+        # Ensure that if a candidate is best at or beyond the extreme of allowed roll
         # then make sure the sampled rolls go out far enough so that the mean
         # of the roll_offsets will get to the edge.
-        # (2) If the original roll is at the extreme of the roll range, then
-        # make sure there are enough bins so that make_ids_list() works (in
-        # particular the first line).
-        roll_pad = max((roll_max - roll_min) / 2, d_roll * 4)
+        roll_pad = (roll_max - roll_min) / 2
         roll = q_att.roll
 
-        roll_offsets = np.arange(roll, roll_max + roll_pad, d_roll) - roll
-        ids_list_plus, ids0 = make_ids_list(roll_offsets)
-        roll_offsets = np.arange(roll, roll_min - roll_pad, -d_roll) - roll
-        ids_list_minus, ids0 = make_ids_list(roll_offsets)
+        # Get roll offsets spanning roll_min:roll_max (with padding).  Make
+        # sure that roll_offset == 0.0 is included.
+        ro_minus = np.arange(0, roll_min - roll_pad - roll, -d_roll)[1:][::-1]
+        ro_plus = np.arange(0, roll_max + roll_pad - roll, d_roll)
+        roll_offsets = np.concatenate([ro_minus, ro_plus])
+        ids_list = get_ids_list(roll_offsets)
+        ids0 = ids_list[len(ro_minus)]
 
-        ids_list = ids_list_minus[::-1] + ids_list_plus
-
-        return ids_list, ids0
+        return ids_list, ids0, roll_offsets
 
 
 def merge_cats(fids=None, guides=None, acqs=None):
