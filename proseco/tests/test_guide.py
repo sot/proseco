@@ -11,7 +11,7 @@ from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
 from chandra_aca.transform import mag_to_count_rate, count_rate_to_mag
 
 from ..guide import (get_guide_catalog, check_spoil_contrib, get_pixmag_for_offset,
-                     check_mag_spoilers, get_ax_range)
+                     check_mag_spoilers, get_ax_range, check_column_spoilers)
 from ..report_guide import make_report
 from ..characteristics_guide import mag_spoiler
 from ..characteristics import CCD
@@ -59,6 +59,33 @@ def test_common_column_obsid_19904():
     # Assert the column spoiled one isn't in the list
     assert 1091705224 not in selected['id'].tolist()
     assert selected['id'].tolist() == [1091702440, 1091698696, 1091704824]
+
+
+# Cases for common column spoiler test
+comm_cases = [
+    # Star id 2 between id 1 and readout register and 5 mags brighter
+    {'r1': -1, 'c1': 0, 'm1': 10.0, 'r2': -5, 'c2': 0, 'm2': 5.0, 'spoils': True},
+    # Star id 2 between id 1 and readout register and 4 mags brighter (too faint to spoil)
+    {'r1': -1, 'c1': 0, 'm1': 10.0, 'r2': -5, 'c2': 0, 'm2': 6.0, 'spoils': False},
+    # Star id 2 between id 1 and readout register and 5 mags brighter
+    {'r1': 10, 'c1': 15, 'm1': 9.0, 'r2': 50, 'c2': 6, 'm2': 4.0, 'spoils': True},
+    # Star id 2 between id 1 and readout register and 5 mags brighter but 11 pix away in col
+    {'r1': 10, 'c1': 15, 'm1': 9.0, 'r2': 50, 'c2': 4, 'm2': 4.0, 'spoils': False}]
+
+
+@pytest.mark.parametrize('case', comm_cases)
+def test_common_column(case):
+    """
+    Test check_column_spoilers method using constructed two-star cases.
+    The check_column_spoilers method uses n_sigma on MAG_ACA_ERR, but this test
+    ignores MAG_ACA_ERR.
+    """
+    stars = StarsTable.empty()
+    stars.add_fake_star(row=case['r1'], col=case['c1'], mag=case['m1'], id=1)
+    stars.add_fake_star(row=case['r2'], col=case['c2'], mag=case['m2'], id=2)
+    stars['offchip'] = False
+    col_spoil, col_rej = check_column_spoilers(stars, [True, True], stars, n_sigma=3)
+    assert col_spoil[0] == case['spoils']
 
 
 def test_box_mag_spoiler():
