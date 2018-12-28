@@ -266,6 +266,44 @@ def test_check_spoil_contrib():
     assert bg_spoil[0]
 
 
+def test_check_spoil_contrib_cases():
+    """
+    Regression test check_spoil_contrib for some synthetic region and background pixel cases.
+
+    This moves a spoiling star from center past and edge to verify the "on the 8x8 region"
+    behavior and then moves a spoiling star diagonally through the background pixels to confirm
+    background pixel spoiling.
+    """
+    drcs = np.arange(10)
+    # Check if any light in the 8x8 from a spoiling star is over the threshold in check_spoil_contrib
+    reg_spoiled = []
+    for drc in drcs:
+        r = 10
+        c = 10
+        stars = StarsTable.empty()
+        stars.add_fake_star(row=r, col=c, mag=8.0, id=1, ASPQ1=1)
+        # Add a "spoiling" star 3 mags fainter and move it from center past edge through the drcs
+        stars.add_fake_star(row=r + drc, col=c, mag=11.0, id=2, ASPQ1=0)
+        bg_spoil, reg_spoil, rej = check_spoil_contrib(stars, np.array([True, True]), stars, .05, 25)
+        reg_spoiled.append(reg_spoil[0])
+    expected_reg_spoiled = [True, True, True, True, False, False, False, False, False, False]
+    assert reg_spoiled == expected_reg_spoiled
+
+    # Check if any light in the background pixels is over the threshold in check_spoil_contrib
+    bg_spoiled = []
+    for drc in drcs:
+        r = 10
+        c = 10
+        stars = StarsTable.empty()
+        stars.add_fake_star(row=r, col=c, mag=8.0, id=1, ASPQ1=1)
+        # Add a "spoiling" star 3 mags fainter and move it from center out through a corner
+        stars.add_fake_star(row=r + drc, col=c + drc, mag=11.0, id=2, ASPQ1=0)
+        bg_spoil, reg_spoil, rej = check_spoil_contrib(stars, np.array([True, True]), stars, .05, 25)
+        bg_spoiled.append(bg_spoil[0])
+    expected_bg_spoiled = [False, False, False, True, True, True, False, False, False, False]
+    assert bg_spoiled == expected_bg_spoiled
+
+
 pix_cases = [{'dither': (8, 8), 'offset_row': 4, 'offset_col': 4, 'spoils': True},
              {'dither': (64, 8), 'offset_row': 16, 'offset_col': 0, 'spoils': True},
              {'dither': (64, 8), 'offset_row': 20, 'offset_col': 0, 'spoils': False},
