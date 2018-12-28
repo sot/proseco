@@ -330,69 +330,83 @@ class ACATable(ACACatalogTable):
             self.log(f'No acq-fid combination was found that met stage requirements',
                      warning=True)
 
-    def get_better_roll_candidates(self):
-        """Find stars that might substantially improve guide or acq catalogs.
+    def get_candidate_better_stars(self):
+        """Find stars that *might* substantially improve guide or acq catalogs.
 
-        :returns: StarsTable of stars
+        Get stars that might be candidates at a different roll.  This takes
+        stars outside the original square CCD FOV (but made smaller by 40
+        pixels) and inside a circle corresponding to the box corners (but made
+        bigger by 40 pixels).  The inward padding ensures any stars that were
+        originally excluded because of dither size etc are considered.
+
+        :returns: list of indexes into self.stars
+
         """
-        # Get stars that might be candidates at a different roll.  This takes
-        # stars outside the original square CCD FOV (but made smaller by 30
-        # pixels) and inside a circle corresponding to the box corners (but
-        # made bigger by 30 pixels).  The inward padding ensures any stars that
-        # were originally excluded because of dither size etc are considered.
+        # First define a spatial mask ``sp_ok`` on ``stars`` that is the
+        # region (mentioned above) between an inner square and outer circle.
         rc_pad = 40
         stars = self.stars
         in_fov = ((np.abs(stars['row']) < ACA.CCD['row_max'] - rc_pad) &
                   (np.abs(stars['col']) < ACA.CCD['col_max'] - rc_pad))
         radius2 = stars['row'] ** 2 + stars['col'] ** 2
-        # Spatial mask
         sp_ok = ~in_fov & (radius2 < 2 * (512 + rc_pad) ** 2)
-        acq_ok = self.acqs.get_candidates_filter(stars)
-        # guide_ok = self.guides.get_candidates_filter()
 
-        # Find stars that are noticably better than worst acq star via the
-        # p_acq_model metric, defined as p_acq is at least 0.3 better.
-        acqs = self.acqs
+        # Find potential acq stars that are noticably better than worst acq
+        # star via the p_acq_model metric, defined as p_acq is at least 0.3
+        # better.
+        acq_ok = self.acqs.get_candidates_filter(stars)
         idxs = np.flatnonzero(sp_ok & acq_ok)
-        p_acqs = acq_success_prob(date=acqs.date, t_ccd=acqs.t_ccd,
+        p_acqs = acq_success_prob(date=self.acqs.date, t_ccd=self.acqs.t_ccd,
                                   mag=stars['mag'][idxs], color=stars['COLOR1'][idxs],
                                   spoiler=False, halfwidth=120)
-        worst_p_acq = min(acq['probs'].p_acq_model(120) for acq in acqs)
+        worst_p_acq = min(acq['probs'].p_acq_model(120) for acq in self.acqs)
         ok = p_acqs > worst_p_acq + 0.3
-        acqs_ids = acqs['id']
+        better_acq_idxs = idxs[ok]
 
-        # Get new candidates that weren't already selected
-        cand_idxs = [idx for idx in idxs[ok] if stars['id'][idx] not in acqs_ids]
+        # Find potential guide stars that are noticably better than worst guide
+        # star, defined as being at least 0.2 mag brighter.
+        guide_ok = self.guides.get_candidates_filter(stars)
+        idxs = np.flatnonzero(sp_ok & guide_ok)
+        worst_mag = np.max(self.guides['mag'])
+        ok = stars['mag'][idxs] < worst_mag - 0.2
+        better_guide_idxs = idxs[ok]
 
-        return stars[cand_idxs]
+        # Take the union of better stars and return the indexes
+        return sorted(set(better_guide_idxs) | set(better_acq_idxs))
 
-    def find_roll_ranges(self, cands, roll_range=None, d_roll=1.0):
+    def find_roll_ranges(self, cand_idxs, roll_range=None, d_roll=0.25):
         """Find a list of rolls that might substantially improve guide or acq catalogs.
 
-        ** NOT RIGHT NOW **
-        The ``roll_range`` is a tuple of (min_roll, max_roll) specifying the absolute
-        (not off-nominal) roll range to explore.  If not specified then the Ska.Sun
-        functions will be used.  These may not precisely match ORviewer results.
+        The ``roll_range`` is a tuple of (min_roll, max_roll) specifying the
+        absolute (not off-nominal) roll range to explore.  If not specified
+        then an approximate value of max allowed off-nominal roll will be used.
+        These will not precisely match ORviewer results.
 
-        :param roll_range: tuple of (min_roll, max_roll)
+        :param roll_range: None or tuple of (min_roll, max_roll)
         :returns: list of candidate rolls
+
         """
-        acqs = vstack([Table(self.acqs['id', 'ra', 'dec']), cands['id', 'ra', 'dec']])
-        # guides = vstack([self.guides['id', 'ra', 'dec'], cands['id', 'ra', 'dec']])
+        cols = ['id', 'ra', 'dec']
+        acqs = Table(self.acqs[cols])
+        acqs.meta.clear()
+        # Mask for guide star IDs that are also in acqs
+        overlap = np.in1d(self.guides['id'], acqs['id'])
+        guides = Table(self.guides[cols][~overlap], meta={})
+        guides.meta.clear()
+        cands = vstack([acqs, guides, self.stars[cols][cand_idxs]])
 
         q_att = Quat(self.att)
-        att = list(q_att.equatorial)
 
         def make_ids_list(roll_offsets):
             d_roll = roll_offsets[1] - roll_offsets[0]
             ids_list = []
             for ii, roll_offset in enumerate(roll_offsets):
-                yag, zag = radec_to_yagzag(acqs['ra'], acqs['dec'],
-                                           Quat([att[0], att[1], att[2] + roll_offset]))
+                q_att_roll = Quat([q_att.ra, q_att.dec, q_att.roll + roll_offset])
+                yag, zag = radec_to_yagzag(cands['ra'], cands['dec'], q_att_roll)
                 row, col = yagzag_to_pixels(yag, zag, allow_bad=True, pix_zero_loc='edge')
 
                 ok = (np.abs(row) < ACA.CCD['row_max']) & (np.abs(col) < ACA.CCD['col_max'])
-                ids = set(acqs['id'][ok])
+                ids = set(cands['id'][ok])
                 print(f'ii={ii} roll_offset={roll_offset}')
                 if ii == 0:
                     ids0 = ids
@@ -408,11 +422,30 @@ class ACATable(ACACatalogTable):
             return ids_list, ids0
 
         if roll_range is None:
-            roll_range = (-20, 20)
-        roll_offset_max = max(np.abs(roll_range))
+            import Ska.Sun
+            pitch = Ska.Sun.pitch(q_att.ra, q_att.dec, self.date)
+            nominal_roll = Ska.Sun.nominal_roll(q_att.ra, q_att.dec, self.date)
+            rolldev = allowed_rolldev(pitch)
+            roll_min = nominal_roll - rolldev
+            roll_max = nominal_roll + rolldev
+        else:
+            roll_min, roll_max = roll_range
 
-        ids_list_plus, ids0 = make_ids_list(np.arange(0, roll_offset_max, d_roll))
-        ids_list_minus, _ = make_ids_list(np.arange(0, -roll_offset_max, -d_roll))
+        # Ensure two things:
+        # (1) If a candidate is best at or beyond the extreme of allowed roll
+        # then make sure the sampled rolls go out far enough so that the mean
+        # of the roll_offsets will get to the edge.
+        # (2) If the original roll is at the extreme of the roll range, then
+        # make sure there are enough bins so that make_ids_list() works (in
+        # particular the first line).
+        roll_pad = max((roll_max - roll_min) / 2, d_roll * 4)
+        roll = q_att.roll
+
+        roll_offsets = np.arange(roll, roll_max + roll_pad, d_roll) - roll
+        ids_list_plus, ids0 = make_ids_list(roll_offsets)
+        roll_offsets = np.arange(roll, roll_min - roll_pad, -d_roll) - roll
+        ids_list_minus, ids0 = make_ids_list(roll_offsets)
+
         ids_list = ids_list_minus[::-1] + ids_list_plus
 
         return ids_list, ids0
