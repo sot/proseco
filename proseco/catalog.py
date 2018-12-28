@@ -12,12 +12,17 @@ from . import characteristics_acq as ACQ
 
 
 def get_aca_catalog(obsid=0, **kwargs):
-    """
-    Get a catalog of guide stars, acquisition stars and fid lights.
+    """Get a catalog of guide stars, acquisition stars and fid lights.
 
-    If ``obsid`` is supplied and is a string, then it is taken to be starcheck text
-    with required info.  User-supplied kwargs take precedence, however (e.g.
-    one can override the dither from starcheck).
+    If ``obsid`` is supplied and is a string, then it is taken to be starcheck
+    text with required info.  User-supplied kwargs take precedence, however
+    (e.g.  one can override the dither from starcheck).
+
+    In this situation if the ``obsid`` text includes the string
+    ``--force-catalog`` anywhere then the final proseco guide and acq catalogs
+    will be forced to match the input starcheck catalog.  This can be done by
+    appending this string, e.g. with ``obs_text + '--force-catalog'`` in the
+    call to ``get_aca_catalog``.
 
     :param obsid: obsid (int) or starcheck text (str) (default=0)
     :param att: attitude (any object that can initialize Quat)
@@ -60,7 +65,8 @@ def get_aca_catalog(obsid=0, **kwargs):
         # If obsid is supplied as a string then it is taken to be starcheck text
         # with required info.  User-supplied kwargs take precedence, however.
         if isinstance(obsid, str):
-            kw = get_kwargs_from_starcheck_text(obsid)
+            force_catalog = '--force-catalog' in obsid
+            kw = get_kwargs_from_starcheck_text(obsid, force_catalog=force_catalog)
             obsid = kw.pop('obsid')
             for key, val in kw.items():
                 if key not in kwargs:

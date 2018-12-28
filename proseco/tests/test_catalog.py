@@ -474,3 +474,65 @@ def test_report_from_objects(tmpdir):
         outdir = obsdir / subdir
         assert(outdir / 'index.html').exists()
         assert len(list(outdir.glob('*.png'))) > 0
+
+
+def test_force_catalog_from_starcheck():
+    """
+    Test forcing a catalog from starcheck output.
+    """
+    obs = """
+    OBSID: 20551  1RXSJ235324.6-125657   ACIS-I SIM Z offset:-1165 (-2.93mm) Grating: NONE
+    RA, Dec, Roll (deg):   358.341787   -12.949882   276.997597
+    Dither: ON  Y_amp= 8.0  Z_amp= 8.0  Y_period=1000.0  Z_period= 707.1
+    BACKSTOP GUIDE_SUMM OR MANVR DOT MAKE_STARS TLR
+
+    MP_TARGQUAT at 2019:009:21:16:11.292 (VCDU count = 13351231)
+      Q1,Q2,Q3,Q4: -0.65711794  0.09397558  0.06394855  0.74516789
+      MANVR: Angle=  89.16 deg  Duration= 1849 sec  Slew err= 55.7 arcsec  End= 2019:009:21:46:55
+
+    MP_STARCAT at 2019:009:21:16:12.935 (VCDU count = 13351237)
+    ---------------------------------------------------------------------------------------------
+     IDX SLOT        ID  TYPE   SZ   P_ACQ    MAG   MAXMAG   YANG   ZANG DIM RES HALFW PASS NOTES
+    ---------------------------------------------------------------------------------------------
+    [ 1]  0           1   FID  8x8     ---   7.000   8.000    919   -904   1   1   25
+    [ 2]  1           4   FID  8x8     ---   7.000   8.000   2140    995   1   1   25
+    [ 3]  2           5   FID  8x8     ---   7.000   8.000  -1828    993   1   1   25
+    [ 4]  3   764677800   BOT  6x6   0.372  10.263  11.766  -2101   -899  20   1  120  a4g4
+    [ 5]  4   765069008   BOT  6x6   0.988   9.030  10.531   2317   2263  28   1  160    a2
+    [ 6]  5   765069552   BOT  6x6   0.669   9.972  11.469    120    736  28   1  160  a3g3
+    [ 7]  6   765069664   BOT  6x6   0.664  10.060  11.562    209   1414  20   1  120  a3g3
+    [ 8]  7   765069712   BOT  6x6   0.998   6.295   7.797    983   1993  28   1  160  a2g2
+    [ 9]  0   765067472   ACQ  6x6   0.305  10.330  11.828   -753   -808  20   1  120    a4
+    [10]  1   765068968   ACQ  6x6   0.185  10.471  11.969    594   -529  20   1  120    a4
+    [11]  2   765070392   ACQ  6x6   0.261  10.378  11.875   -175    756  20   1  120    a4
+
+    >> WARNING: Probability of 2 or fewer stars > 0.008
+    >> WARNING: [ 4] Magnitude. Acq star 10.263
+    >> WARNING: [ 9] Magnitude. Acq star 10.330
+    >> WARNING: [10] Magnitude. Acq star 10.471
+    >> WARNING: [11] Magnitude. Acq star 10.378
+    >> WARNING: [ 7] Magnitude. Acq star 10.060
+
+    Probability of acquiring 2,3, and 4 or fewer stars (10^x):	-1.499	-0.703	-0.275
+    Acquisition Stars Expected  : 4.44
+    Predicted Max CCD temperature: -9.9 C    N100 Warm Pix Frac 0.286
+    Dynamic Mag Limits: Yellow 9.99          Red 10.17"""
+
+    aca = get_aca_catalog(obs + '--force-catalog')
+    assert aca['id'].tolist() == [1, 5, 6,  # NOTE: fids are not forced (yet)
+                                  764677800,
+                                  765069008,
+                                  765069552,
+                                  765069664,
+                                  765069712,
+                                  765067472,
+                                  765070392,
+                                  765068968]
+    assert aca['type'].tolist() == ['FID', 'FID', 'FID',
+                                    'BOT', 'BOT', 'BOT', 'BOT', 'BOT',
+                                    'ACQ', 'ACQ', 'ACQ']
+    assert aca['halfw'].tolist() == [25, 25, 25,
+                                     120, 160, 160, 120, 160,
+                                     120, 120, 120]
+    assert np.allclose(aca.att, [358.341787, -12.949882, 276.997597], rtol=0, atol=1e-6)
+    assert np.allclose(aca.acqs.man_angle, 89.16)
