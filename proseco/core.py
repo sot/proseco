@@ -1405,3 +1405,42 @@ def get_kwargs_from_starcheck_text(obs_text, include_cat=False, force_catalog=Fa
         pass
 
     return kw
+
+
+def logical_intervals(vals, x=None):
+    """
+    Determine contiguous intervals during which ``vals`` is True.
+
+    Returns an Astropy Table with a row for each interval.  Columns are:
+
+    * idx_start: index of interval start
+    * idx_stop: index of interval stop
+    * x_start: x value at idx_start (if ``x`` is supplied)
+    * x_stop: x value at idx_stop (if ``x`` is supplied)
+
+    :param vals: bool values for which intervals are returned.
+    :param x: x-axis values corresponding to ``vals``
+    :returns: Table of intervals
+
+    """
+    if len(vals) < 2:
+        raise ValueError('Filtered data length must be at least 2')
+
+    transitions = np.concatenate([[True], vals[:-1] != vals[1:], [True]])
+
+    state_vals = vals[transitions[1:]]
+    state_idxs = np.where(transitions)[0]
+
+    intervals = {'idx_start': state_idxs[:-1],
+                 'idx_stop': state_idxs[1:] - 1}
+
+    out = Table(intervals, names=sorted(intervals))
+
+    # Filter only the True states
+    out = out[state_vals]
+
+    if x is not None:
+        out['x_start'] = x[out['idx_start']]
+        out['x_stop'] = x[out['idx_stop']]
+
+    return out

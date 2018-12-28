@@ -8,7 +8,8 @@ from chandra_aca.transform import (radec_to_yagzag, yagzag_to_pixels,
                                    calc_aca_from_targ, calc_targ_from_aca)
 from Quaternion import Quat
 
-from .core import ACACatalogTable, get_kwargs_from_starcheck_text, MetaAttribute
+from .core import (ACACatalogTable, get_kwargs_from_starcheck_text, MetaAttribute,
+                   logical_intervals)
 from .guide import get_guide_catalog, GuideTable
 from .acq import get_acq_catalog, AcqTable
 from .fid import get_fid_catalog, FidTable
@@ -375,15 +376,18 @@ class ACATable(ACACatalogTable):
         # Take the union of better stars and return the indexes
         return sorted(set(better_guide_idxs) | set(better_acq_idxs))
 
-    def find_roll_ranges(self, cand_idxs, roll_range=None, y_off=0, z_off=0, d_roll=0.25):
+    def get_better_rolls(self, cand_idxs, roll_nom=None, roll_dev=None,
+                         y_off=0, z_off=0, d_roll=0.25):
         """Find a list of rolls that might substantially improve guide or acq catalogs.
 
-        The ``roll_range`` is a tuple of (min_roll, max_roll) specifying the
-        absolute (not off-nominal) roll range to explore.  If not specified
-        then an approximate value of max allowed off-nominal roll will be used.
-        These will not precisely match ORviewer results.
+        If ``roll_nom`` is not specified then an approximate value is computed via
+        Ska.Sun for the catalog ``date``.
 
-        :param roll_range: None or tuple of (min_roll, max_roll) (deg)
+        if ``roll_dev`` (max allowed off-nominal roll) is not specified it is computed
+        using the OFLS table.  These will not precisely match ORviewer results.
+
+        :param roll_nom: nominal roll for observation (deg)
+        :param roll_dev: max allowed deviation from nominal roll (deg)
         :param y_off: Y offset (deg, sign per OR-list convention)
         :param z_off: Z offset (deg, sign per OR-list convention)
         :param d_roll: step size for examining roll range (deg, default=0.25)
@@ -414,31 +418,66 @@ class ACATable(ACACatalogTable):
                 ids_list.append(set(cands['id'][ok]))
             return ids_list
 
-        if roll_range is None:
+        if roll_nom is None or roll_dev is None:
             import Ska.Sun
             pitch = Ska.Sun.pitch(q_att.ra, q_att.dec, self.date)
-            nominal_roll = Ska.Sun.nominal_roll(q_att.ra, q_att.dec, self.date)
-            rolldev = allowed_rolldev(pitch)
-            roll_min = nominal_roll - rolldev
-            roll_max = nominal_roll + rolldev
-        else:
-            roll_min, roll_max = roll_range
+        if roll_nom is None:
+            roll_nom = Ska.Sun.nominal_roll(q_att.ra, q_att.dec, self.date)
+        if roll_dev is None:
+            roll_dev = allowed_rolldev(pitch)
 
-        # Ensure that if a candidate is best at or beyond the extreme of allowed roll
-        # then make sure the sampled rolls go out far enough so that the mean
-        # of the roll_offsets will get to the edge.
-        roll_pad = (roll_max - roll_min) / 2
+        # Ensure roll_nom in range 0 <= roll_nom < 360 to match q_att.roll
+        roll_nom = roll_nom % 360.0
+        roll_min = roll_nom - roll_dev
+        roll_max = roll_nom + roll_dev
+
+        # Get roll offsets spanning roll_min:roll_max with padding.  Padding
+        # ensures that if a candidate is best at or beyond the extreme of
+        # allowed roll then make sure the sampled rolls go out far enough so
+        # that the mean of the roll_offset boundaries will get to the edge.
         roll = q_att.roll
-
-        # Get roll offsets spanning roll_min:roll_max (with padding).  Make
-        # sure that roll_offset == 0.0 is included.
-        ro_minus = np.arange(0, roll_min - roll_pad - roll, -d_roll)[1:][::-1]
-        ro_plus = np.arange(0, roll_max + roll_pad - roll, d_roll)
+        ro_minus = np.arange(0, roll_min - roll_dev - roll, -d_roll)[1:][::-1]
+        ro_plus = np.arange(0, roll_max + roll_dev - roll, d_roll)
         roll_offsets = np.concatenate([ro_minus, ro_plus])
+
+        # Get a list of the set of AGASC ids that are in the ACA FOV at each
+        # roll offset.  Note that roll_offset is relative to roll (self.att[2])
+        # and not roll_nom.
         ids_list = get_ids_list(roll_offsets)
         ids0 = ids_list[len(ro_minus)]
 
-        return ids_list, ids0, roll_offsets
+        # Get all unique sets of stars that are in the FOV over the sampled
+        # roll offsets.  Ignore ids sets that do not add new candidate stars.
+        uniq_ids_sets = []
+        for ids in ids_list:
+            if ids not in uniq_ids_sets and ids - ids0:
+                uniq_ids_sets.append(ids)
+
+        print(roll_min, roll_max)
+        # For each unique set, find the roll_offset range over which that set
+        # is in the FOV.
+        better_rolls = []
+        for uniq_ids in uniq_ids_sets:
+            print(uniq_ids - ids0, ids0 - uniq_ids)
+            for sid in uniq_ids - ids0:
+                star = self.stars.get_id(sid)
+                print(f'{sid} {star["mag"]} {star["yang"]} {star["zang"]}')
+            # This says that ``uniq_ids`` is a subset of available ``ids`` in
+            # FOV for roll_offset.
+            in_fov = np.array([uniq_ids <= ids for ids in ids_list])
+
+            # Get the contiguous intervals where uniq_ids is in FOV
+            intervals = logical_intervals(in_fov, x=roll_offsets + roll)
+
+            for interval in intervals:
+                print(interval)
+                if interval['x_start'] > roll_max or interval['x_stop'] < roll_min:
+                    print(f'skipping {roll_max} {roll_min}')
+                    continue  # Interval completely outside allowed roll range
+                better_roll = (interval['x_start'] + interval['x_stop']) / 2
+                better_rolls.append(np.clip(better_roll, roll_min, roll_max))
+
+        return sorted(set(better_rolls))
 
 
 def merge_cats(fids=None, guides=None, acqs=None):
