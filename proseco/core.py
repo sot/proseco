@@ -576,12 +576,12 @@ class ACACatalogTable(BaseCatalogTable):
         plt.show()
 
     def get_candidates_filter(self, stars):
-        return np.zeros(len(stars), dtype=bool)
+        return np.ones(len(stars), dtype=bool)
 
     @property
     def bad_stars(self):
         if not hasattr(self, '_bad_stars'):
-            self._bad_stars = self.get_candidates_filter(self.stars)
+            self._bad_stars = ~self.get_candidates_filter(self.stars)
         return self._bad_stars
 
     @bad_stars.setter
