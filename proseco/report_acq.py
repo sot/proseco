@@ -325,7 +325,6 @@ def make_report(obsid, rootdir='.'):
 
     # Get information that is not stored in the acqs pickle for space reasons
     acqs.stars = StarsTable.from_agasc(acqs.att, date=acqs.date)
-    _, acqs.bad_stars = acqs.get_acq_candidates(acqs.stars)
 
     events = make_events(acqs)
     context['events'] = events

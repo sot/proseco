@@ -575,6 +575,19 @@ class ACACatalogTable(BaseCatalogTable):
         plot_stars(attitude=self.att, catalog=self, ax=ax, **stars_kwargs)
         plt.show()
 
+    def get_candidates_filter(self, stars):
+        return np.zeros(len(stars), dtype=bool)
+
+    @property
+    def bad_stars(self):
+        if not hasattr(self, '_bad_stars'):
+            self._bad_stars = self.get_candidates_filter(self.stars)
+        return self._bad_stars
+
+    @bad_stars.setter
+    def bad_stars(self, value):
+        self._bad_stars = value
+
     @property
     def dither(self):
         return None
@@ -890,6 +903,16 @@ class StarsTable(BaseCatalogTable):
 
         plot_stars(attitude=self.att, stars=self, ax=ax)
         plt.show()
+
+    @property
+    def bad_stars(self):
+        if not hasattr(self, '_bad_stars'):
+            self._bad_stars = np.zeros(len(self), dtype=bool)
+        return self._bad_stars
+
+    @bad_stars.setter
+    def bad_stars(self, value):
+        self._bad_stars = value
 
     @classmethod
     def from_agasc(cls, att, date=None, radius=1.2, logger=None):
