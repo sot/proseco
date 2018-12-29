@@ -1241,13 +1241,15 @@ def pea_reject_image(img):
     return False
 
 
-def get_kwargs_from_starcheck_text(obs_text, include_cat=False):
+def get_kwargs_from_starcheck_text(obs_text, include_cat=False, force_catalog=False):
     """
     Get proseco kwargs using the exact catalog from the starcheck output text
     ``obs_text``.  Mostly copied from annie/annie (should move into mica.starcheck
     one day).
 
     :param obs_text: text copied from starcheck output
+    :param include_cat: include the original catalog in returned kwargs
+    :param force_catalog: force proseco catalog to match the original catalog
     :returns: dict of keyword args corresponding to proseco args
     """
     import re
@@ -1308,13 +1310,20 @@ def get_kwargs_from_starcheck_text(obs_text, include_cat=False):
 
     try:
         cat = Table(get_catalog(obs_text))
-        fid_or_mon = (cat['type'] == 'FID') | (cat['type'] == 'MON')
+    except:
+        pass
+    else:
+        fid_or_mon = np.in1d(cat['type'], ('FID', 'MON'))
         kw['n_guide'] = 8 - np.count_nonzero(fid_or_mon)
         kw['n_fid'] = np.count_nonzero(cat['type'] == 'FID')
         if include_cat:
             kw['cat'] = cat
-    except:
-        pass
+        if force_catalog:
+            ok = np.in1d(cat['type'], ('ACQ', 'BOT'))
+            kw['include_ids_acq'] = cat['id'][ok].tolist()
+            kw['include_halfws_acq'] = cat['halfw'][ok].tolist()
+            ok = np.in1d(cat['type'], ('GUI', 'BOT'))
+            kw['include_ids_guide'] = cat['id'][ok].tolist()
 
     try:
         targ = get_targ(obs_text)
