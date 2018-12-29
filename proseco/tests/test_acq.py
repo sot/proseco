@@ -185,8 +185,7 @@ def get_test_cand_acqs():
         acqs.p_man_errs = ACQ.p_man_errs['120-180']
         acqs.t_ccd = -10.0
         stars = get_test_stars()
-        CACHE['cand_acqs'], bads = acqs.get_acq_candidates(stars)
-        # Don't care about bads for testing
+        CACHE['cand_acqs'] = acqs.get_acq_candidates(stars)
     return CACHE['cand_acqs'].copy()
 
 

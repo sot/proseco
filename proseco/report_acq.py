@@ -158,7 +158,7 @@ def make_cand_acqs_report(acqs, cand_acqs, events, context, obsdir):
 
         fig = plot_aca.plot_stars(acqs.att, stars=acqs.stars,
                                   catalog=acqs.cand_acqs,
-                                  bad_stars=acqs.bad_stars)
+                                  bad_stars=acqs.bad_stars_mask)
         # When Ska3 has matplotlib 2.2+ then just use `filename`
         fig.savefig(str(filename))
         plt.close(fig)
@@ -284,7 +284,7 @@ def make_obsid_summary(acqs, events, context, obsdir):
         ax = fig.add_subplot(1, 1, 1)
         plot_aca.plot_stars(acqs.att, stars=acqs.stars,
                             catalog=acqs,
-                            bad_stars=acqs.bad_stars, ax=ax)
+                            bad_stars=acqs.bad_stars_mask, ax=ax)
         # When Ska3 has matplotlib 2.2+ then just use `filename`
         plt.savefig(str(filename))
         plt.close(fig)
@@ -325,7 +325,6 @@ def make_report(obsid, rootdir='.'):
 
     # Get information that is not stored in the acqs pickle for space reasons
     acqs.stars = StarsTable.from_agasc(acqs.att, date=acqs.date)
-    _, acqs.bad_stars = acqs.get_acq_candidates(acqs.stars)
 
     events = make_events(acqs)
     context['events'] = events
@@ -365,7 +364,7 @@ def plot_spoilers(acq, acqs, filename=None):
     ok = ((np.abs(stars['yang'] - acq['yang']) < plot_hw) &
           (np.abs(stars['zang'] - acq['zang']) < plot_hw))
     stars = stars[ok]
-    bad_stars = acqs.bad_stars[ok]
+    bad_stars = acqs.bad_stars_mask[ok]
 
     fig = plt.figure(figsize=(5, 5))
     ax = fig.add_subplot(1, 1, 1)

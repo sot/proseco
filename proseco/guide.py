@@ -64,6 +64,8 @@ def get_guide_catalog(obsid=0, **kwargs):
 
 
 class GuideTable(ACACatalogTable):
+    # Catalog type when plotting (None | 'FID' | 'ACQ' | 'GUI')
+    catalog_type = 'GUI'
 
     # Elements of meta that should not be directly serialized to pickle.
     # (either too big or requires special handling).
@@ -288,8 +290,7 @@ class GuideTable(ACACatalogTable):
 
         super().process_include_ids(cand_guides, stars[ok])
 
-    @staticmethod
-    def get_candidates_filter(stars):
+    def get_candidates_mask(self, stars):
         """Get base filter for acceptable candidates.
 
         This does not include spatial filtering.
@@ -318,7 +319,7 @@ class GuideTable(ACACatalogTable):
 
         # Use the primary selection filter from acq, but allow bad color
         # and limit to brighter stars
-        ok = (self.get_candidates_filter(stars) &
+        ok = (self.get_candidates_mask(stars) &
               (np.abs(stars['row']) < ACA.max_ccd_row) &  # Max usable row
               (np.abs(stars['col']) < ACA.max_ccd_col)  # Max usable col
               )

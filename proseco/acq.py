@@ -72,7 +72,7 @@ def get_acq_catalog(obsid=0, **kwargs):
     acqs.p_man_errs = np.array([get_p_man_err(man_err, acqs.man_angle)
                                 for man_err in ACQ.man_errs])
 
-    acqs.cand_acqs, acqs.bad_stars = acqs.get_acq_candidates(acqs.stars)
+    acqs.cand_acqs = acqs.get_acq_candidates(acqs.stars)
 
     # Fill in the entire acq['probs'].p_acqs table (which is actual a dict of keyed by
     # (box_size, man_err) tuples).
@@ -110,6 +110,9 @@ class AcqTable(ACACatalogTable):
     """
     Catalog of acquisition stars
     """
+    # Catalog type when plotting (None | 'FID' | 'ACQ' | 'GUI')
+    catalog_type = 'ACQ'
+
     # Elements of meta that should not be directly serialized to pickle
     # (either too big or requires special handling).
     pickle_exclude = ('stars', 'dark', 'bad_stars')
@@ -258,8 +261,7 @@ class AcqTable(ACACatalogTable):
                 'detector', 'sim_offset', 'focus_offset')
         return {key: getattr(self, key) for key in keys}
 
-    @staticmethod
-    def get_candidates_filter(stars):
+    def get_candidates_mask(self, stars):
         """Get base filter for acceptable candidates.
 
         This does not include spatial filtering.
@@ -292,12 +294,11 @@ class AcqTable(ACACatalogTable):
 
         :returns: Table of candidates, indices of rejected stars
         """
-        ok = (self.get_candidates_filter(stars) &
+        ok = (self.get_candidates_mask(stars) &
               (np.abs(stars['row']) < ACA.max_ccd_row) &  # Max usable row
               (np.abs(stars['col']) < ACA.max_ccd_col)  # Max usable col
               )
 
-        bads = ~ok
         cand_acqs = stars[ok]
 
         cand_acqs.sort('mag')
@@ -357,7 +358,7 @@ class AcqTable(ACACatalogTable):
         cand_acqs['imposters_box'] = np.full(n_cand, None)
         cand_acqs['box_sizes'] = box_sizes_list
 
-        return cand_acqs, bads
+        return cand_acqs
 
     def get_box_sizes(self, cand_acqs):
         """Get the available box sizes for each cand_acq as all those with size <= the
