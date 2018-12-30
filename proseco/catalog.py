@@ -356,7 +356,7 @@ class ACATable(ACACatalogTable):
         # Find potential acq stars that are noticably better than worst acq
         # star via the p_acq_model metric, defined as p_acq is at least 0.3
         # better.
-        acq_ok = self.acqs.get_candidates_filter(stars)
+        acq_ok = self.acqs.get_candidates_mask(stars)
         idxs = np.flatnonzero(sp_ok & acq_ok)
         p_acqs = acq_success_prob(date=self.acqs.date, t_ccd=self.acqs.t_ccd,
                                   mag=stars['mag'][idxs], color=stars['COLOR1'][idxs],
@@ -367,7 +367,7 @@ class ACATable(ACACatalogTable):
 
         # Find potential guide stars that are noticably better than worst guide
         # star, defined as being at least 0.2 mag brighter.
-        guide_ok = self.guides.get_candidates_filter(stars)
+        guide_ok = self.guides.get_candidates_mask(stars)
         idxs = np.flatnonzero(sp_ok & guide_ok)
         worst_mag = np.max(self.guides['mag'])
         ok = stars['mag'][idxs] < worst_mag - 0.2
@@ -453,15 +453,15 @@ class ACATable(ACACatalogTable):
             if ids not in uniq_ids_sets and ids - ids0:
                 uniq_ids_sets.append(ids)
 
-        print(roll_min, roll_max)
+        print(f'Roll min, max={roll_min:.2f}, {roll_max:.2f}')
         # For each unique set, find the roll_offset range over which that set
         # is in the FOV.
         better_rolls = []
         for uniq_ids in uniq_ids_sets:
-            print(uniq_ids - ids0, ids0 - uniq_ids)
+            # print(uniq_ids - ids0, ids0 - uniq_ids)
             for sid in uniq_ids - ids0:
                 star = self.stars.get_id(sid)
-                print(f'{sid} {star["mag"]} {star["yang"]} {star["zang"]}')
+                # print(f'{sid} {star["mag"]} {star["yang"]} {star["zang"]}')
             # This says that ``uniq_ids`` is a subset of available ``ids`` in
             # FOV for roll_offset.
             in_fov = np.array([uniq_ids <= ids for ids in ids_list])
@@ -470,9 +470,9 @@ class ACATable(ACACatalogTable):
             intervals = logical_intervals(in_fov, x=roll_offsets + roll)
 
             for interval in intervals:
-                print(interval)
+                # print(interval)
                 if interval['x_start'] > roll_max or interval['x_stop'] < roll_min:
-                    print(f'skipping {roll_max} {roll_min}')
+                    # print(f'skipping {roll_max} {roll_min}')
                     continue  # Interval completely outside allowed roll range
                 better_roll = (interval['x_start'] + interval['x_stop']) / 2
                 better_rolls.append(np.clip(better_roll, roll_min, roll_max))
