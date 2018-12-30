@@ -74,6 +74,9 @@ def get_fid_catalog(obsid=0, **kwargs):
 
 
 class FidTable(ACACatalogTable):
+    # Catalog type when plotting (None | 'FID' | 'ACQ' | 'GUI')
+    catalog_type = 'FID'
+
     # Name of table.  Use to define default file names where applicable.
     # (e.g. `obs19387/fids.pkl`).
     name = 'fids'

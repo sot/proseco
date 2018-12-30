@@ -72,7 +72,7 @@ def get_acq_catalog(obsid=0, **kwargs):
     acqs.p_man_errs = np.array([get_p_man_err(man_err, acqs.man_angle)
                                 for man_err in ACQ.man_errs])
 
-    acqs.cand_acqs, acqs.bad_stars = acqs.get_acq_candidates(acqs.stars)
+    acqs.cand_acqs = acqs.get_acq_candidates(acqs.stars)
 
     # Fill in the entire acq['probs'].p_acqs table (which is actual a dict of keyed by
     # (box_size, man_err) tuples).
@@ -110,6 +110,9 @@ class AcqTable(ACACatalogTable):
     """
     Catalog of acquisition stars
     """
+    # Catalog type when plotting (None | 'FID' | 'ACQ' | 'GUI')
+    catalog_type = 'ACQ'
+
     # Elements of meta that should not be directly serialized to pickle
     # (either too big or requires special handling).
     pickle_exclude = ('stars', 'dark', 'bad_stars')
@@ -258,6 +261,27 @@ class AcqTable(ACACatalogTable):
                 'detector', 'sim_offset', 'focus_offset')
         return {key: getattr(self, key) for key in keys}
 
+    def get_candidates_mask(self, stars):
+        """Get base filter for acceptable candidates.
+
+        This does not include spatial filtering.
+
+        :param stars: StarsTable
+        :returns: bool mask of acceptable stars
+
+        """
+        ok = ((stars['CLASS'] == 0) &
+              (stars['mag'] > 5.9) &
+              (stars['mag'] < 11.0) &
+              (~np.isclose(stars['COLOR1'], 0.7)) &
+              (stars['mag_err'] < 1.0) &  # Mag err < 1.0 mag
+              (stars['ASPQ1'] < 40) &  # Less than 2 arcsec offset from nearby spoiler
+              (stars['ASPQ2'] == 0) &  # Proper motion less than 0.5 arcsec/yr
+              (stars['POS_ERR'] < 3000) &  # Position error < 3.0 arcsec
+              ((stars['VAR'] == -9999) | (stars['VAR'] == 5))  # Not known to vary > 0.2 mag
+              )
+        return ok
+
     def get_acq_candidates(self, stars, max_candidates=20):
         """
         Get candidates for acquisition stars from ``stars`` table.
@@ -270,20 +294,11 @@ class AcqTable(ACACatalogTable):
 
         :returns: Table of candidates, indices of rejected stars
         """
-        ok = ((stars['CLASS'] == 0) &
-              (stars['mag'] > 5.9) &
-              (stars['mag'] < 11.0) &
-              (~np.isclose(stars['COLOR1'], 0.7)) &
+        ok = (self.get_candidates_mask(stars) &
               (np.abs(stars['row']) < ACA.max_ccd_row) &  # Max usable row
-              (np.abs(stars['col']) < ACA.max_ccd_col) &  # Max usable col
-              (stars['mag_err'] < 1.0) &  # Mag err < 1.0 mag
-              (stars['ASPQ1'] < 40) &  # Less than 2 arcsec offset from nearby spoiler
-              (stars['ASPQ2'] == 0) &  # Proper motion less than 0.5 arcsec/yr
-              (stars['POS_ERR'] < 3000) &  # Position error < 3.0 arcsec
-              ((stars['VAR'] == -9999) | (stars['VAR'] == 5))  # Not known to vary > 0.2 mag
+              (np.abs(stars['col']) < ACA.max_ccd_col)  # Max usable col
               )
 
-        bads = ~ok
         cand_acqs = stars[ok]
 
         cand_acqs.sort('mag')
@@ -343,7 +358,7 @@ class AcqTable(ACACatalogTable):
         cand_acqs['imposters_box'] = np.full(n_cand, None)
         cand_acqs['box_sizes'] = box_sizes_list
 
-        return cand_acqs, bads
+        return cand_acqs
 
     def get_box_sizes(self, cand_acqs):
         """Get the available box sizes for each cand_acq as all those with size <= the
@@ -394,6 +409,9 @@ class AcqTable(ACACatalogTable):
         """
         if acq['id'] in ACA.bad_star_set:
             self.log(f'Rejecting star {acq["id"]} which is in bad star list', id=acq['id'])
+            idx = self.stars.get_id_idx(acq['id'])
+            self.bad_stars_mask[idx] = True
+
             return True
         else:
             return False

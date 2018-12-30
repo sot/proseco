@@ -347,6 +347,9 @@ class BaseCatalogTable(Table):
     - Indexing on 'id' column
 
     """
+    # Catalog type when plotting (None | 'FID' | 'ACQ' | 'GUI')
+    catalog_type = None
+
     def __init__(self, data=None, **kwargs):
         super().__init__(data=data, **kwargs)
 
@@ -397,6 +400,62 @@ class BaseCatalogTable(Table):
                 raise KeyError(f'{id} is not in table')
 
         return idx
+
+    def get_candidates_mask(self, stars):
+        """Return a boolean mask indicating which ``stars`` are acceptable candidates
+        for the parent class.  This basically applies to guide and acq, though
+        ACACatalog uses a hybrid of those two.
+
+        This is used directly in selection of candidates.  For the base class all
+        stars are considered acceptable.
+
+        :param stars: StarsTable of stars
+        :returns: bool mask
+
+        """
+        return np.ones(len(stars), dtype=bool)
+
+    @property
+    def bad_stars_mask(self):
+        """Mask of stars that are not acceptable candidates for the parent class.  This
+        basically applies to guide and acq, though ACACatalog uses a hybrid of
+        those two.
+
+        This is mostly used for plotting, corresponding to the ``bad_stars``
+        arg of plot_stars where bad stars are plotting in a distinctive color.
+
+        """
+        if not hasattr(self, '_bad_stars_mask'):
+            self._bad_stars_mask = ~self.get_candidates_mask(self.stars)
+        return self._bad_stars_mask
+
+    @bad_stars_mask.setter
+    def bad_stars_mask(self, value):
+        self._bad_stars_mask = value
+
+    @property
+    def bad_stars(self):
+        """Back-compatibility property for bad_stars_mask"""
+        return self.bad_stars_mask
+
+    def plot(self, ax=None, **kwargs):
+        """
+        Plot the catalog and background stars.
+
+        :param ax: matplotlib axes object for plotting to (optional)
+        :param kwargs: other keyword args for plot_stars
+        """
+        from chandra_aca.plot import plot_stars
+        import matplotlib.pyplot as plt
+
+        kwargs.setdefault('stars', np.array([]))
+
+        # Explicitly set bad_stars so that plot_stars does not apply its
+        # internal version (which is no lot always the right answer).
+        kwargs.setdefault('bad_stars', np.zeros(len(kwargs['stars']), dtype=bool))
+
+        plot_stars(attitude=self.att, ax=ax, **kwargs)
+        plt.show()
 
 
 class ACACatalogTable(BaseCatalogTable):
@@ -558,22 +617,29 @@ class ACACatalogTable(BaseCatalogTable):
 
         self.stars = stars
 
-    def plot(self, ax=None):
+    def get_catalog_for_plot(self):
+        """Return value of ``catalog`` for plot_stars() call for this object
+
+        For ACACatalogTable this is the self Table object but with the possibility
+        of changing all the `type` column values to self.catalog_type (e.g. 'ACQ').
+
+        """
+        catalog = self.as_array()
+        if self.catalog_type:
+            catalog['type'] = self.catalog_type
+        return catalog
+
+    def plot(self, ax=None, **kwargs):
         """
         Plot the catalog and background stars.
 
         :param ax: matplotlib axes object for plotting to (optional)
+        :param kwargs: other keyword args for plot_stars
         """
-        from chandra_aca.plot import plot_stars
-        import matplotlib.pyplot as plt
-
-        stars_kwargs = {}
-        if self.acqs:
-            stars_kwargs['stars'] = self.acqs.stars
-            stars_kwargs['bad_stars'] = self.acqs.bad_stars
-
-        plot_stars(attitude=self.att, catalog=self, ax=ax, **stars_kwargs)
-        plt.show()
+        kwargs.setdefault('catalog', self.get_catalog_for_plot())
+        kwargs.setdefault('stars', self.stars)
+        kwargs.setdefault('bad_stars', self.bad_stars_mask)
+        super().plot(ax, **kwargs)
 
     @property
     def dither(self):
@@ -879,17 +945,22 @@ class StarsTable(BaseCatalogTable):
                 pass
             return null_logger
 
-    def plot(self, ax=None):
+    def get_catalog_for_plot(self):
+        """Return value of ``catalog`` for plot_stars() call for this object
+
+        For StarsTable this is None (no catalog).
+        """
+        return None
+
+    def plot(self, ax=None, **kwargs):
         """
         Plot the star field.
 
         :param ax: matplotlib axes object for plotting to (optional)
+        :param kwargs: other keywords for plot_stars
         """
-        from chandra_aca.plot import plot_stars
-        import matplotlib.pyplot as plt
-
-        plot_stars(attitude=self.att, stars=self, ax=ax)
-        plt.show()
+        kwargs.setdefault('stars', self)
+        super().plot(ax, **kwargs)
 
     @classmethod
     def from_agasc(cls, att, date=None, radius=1.2, logger=None):

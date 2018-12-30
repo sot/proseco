@@ -64,6 +64,8 @@ def get_guide_catalog(obsid=0, **kwargs):
 
 
 class GuideTable(ACACatalogTable):
+    # Catalog type when plotting (None | 'FID' | 'ACQ' | 'GUI')
+    catalog_type = 'GUI'
 
     # Elements of meta that should not be directly serialized to pickle.
     # (either too big or requires special handling).
@@ -288,6 +290,26 @@ class GuideTable(ACACatalogTable):
 
         super().process_include_ids(cand_guides, stars[ok])
 
+    def get_candidates_mask(self, stars):
+        """Get base filter for acceptable candidates.
+
+        This does not include spatial filtering.
+
+        :param stars: StarsTable
+        :returns: bool mask of acceptable stars
+
+        """
+        ok = ((stars['CLASS'] == 0) &
+              (stars['mag'] > 5.9) &
+              (stars['mag'] < 10.3) &
+              (stars['mag_err'] < 1.0) &  # Mag err < 1.0 mag
+              (stars['ASPQ1'] < 20) &  # Less than 1 arcsec offset from nearby spoiler
+              (stars['ASPQ2'] == 0) &  # Proper motion less than 0.5 arcsec/yr
+              (stars['POS_ERR'] < 3000) &  # Position error < 3.0 arcsec
+              ((stars['VAR'] == -9999) | (stars['VAR'] == 5))  # Not known to vary > 0.2 mag
+              )
+        return ok
+
     def get_initial_guide_candidates(self):
         """
         Create a candidate list from the available stars in the field.
@@ -297,16 +319,9 @@ class GuideTable(ACACatalogTable):
 
         # Use the primary selection filter from acq, but allow bad color
         # and limit to brighter stars
-        ok = ((stars['CLASS'] == 0) &
-              (stars['mag'] > 5.9) &
-              (stars['mag'] < 10.3) &
+        ok = (self.get_candidates_mask(stars) &
               (np.abs(stars['row']) < ACA.max_ccd_row) &  # Max usable row
-              (np.abs(stars['col']) < ACA.max_ccd_col) &  # Max usable col
-              (stars['mag_err'] < 1.0) &  # Mag err < 1.0 mag
-              (stars['ASPQ1'] < 20) &  # Less than 1 arcsec offset from nearby spoiler
-              (stars['ASPQ2'] == 0) &  # Proper motion less than 0.5 arcsec/yr
-              (stars['POS_ERR'] < 3000) &  # Position error < 3.0 arcsec
-              ((stars['VAR'] == -9999) | (stars['VAR'] == 5))  # Not known to vary > 0.2 mag
+              (np.abs(stars['col']) < ACA.max_ccd_col)  # Max usable col
               )
 
         # Mark stars that are off chip
@@ -335,7 +350,7 @@ class GuideTable(ACACatalogTable):
         self.log(f'Reduced star list from {len(bp)} to '
                  f'{len(cand_guides)} candidate guide stars')
 
-        bs = in_bad_star_list(cand_guides)
+        bs = self.in_bad_star_list(cand_guides)
         for idx in np.flatnonzero(bs):
             self.reject({'id': cand_guides['id'][idx],
                          'stage': 0,
@@ -384,6 +399,22 @@ class GuideTable(ACACatalogTable):
         self.log('Getting pseudo-mag of brightest pixel 2x2 in candidate region')
 
         return cand_guides
+
+    def in_bad_star_list(self, cand_guides):
+        """
+        Mark star bad if candidate AGASC ID in bad star list.
+
+        :param cand_guides: Table of candidate stars
+        :returns: boolean mask where True means star is in bad star list
+        """
+        bad = np.in1d(cand_guides['id'], list(ACA.bad_star_set))
+
+        # Set any matching bad stars as bad for plotting
+        for bad_id in cand_guides['id'][bad]:
+            idx = self.stars.get_id_idx(bad_id)
+            self.bad_stars_mask[idx] = True
+
+        return bad
 
 
 def check_fid_trap(cand_stars, fids, dither):
@@ -734,17 +765,6 @@ def has_spoiler_in_box(cand_guides, stars, halfbox=5, magdiff=-4):
                                  f' including {spoiler["id"]}')
                     })
     return box_spoiled, rej
-
-
-def in_bad_star_list(cand_guides):
-    """
-    Mark star bad if candidate AGASC ID in bad star list.
-
-    :param cand_guides: Table of candidate stars
-    :returns: boolean mask where True means star is in bad star list
-    """
-    bad = [cand_guide['id'] in ACA.bad_star_set for cand_guide in cand_guides]
-    return np.array(bad)
 
 
 def spoiled_by_bad_pixel(cand_guides, dither):

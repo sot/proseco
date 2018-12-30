@@ -185,8 +185,7 @@ def get_test_cand_acqs():
         acqs.p_man_errs = ACQ.p_man_errs['120-180']
         acqs.t_ccd = -10.0
         stars = get_test_stars()
-        CACHE['cand_acqs'], bads = acqs.get_acq_candidates(stars)
-        # Don't care about bads for testing
+        CACHE['cand_acqs'] = acqs.get_acq_candidates(stars)
     return CACHE['cand_acqs'].copy()
 
 
@@ -1034,12 +1033,19 @@ def test_0_5_degree_man_angle_bin_diff_t_ccd():
 
 
 def test_bad_star_list():
+    """
+    Test that a star with ID in the bad star list is not selected.
+    """
     bad_id = 39980640
     dark = DARK40.copy()
     stars = StarsTable.empty()
     stars.add_fake_constellation(mag=np.linspace(9, 10.3, 5), n_stars=5)
+    # Bright star that would normally be selected
     stars.add_fake_star(yang=100, zang=100, mag=6.5, id=bad_id)
     kwargs = mod_std_info(stars=stars, dark=dark,
                           n_guide=0, n_fid=0, n_acq=8, man_angle=4.8)
     acqs = get_acq_catalog(**kwargs)
     assert bad_id not in acqs['id']
+
+    idx = acqs.stars.get_id_idx(bad_id)
+    assert acqs.bad_stars_mask[idx]

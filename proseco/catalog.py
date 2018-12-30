@@ -145,6 +145,10 @@ def _get_aca_catalog(**kwargs):
 
 
 class ACATable(ACACatalogTable):
+    """Container ACACatalogTable class that has merged guide / acq / fid catalogs
+    as attributes and other methods relevant to the merged catalog.
+
+    """
     optimize = MetaAttribute(default=True)
     call_args = MetaAttribute(default={})
 
@@ -165,6 +169,22 @@ class ACATable(ACACatalogTable):
         return int(self.acqs.thumbs_up &
                    self.fids.thumbs_up &
                    self.guides.thumbs_up)
+
+    def get_candidates_mask(self, stars):
+        """Return a boolean mask indicating which ``stars`` are acceptable candidates
+        for the parent class.
+
+        For ACATable this is the logical OR of the guide and acq values,
+        i.e. for ACA a candidate is shown as OK if it is OK for either guide or
+        acq.  This is just used for plotting.
+
+        :param stars: StarsTable of stars
+        :returns: bool mask
+
+        """
+        ok = (self.acqs.get_candidates_mask(stars) |
+              self.guides.get_candidates_mask(stars))
+        return ok
 
     def make_report(self, rootdir='.'):
         """
