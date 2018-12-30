@@ -409,6 +409,9 @@ class AcqTable(ACACatalogTable):
         """
         if acq['id'] in ACA.bad_star_set:
             self.log(f'Rejecting star {acq["id"]} which is in bad star list', id=acq['id'])
+            idx = self.stars.get_id_idx(acq['id'])
+            self.bad_stars_mask[idx] = True
+
             return True
         else:
             return False

@@ -425,7 +425,7 @@ class BaseCatalogTable(Table):
         arg of plot_stars where bad stars are plotting in a distinctive color.
 
         """
-        if not hasattr(self, '_bad_stars'):
+        if not hasattr(self, '_bad_stars_mask'):
             self._bad_stars_mask = ~self.get_candidates_mask(self.stars)
         return self._bad_stars_mask
 

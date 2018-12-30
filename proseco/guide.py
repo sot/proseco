@@ -350,7 +350,7 @@ class GuideTable(ACACatalogTable):
         self.log(f'Reduced star list from {len(bp)} to '
                  f'{len(cand_guides)} candidate guide stars')
 
-        bs = in_bad_star_list(cand_guides)
+        bs = self.in_bad_star_list(cand_guides)
         for idx in np.flatnonzero(bs):
             self.reject({'id': cand_guides['id'][idx],
                          'stage': 0,
@@ -399,6 +399,22 @@ class GuideTable(ACACatalogTable):
         self.log('Getting pseudo-mag of brightest pixel 2x2 in candidate region')
 
         return cand_guides
+
+    def in_bad_star_list(self, cand_guides):
+        """
+        Mark star bad if candidate AGASC ID in bad star list.
+
+        :param cand_guides: Table of candidate stars
+        :returns: boolean mask where True means star is in bad star list
+        """
+        bad = np.in1d(cand_guides['id'], list(ACA.bad_star_set))
+
+        # Set any matching bad stars as bad for plotting
+        for bad_id in cand_guides['id'][bad]:
+            idx = self.stars.get_id_idx(bad_id)
+            self.bad_stars_mask[idx] = True
+
+        return bad
 
 
 def check_fid_trap(cand_stars, fids, dither):
@@ -749,17 +765,6 @@ def has_spoiler_in_box(cand_guides, stars, halfbox=5, magdiff=-4):
                                  f' including {spoiler["id"]}')
                     })
     return box_spoiled, rej
-
-
-def in_bad_star_list(cand_guides):
-    """
-    Mark star bad if candidate AGASC ID in bad star list.
-
-    :param cand_guides: Table of candidate stars
-    :returns: boolean mask where True means star is in bad star list
-    """
-    bad = [cand_guide['id'] in ACA.bad_star_set for cand_guide in cand_guides]
-    return np.array(bad)
 
 
 def spoiled_by_bad_pixel(cand_guides, dither):

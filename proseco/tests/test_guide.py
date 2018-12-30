@@ -16,7 +16,7 @@ from ..report_guide import make_report
 from ..characteristics_guide import mag_spoiler
 from ..characteristics import CCD
 from ..core import StarsTable
-from .test_common import STD_INFO, mod_std_info, OBS_INFO
+from .test_common import STD_INFO, mod_std_info, OBS_INFO, DARK40
 
 
 HAS_SC_ARCHIVE = Path(mica.starcheck.starcheck.FILES['data_root']).exists()
@@ -102,14 +102,22 @@ def test_region_contrib():
     assert 426255616 not in selected2['id']
 
 
-@pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
-def test_exclude_bad_star():
+def test_bad_star_list():
+    """Test that a star with ID in the bad star list is not selected.
+
     """
-    Obsid 17896 attitude
-    Will need to find another bad star, as this one is now excluded via VAR
-    """
-    selected = get_guide_catalog(obsid=6820)
-    assert 614606480 not in selected['id']
+    bad_id = 39980640
+    dark = DARK40.copy()
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(mag=np.linspace(9, 10.3, 4), n_stars=4)
+    # Bright star that would normally be selected
+    stars.add_fake_star(yang=100, zang=100, mag=6.5, id=bad_id)
+    kwargs = mod_std_info(stars=stars, dark=dark, n_guide=5)
+    guides = get_guide_catalog(**kwargs)
+    assert bad_id not in guides['id']
+
+    idx = guides.stars.get_id_idx(bad_id)
+    assert guides.bad_stars_mask[idx]
 
 
 def test_avoid_trap():
