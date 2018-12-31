@@ -453,14 +453,14 @@ class ACATable(ACACatalogTable):
             if ids not in uniq_ids_sets and ids - ids0:
                 uniq_ids_sets.append(ids)
 
-        print(f'Roll min, max={roll_min:.2f}, {roll_max:.2f}')
+        # print(f'Roll min, max={roll_min:.2f}, {roll_max:.2f}')
         # For each unique set, find the roll_offset range over which that set
         # is in the FOV.
         better_rolls = []
         for uniq_ids in uniq_ids_sets:
             # print(uniq_ids - ids0, ids0 - uniq_ids)
-            for sid in uniq_ids - ids0:
-                star = self.stars.get_id(sid)
+            # for sid in uniq_ids - ids0:
+                # star = self.stars.get_id(sid)
                 # print(f'{sid} {star["mag"]} {star["yang"]} {star["zang"]}')
             # This says that ``uniq_ids`` is a subset of available ``ids`` in
             # FOV for roll_offset.
@@ -477,7 +477,7 @@ class ACATable(ACACatalogTable):
                 better_roll = (interval['x_start'] + interval['x_stop']) / 2
                 better_rolls.append(np.clip(better_roll, roll_min, roll_max))
 
-        return sorted(set(better_rolls))
+        return sorted(set(better_rolls)), roll_min, roll_nom, roll_max
 
 
 def merge_cats(fids=None, guides=None, acqs=None):
