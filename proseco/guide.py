@@ -4,7 +4,8 @@
 import numpy as np
 
 import chandra_aca.aca_image
-from chandra_aca.transform import mag_to_count_rate, count_rate_to_mag
+from chandra_aca.transform import (mag_to_count_rate, count_rate_to_mag,
+                                   snr_mag_for_t_ccd)
 from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
 from chandra_aca.star_probs import guide_count
 
@@ -95,6 +96,36 @@ class GuideTable(ACACatalogTable):
     include_ids = AliasAttribute()
     exclude_ids = AliasAttribute()
 
+    def n_stars(self):
+        """Calculate a guide star fractional count/metric using signal-to-noise scaled
+        mag thresholds.
+
+        This uses a modification of the guide star fractional counts that were
+        suggested at the 7-Mar-2018 SSAWG and agreed upon at the 21-Mar-2018
+        SSAWG.  The implementation here does a piecewise linear interpolation
+        between the reference mag - fractional count points instead of the
+        original "threshold interpolation" (nearest neighbor mag <= reference
+        mag).
+
+        :returns: fractional count
+
+        """
+        # The bright limit does not scale.
+        t_ccd = self.t_ccd
+        mag1 = snr_mag_for_t_ccd(t_ccd, ref_mag=10.0, ref_t_ccd=-10.9)
+        mag2 = snr_mag_for_t_ccd(t_ccd, ref_mag=10.2, ref_t_ccd=-10.9)
+        mag3 = snr_mag_for_t_ccd(t_ccd, ref_mag=10.3, ref_t_ccd=-10.9)
+        mag4 = snr_mag_for_t_ccd(t_ccd, ref_mag=10.4, ref_t_ccd=-10.9)
+
+        mags = [mag1, mag2, mag3, mag4]
+        counts = [1.0, 0.75, 0.5, 0.0]
+
+        # Do the interpolation, noting that np.interp will use the end ``counts``
+        # values for any ``mag`` < mag1 or > mag4.
+        count = np.sum(np.interp(self['mag'], mags, counts))
+
+        return count
+
     @property
     def thumbs_up(self):
         if self.n_guide == 0:
@@ -103,9 +134,7 @@ class GuideTable(ACACatalogTable):
         elif len(self) == 0:
             out = 0
         else:
-            # Evaluate guide catalog quality for thumbs_up
-            count = guide_count(self['mag'], self.t_ccd)
-            out = int(count >= GUIDE.min_guide_count)
+            out = self.n_stars() > GUIDE.min_guide_count
         return out
 
     def make_report(self, rootdir='.'):
