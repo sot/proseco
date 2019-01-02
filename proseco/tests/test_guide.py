@@ -275,34 +275,49 @@ def test_check_spoiler_cases():
     the guide star selection.
 
     """
-    drcs = np.arange(0, 10)
+    drcs = np.arange(0, 13, 2)
+    mag0 = 8.0  # Baseline mag
+    dmags = [0, 3, 7]  # Spoiler delta mag
     # Use a blank dark map to skip imposter checks
     dark = ACAImage(np.zeros((1024, 1024)), row0=-512, col0=-512)
     spoiled = []
-    for drc in drcs:
-        r = 10
-        c = 10
-        stars = StarsTable.empty()
-        stars.add_fake_star(row=r, col=c, mag=8.0, id=1, ASPQ1=1)
-        # Add a "spoiling" star 3 mags fainter and move it from center past edge through the drcs
-        stars.add_fake_star(row=r + drc, col=c, mag=11.0, id=2, ASPQ1=0)
-        selected = get_guide_catalog(**STD_INFO, stars=stars, dark=dark)
-        # Is the id=1 star spoiled / not selected?
-        spoiled.append(1 not in selected['id'])
-    expected_spoiled = [True, True, True, True, True, True, True, True, False, False]
+    for dmag in dmags:
+        for drc in drcs:
+            r = 10
+            c = 10
+            stars = StarsTable.empty()
+            stars.add_fake_star(row=r, col=c, mag=mag0, id=1, ASPQ1=1)
+            # Add a "spoiling" star and move it from center past edge through
+            # the drcs
+            stars.add_fake_star(row=r + drc, col=c, mag=mag0 + dmag, id=2, ASPQ1=0)
+            selected = get_guide_catalog(**STD_INFO, stars=stars, dark=dark)
+            # Is the id=1 star spoiled / not selected?
+            spoiled.append(1 if (1 not in selected['id']) else 0)
+    spoiled = np.array(spoiled).reshape(-1, len(drcs)).tolist()
+    #                    0  2  4  6  8 10 12 pixels
+    expected_spoiled = [[1, 1, 1, 1, 1, 0, 0],  # dmag = 0
+                        [1, 1, 1, 1, 0, 0, 0],  # dmag = 3
+                        [1, 1, 1, 1, 0, 0, 0]]  # dmag = 7
     assert spoiled == expected_spoiled
 
     spoiled = []
-    for drc in drcs:
-        r = 10
-        c = 10
-        stars = StarsTable.empty()
-        stars.add_fake_star(row=r, col=c, mag=7.0, id=1, ASPQ1=1)
-        # Add a "spoiling" star 5 mags fainter and move it from center out through a corner
-        stars.add_fake_star(row=r + drc, col=c + drc, mag=12.0, id=2, ASPQ1=0)
-        selected = get_guide_catalog(**STD_INFO, stars=stars, dark=dark)
-        spoiled.append(1 not in selected['id'])
-    expected_spoiled = [True, True, True, True, True, True, True, True, False, False]
+    dmags = [3, 5, 7]  # Spoiler delta mag
+    for dmag in dmags:
+        for drc in drcs:
+            r = 10
+            c = 10
+            stars = StarsTable.empty()
+            stars.add_fake_star(row=r, col=c, mag=mag0, id=1, ASPQ1=1)
+            # Add a "spoiling" star 5 mags fainter and move it from center out through a corner
+            stars.add_fake_star(row=r + drc, col=c + drc, mag=mag0 + dmag, id=2, ASPQ1=0)
+            selected = get_guide_catalog(**STD_INFO, stars=stars, dark=dark)
+            spoiled.append(1 if (1 not in selected['id']) else 0)
+    spoiled = np.array(spoiled).reshape(-1, len(drcs)).tolist()
+    #                    0  2  4  6  8 10 12 pixels
+    expected_spoiled = [[1, 1, 1, 1, 0, 0, 0],  # dmag = 3
+                        [1, 1, 1, 1, 0, 0, 0],  # dmag = 5
+                        [1, 1, 1, 1, 0, 0, 0]]  # dmag = 7
+
     assert spoiled == expected_spoiled
 
 
