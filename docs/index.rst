@@ -191,7 +191,7 @@ Required data files are:
 
 ::
 
-  $SKA/data/agasc/miniagasc.h5
+  $SKA/data/agasc/proseco_agasc_1p7.h5
   $SKA/data/mica/archive/aca_dark/<YYYYddd>/image.fits
   $SKA/data/mica/archive/aca_dark/<YYYYddd>/properties.json
 
