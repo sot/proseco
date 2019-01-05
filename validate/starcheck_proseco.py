@@ -24,10 +24,10 @@ Typically this is going to be run from the proseco git repo, using::
   >>> run_all()
   >>> exit()
 
-Publish the results with:
+Publish the results with (where <version> is the proseco version):
 
   $ rsync -zarv --prune-empty-dirs --include "*/"  --include="starcheck*" --include="starcheck/*" \
-    --exclude="*" loads/proseco/ /proj/sot/ska/www/ASPECT/proseco/loads/
+    --exclude="*" loads/proseco/ /proj/sot/ska/www/ASPECT/proseco/loads-<version>/
 
 This whole process is set up to not repeat existing steps (since it is generally slow).
 To re-do things, either completely delete the proseco load directory (probably your best bet),
@@ -35,6 +35,13 @@ or remove:
 
 - 000-proseco   : to re-do updating products
 - starcheck.txt : to re-do starcheck
+
+Clean some known non-errors:
+
+  perl -pi -e 's/.*not found within 10 arcsec of.*//' */starcheck.html
+  perl -pi -e 's/.*is in star catalog but.*//' */starcheck.html
+  perl -pi -e 's/.*Fewer than 3 ACQ stars.*//' */starcheck.html
+
 """
 
 import pickle
@@ -77,7 +84,8 @@ def run_all(out_root=Path('loads', 'proseco')):
     Convenience function to run starcheck_proseco on a standard set of 10 weekly loads
     for run-for-record validation testing.
     """
-    load_names = ['JUL0918A',  # dark cals
+    load_names = ['DEC0318B',
+                  'JUL0918A',  # dark cals
                   'JUL0218A',
                   'JUN2318A',
                   'JUN1118A',
@@ -85,9 +93,7 @@ def run_all(out_root=Path('loads', 'proseco')):
                   'MAY2118A',
                   'MAY1418A',
                   'MAY0718A',
-                  'APR3018A',
-                  'APR1618A',
-                  'APR2318C']
+                  'APR3018A']
     for load_name in load_names:
         run_starcheck_proseco(load_name)
 
