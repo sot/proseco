@@ -1,5 +1,8 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
+import matplotlib
+matplotlib.use('agg')
+
 import pickle
 import pytest
 from pathlib import Path
@@ -58,6 +61,13 @@ def test_get_aca_catalog_20603():
 
     aca_pkl = pickle.dumps(aca)
     assert len(aca_pkl) < 180_000  # Nominally ~170k, warn if size grows
+
+    # Test that plotting succeeds
+    aca.plot()
+    aca.acqs.plot()
+    aca.guides.plot()
+    aca.stars.plot()
+    aca.fids.plot()
 
 
 @pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
