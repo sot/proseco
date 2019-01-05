@@ -96,6 +96,15 @@ class FidTable(ACACatalogTable):
 
     @acqs.setter
     def acqs(self, val):
+        """Note some subtlety here - this is using a standard __dict__ attribute
+        ``_acqs`` instead of a MetaAttribute, and thus the weakref here is
+        ignored in pickling because Table does not pickle the __dict__, it only
+        pickles the columns and the ``meta`` attribute.
+
+        This overrides the base class definition which *does* store the value in
+        ``.meta`` so it gets into the pickle.
+
+        """
         self._acqs = weakref.ref(val)
 
     @property

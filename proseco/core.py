@@ -362,6 +362,44 @@ class BaseCatalogTable(Table):
         for name in ('ra', 'dec', 'RA_PMCORR', 'DEC_PMCORR'):
             self._default_formats[name] = '.6f'
 
+    def __getstate__(self):
+        """Set the pickle state from self.
+
+        The main functionality here is munging ``meta`` to exclude any
+        MetaAttributes that are marked for exclusion from pickling (e.g. stars,
+        dark).
+
+        """
+        columns, meta = super().__getstate__()
+        meta = meta.copy()
+        cls = self.__class__
+
+        # For everything in meta that is a MetaAttribute, check if it should
+        # be pickled.
+        pickle_excludes = []
+        for attr in meta:
+            descr = getattr(cls, attr, None)
+            if isinstance(descr, MetaAttribute) and not descr.pickle:
+                pickle_excludes.append(attr)
+
+        for attr in pickle_excludes:
+            del meta[attr]
+
+        return columns, meta
+
+    def __setstate__(self, state):
+        """Restore object from pickle state.
+
+        This fixes an upstream issue in astropy.table (as of 3.1) where the
+        Table __setstate__ does ``self.__init__(columns, meta)``, which makes a
+        deepcopy of ``meta``.  That is inefficient but more importantly does
+        not preserve the ``acqs`` weakref in cand_acqs['probs'].
+
+        """
+        columns, meta = state
+        self.__init__(columns)
+        self.meta.update(meta)
+
     def make_index(self):
         # Low-tech index to quickly get a row or the row index by `id` column.
         self._id_index = {}
@@ -784,25 +822,7 @@ class ACACatalogTable(BaseCatalogTable):
             if name in names:
                 self[name].format = self._default_formats.pop(name)
 
-        return super(ACACatalogTable, self[names])._base_repr_(*args, **kwargs)
-
-    def __getstate__(self):
-        columns, meta = super().__getstate__()
-        meta = meta.copy()
-        cls = self.__class__
-
-        # For everything in meta that is a MetaAttribute, check if it should
-        # be pickled.
-        pickle_excludes = []
-        for attr in meta:
-            descr = getattr(cls, attr, None)
-            if isinstance(descr, MetaAttribute) and not descr.pickle:
-                pickle_excludes.append(attr)
-
-        for attr in pickle_excludes:
-            del meta[attr]
-
-        return columns, meta
+        return super(BaseCatalogTable, self[names])._base_repr_(*args, **kwargs)
 
     def to_pickle(self, rootdir='.'):
         """

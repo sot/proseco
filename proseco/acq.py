@@ -132,6 +132,25 @@ class AcqTable(ACACatalogTable):
     _fid_set = MetaAttribute(is_kwarg=False, default=())
     imposters_mag_limit = MetaAttribute(is_kwarg=False, default=20.0)
 
+    def __setstate__(self, state):
+        """Set self during unpickling.
+
+        This has special handling to deal with restoring the ``acqs`` weak
+        reference in the AcqProbs objects.  Since weakrefs cannot be pickled,
+        they are simply dropped prior to pickling and restored here.
+
+        """
+        super().__setstate__(state)
+
+        # This could be a cand_acqs table or acqs table, so check if
+        # ``cand_acqs`` has something, and if so then create the weakref in
+        # each of the AcqProbs objects stored in the ``probs`` column.  TO DO:
+        # make two separate classes AcqTable and CandAcqTable to avoid this
+        # contextual hack.
+        if self.cand_acqs is not None:
+            for probs in self.cand_acqs['probs']:
+                probs.acqs = weakref.ref(self)
+
     @classmethod
     def empty(cls):
         """
@@ -1274,7 +1293,7 @@ class AcqProbs:
             fids = self.acqs().fids
             if fids is None:
                 self.acqs().add_warning('Requested fid spoiler probability without '
-                                      'setting acqs.fids first')
+                                        'setting acqs.fids first')
                 return 1.0
 
             p_fid_id_spoiler = 1.0
@@ -1284,7 +1303,8 @@ class AcqProbs:
                 # This should not happen, but ignore with a warning in any case.  Non-candidate
                 # fid cannot spoil an acq star.
                 self.acqs().add_warning(f'Requested fid spoiler probability for fid '
-                                      f'{self.acqs().detector}-{fid_id} but it is not a candidate')
+                                        f'{self.acqs().detector}-{fid_id} but it is '
+                                        f'not a candidate')
             else:
                 if fids.spoils(fid, self.acq, box_size):
                     p_fid_id_spoiler = 0.0
@@ -1292,6 +1312,16 @@ class AcqProbs:
             self._p_fid_id_spoiler[box_size, fid_id] = p_fid_id_spoiler
 
             return p_fid_id_spoiler
+
+    def __getstate__(self):
+        """Get the state object for pickling.
+
+        Normally this self.__dict__, but for this class we need to drop the ``acqs``
+        attribute which is a weakref and cannot be pickled.
+        """
+        state = self.__dict__.copy()
+        del state['acqs']
+        return state
 
 
 def get_p_man_err(man_err, man_angle):
