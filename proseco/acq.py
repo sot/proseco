@@ -6,6 +6,8 @@ Get a catalog of acquisition stars using the algorithm described in
 https://docs.google.com/presentation/d/1VtFKAW9he2vWIQAnb6unpK4u1bVAVziIdX9TnqRS3a8
 """
 
+import weakref
+
 import numpy as np
 from scipy import ndimage, stats
 from scipy.interpolate import interp1d
@@ -1165,7 +1167,7 @@ class AcqProbs:
         self._p_fid_spoiler = {}
         self._p_fid_id_spoiler = {}
 
-        self.acqs = acqs
+        self.acqs = weakref.ref(acqs)
 
         # Convert table row to plain dict for persistence
         self.acq = {key: acq[key] for key in ('yang', 'zang')}
@@ -1208,7 +1210,7 @@ class AcqProbs:
         return self._p_acq_model[box_size]
 
     def p_acqs(self, box_size, man_err):
-        fid_set = self.acqs.fid_set
+        fid_set = self.acqs().fid_set
         try:
             return self._p_acqs[box_size, man_err, fid_set]
         except KeyError:
@@ -1220,12 +1222,12 @@ class AcqProbs:
             return p_acq
 
     def p_acq_marg(self, box_size):
-        fid_set = self.acqs.fid_set
+        fid_set = self.acqs().fid_set
         try:
             return self._p_acq_marg[box_size, fid_set]
         except KeyError:
             p_acq_marg = 0.0
-            for man_err, p_man_err in zip(ACQ.man_errs, self.acqs.p_man_errs):
+            for man_err, p_man_err in zip(ACQ.man_errs, self.acqs().p_man_errs):
                 p_acq_marg += self.p_acqs(box_size, man_err) * p_man_err
             self._p_acq_marg[box_size, fid_set] = p_acq_marg
             return p_acq_marg
@@ -1242,7 +1244,7 @@ class AcqProbs:
         :param box_size: search box size in arcsec
         :returns: probability multiplier (0 or 1)
         """
-        fid_set = self.acqs.fid_set
+        fid_set = self.acqs().fid_set
         try:
             return self._p_fid_spoiler[box_size, fid_set]
         except KeyError:
@@ -1269,9 +1271,9 @@ class AcqProbs:
         try:
             return self._p_fid_id_spoiler[box_size, fid_id]
         except KeyError:
-            fids = self.acqs.fids
+            fids = self.acqs().fids
             if fids is None:
-                self.acqs.add_warning('Requested fid spoiler probability without '
+                self.acqs().add_warning('Requested fid spoiler probability without '
                                       'setting acqs.fids first')
                 return 1.0
 
@@ -1281,8 +1283,8 @@ class AcqProbs:
             except (KeyError, IndexError, AssertionError):
                 # This should not happen, but ignore with a warning in any case.  Non-candidate
                 # fid cannot spoil an acq star.
-                self.acqs.add_warning(f'Requested fid spoiler probability for fid '
-                                      f'{self.acqs.detector}-{fid_id} but it is not a candidate')
+                self.acqs().add_warning(f'Requested fid spoiler probability for fid '
+                                      f'{self.acqs().detector}-{fid_id} but it is not a candidate')
             else:
                 if fids.spoils(fid, self.acq, box_size):
                     p_fid_id_spoiler = 0.0
