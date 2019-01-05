@@ -188,6 +188,10 @@ def test_pickle():
             else:
                 assert val == val2
 
+    assert np.isclose(aca.acqs.calc_p_safe(), aca2.acqs.calc_p_safe(),
+                      atol=0, rtol=1e-6)
+    assert aca.acqs.fid_set == aca2.acqs.fid_set
+
 
 def test_big_sim_offset():
     """
