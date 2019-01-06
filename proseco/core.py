@@ -679,6 +679,17 @@ class ACACatalogTable(Table):
 
         return columns, meta
 
+    def __setstate__(self, state):
+        """Restore object from pickle state.
+        This fixes an upstream issue in astropy.table (as of 3.1) where the
+        Table __setstate__ does ``self.__init__(columns, meta)``, which makes a
+        deepcopy of ``meta``.  That is inefficient but more importantly does
+        not preserve the ``acqs`` weakref in cand_acqs['probs'].
+        """
+        columns, meta = state
+        self.__init__(columns)
+        self.meta.update(meta)
+
     def to_pickle(self, rootdir='.'):
         """
         Write the catalog table as pickle to:
