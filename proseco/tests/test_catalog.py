@@ -165,6 +165,17 @@ def test_big_dither_from_mica_starcheck():
 
 
 def test_pickle():
+    """Test that ACA, guide, acq, and fid catalogs round-trip through pickling.
+
+    Known attributes that do NOT round-trip are below.  None of these are
+    required for post-facto catalog evaluation and currently the reporting code
+    handles ``stars`` and ``dark``.
+
+    - stars
+    - dark
+    - aca.fids.acqs
+
+    """
     stars = StarsTable.empty()
     stars.add_fake_constellation(mag=10.0, n_stars=5)
     aca = get_aca_catalog(stars=stars, raise_exc=True, **STD_INFO)
@@ -197,6 +208,14 @@ def test_pickle():
                 assert np.isclose(val, val2)
             else:
                 assert val == val2
+
+    # Test that calc_p_safe() gives the same answer, which implicitly tests
+    # that the AcqTable.__setstate__ unpickling code has the right (weak)
+    # reference to acqs within each AcqProbs object.  This also tests
+    # that acqs.p_man_err and acqs.fid_set are the same.
+    assert np.isclose(aca.acqs.calc_p_safe(), aca2.acqs.calc_p_safe(),
+                      atol=0, rtol=1e-6)
+    assert aca.acqs.fid_set == aca2.acqs.fid_set
 
 
 def test_big_sim_offset():

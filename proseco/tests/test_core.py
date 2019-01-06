@@ -1,5 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
+import pickle
 import pytest
 import numpy as np
 from astropy.io import ascii
@@ -236,6 +237,16 @@ def test_alias_attributes(cls, attr):
         setattr(obj, attr + suffix, val)
         assert getattr(obj, attr) == exp
         assert getattr(obj, attr + suffix) == exp
+
+
+def test_pickle_stars():
+    """Test that pickling a StarsTable object roundtrips"""
+    att = [1, 2, 3]
+    stars = StarsTable.from_agasc(att)
+    stars2 = pickle.loads(pickle.dumps(stars))
+    assert stars2.att == att
+    assert stars2.colnames == stars.colnames
+    assert repr(stars) == repr(stars2)
 
 
 def test_starstable_from_stars():
