@@ -1132,7 +1132,7 @@ class StarsTable(BaseCatalogTable):
 
     def add_fake_constellation(self, n_stars=8, size=1500, mag=7.0, **attrs):
         """
-        Add a fake constellation of up to 8 stars consisting of a cross and square
+        Add a fake constellation of up to 8 stars consisting of a cross and square::
 
                 *
               *   *
@@ -1140,8 +1140,8 @@ class StarsTable(BaseCatalogTable):
               *   *
                 *
 
-        yangs = [1,  0, -1,  0, 0.5,  0.5, -0.5, -0.5] * size
-        zangs = [0,  1,  0, -1, 0.5, -0.5,  0.5, -0.5] * size
+          yangs = [1,  0, -1,  0, 0.5,  0.5, -0.5, -0.5] * size
+          zangs = [0,  1,  0, -1, 0.5, -0.5,  0.5, -0.5] * size
 
         Additional star table attributes can be specified as keyword args.  All
         attributes are broadcast as needed.
@@ -1163,7 +1163,7 @@ class StarsTable(BaseCatalogTable):
         :param n_stars: number of stars (default=8, max=8)
         :param size: size of constellation [arcsec] (default=2000)
         :param mag: star magnitudes (default=7.0)
-        :param **attrs: other star table attributes
+        :param \**attrs: other star table attributes
         """
         if n_stars > 8:
             raise ValueError('max value of n_stars is 8')
@@ -1196,7 +1196,7 @@ class StarsTable(BaseCatalogTable):
         primary inputs unless explicitly provided.  All the rest will be set
         to default "good"" values that will preclude initial exclusion of the star.
 
-        :param **star: keyword arg attributes corresponding to StarTable columns
+        :param \**star: keyword arg attributes corresponding to StarTable columns
         """
         names = ['id', 'ra', 'dec', 'yang', 'zang', 'row', 'col', 'mag', 'mag_err',
                  'POS_ERR', 'PM_RA', 'PM_DEC', 'MAG_ACA',

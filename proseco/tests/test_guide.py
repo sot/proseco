@@ -61,6 +61,9 @@ def test_common_column_obsid_19904():
 
 
 def test_box_mag_spoiler():
+    """
+    Test spoiling.
+    """
     # Manipulate a spoiler star in this test to first not be a spoiler
     att = (0, 0, 0)
     agasc_ids = [688522000, 688523960, 611190016, 139192, 688522008]
@@ -85,6 +88,9 @@ def test_box_mag_spoiler():
 
 
 def test_region_contrib():
+    """
+    Regression test of stars rejected by contributing starlight to readout region.
+    """
     att = (8, 47, 0)
     date = '2018:001'
     agasc_ids = [425740488, 425864552, 426263240, 425736928, 426255616, 426253528, 426253768]
@@ -149,6 +155,9 @@ def test_avoid_trap():
 
 @pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
 def test_big_dither():
+    """
+    Regression test of a catalog with big dither.
+    """
     # Obsid 20168
     selected = get_guide_catalog(obsid=20168, n_guide=5)
     expected = [977409032, 977930352, 977414712, 977416336, 977405808]
@@ -156,6 +165,9 @@ def test_big_dither():
 
 
 def test_check_pixmag_offset():
+    """
+    Test the check_pixmag_offset function.
+    """
     APL = AcaPsfLibrary()
 
     # Then use one star and test with various pixels
@@ -330,6 +342,7 @@ def test_guides_include_exclude():
 
 dither_cases = [(8, 8), (64, 8), (8, 64), (20, 20), (30, 20)]
 
+
 def test_guides_include_bad():
     """
     Test include stars for guide where star is bad for some reason.
@@ -365,6 +378,7 @@ def test_guides_include_bad():
     with pytest.raises(ValueError) as err:
         get_guide_catalog(**STD_INFO, stars=stars, include_ids=20)
     assert 'cannot include star id=20' in str(err)
+
 
 @pytest.mark.parametrize('dither', dither_cases)
 def test_edge_star(dither):
