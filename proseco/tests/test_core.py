@@ -205,6 +205,9 @@ def test_calc_spoiler_impact_21068():
 
 
 def test_mag_err_clip():
+    """
+    Test clipping magnitudes
+    """
     # Clipping case for star
     s1 = StarsTable.from_agasc_ids(att=[6.88641501, 16.8899464, 0],
                                    agasc_ids=[154667024])

@@ -82,22 +82,26 @@ def add_spoiler(stars, acq, dyang, dzang, dmag, mag_err=0.05):
 
 
 def test_get_p_man_err():
-    # P_man_errs is a table that defines the probability of a maneuver error being
-    # within a defined lo/hi bin [arcsec] given a maneuver angle [deg] within a
-    # bin range.  The first two columns specify the maneuver error bins and the
-    # subsequent column names give the maneuver angle bin in the format
-    # <angle_lo>-<angle_hi>.  The source table does not include the row for
-    # the 0-60 man err case: this is generated automatically from the other
-    # values so the sum is 1.0.
-    #
-    # man_err_lo man_err_hi 0-5 5-20 20-40 40-60 60-80 80-100 100-120 120-180
-    # ---------- ---------- --- ---- ----- ----- ----- ------ ------- -------
-    #         60         80 0.0  0.2   0.5   0.6   1.6    4.0     8.0     8.0
-    #         80        100 0.0  0.1   0.2   0.3   0.5    1.2     2.4     2.4
-    #        100        120 0.0  0.0   0.1   0.2   0.3    0.8     0.8     0.8
-    #        120        140 0.0  0.0  0.05  0.05   0.2    0.4     0.4     0.4
-    #        140        160 0.0  0.0  0.05  0.05   0.2    0.2     0.2     0.4
+    """Test the get_p_man_err function.
 
+    P_man_errs is a table that defines the probability of a maneuver error being
+    within a defined lo/hi bin [arcsec] given a maneuver angle [deg] within a
+    bin range.  The first two columns specify the maneuver error bins and the
+    subsequent column names give the maneuver angle bin in the format
+    <angle_lo>-<angle_hi>.  The source table does not include the row for
+    the 0-60 man err case: this is generated automatically from the other
+    values so the sum is 1.0.
+    ::
+
+       man_err_lo man_err_hi 0-5 5-20 20-40 40-60 60-80 80-100 100-120 120-180
+       ---------- ---------- --- ---- ----- ----- ----- ------ ------- -------
+               60         80 0.0  0.2   0.5   0.6   1.6    4.0     8.0     8.0
+               80        100 0.0  0.1   0.2   0.3   0.5    1.2     2.4     2.4
+              100        120 0.0  0.0   0.1   0.2   0.3    0.8     0.8     0.8
+              120        140 0.0  0.0  0.05  0.05   0.2    0.4     0.4     0.4
+              140        160 0.0  0.0  0.05  0.05   0.2    0.2     0.2     0.4
+
+    """
     assert get_p_man_err(man_err=30, man_angle=0) == 1.0
     assert get_p_man_err(60, 0) == 1.0  # Exactly 60 is in 0-60 bin
     assert get_p_man_err(60.00001, 0) == 0.0  # Just over 60 in 60-80 bin
@@ -110,12 +114,14 @@ def test_get_p_man_err():
 
 
 def test_bin2x2():
+    """Test the bin2x2 function"""
     arr = bin2x2(np.arange(16).reshape(4, 4))
     assert arr.shape == (2, 2)
     assert np.all(arr == [[10, 18], [42, 50]])
 
 
 def test_get_image_props():
+    """Test the get_image_props function"""
     c_row = 10
     c_col = 20
     bgd = 40
@@ -131,6 +137,7 @@ def test_get_image_props():
 
 
 def setup_get_imposter_stars(val):
+    """Setup for testing with the get_imposter_stars function."""
     bgd = 40
     dark = np.full((100, 100), fill_value=bgd, dtype=float)
     box_size = ACABox(6 * 5)
@@ -144,7 +151,7 @@ def setup_get_imposter_stars(val):
 
 def test_get_imposters_3500():
     """
-    Three nearby hits don't make the cut
+    Test three nearby hits that don't make the cut.
     """
     imposters = setup_get_imposter_stars(3500)
     assert len(imposters) == 1
@@ -157,6 +164,9 @@ def test_get_imposters_3500():
 
 
 def test_get_imposters_5000():
+    """
+    Test get_imposters with an imposter of 5000.
+    """
     imposters = setup_get_imposter_stars(5000)
     assert len(imposters) == 2
     imp = imposters[1]
@@ -421,11 +431,14 @@ def test_get_acq_catalog_19387():
 
 def test_get_acq_catalog_21007():
     """Put it all together.  Regression test for selected stars.
-    From ipython:
-    >>> from proseco.acq import AcqTable
-    >>> acqs = get_acq_catalog(21007)
-    >>> TEST_COLS = ('idx', 'slot', 'id', 'yang', 'zang', 'halfw')
-    >>> repr(acqs.cand_acqs[TEST_COLS]).splitlines()
+
+    From ipython::
+
+      >>> from proseco.acq import AcqTable
+      >>> acqs = get_acq_catalog(21007)
+      >>> TEST_COLS = ('idx', 'slot', 'id', 'yang', 'zang', 'halfw')
+      >>> repr(acqs.cand_acqs[TEST_COLS]).splitlines()
+
     """
     acqs = get_acq_catalog(**OBS_INFO[21007])
 
@@ -468,7 +481,9 @@ def test_get_acq_catalog_21007():
 
 def test_box_strategy_20603():
     """Test for PR #32 that doesn't allow p_acq to be reduced below 0.1.
+
     The idx=8 (mag=10.50) star was previously selected with 160 arsec box.
+
     """
     acqs = get_acq_catalog(**OBS_INFO[20603])
 
@@ -509,9 +524,11 @@ def test_box_strategy_20603():
 
 
 def test_make_report(tmpdir):
-    """
-    Test making an acquisition report.  Use a big-box dither here
-    to test handling of that in report (after passing through pickle).
+    """Test making an acquisition report.
+
+    Use a big-box dither here to test handling of that in report (after passing
+    through pickle).
+
     """
     obsid = 19387
     kwargs = OBS_INFO[obsid].copy()
@@ -546,8 +563,10 @@ def test_make_report(tmpdir):
 
 
 def test_cand_acqs_include_exclude():
-    """
-    Test include and exclude stars.  This uses a catalog with 11 stars:
+    """Test include and exclude stars.
+
+    This uses a catalog with 11 stars:
+
     - 8 bright stars from 7.0 to 7.7 mag, where the 7.0 is EXCLUDED
     - 2 faint (but OK) stars 10.0, 10.1 where the 10.0 is INCLUDED
     - 1 very faint (bad) stars 12.0 mag is INCLUDED
@@ -559,6 +578,7 @@ def test_cand_acqs_include_exclude():
     Finally, starting from the catalog chosen with the include/exclude
     constraints applied, remove those constraints and re-optimize.
     This must come back to the original catalog of the 8 bright stars.
+
     """
     stars = StarsTable.empty()
 

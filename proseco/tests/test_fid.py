@@ -45,7 +45,7 @@ def test_get_fid_position():
 
 
 def test_get_initial_catalog():
-    # Basic catalog with no stars in field.  Standard 2-4-5 config.
+    """Test basic catalog with no stars in field using standard 2-4-5 config."""
     exp = ['<FidTable length=6>',
            '  id    yang     zang     row     col     mag   spoiler_score  idx   slot',
            'int64 float64  float64  float64 float64 float64     int64     int64 int64',
@@ -104,8 +104,10 @@ def test_n_fid():
 
 @pytest.mark.parametrize('dither_z', [8, 64])
 def test_fid_spoiling_acq(dither_z):
-    """
+    """Test fid spoiling acq.
+
     Check fid spoiling acq:
+
     - 20" (4 pix) positional err on fid light
     - 4 pixel readout halfw for fid light
     - 2 pixel PSF of fid light that could creep into search box
@@ -117,6 +119,7 @@ def test_fid_spoiling_acq(dither_z):
     positions of ACIS-S 2, 4, 5 but offset by 82, 149 and 151 arcsec + dither.
     Only ACIS-S-5 is allowed, so we end up with the first fid set using
     1, 3, 5, 6, which is 1, 5, 6.
+
     """
     dither_y = 8
     stars = StarsTable.empty()
@@ -172,6 +175,7 @@ def test_dither_as_sequence():
 
 
 def test_fid_spoiler_score():
+    """Test computing the fid spoiler score."""
     dither_y = 8
     dither_z = 64
     stars = StarsTable.empty()
@@ -189,12 +193,14 @@ def test_fid_spoiler_score():
 
 
 def test_big_sim_offset():
+    """Test of an observation with a big SIM offset"""
     fids = get_fid_catalog(**mod_std_info(stars=StarsTable.empty(), sim_offset=300000))
     names = ['id', 'yang', 'zang', 'row', 'col', 'mag', 'spoiler_score', 'idx']
     assert all(name in fids.colnames for name in names)
 
 
 def test_fid_hot_pixel_reject():
+    """Test hot pixel rejecting a fid"""
     lim = FID.hot_pixel_spoiler_limit
     dark = DARK40.copy()
     for fid_id, off, dc in [(1, 8.0, lim * 1.05),  # spoiler,
