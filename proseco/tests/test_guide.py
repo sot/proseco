@@ -11,7 +11,7 @@ from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
 from chandra_aca.transform import mag_to_count_rate, count_rate_to_mag
 
 from ..guide import (get_guide_catalog, check_spoil_contrib, get_pixmag_for_offset,
-                     check_mag_spoilers, get_ax_range)
+                     check_mag_spoilers, get_ax_range, check_column_spoilers)
 from ..report_guide import make_report
 from ..characteristics_guide import mag_spoiler
 from ..characteristics import CCD
@@ -24,7 +24,7 @@ HAS_SC_ARCHIVE = Path(mica.starcheck.starcheck.FILES['data_root']).exists()
 
 def test_select():
     """
-    Arbitrary ra/dec/roll
+    Regression test that 5 expected agasc ids are selected at an arbitrary ra/dec/roll .
     """
     selected = get_guide_catalog(att=(10, 20, 3), date='2018:001', dither=(8, 8),
                                  t_ccd=-13, n_guide=5)
@@ -35,7 +35,8 @@ def test_select():
 @pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
 def test_obsid_19461():
     """
-    Overall poor star field
+    Regression tests that 5 expected agasc ids are selected in a poor star field
+    corresponding to obsid 19461.
     """
     selected = get_guide_catalog(obsid=19461, n_guide=5)
     expected_star_ids = [450103048, 450101704, 394003312, 450109160, 450109016]
@@ -44,9 +45,9 @@ def test_obsid_19461():
 
 def test_common_column_obsid_19904():
     """
-    Should not select 1091705224 which has a column spoiler
-    Limit the star field to just a handful of stars including the star
-    and the column spoiler
+    Confirm in a specific configuration that a star with a column spoiler,
+    1091705224, is not selected.  This test limits the star field
+    star field to just 5 stars including the star and the column spoiler
     """
     att = (248.515786, -47.373203, 238.665124)
     agasc_ids = [1091709256, 1091698696, 1091705224, 1091702440, 1091704824]
@@ -60,11 +61,38 @@ def test_common_column_obsid_19904():
     assert selected['id'].tolist() == [1091702440, 1091698696, 1091704824]
 
 
+# Cases for common column spoiler test
+comm_cases = [
+    # Star id 2 between id 1 and readout register and 5 mags brighter
+    {'r1': -1, 'c1': 0, 'm1': 10.0, 'r2': -5, 'c2': 0, 'm2': 5.0, 'spoils': True},
+    # Star id 2 between id 1 and readout register and 4 mags brighter (too faint to spoil)
+    {'r1': -1, 'c1': 0, 'm1': 10.0, 'r2': -5, 'c2': 0, 'm2': 6.0, 'spoils': False},
+    # Star id 2 between id 1 and readout register and 5 mags brighter
+    {'r1': 10, 'c1': 15, 'm1': 9.0, 'r2': 50, 'c2': 6, 'm2': 4.0, 'spoils': True},
+    # Star id 2 between id 1 and readout register and 5 mags brighter but 11 pix away in col
+    {'r1': 10, 'c1': 15, 'm1': 9.0, 'r2': 50, 'c2': 4, 'm2': 4.0, 'spoils': False}]
+
+
+@pytest.mark.parametrize('case', comm_cases)
+def test_common_column(case):
+    """
+    Test check_column_spoilers method using constructed two-star cases.
+    The check_column_spoilers method uses n_sigma on MAG_ACA_ERR, but this test
+    ignores MAG_ACA_ERR.
+    """
+    stars = StarsTable.empty()
+    stars.add_fake_star(row=case['r1'], col=case['c1'], mag=case['m1'], id=1)
+    stars.add_fake_star(row=case['r2'], col=case['c2'], mag=case['m2'], id=2)
+    stars['offchip'] = False
+    col_spoil, col_rej = check_column_spoilers(stars, [True, True], stars, n_sigma=3)
+    assert col_spoil[0] == case['spoils']
+
+
 def test_box_mag_spoiler():
     """
-    Test spoiling.
+    Test spoiled star rejection by manipulating a star position and magnitude
+    to make it spoil another star in a specific attitude/config.
     """
-    # Manipulate a spoiler star in this test to first not be a spoiler
     att = (0, 0, 0)
     agasc_ids = [688522000, 688523960, 611190016, 139192, 688522008]
     date = '2018:001'
@@ -88,8 +116,13 @@ def test_box_mag_spoiler():
 
 
 def test_region_contrib():
-    """
-    Regression test of stars rejected by contributing starlight to readout region.
+    """Regression test of stars rejected by contributing starlight to readout region.
+
+    Scenario test for too much light contribution by a spoiler star unto the
+    region of a candidate star... by excluding and then including the spoiler
+    star amongst the stars in the star field and confirming that the candidate
+    is not selected when the spoiler star is included.
+
     """
     att = (8, 47, 0)
     date = '2018:001'
@@ -129,7 +162,7 @@ def test_bad_star_list():
 def test_avoid_trap():
     """
     Set up a scenario where a star is selected fine at one roll, and then
-    confirm that it is not selected when roll places it on the trap
+    confirm that it is not selected when roll places it on the trap.
     """
     agasc_ids = [156384720, 156376184, 156381600, 156379416, 156384304]
     date = '2018:001'
@@ -155,18 +188,25 @@ def test_avoid_trap():
 
 @pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
 def test_big_dither():
+    """Regression test that the expected set of agasc ids selected for "big
+    dither" obsid 20168 are selected.
+
     """
-    Regression test of a catalog with big dither.
-    """
-    # Obsid 20168
     selected = get_guide_catalog(obsid=20168, n_guide=5)
     expected = [977409032, 977930352, 977414712, 977416336, 977405808]
     assert selected['id'].tolist() == expected
 
 
 def test_check_pixmag_offset():
-    """
-    Test the check_pixmag_offset function.
+    """Test the get_pixmag_for_offset guide function.
+
+    get_pixmag_for_offset returns the magnitude required for an individual
+    pixel to spoil the centroid of a candidate star by an specified offset.
+    This test uses a range of pixel locations and intensities, and confirms
+    that for any pixel that would cause an offset in the centroid position over
+    the threshold given that the pixel value would be over the magnitude given
+    by get_pixmag_for_offset.
+
     """
     APL = AcaPsfLibrary()
 
@@ -205,7 +245,8 @@ def test_check_pixmag_offset():
 
 def test_check_spoil_contrib():
     """
-    Construct a case where a star spoils the edge of the 8x8
+    Construct a case where a star spoils the edge of the 8x8 (edge and then background pixel).
+
     Note that for these mock stars, since we we are checking the status of
     the first star, ASPQ1 needs to be nonzero on that star or the
     check_spoil_contrib code will bail out before actually doing the check
@@ -223,6 +264,61 @@ def test_check_spoil_contrib():
 
     bg_spoil, reg_spoil, rej = check_spoil_contrib(stars, np.array([True, True]), stars, .05, 25)
     assert bg_spoil[0]
+
+
+def test_check_spoiler_cases():
+    """
+    Regression test guide star selection against a star and a spoiler
+
+    This moves a spoiling star from center past and edge then moves a spoiling star diagonally.
+    This should hit check_spoil_contrib, has_spoiler_in_box, and check_mag_spoilers tests in
+    the guide star selection.
+
+    """
+    drcs = np.arange(0, 13, 2)
+    mag0 = 8.0  # Baseline mag
+    dmags = [0, 3, 7]  # Spoiler delta mag
+    # Use a blank dark map to skip imposter checks
+    dark = ACAImage(np.zeros((1024, 1024)), row0=-512, col0=-512)
+    spoiled = []
+    for dmag in dmags:
+        for drc in drcs:
+            r = 10
+            c = 10
+            stars = StarsTable.empty()
+            stars.add_fake_star(row=r, col=c, mag=mag0, id=1, ASPQ1=1)
+            # Add a "spoiling" star and move it from center past edge through
+            # the drcs
+            stars.add_fake_star(row=r + drc, col=c, mag=mag0 + dmag, id=2, ASPQ1=0)
+            selected = get_guide_catalog(**STD_INFO, stars=stars, dark=dark)
+            # Is the id=1 star spoiled / not selected?
+            spoiled.append(1 if (1 not in selected['id']) else 0)
+    spoiled = np.array(spoiled).reshape(-1, len(drcs)).tolist()
+    #                    0  2  4  6  8 10 12 pixels
+    expected_spoiled = [[1, 1, 1, 1, 1, 0, 0],  # dmag = 0
+                        [1, 1, 1, 1, 0, 0, 0],  # dmag = 3
+                        [1, 1, 1, 1, 0, 0, 0]]  # dmag = 7
+    assert spoiled == expected_spoiled
+
+    spoiled = []
+    dmags = [3, 5, 7]  # Spoiler delta mag
+    for dmag in dmags:
+        for drc in drcs:
+            r = 10
+            c = 10
+            stars = StarsTable.empty()
+            stars.add_fake_star(row=r, col=c, mag=mag0, id=1, ASPQ1=1)
+            # Add a "spoiling" star 5 mags fainter and move it from center out through a corner
+            stars.add_fake_star(row=r + drc, col=c + drc, mag=mag0 + dmag, id=2, ASPQ1=0)
+            selected = get_guide_catalog(**STD_INFO, stars=stars, dark=dark)
+            spoiled.append(1 if (1 not in selected['id']) else 0)
+    spoiled = np.array(spoiled).reshape(-1, len(drcs)).tolist()
+    #                    0  2  4  6  8 10 12 pixels
+    expected_spoiled = [[1, 1, 1, 1, 0, 0, 0],  # dmag = 3
+                        [1, 1, 1, 1, 0, 0, 0],  # dmag = 5
+                        [1, 1, 1, 1, 0, 0, 0]]  # dmag = 7
+
+    assert spoiled == expected_spoiled
 
 
 pix_cases = [{'dither': (8, 8), 'offset_row': 4, 'offset_col': 4, 'spoils': True},
@@ -257,7 +353,13 @@ def test_pix_spoiler(case):
 
 def test_check_mag_spoilers():
     """
-    Check that stars that should fail the mag/line test actually fail
+    Check that spoiling stars that should spoil a candidated due to the
+    mag/line test actually spoil the candidate star.
+
+    The check_mag_spoilers function sets a star to spoil another star if it
+    is closer than a required separation for the magnitude difference
+    (a faint star can be closer to a candidate star without spoiling it).
+    The line test is defined in the mag_spoiler parameters Intercept and Slope.
     """
     intercept = mag_spoiler['Intercept']
     spoilslope = mag_spoiler['Slope']
@@ -300,10 +402,6 @@ def test_guides_include_exclude():
 
     Both the 7.0 and 10.1 would normally get picked either initially
     or swapped in during optimization, and 12.0 would never get picked.
-
-    NOTE: right now this is a stub that just checks that the include_ids
-    and exclude_ids get set accordingly.  Later the include/exclude
-    functionality will be implemented and this test can be substantive.
     """
     stars = StarsTable.empty()
 
@@ -404,7 +502,7 @@ def test_edge_star(dither):
     stars.add_fake_star(row=row_max, col=col_max * -1, mag=6.0)
     info = mod_std_info(n_guide=8, dither_guide=(row_dither * 5, col_dither * 5), stars=stars)
     guides = get_guide_catalog(**info)
-    # Confirm 4 generic stars plus for corner stars are selected
+    # Confirm 4 generic stars plus four corner stars are selected
     assert len(guides) == 8
 
 
