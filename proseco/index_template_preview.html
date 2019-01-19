@@ -1,0 +1,56 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+  <head>
+    <title>Proseco guide star selection summary</title>
+    <link href="/mta/ASPECT/aspect.css" rel="stylesheet" type="text/css" media="all" />
+  <style>
+h1,h2,h3,h4 {
+  color: #990000;
+}
+
+table.table-striped {
+        border-width: thin thin thin thin;
+        border-spacing: 1px;
+        border-style: outset outset outset outset;
+        border-color: gray gray gray gray;
+        border-collapse: separate;
+        background-color: white;
+}
+
+table.table-striped th {
+        border-width: 1px 1px 1px 1px;
+        padding: 1px 3px 1px 3px;
+        border-color: gray;
+        border-style: inset;
+}
+table.table-striped td {
+        border-width: 1px 1px 1px 1px;
+        padding: 1px 3px 1px 3px;
+        border-style: inset;
+        border-color: gray;
+        text-align: right;
+}
+</style>
+  </head>
+
+  <body>
+
+<!--#include virtual="/mta/ASPECT/header.html"-->
+
+{% for aca in acas %}
+
+<h2> Obsid {{aca.obsid}} at {{aca.date}}</h1>
+<table>
+  <tr>
+    <td><pre>{{aca.context['text_pre']}}</pre></td>
+    <td><img src="{{aca.context['catalog_plot'] | safe}}"></td>
+  </tr>
+</table>
+
+{% endfor %}
+
+<!--#include virtual="/mta/ASPECT/footer.html"-->
+<!--footer end-->
+
+  </body>
+</html>
