@@ -149,6 +149,7 @@ def preview(self):
     self.make_starcat_plot()
     self.add_row_col()
     self.check_catalog()
+    self.check_acq_p2()
 
     self.context['text_pre'] = self.get_text_pre()
 
@@ -200,8 +201,6 @@ def check_position_on_ccd(self, entry):
     entry_type = entry['type']
 
     # Shortcuts and translate y/z to yaw/pitch
-    dither_acq_y = self.dither_acq.y
-    dither_acq_p = self.dither_acq.z
     dither_guide_y = self.dither_guide.y
     dither_guide_p = self.dither_guide.z
 
@@ -233,7 +232,7 @@ def check_position_on_ccd(self, entry):
                             f"lim {track_lims[axis]:.1f} "
                             f"val {entry[axis]:.1f} "
                             f"delta {track_delta:.1f}")
-                    self.add_message(text, idx=entry['idx'], category=category)
+                    self.add_message(category, text, idx=entry['idx'])
                     break
 
     # For acq stars, the distance to the row/col padded limits are also confirmed,
@@ -252,9 +251,23 @@ def check_position_on_ccd(self, entry):
 ACATable.check_position_on_ccd = check_position_on_ccd
 
 
-def add_message(self, text, category, **kwargs):
+def add_message(self, category, text, **kwargs):
     message = {'text': text, 'category': category}
     message.update(kwargs)
     self.messages.append(message)
 
 ACATable.add_message = add_message
+
+
+def check_acq_p2(self):
+    P2 = -np.log10(self.acqs.calc_p_safe())
+    obsid = float(self.obsid)
+    is_OR = abs(obsid) < 38000
+    obs_type = 'OR' if is_OR else 'ER'
+    P2_lim = 2.0 if is_OR else 3.0
+    if P2 < P2_lim:
+        self.add_message('critical', f'P2: {P2:.2f} less than {P2_lim} for {obs_type}')
+    elif P2 < P2_lim + 1:
+        self.add_message('warning', f'P2: {P2:.2f} less than {P2_lim + 1} for {obs_type}')
+
+ACATable.check_acq_p2 = check_acq_p2
