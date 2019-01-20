@@ -1,5 +1,6 @@
 from pathlib import Path
 import pickle
+from itertools import combinations
 
 import matplotlib
 matplotlib.use('Agg')
@@ -194,13 +195,59 @@ Predicted Acq CCD temperature (init) : {self.t_ccd_acq:.1f}"""
         self.make_starcat_plot()
         self.add_row_col()
         self.check_catalog()
-        self.check_acq_p2()
-
         self.context['text_pre'] = self.get_text_pre()
 
     def check_catalog(self):
         for entry in self:
             self.check_position_on_ccd(entry)
+
+        self.check_guide_geometry()
+        self.check_acq_p2()
+
+    def check_guide_geometry(self):
+        """Check for guide stars too tightly clustered
+
+        (1) Check for any set of n_guide-2 stars within 500" of each other.
+        The nominal check here is a cluster of 3 stars within 500".  For
+        ERs this check is very unlikely to fail.  For catalogs with only
+        4 guide stars this will flag for any 2 nearby stars.
+
+        This check will likely need some refinement.
+
+        (2) Check for all stars being within 2500" of each other.
+
+        """
+        ok = np.in1d(self['type'], ('GUI', 'BOT'))
+        guide_idxs = np.flatnonzero(ok)
+        n_guide = len(guide_idxs)
+
+        def dist2(g1, g2):
+            out = (g1['yang'] - g2['yang']) ** 2 + (g1['zang'] - g2['zang']) ** 2
+            return out
+
+        # First check for any set of n_guide-2 stars within 500" of each other.
+        min_dist = 500
+        min_dist2 = min_dist ** 2
+        for idxs in combinations(guide_idxs, n_guide - 2):
+            for idx0, idx1 in combinations(idxs, 2):
+                # If any distance in this combination exceeds min_dist then
+                # the combination is OK.
+                if dist2(self[idx0], self[idx1]) > min_dist2:
+                    break
+            else:
+                # Every distance was too small, issue a warning.
+                msg = f'Guide indexes {idxs} clustered within {min_dist}" radius'
+                self.add_message('critical', msg)
+
+        # Check for all stars within 2500" of each other
+        min_dist = 2500
+        min_dist2 = min_dist ** 2
+        for idx0, idx1 in combinations(guide_idxs, 2):
+            if dist2(self[idx0], self[idx1]) > min_dist2:
+                break
+        else:
+            msg = f'Guide stars all clustered within {min_dist}" radius'
+            self.add_message('warning', msg)
 
     def check_position_on_ccd(self, entry):
         entry_type = entry['type']
