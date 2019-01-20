@@ -51,6 +51,14 @@ span.info {
 
 <!--#include virtual="/mta/ASPECT/header.html"-->
 
+<h1> {{load_name}} </h1>
+
+<pre>
+Proseco version: {{version}}
+
+{{summary_text | safe}}
+</pre>
+
 {% for aca in acas %}
 
 <h2> Obsid {{aca.obsid}} at {{aca.date}}</h1>

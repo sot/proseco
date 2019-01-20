@@ -7,15 +7,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 from Quaternion import Quat
 from jinja2 import Template
-from chandra_aca.star_probs import guide_count
 from chandra_aca.transform import yagzag_to_pixels
 from astropy.table import Column
 
+import proseco
 from proseco.catalog import ACATable
 from proseco.core import StarsTable
 import proseco.characteristics as CHAR
 
 CACHE = {}
+VERSION = proseco.test(get_version=True)
 
 
 def get_acas(rootname):
@@ -55,8 +56,8 @@ def get_text_pre(self):
     att = Quat(self.att)
     self._base_repr_()
     catalog = '\n'.join(self.pformat(max_width=-1))
-    n_acq = np.sum(self.acqs['p_acq'])
-    n_guide = guide_count(self.guides['mag'], self.guides.t_ccd)
+    self.acq_count = np.sum(self.acqs['p_acq'])
+    self.guide_count = self.guides.guide_count(self.guides['mag'], self.guides.t_ccd)
 
     message_text = self.get_formatted_messages()
 
@@ -72,8 +73,8 @@ Date: {self.date}
 
 {message_text}\
 Probability of acquiring 2 or fewer stars (10^-x): {P2:.2f}
-Acquisition Stars Expected: {n_acq:.2f}
-Guide Stars count: {n_guide:.2f}
+Acquisition Stars Expected: {self.acq_count:.2f}
+Guide Stars count: {self.guide_count:.2f}
 Predicted Guide CCD temperature (max): {self.t_ccd_guide:.1f}
 Predicted Acq CCD temperature (init) : {self.t_ccd_acq:.1f}"""
 
@@ -122,6 +123,26 @@ def add_row_col(self):
 
 ACATable.add_row_col = add_row_col
 
+CATEGORIES = ('critical', 'warning', 'caution', 'info')
+
+
+def get_summary_text(acas):
+    lines = []
+    for aca in acas:
+        line = (f'OBSID = {aca.obsid:7s} at {aca.date}   '
+                f'{aca.acq_count:.1f} ACQ | {aca.guide_count:.1f} GUI |')
+
+        # Warnings
+        for category in CATEGORIES:
+            msgs = [msg for msg in aca.messages if msg['category'] == category]
+            if msgs:
+                text = stylize(f' {category.capitalize()}: {len(msgs)}', category)
+                line += text
+
+        lines.append(line)
+
+    return '\n'.join(lines)
+
 
 def preview(self):
     """Monkey patch method for catalog pre-review from proseco pickle"""
@@ -138,19 +159,26 @@ def preview_load(rootname='jan2819'):
     if rootname in CACHE:
         acas = CACHE[rootname]
     else:
-        acas = get_acas(rootname)
+        acas_dict = get_acas(rootname)
+        # TO DO : Sort by date
+        acas = []
+        for obsid, aca in acas_dict.items():
+            aca.obsid = obsid
+            acas.append(aca)
         CACHE[rootname] = acas
 
-    for obsid, aca in acas.items():
-        aca.obsid = obsid
+    # Do the pre-review for each catalog
+    for aca in acas:
         aca.context = {}
         aca.messages = []
         aca.preview()
 
     context = {}
 
-    # Probably sort by date
-    context['acas'] = [aca for aca in acas.values()]
+    context['load_name'] = rootname.upper()
+    context['version'] = VERSION
+    context['acas'] = acas
+    context['summary_text'] = get_summary_text(acas)
 
     template_file = 'index_template_preview.html'
     template = Template(open(template_file, 'r').read())
