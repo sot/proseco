@@ -82,12 +82,26 @@ Predicted Acq CCD temperature (init) : {self.t_ccd_acq:.1f}"""
 ACATable.get_text_pre = get_text_pre
 
 
+def stylize(text, category):
+    """Stylize ``text``.
+
+    Currently ``category`` of critical, warning, caution, or info are supported
+    in the CSS span style.
+
+    """
+    out = f'<span class="{category}">{text}</span>'
+    return out
+
+
 def get_formatted_messages(self):
     """Format message dicts into pre-formatted lines for the preview report"""
+
     lines = []
     for message in self.messages:
+        category = message['category']
         idx_str = f"[{message['idx']}] " if ('idx' in message) else ''
-        line = f">> {message['category'].upper()}: {idx_str}{message['text']}"
+        line = f">> {category.upper()}: {idx_str}{message['text']}"
+        line = stylize(line, category)
         lines.append(line)
 
     out = '\n'.join(lines) + '\n\n' if lines else ''
@@ -210,8 +224,8 @@ def check_position_on_ccd(self, entry):
 ACATable.check_position_on_ccd = check_position_on_ccd
 
 
-def add_message(self, text, **kwargs):
-    message = {'text': text}
+def add_message(self, text, category, **kwargs):
+    message = {'text': text, 'category': category}
     message.update(kwargs)
     self.messages.append(message)
 
