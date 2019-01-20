@@ -22,35 +22,46 @@ FILEDIR = Path(__file__).parent
 CATEGORIES = ('critical', 'warning', 'caution', 'info')
 
 
-def preview_load(rootname='jan2819'):
-    """Do preliminary load review based on proseco pickle.
+def preview_load(load_name, outdir=None):
+    """Do preliminary load review based on proseco pickle file from ORviewer.
 
-    This assumes a file <rootname>.pkl is available.  The review is written to
-    a ``<rootname>/index.html``.  That directory is created if necessary.
+    The ``load_name`` specifies the pickle file.  The following options are tried
+    in this order:
+    - <load_name>_proseco.pkl (for <load_name> like 'JAN2119A', ORviewer default)
+    - <load_name>.pkl
 
+    If ``outdir`` is not provided then it will be set to ``load_name``.
+
+    :param load_name: Name of loads
+    :param outdir: Output directory
     """
-    if rootname in CACHE:
-        acas = CACHE[rootname]
+    if load_name in CACHE:
+        acas_dict = CACHE[load_name]
     else:
-        acas_dict = get_acas(rootname)
-        # TO DO : Sort by date
-        acas = []
-        for obsid, aca in acas_dict.items():
-            # Change instance class to include all the review methods. This is legal!
-            aca.__class__ = ACAReviewTable
-            aca.obsid = obsid
-            acas.append(aca)
-        CACHE[rootname] = acas
+        acas_dict = get_acas(load_name)
+        CACHE[load_name] = acas_dict
+
+    # Make output directory if needed
+    if outdir is None:
+        outdir = load_name
+    outdir = Path(outdir)
+    outdir.mkdir(parents=True, exist_ok=True)
 
     # Do the pre-review for each catalog
-    for aca in acas:
+    acas = []
+    for obsid, aca in acas_dict.items():
+        # Change instance class to include all the review methods. This is legal!
+        aca.__class__ = ACAReviewTable
+        aca.obsid = obsid
+        aca.outdir = outdir
         aca.context = {}
         aca.messages = []
         aca.preview()
+        acas.append(aca)
 
     context = {}
 
-    context['load_name'] = rootname.upper()
+    context['load_name'] = load_name.upper()
     context['version'] = VERSION
     context['acas'] = acas
     context['summary_text'] = get_summary_text(acas)
@@ -59,7 +70,7 @@ def preview_load(rootname='jan2819'):
     template = Template(open(template_file, 'r').read())
     out_html = template.render(context)
 
-    out_filename = Path(rootname) / 'index.html'
+    out_filename = outdir / 'index.html'
     with open(out_filename, 'w') as fh:
         fh.write(out_html)
 
@@ -75,10 +86,13 @@ def stylize(text, category):
     return out
 
 
-def get_acas(rootname):
-    filename = rootname + '.pkl'
-    acas = pickle.load(open(filename, 'rb'))
-    return acas
+def get_acas(load_name):
+    filenames = [f'{load_name}_proseco.pkl', f'{load_name}.pkl']
+    for filename in filenames:
+        if Path(filename).exists():
+            acas = pickle.load(open(filename, 'rb'))
+            return acas
+    raise FileNotFoundError(f'no matching pickle file {filenames}')
 
 
 def get_summary_text(acas):
@@ -111,11 +125,9 @@ def get_summary_text(acas):
 
 
 class ACAReviewTable(ACATable):
-    def make_starcat_plot(self, rootdir='jan2819'):
-        rootdir = Path(rootdir)
-        rootdir.mkdir(exist_ok=True, parents=True)
+    def make_starcat_plot(self):
         plotname = f'cat{self.obsid}.png'
-        outfile = rootdir / plotname
+        outfile = self.outdir / plotname
         self.context['catalog_plot'] = plotname
 
         if outfile.exists():
