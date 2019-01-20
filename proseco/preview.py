@@ -17,6 +17,7 @@ import proseco.characteristics as CHAR
 
 CACHE = {}
 VERSION = proseco.test(get_version=True)
+FILEDIR = Path(__file__).parent
 
 
 def get_acas(rootname):
@@ -184,7 +185,7 @@ def preview_load(rootname='jan2819'):
     context['acas'] = acas
     context['summary_text'] = get_summary_text(acas)
 
-    template_file = 'index_template_preview.html'
+    template_file = FILEDIR / 'index_template_preview.html'
     template = Template(open(template_file, 'r').read())
     out_html = template.render(context)
 
