@@ -127,9 +127,12 @@ CATEGORIES = ('critical', 'warning', 'caution', 'info')
 
 
 def get_summary_text(acas):
+    # <A HREF="#obsid48487">OBSID = 48487</A>
+    # <A NAME="obsid48487"></A>
     lines = []
     for aca in acas:
-        line = (f'OBSID = {aca.obsid:7s} at {aca.date}   '
+        line = (f'<a href="#obsid{aca.obsid}">OBSID = {aca.obsid:7s}</a>'
+                f' at {aca.date}   '
                 f'{aca.acq_count:.1f} ACQ | {aca.guide_count:.1f} GUI |')
 
         # Warnings

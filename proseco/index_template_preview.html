@@ -2,7 +2,6 @@
 <html>
   <head>
     <title>Proseco guide star selection summary</title>
-    <link href="/mta/ASPECT/aspect.css" rel="stylesheet" type="text/css" media="all" />
   <style>
 h1,h2,h3,h4 {
   color: #990000;
@@ -49,9 +48,7 @@ span.info {
 
   <body>
 
-<!--#include virtual="/mta/ASPECT/header.html"-->
-
-<h1> {{load_name}} </h1>
+<h1> {{load_name}} Pre-review</h1>
 
 <pre>
 Proseco version: {{version}}
@@ -61,6 +58,7 @@ Proseco version: {{version}}
 
 {% for aca in acas %}
 
+<a name="obsid{{aca.obsid}}"></a>
 <h2> Obsid {{aca.obsid}} at {{aca.date}}</h1>
 <table>
   <tr>
@@ -70,9 +68,6 @@ Proseco version: {{version}}
 </table>
 
 {% endfor %}
-
-<!--#include virtual="/mta/ASPECT/footer.html"-->
-<!--footer end-->
 
   </body>
 </html>
