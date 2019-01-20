@@ -96,7 +96,8 @@ class GuideTable(ACACatalogTable):
     include_ids = AliasAttribute()
     exclude_ids = AliasAttribute()
 
-    def n_stars(self):
+    @classmethod
+    def guide_count(cls, mags, t_ccd):
         """Calculate a guide star fractional count/metric using signal-to-noise scaled
         mag thresholds.
 
@@ -110,18 +111,15 @@ class GuideTable(ACACatalogTable):
         :returns: fractional count
 
         """
-        t_ccd = self.t_ccd
-        mag1 = snr_mag_for_t_ccd(t_ccd, ref_mag=10.0, ref_t_ccd=-10.9)
-        mag2 = snr_mag_for_t_ccd(t_ccd, ref_mag=10.2, ref_t_ccd=-10.9)
-        mag3 = snr_mag_for_t_ccd(t_ccd, ref_mag=10.3, ref_t_ccd=-10.9)
-        mag4 = snr_mag_for_t_ccd(t_ccd, ref_mag=10.4, ref_t_ccd=-10.9)
-
-        mags = [mag1, mag2, mag3, mag4]
-        counts = [1.0, 0.75, 0.5, 0.0]
+        # Generate interpolation curve for the specified input ``t_ccd``
+        ref_t_ccd = -10.9
+        ref_mags0 = [10.0, 10.2, 10.3, 10.4]
+        ref_mags = [snr_mag_for_t_ccd(t_ccd, ref_mag, ref_t_ccd) for ref_mag in ref_mags0]
+        ref_counts = [1.0, 0.75, 0.5, 0.0]
 
         # Do the interpolation, noting that np.interp will use the end ``counts``
-        # values for any ``mag`` < mag1 or > mag4.
-        count = np.sum(np.interp(self['mag'], mags, counts))
+        # values for any ``mag`` < ref_mags[0] or > ref_mags[-1].
+        count = np.sum(np.interp(mags, ref_mags, ref_counts))
 
         return count
 
@@ -133,7 +131,7 @@ class GuideTable(ACACatalogTable):
         elif len(self) == 0:
             out = 0
         else:
-            out = self.n_stars() > GUIDE.min_guide_count
+            out = self.guide_count(self['mag'], self.t_ccd) >= GUIDE.min_guide_count
         return out
 
     def make_report(self, rootdir='.'):
