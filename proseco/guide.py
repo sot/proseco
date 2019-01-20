@@ -105,12 +105,11 @@ class GuideTable(ACACatalogTable):
         SSAWG.  The implementation here does a piecewise linear interpolation
         between the reference mag - fractional count points instead of the
         original "threshold interpolation" (nearest neighbor mag <= reference
-        mag).
+        mag).  Approved at 16-Jan-2019 SSAWG.
 
         :returns: fractional count
 
         """
-        # The bright limit does not scale.
         t_ccd = self.t_ccd
         mag1 = snr_mag_for_t_ccd(t_ccd, ref_mag=10.0, ref_t_ccd=-10.9)
         mag2 = snr_mag_for_t_ccd(t_ccd, ref_mag=10.2, ref_t_ccd=-10.9)
