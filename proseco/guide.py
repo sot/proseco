@@ -331,8 +331,10 @@ class GuideTable(ACACatalogTable):
         # Add a filter for stars that are too close to the chip edge including dither
         r_dith_pad = self.dither.row
         c_dith_pad = self.dither.col
-        row_max = CCD['row_max'] - (CCD['row_pad'] + CCD['window_pad'] + r_dith_pad)
-        col_max = CCD['col_max'] - (CCD['col_pad'] + CCD['window_pad'] + c_dith_pad)
+        row_max = (CCD['row_max'] -
+                   (CCD['row_pad'] + CCD['window_pad'] + CCD['guide_extra_pad'] + r_dith_pad))
+        col_max = (CCD['col_max'] -
+                   (CCD['col_pad'] + CCD['window_pad'] + CCD['guide_extra_pad'] + c_dith_pad))
         outofbounds = (np.abs(stars['row']) > row_max) | (np.abs(stars['col']) > col_max)
 
         cand_guides = stars[ok & ~outofbounds]
