@@ -317,13 +317,6 @@ class GuideTable(ACACatalogTable):
         stars = self.stars
         dark = self.dark
 
-        # Use the primary selection filter from acq, but allow bad color
-        # and limit to brighter stars
-        ok = (self.get_candidates_mask(stars) &
-              (np.abs(stars['row']) < ACA.max_ccd_row) &  # Max usable row
-              (np.abs(stars['col']) < ACA.max_ccd_col)  # Max usable col
-              )
-
         # Mark stars that are off chip
         offchip = (np.abs(stars['row']) > CCD['row_max']) | (np.abs(stars['col']) > CCD['col_max'])
         stars['offchip'] = offchip
@@ -337,7 +330,11 @@ class GuideTable(ACACatalogTable):
                    (CCD['col_pad'] + CCD['window_pad'] + CCD['guide_extra_pad'] + c_dith_pad))
         outofbounds = (np.abs(stars['row']) > row_max) | (np.abs(stars['col']) > col_max)
 
-        cand_guides = stars[ok & ~outofbounds]
+        # Set the candidates to be the set of stars that is both *not* out of bounds
+        # and satisfies the rules in 'get_candidates_mask' (which uses the primary
+        # selection filter from acq, but allows bad color and limits to brighter stars).
+        ok = self.get_candidates_mask(stars) & ~outofbounds
+        cand_guides = stars[ok]
         self.log('Filtering on CLASS, mag, row/col, '
                  'mag_err, ASPQ1/2, POS_ERR:')
         self.log(f'Reduced star list from {len(stars)} to '
