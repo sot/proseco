@@ -100,8 +100,19 @@ class GuideTable(ACACatalogTable):
             out = 1
         elif len(self) == 0:
             out = 0
+        # If this is an ER as inferred by number of requested guide stars, apply
+        # more requirements on the guide catalog to get a thumbs_up = 1.
+        elif self.n_guide > 6:
+            n_bright = np.count_nonzero(self['mag'] < GUIDE_CHAR.er_bright_thresh)
+            count = guide_count(self['mag'], self.t_ccd)
+            # Confirm it has all of the requested number of guide stars, has
+            # at least n stars brighter than the er_bright_thresh, and has
+            # the minimum guide count.
+            out = int((len(self) == self.n_guide) &
+                      (n_bright == GUIDE_CHAR.er_n_bright_req) &
+                      (count >= GUIDE_CHAR.min_guide_count))
         else:
-            # Evaluate guide catalog quality for thumbs_up
+            # For ORs confirm guide count is over threshold min_guide_count
             count = guide_count(self['mag'], self.t_ccd)
             out = int(count >= GUIDE_CHAR.min_guide_count)
         return out

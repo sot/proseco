@@ -21,6 +21,11 @@ CCD = {'row_min': -512.0,
        'col_pad': 1,
        'bgpix': ['A1', 'B1', 'G1', 'H1', 'I4', 'J4', 'O4', 'P4']}
 
+
+# For the check that ERs must have 3 stars brighter than 9th mag
+er_n_bright_req = 3
+er_bright_thresh = 9.0
+
 PIX_2_ARC = 4.96289
 ARC_2_PIX = 1.0 / PIX_2_ARC
 

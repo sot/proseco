@@ -248,6 +248,25 @@ def test_bad_obsid():
     assert aca.fids.thumbs_up == 0
 
 
+def test_check_guide_thumbs_for_ers():
+    dark = DARK40.copy()
+    stars1 = StarsTable.empty()
+    stars1.add_fake_constellation(mag=[8.0, 8.0, 8.0, 10.0, 10.0, 10.0, 10.0, 10.0],
+                                  n_stars=8)
+    kwargs1 = mod_std_info(stars=stars1, dark=dark, dither=20,
+                          n_guide=8, n_fid=0, n_acq=8, man_angle=90)
+    aca1 = get_aca_catalog(**kwargs1)
+    assert aca1.guides.thumbs_up == 1
+
+    stars2 = StarsTable.empty()
+    stars2.add_fake_constellation(mag=[10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0],
+                                  n_stars=8)
+    kwargs2 = mod_std_info(stars=stars2, dark=dark, dither=20,
+                          n_guide=8, n_fid=0, n_acq=8, man_angle=90)
+    aca2 = get_aca_catalog(**kwargs2)
+    assert aca2.guides.thumbs_up == 1
+
+
 def test_bad_pixel_dark_current():
     """
     Test avoidance of bad_pixels = [[-245, 0, 454, 454]]
