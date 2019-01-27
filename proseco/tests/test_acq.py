@@ -7,7 +7,7 @@ from pathlib import Path
 from chandra_aca.aca_image import AcaPsfLibrary
 from chandra_aca.transform import mag_to_count_rate, yagzag_to_pixels
 
-from ..report import make_report
+from ..report_acq import make_report
 from ..acq import (get_p_man_err, bin2x2, CHAR,
                    get_imposter_stars,
                    get_image_props,

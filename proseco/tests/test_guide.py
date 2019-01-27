@@ -12,9 +12,10 @@ from chandra_aca.transform import mag_to_count_rate, count_rate_to_mag
 
 from ..guide import (get_guide_catalog, check_spoil_contrib, get_pixmag_for_offset,
                      check_mag_spoilers, get_ax_range)
+from ..report_guide import make_report
 from ..characteristics_guide import mag_spoiler, CCD
 from ..core import StarsTable
-from .test_common import STD_INFO, mod_std_info
+from .test_common import STD_INFO, mod_std_info, OBS_INFO
 
 
 HAS_SC_ARCHIVE = Path(mica.starcheck.starcheck.FILES['data_root']).exists()

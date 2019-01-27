@@ -3,6 +3,7 @@
 
 from __future__ import division, print_function, absolute_import  # For Py2 compatibility
 
+import re
 from copy import copy, deepcopy
 from pathlib import Path
 

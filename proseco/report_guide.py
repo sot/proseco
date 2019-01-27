@@ -1,6 +1,7 @@
 # coding: utf-8
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
+import re
 from copy import copy
 from pathlib import Path
 
@@ -16,8 +17,9 @@ from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
 from chandra_aca.transform import mag_to_count_rate
 from mica.archive.aca_dark.dark_cal import get_dark_cal_image
 
-from .core import StarsTable, table_to_html
-from .guide import GuideTable, get_ax_range, GUIDE
+from .core import StarsTable
+from .guide import GuideTable, get_ax_range
+from .guide import GUIDE_CHAR as GUIDE
 
 # Do reporting for at-most MAX_CAND candidates
 MAX_CAND = 50
@@ -27,6 +29,23 @@ COLS = ['id', 'stage', 'forced',
         'COLOR1', 'ASPQ1', 'MAG_ACA_ERR']
 FILEDIR = Path(__file__).parent
 APL = AcaPsfLibrary()
+
+
+def table_to_html(tbl):
+    """
+    Make an HTML representation of a table
+    :param tbl: astropy Table
+    :returns: str
+    """
+    out = tbl._base_repr_(html=True, max_width=-1,
+                          show_dtype=False, descr_vals=[],
+                          max_lines=-1, tableclass='table-striped')
+    # Undo HTML sanitizing to allow raw HTML in table elements
+    out = re.sub(r'&quot;', '"', out)
+    out = re.sub(r'&lt;', '<', out)
+    out = re.sub(r'&gt;', '>', out)
+
+    return out
 
 
 def make_report(obsid, rootdir='.'):
@@ -109,7 +128,7 @@ def make_report(obsid, rootdir='.'):
     context['cand_guides_table'] = table_to_html(cand_guides_table)
 
     # Make the HTML
-    template_file = FILEDIR / GUIDE.index_template_file
+    template_file = FILEDIR / 'index_template_guide.html'
     template = Template(open(template_file, 'r').read())
     out_html = template.render(context)
     out_filename = outdir / 'index.html'
