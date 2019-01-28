@@ -19,6 +19,7 @@ CCD = {'row_min': -512.0,
        'window_pad': 7,
        'row_pad': 8,
        'col_pad': 1,
+       'guide_extra_pad': 3,
        'bgpix': ['A1', 'B1', 'G1', 'H1', 'I4', 'J4', 'O4', 'P4']}
 
 PIX_2_ARC = 4.96289
