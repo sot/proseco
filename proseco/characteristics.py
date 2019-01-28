@@ -102,7 +102,8 @@ bad_star_set = set([36178592,
                    1130649544,
                    1161827976,
                    1196953168,
-                   1197635184])
+                   1197635184,
+                   1158290496])
 
 # Minimum acquisition probability thresholds from starcheck for thumbs_up
 acq_prob_n = 2
