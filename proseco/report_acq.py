@@ -3,8 +3,8 @@
 
 from __future__ import division, print_function, absolute_import  # For Py2 compatibility
 
-from copy import copy, deepcopy
 import re
+from copy import copy, deepcopy
 from pathlib import Path
 
 import matplotlib
@@ -163,7 +163,6 @@ def make_cand_acqs_report(acqs, cand_acqs, events, context, obsdir):
     # Now plot figure
     filename = obsdir / 'candidate_stars.png'
     if not filename.exists():
-        print(f'Making candidate stars plot {filename}')
 
         # Pull a fast-one and mark the final selected ACQ stars as BOT so they
         # get a circle in the plot.  This might be confusing and need fixing
@@ -198,7 +197,6 @@ def make_acq_star_details_report(acqs, cand_acqs, events, context, obsdir):
     context['cand_acqs'] = []
 
     for ii, acq in enumerate(cand_acqs):
-        print('Doing detail for star {}'.format(acq['id']))
         # Local context dict for each cand_acq star
         cca = {'id': acq['id'],
                'selected': 'SELECTED' if acq['id'] in acqs['id'] else 'not selected'}
@@ -293,7 +291,7 @@ def make_obsid_summary(acqs, events, context, obsdir):
     context['acqs_table'] = table_to_html(acqs_table)
 
     basename = 'acq_stars.png'
-    filename = obsdir / basename
+    filename = obsdir / 'acq' / basename
     context['acq_stars_plot'] = basename
     if not filename.exists():
         fig = plt.figure(figsize=(4, 4))
@@ -304,18 +302,41 @@ def make_obsid_summary(acqs, events, context, obsdir):
                             bad_stars=acqs.bad_stars, ax=ax)
         # When Ska3 has matplotlib 2.2+ then just use `filename`
         plt.savefig(str(filename))
-        plt.close()
+        plt.close(fig)
 
 
 def make_report(obsid, rootdir='.'):
-    rootdir = Path(rootdir)
-    print(f'Processing obsid {obsid}')
+    """
+    Make summary HTML report for acq star selection.
 
-    obsdir = rootdir / f'obs{obsid:05}'
-    acqs = AcqTable.from_pickle(obsid, rootdir)
+    The first arg ``obsid`` can be an obsid (int) or a ``AcqTable`` object.
+    For ``int`` the acq table is read from ``<rootdir>/obs<obsid>/acq.pkl``.
+
+    Output is in ``<rootdir>/obs<obsid>/acq/index.html`` plus related images
+    in that directory.
+
+    :param obsid: int obsid or AcqTable instance
+    :param rootdir: root directory for outputs
+
+    :returns: AcqTable object (mostly for testing)
+    """
+    rootdir = Path(rootdir)
+    if isinstance(obsid, AcqTable):
+        acqs = obsid
+        obsid = acqs.obsid
+    else:
+        acqs = AcqTable.from_pickle(obsid, rootdir)
     cand_acqs = acqs.cand_acqs
 
+    # Define and make directories as needed
+    obsdir = rootdir / f'obs{obsid:05}'
+    outdir = obsdir / 'acq'
+    outdir.mkdir(exist_ok=True, parents=True)
+
     context = copy(acqs.meta)
+    context['include_ids'] = ", ".join([str(val) for val in acqs.include_ids])
+    context['include_halfws'] = ", ".join([str(val) for val in acqs.include_halfws])
+    context['exclude_ids'] = ", ".join([str(val) for val in acqs.exclude_ids])
 
     # Get information that is not stored in the acqs pickle for space reasons
     acqs.stars = StarsTable.from_agasc(acqs.att, date=acqs.date)
@@ -326,15 +347,15 @@ def make_report(obsid, rootdir='.'):
 
     make_obsid_summary(acqs, events, context, obsdir)
     make_p_man_errs_report(context)
-    make_cand_acqs_report(acqs, cand_acqs, events, context, obsdir)
+    make_cand_acqs_report(acqs, cand_acqs, events, context, outdir)
     make_initial_cat_report(events, context)
-    make_acq_star_details_report(acqs, cand_acqs, events, context, obsdir)
+    make_acq_star_details_report(acqs, cand_acqs, events, context, outdir)
     make_optimize_catalog_report(events, context)
 
     template_file = FILEDIR / 'index_template.html'
     template = Template(open(template_file, 'r').read())
     out_html = template.render(context)
-    out_filename = obsdir / 'index.html'
+    out_filename = outdir / 'index.html'
     with open(out_filename, 'w') as fh:
         fh.write(out_html)
 
@@ -486,5 +507,6 @@ def plot_imposters(acq, dark, dither, vmin=100, vmax=2000,
     if filename is not None:
         # When Ska3 has matplotlib 2.2+ then just use `filename`
         plt.savefig(str(filename), pad_inches=0.0)
+    plt.close(fig)
 
     return img, ax

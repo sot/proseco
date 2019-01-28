@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 import mica.starcheck
 
-from .test_common import STD_INFO, mod_std_info, DARK40
+from .test_common import STD_INFO, mod_std_info, DARK40, OBS_INFO
 from ..core import StarsTable, ACACatalogTable
 from ..catalog import get_aca_catalog
 from ..fid import get_fid_catalog
@@ -453,3 +453,25 @@ def test_aca_acqs_include_exclude():
     guides = aca.guides
     assert guides.include_ids == include_ids
     assert guides.exclude_ids == exclude_ids
+
+
+def test_report_from_objects(tmpdir):
+    """
+    Test making guide and acq reports without the intermediate pickle.
+
+    This is just a sanity check that appropriate files are created.  More
+    detailed testing (including pickle round trip) is tested in test_guide
+    and test_acq.
+    """
+    rootdir = Path(tmpdir)
+
+    obsid = 20603
+    aca = get_aca_catalog(**OBS_INFO[obsid])
+    aca.guides.make_report(rootdir=rootdir)
+    aca.acqs.make_report(rootdir=rootdir)
+
+    obsdir = rootdir / f'obs{obsid:05}'
+    for subdir in 'acq', 'guide':
+        outdir = obsdir / subdir
+        assert(outdir / 'index.html').exists()
+        assert len(list(outdir.glob('*.png'))) > 0

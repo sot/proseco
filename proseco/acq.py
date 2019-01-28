@@ -208,6 +208,19 @@ class AcqTable(ACACatalogTable):
             out = int(self.get_log_p_2_or_fewer() <= np.log10(CHAR.acq_prob))
         return out
 
+    def make_report(self, rootdir='.'):
+        """
+        Make summary HTML report for acq selection process and outputs.
+
+        Output is in ``<rootdir>/obs<obsid>/acq/index.html`` plus related images
+        in that directory.
+
+        :param rootdir: root directory for outputs
+
+        """
+        from .report_acq import make_report
+        make_report(self, rootdir=rootdir)
+
     def update_p_acq_column(self):
         """
         Update (in-place) the marginalized acquisition probability column

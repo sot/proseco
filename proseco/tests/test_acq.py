@@ -7,7 +7,7 @@ from pathlib import Path
 from chandra_aca.aca_image import AcaPsfLibrary
 from chandra_aca.transform import mag_to_count_rate, yagzag_to_pixels
 
-from ..report import make_report
+from ..report_acq import make_report
 from ..acq import (get_p_man_err, bin2x2, CHAR,
                    get_imposter_stars,
                    get_image_props,
@@ -519,13 +519,16 @@ def test_make_report(tmpdir):
 
     tmpdir = Path(tmpdir)
     obsdir = tmpdir / f'obs{obsid:05}'
+    outdir = obsdir / 'acq'
 
     acqs.to_pickle(rootdir=tmpdir)
 
     acqs2 = make_report(obsid, rootdir=tmpdir)
 
-    assert (obsdir / 'index.html').exists()
-    assert len(list(obsdir.glob('*.png'))) > 0
+    assert (outdir / 'index.html').exists()
+    assert (outdir / 'acq_stars.png').exists()
+    assert (outdir / 'candidate_stars.png').exists()
+    assert len(list(outdir.glob('*.png'))) > 0
 
     assert repr(acqs) == repr(acqs2)
     assert repr(acqs.cand_acqs) == repr(acqs2.cand_acqs)
