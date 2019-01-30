@@ -840,7 +840,7 @@ class StarsTable(ACACatalogTable):
 
         logger = StarsTable.get_logger(logger)
         logger(f'Got {len(stars)} stars from AGASC at '
-               'ra={q_att.ra:.5f} dec={q_att.dec:.4f}',
+               f'ra={q_att.ra:.5f} dec={q_att.dec:.4f}',
                level=1)
 
         return stars
