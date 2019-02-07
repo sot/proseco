@@ -494,8 +494,10 @@ def test_edge_star(dither):
     # Add stars exactly at 4 corners of allowed "in bounds" area for this dither
     row_dither = dither[0] / 5.
     col_dither = dither[1] / 5.
-    row_max = CCD['row_max'] - (CCD['row_pad'] + CCD['window_pad'] + row_dither)
-    col_max = CCD['col_max'] - (CCD['col_pad'] + CCD['window_pad'] + col_dither)
+    row_max = CCD['row_max'] - (CCD['row_pad'] + CCD['window_pad'] + CCD['guide_extra_pad'] +
+                                row_dither)
+    col_max = CCD['col_max'] - (CCD['col_pad'] + CCD['window_pad'] + CCD['guide_extra_pad'] +
+                                col_dither)
     stars.add_fake_star(row=row_max, col=col_max, mag=6.0)
     stars.add_fake_star(row=row_max * -1, col=col_max, mag=6.0)
     stars.add_fake_star(row=row_max * -1, col=col_max * -1, mag=6.0)
@@ -504,6 +506,23 @@ def test_edge_star(dither):
     guides = get_guide_catalog(**info)
     # Confirm 4 generic stars plus four corner stars are selected
     assert len(guides) == 8
+
+    # Do the same as above, but this time don't include the guide edge pad, so
+    # the edge stars will be off the edge
+    stars1 = StarsTable.empty()
+    stars1.add_fake_constellation(mag=[7.0, 7.1, 7.2, 7.3],
+                                  id=[1, 2, 3, 4],
+                                  size=2000, n_stars=4)
+    row_max = CCD['row_max'] - (CCD['row_pad'] + CCD['window_pad'] + row_dither)
+    col_max = CCD['col_max'] - (CCD['col_pad'] + CCD['window_pad'] + col_dither)
+    stars1.add_fake_star(row=row_max, col=col_max, mag=6.0)
+    stars1.add_fake_star(row=row_max * -1, col=col_max, mag=6.0)
+    stars1.add_fake_star(row=row_max * -1, col=col_max * -1, mag=6.0)
+    stars1.add_fake_star(row=row_max, col=col_max * -1, mag=6.0)
+    info = mod_std_info(n_guide=8, dither_guide=(row_dither * 5, col_dither * 5), stars=stars1)
+    guides = get_guide_catalog(**info)
+    # Confirm 4 generic stars are the only stars that can be used (edge stars are off the edges)
+    assert len(guides) == 4
 
 
 def test_get_ax_range():
