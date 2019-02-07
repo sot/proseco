@@ -170,6 +170,38 @@ class ACATable(ACACatalogTable):
                    self.fids.thumbs_up &
                    self.guides.thumbs_up)
 
+    def get_aca_review(self, *, report_dir=None, report_level='none', roll_level='none',
+                       loud=False):
+        """Do aca review based for this catalog
+
+        The ``report_level`` arg specifies the message category at which the full
+        HTML report for guide and acquisition will be generated for obsids with at
+        least one message at or above that level.  The options correspond to
+        standard categories "info", "caution", "warning", and "critical".  The
+        default is "none", meaning no reports are generated.  A final option is
+        "all" which generates a report for every obsid.
+
+        :param make_report: make report
+        :param outdir: output directory
+        :param report_level: report level threshold for generating acq and guide report
+        :param roll_level: level threshold for suggesting alternate rolls
+        :param loud: print status information during checking
+        """
+        from aca_preview.preview import preview_load
+
+        acas = [self.copy()]
+        obsids = [self.obsid]  # NEED OBSID or is_OR from ORviewer!
+
+        make_html = (report_dir is not None)
+
+        # Do aca review checks and update acas[0] in place
+        preview_load(acas=acas, obsids=obsids, make_html=make_html, outdir=report_dir,
+                     report_level=report_level, roll_level=roll_level,
+                     load_name=f'Obsid {self.obsid}',
+                     loud=False)
+
+        return acas[0]
+
     def get_candidates_mask(self, stars):
         """Return a boolean mask indicating which ``stars`` are acceptable candidates
         for the parent class.
