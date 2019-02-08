@@ -265,7 +265,8 @@ class GuideTable(ACACatalogTable):
                          'faint_lim': faint_lim,
                          'cand_mag': cand_guides['mag'][idx],
                          'cand_mag_err_times_sigma': mag_err_mult * mag_err[idx],
-                         'text': f'Cand {cand_guides["id"][idx]} rejected with mag outside range for stage'})
+                         'text': (f'Cand {cand_guides["id"][idx]} rejected with '
+                                  'mag outside range for stage')})
         cand_guides[scol][bad_mag] += GUIDE.errs['mag range']
         ok = ok & ~bad_mag
 
