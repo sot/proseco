@@ -234,10 +234,6 @@ class GuideTable(ACACatalogTable):
 
         n_sigma = stage['SigErrMultiplier']
 
-        # For the reasonable mag check, override the SigErrMultiplier to be at least 1.
-        # It may go to 0 in later stages for the spoiler checks.
-        mag_err_mult = max(n_sigma, 1)
-
         # And for bright stars, use a local mag_err that is lower bounded at 0.1
         # for the mag selection.
         mag_err = cand_guides['mag_err']
@@ -250,12 +246,14 @@ class GuideTable(ACACatalogTable):
         # Check reasonable mag
         bright_lim = stage['MagLimit'][0]
         faint_lim = stage['MagLimit'][1]
-        # Confirm that the star mag is not outside the limits when padded by error
-        # and explicitly confirm that the star is not within 2 * mag_err of the hard
+        # Confirm that the star mag is not outside the limits when padded by error.
+        # For the bright end of the check, set a lower bound to always use at least 1
+        # mag_err, but do not bother with this bound at the faint end of the check.
+        # Also explicitly confirm that the star is not within 2 * mag_err of the hard
         # bright limit.
         bad_mag = (
-            ((cand_guides['mag'] - mag_err_mult * mag_err) < bright_lim) |
-            ((cand_guides['mag'] + mag_err_mult * mag_err) > faint_lim) |
+            ((cand_guides['mag'] - max(n_sigma, 1) * mag_err) < bright_lim) |
+            ((cand_guides['mag'] + n_sigma * mag_err) > faint_lim) |
             ((cand_guides['mag'] - 2 * mag_err) < 5.8))
         for idx in np.flatnonzero(bad_mag):
             self.reject({'id': cand_guides['id'][idx],
@@ -264,7 +262,7 @@ class GuideTable(ACACatalogTable):
                          'bright_lim': bright_lim,
                          'faint_lim': faint_lim,
                          'cand_mag': cand_guides['mag'][idx],
-                         'cand_mag_err_times_sigma': mag_err_mult * mag_err[idx],
+                         'cand_mag_err_times_sigma': n_sigma * mag_err[idx],
                          'text': (f'Cand {cand_guides["id"][idx]} rejected with '
                                   'mag outside range for stage')})
         cand_guides[scol][bad_mag] += GUIDE.errs['mag range']
