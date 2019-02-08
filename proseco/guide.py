@@ -243,6 +243,9 @@ class GuideTable(ACACatalogTable):
         mag_err = cand_guides['mag_err']
         bright = cand_guides['mag'] < 7.0
         mag_err[bright] = mag_err[bright].clip(0.1)
+        # Also set any color=0.7 stars to have lower bound mag err of 0.5
+        bad_color = np.isclose(cand_guides['COLOR1'], 0.7)
+        mag_err[bad_color] = mag_err[bad_color].clip(0.5)
 
         # Check reasonable mag
         bright_lim = stage['MagLimit'][0]
