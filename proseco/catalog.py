@@ -177,12 +177,7 @@ class ACATable(ACACatalogTable):
         """
         from aca_preview.preview import ACAReviewTable
 
-        aca = self.copy()
-
-        # FIX THIS to be acar = ACAReviewTable(aca)
-        ACAReviewTable.add_review_methods(aca, obsid=aca.obsid)
-
-        return aca
+        return ACAReviewTable(self)
 
     def get_candidates_mask(self, stars):
         """Return a boolean mask indicating which ``stars`` are acceptable candidates
