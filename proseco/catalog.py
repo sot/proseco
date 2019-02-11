@@ -175,7 +175,7 @@ class ACATable(ACACatalogTable):
 
         :returns: ACAReviewTable object
         """
-        from aca_preview.preview import ACAReviewTable
+        from sparkles.core import ACAReviewTable
 
         return ACAReviewTable(self)
 
