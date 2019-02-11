@@ -170,6 +170,15 @@ class ACATable(ACACatalogTable):
                    self.fids.thumbs_up &
                    self.guides.thumbs_up)
 
+    def get_review_table(self):
+        """Get ACAReviewTable object based on self.
+
+        :returns: ACAReviewTable object
+        """
+        from sparkles.core import ACAReviewTable
+
+        return ACAReviewTable(self)
+
     def get_candidates_mask(self, stars):
         """Return a boolean mask indicating which ``stars`` are acceptable candidates
         for the parent class.
