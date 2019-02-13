@@ -822,7 +822,8 @@ class ACACatalogTable(BaseCatalogTable):
             if name in names:
                 self[name].format = self._default_formats.pop(name)
 
-        return super(BaseCatalogTable, self[names])._base_repr_(*args, **kwargs)
+        tmp = self.__class__([self[name] for name in names], names=names, copy=False)
+        return super(BaseCatalogTable, tmp)._base_repr_(*args, **kwargs)
 
     def to_pickle(self, rootdir='.'):
         """
