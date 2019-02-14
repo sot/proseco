@@ -196,7 +196,7 @@ class GuideTable(ACACatalogTable):
             n_pass, n_tests = run_select_checks(cands)  # This function knows how many tests get run
             if n_pass == n_tests:
                 self.log(f'Selected stars passing all tests at combination {n_tries}',
-                         tried_combinations=n_tries > 1)
+                         tried_combinations=n_tries)
                 return cands
             else:
                 if n_pass not in select_results:
@@ -207,7 +207,7 @@ class GuideTable(ACACatalogTable):
         max_n_pass = max(select_results)
         self.log(
             f'Settled for combination that satisfied {max_n_pass} cluster checks',
-            warning=True, tried_combinations=True)
+            warning=True, tried_combinations=n_tries)
         return select_results[max_n_pass]
 
     def search_stage(self, stage):
