@@ -2,6 +2,7 @@
 import copy
 
 import matplotlib
+
 matplotlib.use('agg')
 
 import pickle
@@ -16,7 +17,6 @@ from ..core import StarsTable, ACACatalogTable
 from ..catalog import get_aca_catalog
 from ..fid import get_fid_catalog
 from .. import characteristics as ACA
-
 
 HAS_SC_ARCHIVE = Path(mica.starcheck.starcheck.FILES['data_root']).exists()
 TEST_COLS = 'slot idx id type sz yang zang dim res halfw'.split()
@@ -56,7 +56,6 @@ def test_get_aca_catalog_20603():
            '   6   8 116923528  ACQ 6x6 -2418.65  1088.40  20   1   160',
            '   7   9 116791744  ACQ 6x6   985.38 -1210.19  20   1   140',
            '   0  10  40108048  ACQ 6x6     2.21  1619.17  20   1   140']
-
 
     repr(aca)  # Apply default formats
     assert aca[TEST_COLS].pformat(max_width=-1) == exp
@@ -278,6 +277,71 @@ def test_big_sim_offset():
     assert len(aca.fids) == 0
     names = ['id', 'yang', 'zang', 'row', 'col', 'mag', 'spoiler_score', 'idx']
     assert all(name in aca.fids.colnames for name in names)
+
+
+def test_calling_with_t_ccd():
+    """Test that calling get_aca_catalog with t_ccd arg sets all the
+    CCD attributes correctly in the nominal case of a temperature
+    below the planning limit.
+
+    """
+    dark = DARK40.copy()
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(mag=8.0, n_stars=8)
+    t_ccd = ACA.aca_t_ccd_planning_limit - 1.0
+
+    kwargs = mod_std_info(stars=stars, dark=dark, t_ccd=t_ccd)
+    aca = get_aca_catalog(**kwargs)
+    assert np.isclose(aca.t_ccd, t_ccd)
+    assert np.isclose(aca.t_ccd_acq, t_ccd)
+    assert np.isclose(aca.t_ccd_guide, t_ccd)
+
+    assert np.isclose(aca.t_ccd_eff_acq, t_ccd)
+    assert np.isclose(aca.t_ccd_eff_guide, t_ccd)
+
+    assert np.isclose(aca.acqs.t_ccd, t_ccd)
+    assert np.isclose(aca.guides.t_ccd, t_ccd)
+
+
+t_ccd_cases = [(-0.5, 0, 0),
+               (0, 0, 0),
+               (0.5, 1.5, 1.4)]
+
+
+@pytest.mark.parametrize('t_ccd_case', t_ccd_cases)
+def test_t_ccd_effective_acq_guide(t_ccd_case):
+    """Test setting of effective T_ccd temperatures for cases above and
+    below the planning limit.
+
+    """
+    dark = DARK40.copy()
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(mag=8.0, n_stars=8)
+
+    t_limit = ACA.aca_t_ccd_planning_limit
+
+    t_offset, t_penalty_acq, t_penalty_guide = t_ccd_case
+    # Set acq and guide temperatures different
+    t_ccd_acq = t_limit + t_offset
+    t_ccd_guide = t_ccd_acq - 0.1
+
+    kwargs = mod_std_info(stars=stars, dark=dark,
+                          t_ccd_acq=t_ccd_acq, t_ccd_guide=t_ccd_guide)
+    aca = get_aca_catalog(**kwargs)
+
+    with pytest.raises(ValueError):
+        # Cannot access this attribute if acq and guide temps are different
+        aca.t_ccd
+
+    assert np.isclose(aca.t_ccd_acq, t_ccd_acq)
+    assert np.isclose(aca.t_ccd_guide, t_ccd_guide)
+
+    # t_ccd + 1 + (t_ccd - t_limit) from proseco.catalog.get_effective_t_ccd()
+    assert np.isclose(aca.t_ccd_eff_acq, t_ccd_acq + t_penalty_acq)
+    assert np.isclose(aca.t_ccd_eff_guide, t_ccd_guide + t_penalty_guide)
+
+    assert np.isclose(aca.t_ccd_eff_acq, aca.acqs.t_ccd)
+    assert np.isclose(aca.t_ccd_eff_guide, aca.guides.t_ccd)
 
 
 def test_call_args_attr():
@@ -540,7 +604,7 @@ def test_report_from_objects(tmpdir):
     obsdir = rootdir / f'obs{obsid:05}'
     for subdir in 'acq', 'guide':
         outdir = obsdir / subdir
-        assert(outdir / 'index.html').exists()
+        assert (outdir / 'index.html').exists()
         assert len(list(outdir.glob('*.png'))) > 0
 
 
