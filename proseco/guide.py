@@ -886,7 +886,7 @@ def check_single_cluster(cand_guide_set, threshold, n_minus):
     the 5 stars (5 minus n_minus = 1), one pair of those stars is separated by at
     least 1000 arcsecs.
 
-    :rtype: bool
+    :returns: bool (True for check passing threshold)
     """
     min_dist = threshold
     min_dist2 = min_dist ** 2
