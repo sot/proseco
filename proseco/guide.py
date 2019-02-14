@@ -87,7 +87,6 @@ class GuideTable(ACACatalogTable):
 
     cand_guides = MetaAttribute(is_kwarg=False)
     reject_info = MetaAttribute(default=[], is_kwarg=False)
-    required_optimization = MetaAttribute(default=False, is_kwarg=False)
 
     def reject(self, reject):
         """
@@ -177,34 +176,40 @@ class GuideTable(ACACatalogTable):
         """
         self.log(f'Selecting catalog from {len(stage_cands)} stage-selected stars')
 
-        # Set some arrays to save "check status" and combination identifiers so
-        # we only have to search through the candidate combinations ones.  The plan is
-        # if no combination satisfies all the checks, lower the standard (required success
-        # on n checks) and repeat, but do this just searching through the previously
-        # determined status.
-        saved_status = []
-        saved_idxs = []
+        def index_combinations(n, m):
+            seen = set()
+            for n_tmp in range(m + 1, n + 1):
+                for comb in combinations(range(n_tmp), m):
+                    if comb not in seen:
+                        seen.add(comb)
+                        yield comb
+
+        # Set a dictionary to save the first combination of that satisfies N tests.
+        # This will be used if no combination satisfies all the tests.
+        select_results = {}
 
         # I should come back to this and see if the "min" is needed or if the combinations
         # code runs fine even if we have fewer-than-expected stage_cands to start
-        choose_n = min(len(stage_cands), self.n_guide)
+        choose_m = min(len(stage_cands), self.n_guide)
 
-        for comb in combinations(range(len(stage_cands)), choose_n):
-            cluster_status = run_comb_checks(stage_cands[[comb]])
-            saved_idxs.append(comb)
-            saved_status.append(cluster_status)
-            if len(saved_idxs) > 1:
-                self.required_optimization = True
-            if np.all(cluster_status):
-                self.log(f'Selected stars after trying {len(saved_idxs)} combinations')
-                return stage_cands[[comb]]
-        for n_success in [2, 1, 0]:
-            for idxs, status in zip(saved_idxs, saved_status):
-                if np.sum(status) == n_success:
-                    self.log(
-                        f'Settled for combination that satisfied {n_success} of 3 cluster checks',
-                        warning=True)
-                    return stage_cands[[idxs]]
+        for n_tries, comb in enumerate(index_combinations(len(stage_cands), choose_m), start=1):
+            cands = stage_cands[list(comb)]  # (note that [(1,2)] is not the same as list((1,2))
+            n_pass, n_tests = run_select_checks(cands)  # This function knows how many tests get run
+            if n_pass == n_tests:
+                self.log(f'Selected stars passing all tests at combination {n_tries}',
+                         tried_combinations=n_tries > 1)
+                return cands
+            else:
+                if n_pass not in select_results:
+                    # Keep a copy of the first cands table with n_pass passing tests
+                    select_results[n_pass] = cands
+
+        # Return the catalog with the maximum n_pass key value
+        max_n_pass = max(select_results)
+        self.log(
+            f'Settled for combination that satisfied {max_n_pass} cluster checks',
+            warning=True, tried_combinations=True)
+        return select_results[max_n_pass]
 
     def search_stage(self, stage):
         """
@@ -897,17 +902,19 @@ def check_single_cluster(cand_guide_set, threshold, n_minus):
     return True
 
 
-def run_comb_checks(cand_guide_set):
+def run_select_checks(cand_guide_set):
     """
     Run boolean checks on a combination of candidate guide stars.
-    Returns a list of the status of the checks (True is success/good).
+    Returns a sum of the status of the checks and the number of checks run.
 
     Presently this runs three checks to confirm that the set of stars
     is not too tightly packed.
+
+    :returns: tuple (status sum, number of tests run)
     """
     status = []
     for n_minus, threshold in enumerate(GUIDE.cluster_thresholds):
         if n_minus < len(cand_guide_set) + 1:
             status.append(check_single_cluster(
                     cand_guide_set, threshold=threshold, n_minus=n_minus))
-    return status
+    return sum(status), len(status)
