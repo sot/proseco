@@ -156,6 +156,17 @@ class ACATable(ACACatalogTable):
     # catalog in the ACATable meta.
     starcheck_catalog = MetaAttribute(is_kwarg=False)
 
+    @property
+    def t_ccd(self):
+        if self.t_ccd_acq != self.t_ccd_guide:
+            raise ValueError('t_ccd attribute is ambiguous: acq and guide t_ccd are different')
+        return self.t_ccd_guide
+
+    @t_ccd.setter
+    def t_ccd(self, value):
+        self.t_ccd_guide = value
+        self.t_ccd_acq = value
+
     @classmethod
     def empty(cls):
         out = super().empty()
