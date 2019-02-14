@@ -1,3 +1,8 @@
+import os
+import warnings
+from pathlib import Path
+from astropy.table import Table
+
 CCD = {'row_min': -512.0,
        'row_max': 512.0,
        'col_min': -512.0,
@@ -74,3 +79,11 @@ bad_star_set = set([36178592,
                    1196953168,
                    1197635184,
                    1158290496])
+
+# Add in entries from the AGASC supplement file, if possible, warn otherwise
+agasc_supplement_file = Path(os.environ['SKA']) / 'data' / 'agasc' / 'agasc_supplement.h5'
+if agasc_supplement_file.exists():
+    bad_star_table = Table.read(str(agasc_supplement_file), path='bad')
+    bad_star_set.update(set(bad_star_table['agasc_id'].tolist()))
+else:
+    warnings.warn(f'Unable to find {agasc_supplement_file}, using limited bad star set')
