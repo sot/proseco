@@ -10,6 +10,9 @@ from .acq import get_acq_catalog, AcqTable
 from .fid import get_fid_catalog, FidTable
 from . import characteristics_acq as ACQ
 from . import characteristics as ACA
+from . import test as test_from_init
+
+VERSION = test_from_init(get_version=True)
 
 
 def get_aca_catalog(obsid=0, **kwargs):
@@ -176,6 +179,7 @@ class ACATable(ACACatalogTable):
     """
     optimize = MetaAttribute(default=True)
     call_args = MetaAttribute(default={})
+    version = MetaAttribute()
 
     # For validation with get_aca_catalog(obsid), store the starcheck
     # catalog in the ACATable meta.
@@ -233,6 +237,7 @@ class ACATable(ACACatalogTable):
 
         self.t_ccd_eff_acq = get_effective_t_ccd(self.t_ccd_acq)
         self.t_ccd_eff_guide = get_effective_t_ccd(self.t_ccd_guide)
+        self.version = VERSION
 
 
     def get_review_table(self):
