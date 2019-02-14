@@ -42,7 +42,6 @@ def get_guide_catalog(obsid=0, **kwargs):
 
     :returns: GuideTable of acquisition stars
     """
-    global STAR_PAIR_DIST_CACHE
     STAR_PAIR_DIST_CACHE.clear()
 
     guides = GuideTable()
