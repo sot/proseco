@@ -163,10 +163,10 @@ class GuideTable(ACACatalogTable):
         self.log('Done with search stages')
         stage_cands = cand_guides[cand_guides['stage'] != -1]
         stage_cands.sort(['stage', 'mag'])
-        selected = self.select_catalog(stage_cands[0:n_guide + GUIDE.surplus_stars])
-        if len(selected) < self.n_guide:
+        guides = self.select_catalog(stage_cands[0:n_guide + GUIDE.surplus_stars])
+        if len(guides) < self.n_guide:
             self.log(f'Could not find {self.n_guide} candidates after all search stages')
-        return selected
+        return guides
 
     def select_catalog(self, stage_cands):
         """
