@@ -176,6 +176,7 @@ class GuideTable(ACACatalogTable):
         too tightly clustered.
         """
         self.log(f'Selecting catalog from {len(stage_cands)} stage-selected stars')
+
         # Set some arrays to save "check status" and combination identifiers so
         # we only have to search through the candidate combinations ones.  The plan is
         # if no combination satisfies all the checks, lower the standard (required success
