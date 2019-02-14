@@ -177,7 +177,7 @@ class GuideTable(ACACatalogTable):
 
         def index_combinations(n, m):
             seen = set()
-            for n_tmp in range(m + 1, n + 1):
+            for n_tmp in range(m, n + 1):
                 for comb in combinations(range(n_tmp), m):
                     if comb not in seen:
                         seen.add(comb)
