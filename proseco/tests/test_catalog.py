@@ -314,7 +314,6 @@ def test_t_ccd_effective_acq_guide(t_ccd_case):
     below the planning limit.
 
     """
-    dark = DARK40.copy()
     stars = StarsTable.empty()
     stars.add_fake_constellation(mag=8.0, n_stars=8)
 
@@ -325,13 +324,8 @@ def test_t_ccd_effective_acq_guide(t_ccd_case):
     t_ccd_acq = t_limit + t_offset
     t_ccd_guide = t_ccd_acq - 0.1
 
-    kwargs = mod_std_info(stars=stars, dark=dark,
-                          t_ccd_acq=t_ccd_acq, t_ccd_guide=t_ccd_guide)
+    kwargs = mod_std_info(stars=stars, t_ccd_acq=t_ccd_acq, t_ccd_guide=t_ccd_guide)
     aca = get_aca_catalog(**kwargs)
-
-    with pytest.raises(ValueError):
-        # Cannot access this attribute if acq and guide temps are different
-        aca.t_ccd
 
     assert np.isclose(aca.t_ccd_acq, t_ccd_acq)
     assert np.isclose(aca.t_ccd_guide, t_ccd_guide)
