@@ -101,5 +101,14 @@ stages = [{"Stage": 1,
            }
           ]
 
+
+# Guide cluster checks.
+# Index is the "n_minus" value, so n - 0 stars need minimum 2500 max separation
+# n - 1 stars require 1000 arcsec separation.
+# n - 2 stars require 500 arcsec minimum max separation in the pairs.
+cluster_thresholds = [2500, 1000, 500]
+surplus_stars = 8
+
+
 # Index template file name
 index_template_file = 'index_template_guide.html'

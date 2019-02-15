@@ -2,6 +2,7 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 import numpy as np
+from itertools import combinations
 
 import chandra_aca.aca_image
 from chandra_aca.transform import mag_to_count_rate, count_rate_to_mag
@@ -14,6 +15,8 @@ from . import characteristics_guide as GUIDE
 from .core import bin2x2, ACACatalogTable, MetaAttribute, AliasAttribute
 
 CCD = ACA.CCD
+
+STAR_PAIR_DIST_CACHE = {}
 
 
 def get_guide_catalog(obsid=0, **kwargs):
@@ -39,6 +42,7 @@ def get_guide_catalog(obsid=0, **kwargs):
 
     :returns: GuideTable of acquisition stars
     """
+    STAR_PAIR_DIST_CACHE.clear()
 
     guides = GuideTable()
     guides.set_attrs_from_kwargs(obsid=obsid, **kwargs)
@@ -142,8 +146,10 @@ class GuideTable(ACACatalogTable):
         for idx, stage in enumerate(GUIDE.stages, 1):
             already_selected = np.count_nonzero(cand_guides['stage'] != -1)
 
-            # If we don't have enough stage-selected candidates, keep going
-            if already_selected < n_guide:
+            # If we don't have enough stage-selected candidates, keep going.
+            # Enough is defined as the requested n_guide + a "surplus" value
+            # in characteristics
+            if already_selected < (n_guide + GUIDE.surplus_stars):
                 stage_ok = self.search_stage(stage)
                 sel = cand_guides['stage'] == -1
                 cand_guides['stage'][stage_ok & sel] = idx
@@ -153,13 +159,56 @@ class GuideTable(ACACatalogTable):
                 self.log(f'Quitting after stage {idx - 1} with {already_selected} stars', level=1)
                 break
         self.log('Done with search stages')
-        selected = cand_guides[cand_guides['stage'] != -1]
-        selected.sort(['stage', 'mag'])
-        if len(selected) >= self.n_guide:
-            return selected[0:n_guide]
-        if len(selected) < self.n_guide:
+        stage_cands = cand_guides[cand_guides['stage'] != -1]
+        stage_cands.sort(['stage', 'mag'])
+        guides = self.select_catalog(stage_cands[0:n_guide + GUIDE.surplus_stars])
+        if len(guides) < self.n_guide:
             self.log(f'Could not find {self.n_guide} candidates after all search stages')
-            return selected
+        return guides
+
+    def select_catalog(self, stage_cands):
+        """
+        For the candidates selected at any stage (stage-assigned candidates?) select the
+        first combination that satisfies the most number of extra tests.
+        Here the extra tests are just the 3 checks for guide stars that are
+        too tightly clustered.
+        """
+        self.log(f'Selecting catalog from {len(stage_cands)} stage-selected stars')
+
+        def index_combinations(n, m):
+            seen = set()
+            for n_tmp in range(m, n + 1):
+                for comb in combinations(range(n_tmp), m):
+                    if comb not in seen:
+                        seen.add(comb)
+                        yield comb
+
+        # Set a dictionary to save the first combination of that satisfies N tests.
+        # This will be used if no combination satisfies all the tests.
+        select_results = {}
+
+        # I should come back to this and see if the "min" is needed or if the combinations
+        # code runs fine even if we have fewer-than-expected stage_cands to start
+        choose_m = min(len(stage_cands), self.n_guide)
+
+        for n_tries, comb in enumerate(index_combinations(len(stage_cands), choose_m), start=1):
+            cands = stage_cands[list(comb)]  # (note that [(1,2)] is not the same as list((1,2))
+            n_pass, n_tests = run_select_checks(cands)  # This function knows how many tests get run
+            if n_pass == n_tests:
+                self.log(f'Selected stars passing all tests at combination {n_tries}',
+                         tried_combinations=n_tries)
+                return cands
+            else:
+                if n_pass not in select_results:
+                    # Keep a copy of the first cands table with n_pass passing tests
+                    select_results[n_pass] = cands
+
+        # Return the catalog with the maximum n_pass key value
+        max_n_pass = max(select_results)
+        self.log(
+            f'Settled for combination that satisfied {max_n_pass} cluster checks',
+            warning=True, tried_combinations=n_tries)
+        return select_results[max_n_pass]
 
     def search_stage(self, stage):
         """
@@ -814,3 +863,57 @@ def spoiled_by_bad_pixel(cand_guides, dither):
                         'text': (f'Cand {cand["id"]} spoiled by {np.count_nonzero(bps)} bad pixels '
                                  f'including {(bp_row[bps][0], bp_col[bps][0])}')})
     return spoiled, rej
+
+
+def dist2(g1, g2):
+    """
+    Calculate squared distance between a pair of stars in a star table.
+
+    This local version of the method uses a cache.
+    """
+    if (g1['id'], g2['id']) in STAR_PAIR_DIST_CACHE:
+        return STAR_PAIR_DIST_CACHE[(g1['id'], g2['id'])]
+    out = (g1['yang'] - g2['yang']) ** 2 + (g1['zang'] - g2['zang']) ** 2
+    STAR_PAIR_DIST_CACHE[(g1['id'], g2['id'])] = out
+    return out
+
+
+def check_single_cluster(cand_guide_set, threshold, n_minus):
+    """
+    Confirm that a set of stars satisfies the minimum separation threshold when n_minus
+    stars are removed from the set.  For example, for a threshold of 1000, n_minus of 1,
+    and an input set of candidates stars with 5 candidates, confirm that, for any 4 of
+    the 5 stars (5 minus n_minus = 1), one pair of those stars is separated by at
+    least 1000 arcsecs.
+
+    :returns: bool (True for check passing threshold)
+    """
+    min_dist = threshold
+    min_dist2 = min_dist ** 2
+    guide_idxs = np.arange(len(cand_guide_set))
+    n_guide = len(guide_idxs)
+    for idxs in combinations(guide_idxs, n_guide - n_minus):
+        for idx0, idx1 in combinations(idxs, 2):
+            if dist2(cand_guide_set[idx0], cand_guide_set[idx1]) > min_dist2:
+                break
+        else:
+            return False
+    return True
+
+
+def run_select_checks(cand_guide_set):
+    """
+    Run boolean checks on a combination of candidate guide stars.
+    Returns a sum of the status of the checks and the number of checks run.
+
+    Presently this runs three checks to confirm that the set of stars
+    is not too tightly packed.
+
+    :returns: tuple (status sum, number of tests run)
+    """
+    status = []
+    for n_minus, threshold in enumerate(GUIDE.cluster_thresholds):
+        if n_minus < len(cand_guide_set) + 1:
+            status.append(check_single_cluster(
+                    cand_guide_set, threshold=threshold, n_minus=n_minus))
+    return sum(status), len(status)
