@@ -614,6 +614,11 @@ class ACACatalogTable(BaseCatalogTable):
             self.log(f'Getting dark cal image at date={self.date} t_ccd={self.t_ccd:.1f}')
             self.dark = get_dark_cal_image(date=self.date, select='before',
                                            t_ccd_ref=self.t_ccd, aca_image=True)
+
+            # Dark cal images from archive can have negative values (sometimes large)
+            # but this is not physical.  Do an in-place lower-limit clip to 0.
+            np.clip(self.dark, a_min=0, a_max=None, out=self.dark)
+
         elif not isinstance(self.dark, ACAImage):
             self.dark = ACAImage(self.dark, row0=-512, col0=-512, copy=False)
 
