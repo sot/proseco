@@ -192,8 +192,6 @@ class ACATable(ACACatalogTable):
 
     @property
     def t_ccd(self):
-        if self.t_ccd_acq != self.t_ccd_guide:
-            raise ValueError('t_ccd attribute is ambiguous: acq and guide t_ccd are different')
         return self.t_ccd_guide
 
     @t_ccd.setter
