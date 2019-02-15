@@ -354,7 +354,7 @@ class GuideTable(ACACatalogTable):
               (stars['mag_err'] < 1.0) &  # Mag err < 1.0 mag
               (stars['ASPQ1'] < 20) &  # Less than 1 arcsec offset from nearby spoiler
               (stars['ASPQ2'] == 0) &  # Proper motion less than 0.5 arcsec/yr
-              (stars['POS_ERR'] < 3000) &  # Position error < 3.0 arcsec
+              (stars['POS_ERR'] < 1250) &  # Position error < 1.25 arcsec
               ((stars['VAR'] == -9999) | (stars['VAR'] == 5))  # Not known to vary > 0.2 mag
               )
         return ok
