@@ -192,6 +192,8 @@ class ACATable(ACACatalogTable):
 
     @property
     def t_ccd(self):
+        # For top-level ACATable object use the guide temperature, which is always
+        # greater than or equal to the acq temperature.
         return self.t_ccd_guide
 
     @t_ccd.setter

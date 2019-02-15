@@ -94,8 +94,8 @@ class GuideTable(ACACatalogTable):
         reject_info = self.reject_info
         reject_info.append(reject)
 
-    t_ccd = AliasAttribute()
-    dither = AliasAttribute()
+    t_ccd = AliasAttribute()  # Maps t_ccd to t_ccd_guide attribute from base class
+    dither = AliasAttribute()  # .. and likewise.
     include_ids = AliasAttribute()
     exclude_ids = AliasAttribute()
 

@@ -13,8 +13,8 @@ import numpy as np
 import mica.starcheck
 
 from .test_common import STD_INFO, mod_std_info, DARK40, OBS_INFO
-from ..core import StarsTable, ACACatalogTable
-from ..catalog import get_aca_catalog
+from ..core import StarsTable
+from ..catalog import get_aca_catalog, ACATable
 from ..fid import get_fid_catalog
 from .. import characteristics as ACA
 
@@ -167,7 +167,7 @@ def test_big_dither_from_mica_starcheck():
     Test code that infers dither_acq and dither_guide for a big-dither
     observation like 20168.
     """
-    aca = ACACatalogTable()
+    aca = ACATable()
     aca.set_attrs_from_kwargs(obsid=20168)
 
     assert aca.detector == 'HRC-S'

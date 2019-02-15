@@ -126,6 +126,12 @@ class AcqTable(ACACatalogTable):
     # Required attributes
     required_attrs = ('att', 'man_angle', 't_ccd_acq', 'date', 'dither_acq')
 
+    t_ccd = AliasAttribute()  # Maps t_ccd to t_ccd_acq base attribute
+    dither = AliasAttribute()  # .. and likewise.
+    include_ids = AliasAttribute()
+    include_halfws = AliasAttribute()
+    exclude_ids = AliasAttribute()
+
     p_man_errs = MetaAttribute(is_kwarg=False)
     cand_acqs = MetaAttribute(is_kwarg=False)
     p_safe = MetaAttribute(is_kwarg=False)
@@ -174,11 +180,6 @@ class AcqTable(ACACatalogTable):
         out['halfw'] = np.full(fill_value=0, shape=(0,), dtype=np.int64)
         return out
 
-    t_ccd = AliasAttribute()
-    dither = AliasAttribute()
-    include_ids = AliasAttribute()
-    include_halfws = AliasAttribute()
-    exclude_ids = AliasAttribute()
 
     @property
     def fid_set(self):
