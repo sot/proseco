@@ -10,6 +10,7 @@ from ..core import (ACABox, get_kwargs_from_starcheck_text, calc_spoiler_impact,
                     StarsTable)
 from ..acq import AcqTable
 from ..guide import GuideTable
+from ..characteristics import bad_star_set
 
 
 def test_agasc_1p7():
@@ -25,6 +26,13 @@ def test_agasc_1p7():
     star = agasc.get_star(611193056)
     assert star['RSV3'] == 0
     assert star['RSV2'] == -9999
+
+
+def test_agasc_supplement():
+    assert len(bad_star_set) > 3300
+    assert 36178592 in bad_star_set  # From original starcheck list
+    assert 658160 in bad_star_set
+    assert 1248994952 in bad_star_set
 
 
 def test_box_init():
