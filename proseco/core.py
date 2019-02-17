@@ -492,8 +492,10 @@ class BaseCatalogTable(Table):
         # internal version (which is no lot always the right answer).
         kwargs.setdefault('bad_stars', np.zeros(len(kwargs['stars']), dtype=bool))
 
-        plot_stars(attitude=self.att, ax=ax, **kwargs)
+        fig = plot_stars(attitude=self.att, ax=ax, **kwargs)
         plt.show()
+
+        return fig
 
 
 class ACACatalogTable(BaseCatalogTable):
@@ -677,7 +679,7 @@ class ACACatalogTable(BaseCatalogTable):
         kwargs.setdefault('catalog', self.get_catalog_for_plot())
         kwargs.setdefault('stars', self.stars)
         kwargs.setdefault('bad_stars', self.bad_stars_mask)
-        super().plot(ax, **kwargs)
+        return super().plot(ax, **kwargs)
 
     @property
     def dither(self):
@@ -981,7 +983,7 @@ class StarsTable(BaseCatalogTable):
         :param kwargs: other keywords for plot_stars
         """
         kwargs.setdefault('stars', self)
-        super().plot(ax, **kwargs)
+        return super().plot(ax, **kwargs)
 
     @classmethod
     def from_agasc(cls, att, date=None, radius=1.2, logger=None):
