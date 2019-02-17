@@ -97,9 +97,22 @@ stages = [{"Stage": 1,
             },
            "Imposter": {
             "CentroidOffsetLim": 4.5,
+            }},
+          {"Stage": 6,
+           "SigErrMultiplier": 0,
+           "ASPQ1Lim": 20,
+           "MagLimit": [5.6, 10.3],
+           "DoBminusVcheck": 0,
+           "Spoiler": {
+            "BgPixThresh": 25,
+            "RegionFrac": .05,
+            },
+           "Imposter": {
+            "CentroidOffsetLim": 4.0,
             },
            }
           ]
+
 
 
 # Guide cluster checks.

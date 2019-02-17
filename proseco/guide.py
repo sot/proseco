@@ -250,11 +250,12 @@ class GuideTable(ACACatalogTable):
         # For the bright end of the check, set a lower bound to always use at least 1
         # mag_err, but do not bother with this bound at the faint end of the check.
         # Also explicitly confirm that the star is not within 2 * mag_err of the hard
-        # bright limit.
+        # bright limit (which is basically 5.8, but if bright lim set to less than 5.8
+        # in the stage, take that).
         bad_mag = (
             ((cand_guides['mag'] - max(n_sigma, 1) * mag_err) < bright_lim) |
             ((cand_guides['mag'] + n_sigma * mag_err) > faint_lim) |
-            ((cand_guides['mag'] - 2 * mag_err) < 5.8))
+            ((cand_guides['mag'] - 2 * mag_err) < min(bright_lim, 5.8)))
         for idx in np.flatnonzero(bad_mag):
             self.reject({'id': cand_guides['id'][idx],
                          'type': 'mag outside range',
@@ -366,7 +367,7 @@ class GuideTable(ACACatalogTable):
 
         """
         ok = ((stars['CLASS'] == 0) &
-              (stars['mag'] > 5.9) &
+              (stars['mag'] > 5.8) &
               (stars['mag'] < 10.3) &
               (stars['mag_err'] < 1.0) &  # Mag err < 1.0 mag
               (stars['ASPQ1'] < 20) &  # Less than 1 arcsec offset from nearby spoiler
