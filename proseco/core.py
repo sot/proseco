@@ -25,6 +25,8 @@ from . import characteristics as ACA
 FIDS_CACHE = {}
 APL = AcaPsfLibrary()
 
+# Cache recently retrieved images which are called with the same args/kwargs
+get_dark_cal_image = functools.lru_cache(maxsize=6)(get_dark_cal_image)
 
 def yagzag_to_radec(yag, zag, att):
     """
@@ -555,7 +557,7 @@ class ACACatalogTable(BaseCatalogTable):
         # catalog tables.
         self.log(f'Getting dark cal image at date={self.date} t_ccd={self.t_ccd:.1f}')
         self.dark = get_dark_cal_image(date=self.date, select='before',
-                                       t_ccd_ref=self.t_ccd_guide or self.t_ccd_acq,
+                                       t_ccd_ref=self.t_ccd,
                                        aca_image=True)
         return self._dark
 
