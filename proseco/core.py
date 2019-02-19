@@ -28,6 +28,7 @@ APL = AcaPsfLibrary()
 # Cache recently retrieved images which are called with the same args/kwargs
 get_dark_cal_image = functools.lru_cache(maxsize=6)(get_dark_cal_image)
 
+
 def yagzag_to_radec(yag, zag, att):
     """
     Convert yag, zag [arcsec] to ra, dec [deg] for attitude ``att``.
@@ -266,6 +267,7 @@ class AliasAttribute:
     The <subclass> name is the lower case version of everything before
     ``Table`` in the subclass name, so GuideTable => 'guide'.
     """
+
     def __get__(self, instance, owner):
         if instance is None:
             # When called without an instance, return self to allow access
@@ -551,8 +553,8 @@ class ACACatalogTable(BaseCatalogTable):
         if hasattr(self, '_dark'):
             return self._dark
 
-        # Dark current map handling.  Either get from mica archive or from
-        # kwarg input.  Note that get_dark_cal_image caches returned values
+        # Dark current map handling.  If asking for `dark` attribute without having set
+        # it then auto-fetch from mica.  Note that get_dark_cal_image caches returned values
         # using LRU cache on all params, so this is efficient for the different
         # catalog tables.
         self.log(f'Getting dark cal image at date={self.date} t_ccd={self.t_ccd:.1f}')
@@ -898,6 +900,7 @@ class ACACatalogTable(BaseCatalogTable):
         else:
             return False
 
+
 # AGASC columns not needed (at this moment) for acq star selection.
 # Change as needed.
 AGASC_COLS_DROP = [
@@ -974,6 +977,7 @@ class StarsTable(BaseCatalogTable):
         else:
             def null_logger(*args, **kwargs):
                 pass
+
             return null_logger
 
     def get_catalog_for_plot(self):
