@@ -228,6 +228,7 @@ def test_pickle():
                       atol=0, rtol=1e-6)
     assert aca.acqs.fid_set == aca2.acqs.fid_set
 
+
 def test_copy_deepcopy_pickle():
     """
     Test that copy, deepcopy and pickle all return the expected object which
@@ -279,8 +280,9 @@ def test_big_sim_offset():
     assert all(name in aca.fids.colnames for name in names)
 
 
-def test_calling_with_t_ccd():
-    """Test that calling get_aca_catalog with t_ccd arg sets all the
+@pytest.mark.parametrize('call_t_ccd', [True, False])
+def test_calling_with_t_ccd_acq_guide(call_t_ccd):
+    """Test that calling get_aca_catalog with t_ccd or t_ccd_acq/guide args sets all
     CCD attributes correctly in the nominal case of a temperature
     below the planning limit.
 
@@ -288,19 +290,41 @@ def test_calling_with_t_ccd():
     dark = DARK40.copy()
     stars = StarsTable.empty()
     stars.add_fake_constellation(mag=8.0, n_stars=8)
-    t_ccd = ACA.aca_t_ccd_planning_limit - 1.0
 
-    kwargs = mod_std_info(stars=stars, dark=dark, t_ccd=t_ccd)
+    t_ccd = np.trunc(ACA.aca_t_ccd_planning_limit - 1.0)
+
+    if call_t_ccd:
+        # Call with just t_ccd=t_ccd
+        t_ccd_guide = t_ccd
+        t_ccd_acq = t_ccd
+        ccd_kwargs = {'t_ccd': t_ccd}
+    else:
+        # Call with separate values
+        t_ccd_guide = t_ccd
+        t_ccd_acq = t_ccd - 1
+        ccd_kwargs = {'t_ccd_acq': t_ccd_acq, 't_ccd_guide': t_ccd_guide}
+
+    kwargs = mod_std_info(stars=stars, dark=dark, **ccd_kwargs)
     aca = get_aca_catalog(**kwargs)
-    assert np.isclose(aca.t_ccd, t_ccd)
-    assert np.isclose(aca.t_ccd_acq, t_ccd)
-    assert np.isclose(aca.t_ccd_guide, t_ccd)
 
-    assert np.isclose(aca.t_ccd_eff_acq, t_ccd)
-    assert np.isclose(aca.t_ccd_eff_guide, t_ccd)
+    assert aca.t_ccd == t_ccd_guide
+    assert aca.t_ccd_acq == t_ccd_acq
+    assert aca.t_ccd_guide == t_ccd_guide
 
-    assert np.isclose(aca.acqs.t_ccd, t_ccd)
-    assert np.isclose(aca.guides.t_ccd, t_ccd)
+    assert aca.t_ccd_eff_acq == t_ccd_acq
+    assert aca.t_ccd_eff_guide == t_ccd_guide
+
+    assert aca.acqs.t_ccd == t_ccd_acq
+    assert aca.acqs.t_ccd_acq == t_ccd_acq
+    assert aca.acqs.t_ccd_guide == t_ccd_guide
+
+    assert aca.guides.t_ccd == t_ccd_guide
+    assert aca.guides.t_ccd_guide == t_ccd_guide
+    assert aca.guides.t_ccd_acq == t_ccd_acq
+
+    assert aca.fids.t_ccd == t_ccd_guide
+    assert aca.fids.t_ccd_guide == t_ccd_guide
+    assert aca.fids.t_ccd_acq == t_ccd_acq
 
 
 t_ccd_cases = [(-0.5, 0, 0),
