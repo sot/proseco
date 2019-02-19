@@ -141,12 +141,23 @@ class AcqTable(ACACatalogTable):
 
         """
         super().__setstate__(state)
+        self.set_cand_acqs_probs_weakref()
 
-        # This could be a cand_acqs table or acqs table, so check if
-        # ``cand_acqs`` has something, and if so then create the weakref in
-        # each of the AcqProbs objects stored in the ``probs`` column.  TO DO:
-        # make two separate classes AcqTable and CandAcqTable to avoid this
-        # contextual hack.
+    def copy(self, copy_data=True):
+        out = super().copy(copy_data)
+        out.set_cand_acqs_probs_weakref()
+        return out
+
+    def set_cand_acqs_probs_weakref(self):
+        """
+        This could be a cand_acqs table or acqs table, so check if
+        ``cand_acqs`` has something, and if so then create the weakref in
+        each of the AcqProbs objects stored in the ``probs`` column.  TO DO:
+        make two separate classes AcqTable and CandAcqTable to avoid this
+        contextual hack.
+
+        :return: None
+        """
         if self.cand_acqs is not None:
             for probs in self.cand_acqs['probs']:
                 probs.acqs = weakref.ref(self)
