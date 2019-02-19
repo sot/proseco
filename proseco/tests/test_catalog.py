@@ -516,6 +516,28 @@ def test_reject_column_spoilers():
     assert aca.acqs['id'].tolist() == [101, 102, 103, 104]
 
 
+def test_dark_property():
+    """
+    Test that in the case of a common t_ccd, all the dark current maps are
+    actually the same object.
+
+    :return: None
+    """
+    aca = get_aca_catalog(**STD_INFO)
+    for attr in ('acqs', 'guides', 'fids'):
+        assert aca.dark is getattr(aca, attr).dark
+
+    kwargs = STD_INFO.copy()
+    del kwargs['t_ccd']
+    kwargs['t_ccd_acq'] = -12.5
+    kwargs['t_ccd_guide'] = -11.5
+    aca = get_aca_catalog(**kwargs)
+    assert aca.dark is aca.guides.dark
+    assert aca.dark is aca.fids.dark
+    assert aca.dark is not aca.acqs.dark
+    assert aca.dark.mean() > aca.acqs.dark.mean()
+
+
 def test_dense_star_field_regress():
     """
     Test getting stars at the most dense star field in the sky.  Taken from:

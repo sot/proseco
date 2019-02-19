@@ -17,12 +17,16 @@ from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
 from Ska.quatutil import radec2yagzag, yagzag2radec
 import agasc
 from Quaternion import Quat
+from mica.archive.aca_dark import get_dark_cal_image
 
 from . import characteristics as ACA
 
 # For testing this is used to cache fid tables for a detector
 FIDS_CACHE = {}
 APL = AcaPsfLibrary()
+
+# Cache recently retrieved images which are called with the same args/kwargs
+get_dark_cal_image = functools.lru_cache(maxsize=6)(get_dark_cal_image)
 
 
 def yagzag_to_radec(yag, zag, att):
@@ -263,6 +267,7 @@ class AliasAttribute:
     The <subclass> name is the lower case version of everything before
     ``Table`` in the subclass name, so GuideTable => 'guide'.
     """
+
     def __get__(self, instance, owner):
         if instance is None:
             # When called without an instance, return self to allow access
@@ -514,7 +519,7 @@ class ACACatalogTable(BaseCatalogTable):
     name = 'aca_cat'
 
     # Catalog attributes, gets set in MetaAttribute or AliasAttribute
-    allowed_kwargs = set()
+    allowed_kwargs = set(['dark'])
 
     required_attrs = ('dither_acq', 'dither_guide', 'date')
 
@@ -532,7 +537,6 @@ class ACACatalogTable(BaseCatalogTable):
     detector = MetaAttribute()
     sim_offset = MetaAttribute()
     focus_offset = MetaAttribute()
-    dark = MetaAttribute(pickle=False)
     stars = MetaAttribute(pickle=False)
     include_ids_acq = IntListMetaAttribute(default=[])
     include_halfws_acq = IntListMetaAttribute(default=[])
@@ -543,6 +547,34 @@ class ACACatalogTable(BaseCatalogTable):
     verbose = MetaAttribute(default=False)
     print_log = MetaAttribute(default=False)
     log_info = MetaAttribute(default={}, is_kwarg=False)
+
+    @property
+    def dark(self):
+        if hasattr(self, '_dark'):
+            return self._dark
+
+        # Dark current map handling.  If asking for `dark` attribute without having set
+        # it then auto-fetch from mica.  Note that get_dark_cal_image caches returned values
+        # using LRU cache on all params, so this is efficient for the different
+        # catalog tables.
+        self.log(f'Getting dark cal image at date={self.date} t_ccd={self.t_ccd:.1f}')
+        self.dark = get_dark_cal_image(date=self.date, select='before',
+                                       t_ccd_ref=self.t_ccd,
+                                       aca_image=True)
+        return self._dark
+
+    @dark.setter
+    def dark(self, value):
+        if not isinstance(value, ACAImage):
+            assert value.shape == (1024, 1024)
+            value = ACAImage(value, row0=-512, col0=-512, copy=False)
+
+        self._dark = value
+
+        # Set pixel regions from ACA.bad_pixels to have acqs.dark=700000 (5.0 mag
+        # star) per pixel.
+        for r0, r1, c0, c1 in ACA.bad_pixels:
+            self._dark.aca[r0:r1 + 1, c0:c1 + 1] = ACA.bad_pixel_dark_current
 
     def set_attrs_from_kwargs(self, **kwargs):
         for name, val in kwargs.items():
@@ -608,29 +640,6 @@ class ACACatalogTable(BaseCatalogTable):
             dither = getattr(self, dither_attr)
             if not isinstance(dither, ACABox):
                 setattr(self, dither_attr, ACABox(dither))
-
-        # Dark current map handling.  Either get from mica archive or from
-        # kwarg input.
-        if self.dark is None:
-            from mica.archive.aca_dark import get_dark_cal_image
-            self.log(f'Getting dark cal image at date={self.date} t_ccd={self.t_ccd:.1f}')
-            self.dark = get_dark_cal_image(date=self.date, select='before',
-                                           t_ccd_ref=self.t_ccd, aca_image=True)
-        elif not isinstance(self.dark, ACAImage):
-            self.dark = ACAImage(self.dark, row0=-512, col0=-512, copy=False)
-
-        # Set pixel regions from ACA.bad_pixels to have acqs.dark=700000 (5.0 mag
-        # star) per pixel.
-        self.set_bad_pixels_in_dark()
-
-    def set_bad_pixels_in_dark(self):
-        """
-        Set pixel regions from ACA.bad_pixels to have acqs.dark=700000 (5.0 mag
-        star) per pixel.  This will effectively spoil any star or fid.
-
-        """
-        for r0, r1, c0, c1 in ACA.bad_pixels:
-            self.dark.aca[r0:r1 + 1, c0:c1 + 1] = ACA.bad_pixel_dark_current
 
     def set_stars(self, acqs=None, filter_near_fov=True):
         """Set the object ``stars`` attribute to an appropriate StarsTable object.
@@ -891,6 +900,7 @@ class ACACatalogTable(BaseCatalogTable):
         else:
             return False
 
+
 # AGASC columns not needed (at this moment) for acq star selection.
 # Change as needed.
 AGASC_COLS_DROP = [
@@ -967,6 +977,7 @@ class StarsTable(BaseCatalogTable):
         else:
             def null_logger(*args, **kwargs):
                 pass
+
             return null_logger
 
     def get_catalog_for_plot(self):
