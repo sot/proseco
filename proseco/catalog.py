@@ -114,9 +114,6 @@ def _get_aca_catalog(**kwargs):
     aca.set_stars(filter_near_fov=False)
     kwargs.pop('stars', None)
 
-    # Share a common dark map for memory / processing
-    kwargs['dark'] = aca.dark
-
     aca.log('Starting get_acq_catalog')
     aca.acqs = get_acq_catalog(stars=aca.stars, **kwargs)
 
