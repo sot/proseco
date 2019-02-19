@@ -692,11 +692,12 @@ class ACACatalogTable(BaseCatalogTable):
 
     @property
     def t_ccd(self):
-        return self.t_ccd_guide
+        # Subclasses must implement.
+        raise NotImplementedError()
 
     @t_ccd.setter
     def t_ccd(self, value):
-        self.t_ccd_guide = value
+        raise NotImplementedError()
 
     @classmethod
     def empty(cls):

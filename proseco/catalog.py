@@ -9,6 +9,10 @@ from .guide import get_guide_catalog, GuideTable
 from .acq import get_acq_catalog, AcqTable
 from .fid import get_fid_catalog, FidTable
 from . import characteristics_acq as ACQ
+from . import characteristics as ACA
+from . import test as test_from_init
+
+VERSION = test_from_init(get_version=True)
 
 
 def get_aca_catalog(obsid=0, **kwargs):
@@ -96,6 +100,14 @@ def _get_aca_catalog(**kwargs):
     aca.call_args = kwargs.copy()
     aca.set_attrs_from_kwargs(**kwargs)
 
+    # Override t_ccd related inputs with effective temperatures for downstream
+    # action by AcqTable, GuideTable, FidTable.  See set_attrs_from_kwargs()
+    # method for more details.
+    if 't_ccd' in kwargs:
+        del kwargs['t_ccd']
+    kwargs['t_ccd_acq'] = aca.t_ccd_eff_acq
+    kwargs['t_ccd_guide'] = aca.t_ccd_eff_guide
+
     # Get stars (typically from AGASC) and do not filter for stars near
     # the ACA FOV.  This leaves the full radial selection available for
     # later roll optimization.  Use aca.stars or aca.acqs.stars from here.
@@ -144,6 +156,22 @@ def _get_aca_catalog(**kwargs):
     return aca
 
 
+def get_effective_t_ccd(t_ccd):
+    """Return the effective T_ccd used for selection and catalog evaluation.
+
+    For details see Dynamic ACA limits in baby steps section in:
+    https://occweb.cfa.harvard.edu/twiki/bin/view/Aspect/StarWorkingGroupMeeting2019x02x13
+
+    :param t_ccd:
+    :return:
+    """
+    t_limit = ACA.aca_t_ccd_planning_limit
+    if t_ccd > t_limit:
+        return t_ccd + 1 + (t_ccd - t_limit)
+    else:
+        return t_ccd
+
+
 class ACATable(ACACatalogTable):
     """Container ACACatalogTable class that has merged guide / acq / fid catalogs
     as attributes and other methods relevant to the merged catalog.
@@ -151,10 +179,27 @@ class ACATable(ACACatalogTable):
     """
     optimize = MetaAttribute(default=True)
     call_args = MetaAttribute(default={})
+    version = MetaAttribute()
 
     # For validation with get_aca_catalog(obsid), store the starcheck
     # catalog in the ACATable meta.
     starcheck_catalog = MetaAttribute(is_kwarg=False)
+
+    # Effective T_ccd used for dynamic ACA limits (see updates_for_t_ccd_effective()
+    # method below).
+    t_ccd_eff_acq = MetaAttribute(is_kwarg=False)
+    t_ccd_eff_guide = MetaAttribute(is_kwarg=False)
+
+    @property
+    def t_ccd(self):
+        # For top-level ACATable object use the guide temperature, which is always
+        # greater than or equal to the acq temperature.
+        return self.t_ccd_guide
+
+    @t_ccd.setter
+    def t_ccd(self, value):
+        self.t_ccd_guide = value
+        self.t_ccd_acq = value
 
     @classmethod
     def empty(cls):
@@ -169,6 +214,31 @@ class ACATable(ACACatalogTable):
         return int(self.acqs.thumbs_up &
                    self.fids.thumbs_up &
                    self.guides.thumbs_up)
+
+    def set_attrs_from_kwargs(self, **kwargs):
+        """Set object attributes from kwargs.
+
+        After calling the base class method which does all the real work, then
+        compute the effective T_ccd temperatures.
+
+        In this ACATable object:
+        - t_ccd_eff_{acq,guide} are the effective T_ccd values which are adjusted
+          if the actual t_ccd{acq,guide} values are above ACA.aca_t_ccd_planning_limit.
+        - t_ccd_{acq,guide} are the actual (or predicted) values from the call
+
+        The downstream AcqTable, GuideTable, and FidTable are initialized with the
+        *effective* values as t_ccd.  Those classes do not have the concept of effective
+        temperature.
+
+        :param kwargs: dict of input kwargs
+        :return: dict
+        """
+        super().set_attrs_from_kwargs(**kwargs)
+
+        self.t_ccd_eff_acq = get_effective_t_ccd(self.t_ccd_acq)
+        self.t_ccd_eff_guide = get_effective_t_ccd(self.t_ccd_guide)
+        self.version = VERSION
+
 
     def get_review_table(self):
         """Get ACAReviewTable object based on self.

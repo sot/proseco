@@ -108,6 +108,15 @@ class FidTable(ACACatalogTable):
         self._acqs = weakref.ref(val)
 
     @property
+    def t_ccd(self):
+        # For fids use the guide CCD temperature
+        return self.t_ccd_guide
+
+    @t_ccd.setter
+    def t_ccd(self, value):
+        self.t_ccd_guide = value
+
+    @property
     def thumbs_up(self):
         if self.n_fid == 0:
             out = 1
