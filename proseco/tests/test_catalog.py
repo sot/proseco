@@ -1,4 +1,5 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
+import copy
 
 import matplotlib
 matplotlib.use('agg')
@@ -227,6 +228,43 @@ def test_pickle():
     assert np.isclose(aca.acqs.calc_p_safe(), aca2.acqs.calc_p_safe(),
                       atol=0, rtol=1e-6)
     assert aca.acqs.fid_set == aca2.acqs.fid_set
+
+def test_copy_deepcopy_pickle():
+    """
+    Test that copy, deepcopy and pickle all return the expected object which
+    is independent of the original (where expected).
+
+    :return:
+    """
+    aca = get_aca_catalog(**STD_INFO)
+
+    f1 = lambda x: pickle.loads(pickle.dumps(x))
+    f2 = copy.deepcopy
+    f3 = copy.copy
+    f4 = lambda x: x.__class__(x)
+
+    for func in (f1, f2, f3, f4):
+        aca2 = func(aca)
+        for attr in ('acqs', 'guides', 'fids'):
+            val = getattr(aca, attr)
+            val2 = getattr(aca2, attr)
+            # New table appears the same but is not the same object
+            assert repr(val) == repr(val2)
+            assert val is not val2
+
+            # Now do the copy func on the lower level table directly
+            val2 = func(val)
+            assert repr(val) == repr(val2)
+            assert val is not val2
+
+    for probs in aca2.acqs.cand_acqs['probs']:
+        assert probs.acqs() is aca2.acqs
+
+    if func is not f4:
+        # Try to make this work but not a high priority
+        acqs2 = func(aca.acqs)
+        for probs in acqs2.cand_acqs['probs']:
+            assert probs.acqs() is acqs2
 
 
 def test_big_sim_offset():
