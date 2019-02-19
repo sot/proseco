@@ -41,7 +41,7 @@ mag_spoiler = {
 stages = [{"Stage": 1,
            "SigErrMultiplier": 3,
            "ASPQ1Lim": 0,
-           "MagLimit": [5.9, 10.2],
+           "MagLimit": [6.2, 10.2],
            "DoBminusVcheck": 1,
            "Spoiler": {
             "BgPixThresh": 25,
@@ -53,7 +53,7 @@ stages = [{"Stage": 1,
           {"Stage": 2,
            "SigErrMultiplier": 2,
            "ASPQ1Lim": 0,
-           "MagLimit": [5.9, 10.2],
+           "MagLimit": [6.2, 10.2],
            "DoBminusVcheck": 1,
            "Spoiler": {
             "BgPixThresh": 25,
@@ -65,7 +65,7 @@ stages = [{"Stage": 1,
           {"Stage": 3,
            "SigErrMultiplier": 1,
            "ASPQ1Lim": 10,
-           "MagLimit": [5.9, 10.3],
+           "MagLimit": [6.1, 10.3],
            "DoBminusVcheck": 1,
            "Spoiler": {
             "BgPixThresh": 25,
@@ -77,14 +77,14 @@ stages = [{"Stage": 1,
           {"Stage": 4,
            "SigErrMultiplier": 0,
            "ASPQ1Lim": 20,
-           "MagLimit": [5.9, 10.3],
+           "MagLimit": [6.0, 10.3],
            "DoBminusVcheck": 1,
            "Spoiler": {
             "BgPixThresh": 25,
             "RegionFrac": .05,
             },
            "Imposter": {
-            "CentroidOffsetLim": 2.5,
+            "CentroidOffsetLim": 2.0,
             }},
           {"Stage": 5,
            "SigErrMultiplier": 0,
@@ -96,10 +96,23 @@ stages = [{"Stage": 1,
             "RegionFrac": .05,
             },
            "Imposter": {
-            "CentroidOffsetLim": 4.5,
+            "CentroidOffsetLim": 3.5,
+            }},
+          {"Stage": 6,
+           "SigErrMultiplier": 0,
+           "ASPQ1Lim": 20,
+           "MagLimit": [5.6, 10.3],
+           "DoBminusVcheck": 0,
+           "Spoiler": {
+            "BgPixThresh": 25,
+            "RegionFrac": .05,
+            },
+           "Imposter": {
+            "CentroidOffsetLim": 4.0,
             },
            }
           ]
+
 
 
 # Guide cluster checks.
