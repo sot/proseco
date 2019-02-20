@@ -1202,7 +1202,7 @@ class AcqProbs:
     def p_on_ccd(self, man_err):
         return self._p_on_ccd[man_err]
 
-    def p_brightest(self, box_size, man_err):
+    def p_brightest(self, box_size, man_err, acqs):
         return self._p_brightest[box_size, man_err]
 
     def p_acq_model(self, box_size):
@@ -1213,7 +1213,7 @@ class AcqProbs:
         try:
             return self._p_acqs[box_size, man_err, fid_set]
         except KeyError:
-            p_acq = (self.p_brightest(box_size, man_err) *
+            p_acq = (self.p_brightest(box_size, man_err, acqs) *
                      self.p_acq_model(box_size) *
                      self.p_on_ccd(man_err) *
                      self.p_fid_spoiler(box_size, acqs))

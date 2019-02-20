@@ -32,11 +32,7 @@ def get_p_acqs_table(acq, p_name):
 
     - ``p_brightest``: probability this star is the brightest in box (function
         of ``box_size`` and ``man_err``)
-    - ``p_acq_model``: probability of acquisition from the chandra_aca model
-        (function of ``box_size``)
-    - ``p_on_ccd``: probability star is on the usable part of the CCD (function
-        of ``man_err`` and ``dither``)
-    - ``p_acqs``: product of the above three
+    - ``p_acqs``: product of all probability bits
     """
     acqs = acq._table
     man_errs = ACQ.p_man_errs['man_err_hi']

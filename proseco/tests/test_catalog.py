@@ -260,15 +260,6 @@ def test_copy_deepcopy_pickle():
             assert repr(val) == repr(val2)
             assert val is not val2
 
-    for probs in aca2.acqs.cand_acqs['probs']:
-        assert probs.acqs() is aca2.acqs
-
-    if func is not f4:
-        # Try to make this work but not a high priority
-        acqs2 = func(aca.acqs)
-        for probs in acqs2.cand_acqs['probs']:
-            assert probs.acqs() is acqs2
-
 
 def test_big_sim_offset():
     """
