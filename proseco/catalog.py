@@ -351,7 +351,7 @@ class ACATable(ACACatalogTable):
                 else:
                     # Re-optimize the catalog with the fid set selected and get new probs.
                     acqs.optimize_catalog()
-                    acqs.update_p_acq_column(acqs)  # Needed for get_log_p_2_or_fewer
+                    acqs.update_p_acq_column()  # Needed for get_log_p_2_or_fewer
 
                 # Store optimization results
                 fid_set['P2'] = -acqs.get_log_p_2_or_fewer()

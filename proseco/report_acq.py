@@ -38,6 +38,7 @@ def get_p_acqs_table(acq, p_name):
         of ``man_err`` and ``dither``)
     - ``p_acqs``: product of the above three
     """
+    acqs = acq._table
     man_errs = ACQ.p_man_errs['man_err_hi']
     box_sizes = sorted(ACQ.box_sizes)
     names = [r'box \ man_err'] + [f'{man_err}"' for man_err in man_errs]
@@ -45,7 +46,7 @@ def get_p_acqs_table(acq, p_name):
     cols[r'box \ man_err'] = [f'{box_size}"' for box_size in box_sizes]
     for man_err in man_errs:
         name = f'{man_err}"'
-        cols[name] = [round(getattr(acq['probs'], p_name)(box_size, man_err), 3)
+        cols[name] = [round(getattr(acq['probs'], p_name)(box_size, man_err, acqs), 3)
                       for box_size in box_sizes]
 
     return table_to_html(Table(cols, names=names))

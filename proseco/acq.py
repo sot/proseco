@@ -6,8 +6,6 @@ Get a catalog of acquisition stars using the algorithm described in
 https://docs.google.com/presentation/d/1VtFKAW9he2vWIQAnb6unpK4u1bVAVziIdX9TnqRS3a8
 """
 
-import weakref
-
 import numpy as np
 from scipy import ndimage, stats
 from scipy.interpolate import interp1d
@@ -75,6 +73,7 @@ def get_acq_catalog(obsid=0, **kwargs):
                                 for man_err in ACQ.man_errs])
 
     acqs.cand_acqs = acqs.get_acq_candidates(acqs.stars)
+    acqs.cand_acqs.p_man_errs = acqs.p_man_errs
 
     # Fill in the entire acq['probs'].p_acqs table (which is actual a dict of keyed by
     # (box_size, man_err) tuples).
@@ -137,36 +136,6 @@ class AcqTable(ACACatalogTable):
     p_safe = MetaAttribute(is_kwarg=False)
     _fid_set = MetaAttribute(is_kwarg=False, default=())
     imposters_mag_limit = MetaAttribute(is_kwarg=False, default=20.0)
-
-    def __setstate__(self, state):
-        """Set self during unpickling.
-
-        This has special handling to deal with restoring the ``acqs`` weak
-        reference in the AcqProbs objects.  Since weakrefs cannot be pickled,
-        they are simply dropped prior to pickling and restored here.
-
-        """
-        super().__setstate__(state)
-        self.set_cand_acqs_probs_weakref()
-
-    def copy(self, copy_data=True):
-        out = super().copy(copy_data)
-        out.set_cand_acqs_probs_weakref()
-        return out
-
-    def set_cand_acqs_probs_weakref(self):
-        """
-        This could be a cand_acqs table or acqs table, so check if
-        ``cand_acqs`` has something, and if so then create the weakref in
-        each of the AcqProbs objects stored in the ``probs`` column.  TO DO:
-        make two separate classes AcqTable and CandAcqTable to avoid this
-        contextual hack.
-
-        :return: None
-        """
-        if self.cand_acqs is not None:
-            for probs in self.cand_acqs['probs']:
-                probs.acqs = weakref.ref(self)
 
     @classmethod
     def empty(cls):
@@ -1325,16 +1294,6 @@ class AcqProbs:
             self._p_fid_id_spoiler[box_size, fid_id] = p_fid_id_spoiler
 
             return p_fid_id_spoiler
-
-    def __getstate__(self):
-        """Get the state object for pickling.
-
-        Normally this self.__dict__, but for this class we need to drop the ``acqs``
-        attribute which is a weakref and cannot be pickled.
-        """
-        state = self.__dict__.copy()
-        del state['acqs']
-        return state
 
 
 def get_p_man_err(man_err, man_angle):
