@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 from pathlib import Path
 
+from Quaternion import Quat
 from chandra_aca.aca_image import AcaPsfLibrary
 from chandra_aca.transform import mag_to_count_rate, yagzag_to_pixels
 
@@ -558,6 +559,8 @@ def test_make_report(tmpdir):
         val2 = getattr(acqs2, attr)
         if isinstance(val, float):
             assert np.isclose(val, val2)
+        elif isinstance(val, Quat):
+            assert np.allclose(val.q, val2.q)
         else:
             assert val == val2
 
