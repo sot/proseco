@@ -87,7 +87,7 @@ def get_acq_catalog(obsid=0, **kwargs):
         acqs.optimize_catalog(acqs.verbose)
 
     # Set p_acq column to be the marginalized probabilities
-    acqs.update_p_acq_column()
+    acqs.update_p_acq_column(acqs)
 
     # Sort to make order match the original candidate list order (by
     # increasing mag), and assign a slot.
@@ -181,7 +181,7 @@ class AcqTable(ACACatalogTable):
 
         # Update marginalized p_acq and p_safe.  The underlying probability
         # functions know about fid_set and new values are computed on-demand.
-        self.update_p_acq_column()
+        self.update_p_acq_column(self)
         self.calc_p_safe()
 
     @property
@@ -191,7 +191,7 @@ class AcqTable(ACACatalogTable):
         elif len(self) < 2:
             out = 0
         else:
-            self.update_p_acq_column()
+            self.update_p_acq_column(self)
             out = int(self.get_log_p_2_or_fewer() <= np.log10(ACQ.acq_prob))
         return out
 
@@ -208,16 +208,17 @@ class AcqTable(ACACatalogTable):
         from .report_acq import make_report
         make_report(self, rootdir=rootdir)
 
-    def update_p_acq_column(self):
+    def update_p_acq_column(self, acqs):
         """
         Update (in-place) the marginalized acquisition probability column
         'p_acq'.  This is typically called after a change in catalog or
         change in the fid set.  The acq['probs'].p_acq_marg() method will
         pick up the new fid set.
         :param acqs:
+        :param acqs:
         """
         for acq in self:
-            acq['p_acq'] = acq['probs'].p_acq_marg(acq['halfw'], self)
+            acq['p_acq'] = acq['probs'].p_acq_marg(acq['halfw'], acqs)
 
     def update_idxs_halfws(self, idxs, halfws):
         """
@@ -567,7 +568,7 @@ class AcqTable(ACACatalogTable):
         # p_acq to the marginalized acquisition probability.
         cand_acqs['halfw'] = np.minimum(120, cand_acqs['halfw'])
         cand_acqs['halfw'][acq_indices] = box_sizes
-        cand_acqs.update_p_acq_column()
+        cand_acqs.update_p_acq_column(self)
 
         # Finally select the initial catalog
         acqs_init = cand_acqs[acq_indices]
@@ -1203,13 +1204,16 @@ class AcqProbs:
         return self._p_on_ccd[man_err]
 
     def p_brightest(self, box_size, man_err, acqs):
+        assert acqs.cand_acqs is not None
         return self._p_brightest[box_size, man_err]
 
     def p_acq_model(self, box_size):
         return self._p_acq_model[box_size]
 
     def p_acqs(self, box_size, man_err, acqs):
+        assert acqs.cand_acqs is not None
         fid_set = acqs.fid_set
+
         try:
             return self._p_acqs[box_size, man_err, fid_set]
         except KeyError:
@@ -1221,6 +1225,7 @@ class AcqProbs:
             return p_acq
 
     def p_acq_marg(self, box_size, acqs):
+        assert acqs.cand_acqs is not None
         fid_set = acqs.fid_set
         try:
             return self._p_acq_marg[box_size, fid_set]
@@ -1244,6 +1249,7 @@ class AcqProbs:
         :param box_size: search box size in arcsec
         :returns: probability multiplier (0 or 1)
         """
+        assert acqs.cand_acqs is not None
         fid_set = acqs.fid_set
         try:
             return self._p_fid_spoiler[box_size, fid_set]
@@ -1269,6 +1275,7 @@ class AcqProbs:
         :param box_size: search box size in arcsec
         :returns: probability multiplier (0 or 1)
         """
+        assert acqs.cand_acqs is not None
         try:
             return self._p_fid_id_spoiler[box_size, fid_id]
         except KeyError:
