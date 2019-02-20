@@ -2,6 +2,7 @@
 import copy
 
 import matplotlib
+from Quaternion import Quat
 
 matplotlib.use('agg')
 
@@ -217,6 +218,8 @@ def test_pickle():
             val2 = getattr(obj2, attr)
             if isinstance(val, float):
                 assert np.isclose(val, val2)
+            elif isinstance(val, Quat):
+                assert np.allclose(val.q, val2.q)
             else:
                 assert val == val2
 
@@ -706,5 +709,5 @@ def test_force_catalog_from_starcheck():
     assert aca['halfw'].tolist() == [25, 25, 25,
                                      120, 160, 160, 120, 160,
                                      120, 120, 120]
-    assert np.allclose(aca.att, [358.341787, -12.949882, 276.997597], rtol=0, atol=1e-6)
+    assert np.allclose(aca.att.equatorial, [358.341787, -12.949882, 276.997597], rtol=0, atol=1e-6)
     assert np.allclose(aca.acqs.man_angle, 89.16)

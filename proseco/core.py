@@ -332,6 +332,11 @@ class MetaAttribute:
         return (f'<{self.__class__.__name__} name={self.name} default={self.default} '
                 f'pickle={self.pickle}>')
 
+class QuatMetaAttribute(MetaAttribute):
+    def __set__(self, instance, value):
+        if not isinstance(value, Quat):
+            value = Quat(value)
+        instance.meta[self.name] = value
 
 class IntMetaAttribute(MetaAttribute):
     def __set__(self, instance, value):
@@ -524,7 +529,7 @@ class ACACatalogTable(BaseCatalogTable):
     required_attrs = ('dither_acq', 'dither_guide', 'date')
 
     obsid = MetaAttribute(default=0)
-    att = MetaAttribute()
+    att = QuatMetaAttribute()
     n_acq = MetaAttribute(default=8)
     n_guide = MetaAttribute()
     n_fid = MetaAttribute(default=3)
@@ -965,7 +970,7 @@ class StarsTable(BaseCatalogTable):
     - empty() : empty catalog, then use add_* methods to add stars
 
     """
-    att = MetaAttribute()
+    att = QuatMetaAttribute()
 
     # StarsTable attributes, gets set in MetaAttribute or AliasAttribute
     allowed_kwargs = set()

@@ -3,6 +3,8 @@
 from pathlib import Path
 import numpy as np
 import itertools
+
+from Quaternion import Quat
 from astropy.table import Table
 import pytest
 
@@ -577,5 +579,7 @@ def test_make_report_guide(tmpdir):
         val2 = getattr(guides2, attr)
         if isinstance(val, float):
             assert np.isclose(val, val2)
+        elif isinstance(val, Quat):
+            assert np.allclose(val.q, val2.q)
         else:
             assert val == val2

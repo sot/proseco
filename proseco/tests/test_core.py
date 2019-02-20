@@ -255,7 +255,7 @@ def test_pickle_stars():
     att = [1, 2, 3]
     stars = StarsTable.from_agasc(att)
     stars2 = pickle.loads(pickle.dumps(stars))
-    assert stars2.att == att
+    assert np.allclose(stars2.att.equatorial, att)
     assert stars2.colnames == stars.colnames
     assert repr(stars) == repr(stars2)
 
