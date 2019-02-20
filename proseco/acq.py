@@ -1199,8 +1199,6 @@ class AcqProbs:
         self._p_fid_spoiler = {}
         self._p_fid_id_spoiler = {}
 
-        self.acqs = weakref.ref(acqs)
-
         # Convert table row to plain dict for persistence
         self.acq = {key: acq[key] for key in ('yang', 'zang')}
 
