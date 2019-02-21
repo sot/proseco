@@ -678,9 +678,9 @@ class ACACatalogTable(BaseCatalogTable):
         of changing all the `type` column values to self.catalog_type (e.g. 'ACQ').
 
         """
-        catalog = self.as_array()
         if self.catalog_type:
-            catalog['type'] = self.catalog_type
+            self['type'] = self.catalog_type
+        catalog = self.as_array()
         return catalog
 
     def plot(self, ax=None, **kwargs):
