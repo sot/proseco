@@ -172,8 +172,6 @@ def make_acq_star_details_report(acqs, cand_acqs, events, context, obsdir):
     ######################################################
     # Candidate acq star detail sections
     ######################################################
-    acqs.dark = get_dark_cal_image(date=acqs.date, select='before',
-                                   t_ccd_ref=acqs.t_ccd)
 
     context['cand_acqs'] = []
 

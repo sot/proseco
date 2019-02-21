@@ -28,6 +28,14 @@ def get_aca_catalog(obsid=0, **kwargs):
     appending this string, e.g. with ``obs_text + '--force-catalog'`` in the
     call to ``get_aca_catalog``.
 
+    NOTE on API:
+
+    Keywords that have ``_acq`` and/or ``_guide`` suffixes are handled with
+    the AliasAttribute in core.py.  If one calls get_aca_catalog() with e.g.
+    ``t_ccd=-10`` then that will set the CCD temperature for both acq and
+    guide selection.  This is not part of the public API but is a private
+    feature of the implementation that works for now.
+
     :param obsid: obsid (int) or starcheck text (str) (default=0)
     :param att: attitude (any object that can initialize Quat)
     :param n_acq: desired number of acquisition stars (default=8)
@@ -51,19 +59,12 @@ def get_aca_catalog(obsid=0, **kwargs):
     :param optimize: optimize star catalog after initial selection (default=True)
     :param verbose: provide extra logging info (mostly calc_p_safe) (default=False)
     :param print_log: print the run log to stdout (default=False)
+    :param raise_exc: raise exception if it occurs in processing (default=True)
 
     :returns: ACATable of stars and fids
 
     """
-    # NOTE on API:
-    #
-    # Keywords that have ``_acq`` and/or ``_guide`` suffixes are handled with
-    # the AliasAttribute in core.py.  If one calls get_aca_catalog() with e.g.
-    # ``t_ccd=-10`` then that will set the CCD temperature for both acq and
-    # guide selection.  This is not part of the public API but is a private
-    # feature of the implementation that works for now.
-
-    raise_exc = kwargs.pop('raise_exc', None)  # This cannot credibly fail
+    raise_exc = kwargs.pop('raise_exc', True)  # This cannot credibly fail
 
     try:
         # If obsid is supplied as a string then it is taken to be starcheck text

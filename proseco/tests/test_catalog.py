@@ -115,7 +115,7 @@ def test_exception_handling():
                           t_ccd_acq=-10, t_ccd_guide=-10,
                           detector='ACIS-S', sim_offset=0, focus_offset=0,
                           n_guide=8, n_fid=3, n_acq=8,
-                          include_ids_acq=[1])  # Fail
+                          include_ids_acq=[1], raise_exc=False)  # Fail
     assert 'include_ids and include_halfws must have same length' in aca.exception
 
     for obj in (aca, aca.acqs, aca.guides, aca.fids):
@@ -149,7 +149,7 @@ def test_no_candidates():
                      dither_guide=(8.0, 8.0))
     stars = StarsTable.empty()
     stars.add_fake_constellation(mag=13.0, n_stars=2)
-    acas = get_aca_catalog(**test_info, stars=stars)
+    acas = get_aca_catalog(**test_info, stars=stars, raise_exc=False)
 
     assert 'id' in acas.acqs.colnames
     assert 'halfw' in acas.acqs.colnames
@@ -357,7 +357,8 @@ def test_t_ccd_effective_acq_guide(t_ccd_case):
 
 
 def test_call_args_attr():
-    aca = get_aca_catalog(**mod_std_info(optimize=False, n_guide=0, n_acq=0, n_fid=0))
+    aca = get_aca_catalog(**mod_std_info(optimize=False, n_guide=0, n_acq=0, n_fid=0),
+                          raise_exc=False)
     assert aca.call_args == {'att': (0, 0, 0),
                              'date': '2018:001',
                              'detector': 'ACIS-S',
@@ -374,7 +375,7 @@ def test_call_args_attr():
 
 
 def test_bad_obsid():
-    aca = get_aca_catalog(obsid='blah blah')  # Expects this to be starcheck catalog
+    aca = get_aca_catalog(obsid='blah blah', raise_exc=False)  # Expects this to be starcheck catalog
     assert 'ValueError: text does not have OBSID' in aca.exception
 
     assert aca.thumbs_up == 0

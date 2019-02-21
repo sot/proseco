@@ -70,8 +70,6 @@ def make_report(obsid, rootdir='.'):
 
     # Get information that is not stored in the acqs pickle for space reasons
     guides.stars = StarsTable.from_agasc(guides.att, date=guides.date)
-    guides.dark = get_dark_cal_image(date=guides.date, select='before',
-                                     t_ccd_ref=guides.t_ccd)
 
     # For include/exclude stars, add some bookkeeping (the forced column)
     cand_guides['forced'] = False
