@@ -73,7 +73,6 @@ def get_acq_catalog(obsid=0, **kwargs):
                                 for man_err in ACQ.man_errs])
 
     acqs.cand_acqs = acqs.get_acq_candidates(acqs.stars)
-    acqs.cand_acqs.p_man_errs = acqs.p_man_errs
 
     # Fill in the entire acq['probs'].p_acqs table (which is actual a dict of keyed by
     # (box_size, man_err) tuples).
