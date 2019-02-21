@@ -6,8 +6,6 @@ Get a catalog of acquisition stars using the algorithm described in
 https://docs.google.com/presentation/d/1VtFKAW9he2vWIQAnb6unpK4u1bVAVziIdX9TnqRS3a8
 """
 
-import weakref
-
 import numpy as np
 from scipy import ndimage, stats
 from scipy.interpolate import interp1d
@@ -88,7 +86,7 @@ def get_acq_catalog(obsid=0, **kwargs):
         acqs.optimize_catalog(acqs.verbose)
 
     # Set p_acq column to be the marginalized probabilities
-    acqs.update_p_acq_column()
+    acqs.update_p_acq_column(acqs)
 
     # Sort to make order match the original candidate list order (by
     # increasing mag), and assign a slot.
@@ -138,36 +136,6 @@ class AcqTable(ACACatalogTable):
     _fid_set = MetaAttribute(is_kwarg=False, default=())
     imposters_mag_limit = MetaAttribute(is_kwarg=False, default=20.0)
 
-    def __setstate__(self, state):
-        """Set self during unpickling.
-
-        This has special handling to deal with restoring the ``acqs`` weak
-        reference in the AcqProbs objects.  Since weakrefs cannot be pickled,
-        they are simply dropped prior to pickling and restored here.
-
-        """
-        super().__setstate__(state)
-        self.set_cand_acqs_probs_weakref()
-
-    def copy(self, copy_data=True):
-        out = super().copy(copy_data)
-        out.set_cand_acqs_probs_weakref()
-        return out
-
-    def set_cand_acqs_probs_weakref(self):
-        """
-        This could be a cand_acqs table or acqs table, so check if
-        ``cand_acqs`` has something, and if so then create the weakref in
-        each of the AcqProbs objects stored in the ``probs`` column.  TO DO:
-        make two separate classes AcqTable and CandAcqTable to avoid this
-        contextual hack.
-
-        :return: None
-        """
-        if self.cand_acqs is not None:
-            for probs in self.cand_acqs['probs']:
-                probs.acqs = weakref.ref(self)
-
     @classmethod
     def empty(cls):
         """
@@ -212,7 +180,7 @@ class AcqTable(ACACatalogTable):
 
         # Update marginalized p_acq and p_safe.  The underlying probability
         # functions know about fid_set and new values are computed on-demand.
-        self.update_p_acq_column()
+        self.update_p_acq_column(self)
         self.calc_p_safe()
 
     @property
@@ -222,7 +190,7 @@ class AcqTable(ACACatalogTable):
         elif len(self) < 2:
             out = 0
         else:
-            self.update_p_acq_column()
+            self.update_p_acq_column(self)
             out = int(self.get_log_p_2_or_fewer() <= np.log10(ACQ.acq_prob))
         return out
 
@@ -239,15 +207,17 @@ class AcqTable(ACACatalogTable):
         from .report_acq import make_report
         make_report(self, rootdir=rootdir)
 
-    def update_p_acq_column(self):
+    def update_p_acq_column(self, acqs):
         """
         Update (in-place) the marginalized acquisition probability column
         'p_acq'.  This is typically called after a change in catalog or
         change in the fid set.  The acq['probs'].p_acq_marg() method will
         pick up the new fid set.
+        :param acqs:
+        :param acqs:
         """
         for acq in self:
-            acq['p_acq'] = acq['probs'].p_acq_marg(acq['halfw'])
+            acq['p_acq'] = acq['probs'].p_acq_marg(acq['halfw'], acqs)
 
     def update_idxs_halfws(self, idxs, halfws):
         """
@@ -523,7 +493,7 @@ class AcqTable(ACACatalogTable):
             p_acqs_for_box = np.zeros(len(cand_acqs))
             for idx, acq in enumerate(cand_acqs):
                 if box_size in acq['box_sizes']:
-                    p_acqs_for_box[idx] = acq['probs'].p_acq_marg(box_size)
+                    p_acqs_for_box[idx] = acq['probs'].p_acq_marg(box_size, self)
 
             self.log(f'Trying search box size {box_size} arcsec', level=1)
 
@@ -597,7 +567,7 @@ class AcqTable(ACACatalogTable):
         # p_acq to the marginalized acquisition probability.
         cand_acqs['halfw'] = np.minimum(120, cand_acqs['halfw'])
         cand_acqs['halfw'][acq_indices] = box_sizes
-        cand_acqs.update_p_acq_column()
+        cand_acqs.update_p_acq_column(self)
 
         # Finally select the initial catalog
         acqs_init = cand_acqs[acq_indices]
@@ -673,7 +643,7 @@ class AcqTable(ACACatalogTable):
             if p_man_err == 0.0:
                 continue
 
-            p_acqs = [acq['probs'].p_acqs(acq['halfw'], man_err) for acq in self]
+            p_acqs = [acq['probs'].p_acqs(acq['halfw'], man_err, self) for acq in self]
 
             p_n_cum = prob_n_acq(p_acqs)[1]  # This returns (p_n, p_n_cum)
 
@@ -704,7 +674,7 @@ class AcqTable(ACACatalogTable):
         """
         acq = self[idx]
         orig_halfw = acq['halfw']
-        orig_p_acq = acq['probs'].p_acq_marg(acq['halfw'])
+        orig_p_acq = acq['probs'].p_acq_marg(acq['halfw'], self)
 
         self.log(f'Optimizing halfw for idx={idx} id={acq["id"]}', id=acq['id'])
 
@@ -712,7 +682,7 @@ class AcqTable(ACACatalogTable):
         p_safes = []
         box_sizes = acq['box_sizes']
         for box_size in box_sizes:
-            new_p_acq = acq['probs'].p_acq_marg(box_size)
+            new_p_acq = acq['probs'].p_acq_marg(box_size, self)
             # Do not reduce marginalized p_acq to below 0.1.  It can happen that p_safe
             # goes down very slightly with an increase in box size from the original,
             # and then the box size gets stuck there because of the deadband for later
@@ -815,7 +785,7 @@ class AcqTable(ACACatalogTable):
             acqs = self[ok]
 
             # Sort by the marginalized acq probability for the current box size
-            p_acqs = [acq['probs'].p_acq_marg(acq['halfw']) for acq in acqs]
+            p_acqs = [acq['probs'].p_acq_marg(acq['halfw'], acqs) for acq in acqs]
             idx_worst = np.argsort(p_acqs, kind='mergesort')[0]
 
             idx = self.get_id_idx(acqs[idx_worst]['id'])
@@ -1198,8 +1168,6 @@ class AcqProbs:
         self._p_fid_spoiler = {}
         self._p_fid_id_spoiler = {}
 
-        self.acqs = weakref.ref(acqs)
-
         # Convert table row to plain dict for persistence
         self.acq = {key: acq[key] for key in ('yang', 'zang')}
 
@@ -1234,36 +1202,40 @@ class AcqProbs:
     def p_on_ccd(self, man_err):
         return self._p_on_ccd[man_err]
 
-    def p_brightest(self, box_size, man_err):
+    def p_brightest(self, box_size, man_err, acqs):
+        assert acqs.cand_acqs is not None
         return self._p_brightest[box_size, man_err]
 
     def p_acq_model(self, box_size):
         return self._p_acq_model[box_size]
 
-    def p_acqs(self, box_size, man_err):
-        fid_set = self.acqs().fid_set
+    def p_acqs(self, box_size, man_err, acqs):
+        assert acqs.cand_acqs is not None
+        fid_set = acqs.fid_set
+
         try:
             return self._p_acqs[box_size, man_err, fid_set]
         except KeyError:
-            p_acq = (self.p_brightest(box_size, man_err) *
+            p_acq = (self.p_brightest(box_size, man_err, acqs) *
                      self.p_acq_model(box_size) *
                      self.p_on_ccd(man_err) *
-                     self.p_fid_spoiler(box_size))
+                     self.p_fid_spoiler(box_size, acqs))
             self._p_acqs[box_size, man_err, fid_set] = p_acq
             return p_acq
 
-    def p_acq_marg(self, box_size):
-        fid_set = self.acqs().fid_set
+    def p_acq_marg(self, box_size, acqs):
+        assert acqs.cand_acqs is not None
+        fid_set = acqs.fid_set
         try:
             return self._p_acq_marg[box_size, fid_set]
         except KeyError:
             p_acq_marg = 0.0
-            for man_err, p_man_err in zip(ACQ.man_errs, self.acqs().p_man_errs):
-                p_acq_marg += self.p_acqs(box_size, man_err) * p_man_err
+            for man_err, p_man_err in zip(ACQ.man_errs, acqs.p_man_errs):
+                p_acq_marg += self.p_acqs(box_size, man_err, acqs) * p_man_err
             self._p_acq_marg[box_size, fid_set] = p_acq_marg
             return p_acq_marg
 
-    def p_fid_spoiler(self, box_size):
+    def p_fid_spoiler(self, box_size, acqs):
         """
         Return the probability multiplier based on any fid in the current fid set spoiling
         this acq star (within ``box_size``).  The current fid set is a property of the
@@ -1272,10 +1244,12 @@ class AcqProbs:
 
         This caches the values in a dict for subsequent access.
 
+        :param acqs:
         :param box_size: search box size in arcsec
         :returns: probability multiplier (0 or 1)
         """
-        fid_set = self.acqs().fid_set
+        assert acqs.cand_acqs is not None
+        fid_set = acqs.fid_set
         try:
             return self._p_fid_spoiler[box_size, fid_set]
         except KeyError:
@@ -1283,12 +1257,12 @@ class AcqProbs:
 
             # If there are fids then multiplier the individual fid spoiler probs
             for fid_id in fid_set:
-                p_fid_spoiler *= self.p_fid_id_spoiler(box_size, fid_id)
+                p_fid_spoiler *= self.p_fid_id_spoiler(box_size, fid_id, acqs)
             self._p_fid_spoiler[box_size, fid_set] = p_fid_spoiler
 
             return p_fid_spoiler
 
-    def p_fid_id_spoiler(self, box_size, fid_id):
+    def p_fid_id_spoiler(self, box_size, fid_id, acqs):
         """
         Return the probability multiplier for fid ``fid_id`` spoiling this acq star (within
         ``box_size``).  The output value will be 0.0 if this fid spoils this acq, otherwise
@@ -1296,15 +1270,17 @@ class AcqProbs:
 
         This caches the values in a dict for subsequent access.
 
+        :param acqs:
         :param box_size: search box size in arcsec
         :returns: probability multiplier (0 or 1)
         """
+        assert acqs.cand_acqs is not None
         try:
             return self._p_fid_id_spoiler[box_size, fid_id]
         except KeyError:
-            fids = self.acqs().fids
+            fids = acqs.fids
             if fids is None:
-                self.acqs().add_warning('Requested fid spoiler probability without '
+                acqs.add_warning('Requested fid spoiler probability without '
                                         'setting acqs.fids first')
                 return 1.0
 
@@ -1314,8 +1290,8 @@ class AcqProbs:
             except (KeyError, IndexError, AssertionError):
                 # This should not happen, but ignore with a warning in any case.  Non-candidate
                 # fid cannot spoil an acq star.
-                self.acqs().add_warning(f'Requested fid spoiler probability for fid '
-                                        f'{self.acqs().detector}-{fid_id} but it is '
+                acqs.add_warning(f'Requested fid spoiler probability for fid '
+                                        f'{acqs.detector}-{fid_id} but it is '
                                         f'not a candidate')
             else:
                 if fids.spoils(fid, self.acq, box_size):
@@ -1324,16 +1300,6 @@ class AcqProbs:
             self._p_fid_id_spoiler[box_size, fid_id] = p_fid_id_spoiler
 
             return p_fid_id_spoiler
-
-    def __getstate__(self):
-        """Get the state object for pickling.
-
-        Normally this self.__dict__, but for this class we need to drop the ``acqs``
-        attribute which is a weakref and cannot be pickled.
-        """
-        state = self.__dict__.copy()
-        del state['acqs']
-        return state
 
 
 def get_p_man_err(man_err, man_angle):

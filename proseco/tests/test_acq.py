@@ -787,8 +787,8 @@ def test_acq_fid_catalog_probs_low_level():
     acq = acqs.get_id(2)
     p0 = acq['probs']
 
-    assert p0.p_fid_id_spoiler(box_size_thresh - 1, fid_id=2) == 1.0  # OK
-    assert p0.p_fid_id_spoiler(box_size_thresh + 1, fid_id=2) == 0.0  # spoiled
+    assert p0.p_fid_id_spoiler(box_size_thresh - 1, fid_id=2, acqs=acqs) == 1.0  # OK
+    assert p0.p_fid_id_spoiler(box_size_thresh + 1, fid_id=2, acqs=acqs) == 0.0  # spoiled
 
     # Caching of values
     assert p0._p_fid_id_spoiler == {(box_size_thresh - 1, 2): 1.0,
@@ -797,8 +797,8 @@ def test_acq_fid_catalog_probs_low_level():
     # With fid_set = (), the probability multiplier for any fid in the fid set
     # spoiling this star is 1.0, i.e. no fids spoil this star (since there
     # are no fids).
-    assert p0.p_fid_spoiler(box_size_thresh - 1) == 1.0
-    assert p0.p_fid_spoiler(box_size_thresh + 1) == 1.0
+    assert p0.p_fid_spoiler(box_size_thresh - 1, acqs) == 1.0
+    assert p0.p_fid_spoiler(box_size_thresh + 1, acqs) == 1.0
 
     # Now change the fid set to include ones (in particular fid_id=2) that
     # spoils an acq star.  This makes the p_safe value much worse.
@@ -810,8 +810,8 @@ def test_acq_fid_catalog_probs_low_level():
     # With fid_set = (1, 2, 4), the probability multiplier for catalog
     # ids 2 and 4 are spoiled.  This test checks for star id=2 (which is
     # near fid_id=2).
-    assert p0.p_fid_spoiler(box_size_thresh - 1) == 1.0
-    assert p0.p_fid_spoiler(box_size_thresh + 1) == 0.0
+    assert p0.p_fid_spoiler(box_size_thresh - 1, acqs) == 1.0
+    assert p0.p_fid_spoiler(box_size_thresh + 1, acqs) == 0.0
 
     # Reverting fid set also revert the p_safe value.  Note the (1, 3, 4)
     # set does not spoil an acq star.
@@ -827,10 +827,10 @@ def test_acq_fid_catalog_probs_low_level():
                 continue  # p_acq always zero in this case, see AcqProbs.__init__()
 
             acqs.fid_set = ()
-            p_acq0 = acq['probs'].p_acqs(box_size, man_err)
+            p_acq0 = acq['probs'].p_acqs(box_size, man_err, acqs)
 
             acqs.fid_set = (2, 3, 4)
-            p_acq1 = acq['probs'].p_acqs(box_size, man_err)
+            p_acq1 = acq['probs'].p_acqs(box_size, man_err, acqs)
 
             if box_size > box_size_thresh:
                 # Box includes spoiler so p_acq1 is 0

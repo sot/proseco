@@ -26,17 +26,13 @@ ACQ_COLS = ['idx', 'slot', 'id', 'yang', 'zang', 'row', 'col',
             'mag', 'mag_err', 'color', 'halfw', 'p_acq']
 
 
-def get_p_acqs_table(acq, p_name):
+def get_p_acqs_table(acqs, acq, p_name):
     """
     Make HTML tables for an acq star for the following:
 
     - ``p_brightest``: probability this star is the brightest in box (function
         of ``box_size`` and ``man_err``)
-    - ``p_acq_model``: probability of acquisition from the chandra_aca model
-        (function of ``box_size``)
-    - ``p_on_ccd``: probability star is on the usable part of the CCD (function
-        of ``man_err`` and ``dither``)
-    - ``p_acqs``: product of the above three
+    - ``p_acqs``: product of all probability bits
     """
     man_errs = ACQ.p_man_errs['man_err_hi']
     box_sizes = sorted(ACQ.box_sizes)
@@ -45,7 +41,7 @@ def get_p_acqs_table(acq, p_name):
     cols[r'box \ man_err'] = [f'{box_size}"' for box_size in box_sizes]
     for man_err in man_errs:
         name = f'{man_err}"'
-        cols[name] = [round(getattr(acq['probs'], p_name)(box_size, man_err), 3)
+        cols[name] = [round(getattr(acq['probs'], p_name)(box_size, man_err, acqs), 3)
                       for box_size in box_sizes]
 
     return table_to_html(Table(cols, names=names))
@@ -198,8 +194,8 @@ def make_acq_star_details_report(acqs, cand_acqs, events, context, obsdir):
                            .format(aq['id']) for aq in acq_table]
         cca['acq_table'] = table_to_html(acq_table)
 
-        cca['p_brightest_table'] = get_p_acqs_table(acq, 'p_brightest')
-        cca['p_acqs_table'] = get_p_acqs_table(acq, 'p_acqs')
+        cca['p_brightest_table'] = get_p_acqs_table(acqs, acq, 'p_brightest')
+        cca['p_acqs_table'] = get_p_acqs_table(acqs, acq, 'p_acqs')
         cca['p_acq_model_table'] = get_p_acq_model_table(acq)
         cca['p_on_ccd_table'] = get_p_on_ccd_table(acq)
 
