@@ -20,7 +20,7 @@ def mod_std_info(**kwargs):
 
 
 # Flat dark current map
-DARK40 = ACAImage(np.full(shape=(1024, 1024), fill_value=40), row0=-512, col0=-512)
+DARK40 = np.full(shape=(1024, 1024), fill_value=40)
 
 
 # Parameters for test cases (to avoid starcheck.db3 dependence)

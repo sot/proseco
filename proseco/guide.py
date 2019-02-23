@@ -751,7 +751,7 @@ def get_imposter_mags(cand_stars, dark, dither):
     for cand in cand_stars:
         rminus, rplus = get_ax_range(cand['row'], row_extent)
         cminus, cplus = get_ax_range(cand['col'], col_extent)
-        pix = np.array(dark.aca[rminus:rplus, cminus:cplus])
+        pix = np.array(dark[rminus + 512:rplus + 512, cminus + 512:cplus + 512])
         pixmax = 0
         max_r = None
         max_c = None

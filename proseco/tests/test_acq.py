@@ -776,7 +776,7 @@ def test_acq_fid_catalog_probs_low_level():
     aca = get_aca_catalog(**kwargs)
     acqs = aca.acqs
 
-    assert np.all(acqs.dark.aca[-512:0, -512:0] == 40)
+    assert np.all(acqs.dark[0:512, 0:512] == 40)
 
     # Initial fid set is empty () and we check baseline p_safe
     assert acqs.fid_set == ()

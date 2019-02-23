@@ -405,7 +405,7 @@ def test_bad_pixel_dark_current():
     aca = get_aca_catalog(**kwargs)
 
     # Make sure bad pixels have expected value
-    assert np.all(aca.acqs.dark.aca[-245:0, 454] == ACA.bad_pixel_dark_current)
+    assert np.all(aca.acqs.dark[-245 + 512:512, 454 + 512] == ACA.bad_pixel_dark_current)
 
     exp_ids = [2, 100, 101, 102, 103]
     assert sorted(aca.guides['id']) == exp_ids

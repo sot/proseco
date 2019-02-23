@@ -340,15 +340,15 @@ def test_pix_spoiler(case):
     stars = StarsTable.empty()
     stars.add_fake_star(row=0, col=0, mag=7.0, id=1, ASPQ1=0)
     stars.add_fake_constellation(n_stars=4)
-    dark = ACAImage(np.zeros((1024, 1024)), row0=-512, col0=-512)
+    dark = np.zeros((1024, 1024))
     pix_config = {'att': (0, 0, 0),
                   'date': '2018:001',
                   't_ccd': -10,
                   'n_guide': 5,
                   'stars': stars}
     # Use the "case" to try to spoil the first star with a bad pixel
-    dark.aca[case['offset_row'] + int(stars[0]['row']),
-             case['offset_col'] + int(stars[0]['col'])] = mag_to_count_rate(stars[0]['mag'])
+    dark[case['offset_row'] + int(stars[0]['row']) + 512,
+         case['offset_col'] + int(stars[0]['col']) + 512] = mag_to_count_rate(stars[0]['mag'])
     selected = get_guide_catalog(**pix_config, dither=case['dither'], dark=dark)
     assert (1 not in selected['id']) == case['spoils']
 
