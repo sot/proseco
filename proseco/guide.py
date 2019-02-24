@@ -622,17 +622,20 @@ def check_mag_spoilers(cand_stars, ok, stars, n_sigma):
 
     mag_spoiled = np.zeros(len(ok)).astype(bool)
     rej = []
-    for cand in cand_stars[ok]:
-        pix_dist = np.sqrt(((cand['row'] - stars['row']) ** 2) +
-                           ((cand['col'] - stars['col']) ** 2))
-        spoilers = ((np.abs(cand['row'] - stars['row']) < 10) &
-                    (np.abs(cand['col'] - stars['col']) < 10))
+    cand_idxs = np.flatnonzero(ok)
+
+    for cand_idx in cand_idxs:
+        cand = cand_stars[cand_idx]
+        spoil_idxs = np.flatnonzero(
+            (np.abs(cand['row'] - stars['row']) < 10) &
+            (np.abs(cand['col'] - stars['col']) < 10))
 
         # If there is only one match, it is the candidate so there's nothing to do
-        if np.count_nonzero(spoilers) == 1:
+        if len(spoil_idxs) == 1:
             continue
 
-        for spoil, dist in zip(stars[spoilers], pix_dist[spoilers]):
+        for spoil_idx in spoil_idxs:
+            spoil = stars[spoil_idx]
             if spoil['id'] == cand['id']:
                 continue
             if (cand['mag'] - spoil['mag']) < magdifflim:
@@ -641,6 +644,8 @@ def check_mag_spoilers(cand_stars, ok, stars, n_sigma):
                                   (spoil['MAG_ACA_ERR'] * 0.01) ** 2)
             delmag = cand['mag'] - spoil['mag'] + n_sigma * mag_err_sum
             thsep = intercept + delmag * spoilslope
+            dist = np.sqrt(((cand['row'] - spoil['row']) ** 2) +
+                           ((cand['col'] - spoil['col']) ** 2))
             if dist < thsep:
                 rej.append({'id': cand['id'],
                             'spoiler': spoil['id'],
