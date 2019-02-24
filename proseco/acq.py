@@ -988,23 +988,26 @@ def get_imposter_stars(dark, star_row, star_col, thresh=None,
 
         yang, zang = pixels_to_yagzag(row, col, allow_bad=True)
 
-        out = {'row': row,
-               'col': col,
-               'd_row': row - star_row,
-               'd_col': col - star_col,
-               'yang': yang,
-               'zang': zang,
-               'row0': c_row - 4,
-               'col0': c_col - 4,
-               'img': img,
-               'img_sum': img_sum,
-               'mag': mag,
-               'mag_err': get_mag_std(mag).item(),
-               }
+        out = (row,
+               col,
+               row - star_row,
+               col - star_col,
+               yang,
+               zang,
+               c_row - 4,
+               c_col - 4,
+               img,
+               img_sum,
+               mag,
+               get_mag_std(mag).item(),
+               )
         outs.append(out)
 
     if len(outs) > 0:
-        outs = Table(outs).as_array()
+        dtype = [('row', '<f8'), ('col', '<f8'), ('d_row', '<f8'), ('d_col', '<f8'),
+                 ('yang', '<f8'), ('zang', '<f8'), ('row0', '<i8'), ('col0', '<i8'),
+                 ('img', 'f8', (8, 8)), ('img_sum', '<f8'), ('mag', '<f8'), ('mag_err', '<f8')]
+        outs = np.rec.fromrecords(outs, dtype=dtype)
         outs.sort(order=['mag'])
 
     return outs
