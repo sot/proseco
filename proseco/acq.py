@@ -89,8 +89,15 @@ def get_acq_catalog(obsid=0, **kwargs):
     acqs.update_p_acq_column(acqs)
 
     # Sort to make order match the original candidate list order (by
-    # increasing mag), and assign a slot.
+    # increasing mag), and assign a slot.  Sadly astropy 3.1 has a real
+    # performance bug here and doing the sort makes 6 deepcopy's of the
+    # meta, which in this case is substantial (mostly stars).  So temporarily
+    # clear out the meta before sorting and then restore from a (light) copy.
+    acqs_meta_copy = acqs.meta.copy()
+    acqs.meta.clear()
     acqs.sort('idx')
+    acqs.meta.update(acqs_meta_copy)
+
     acqs['slot'] = np.arange(len(acqs), dtype=np.int64)
 
     # Add slot to cand_acqs table, putting in -99 if not selected as acq.
