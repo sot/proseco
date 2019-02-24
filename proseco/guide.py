@@ -15,6 +15,7 @@ from . import characteristics_guide as GUIDE
 from .core import bin2x2, ACACatalogTable, MetaAttribute, AliasAttribute
 
 CCD = ACA.CCD
+APL = AcaPsfLibrary()
 
 STAR_PAIR_DIST_CACHE = {}
 
@@ -540,7 +541,6 @@ def check_spoil_contrib(cand_stars, ok, stars, regfrac, bgthresh):
     :returns: reg_spoiled, bg_spoiled, rej - two masks on cand_stars and a list of reject debug dicts
     """
     fraction = regfrac
-    APL = AcaPsfLibrary()
     bg_spoiled = np.zeros_like(ok)
     reg_spoiled = np.zeros_like(ok)
     bgpix = CCD['bgpix']
