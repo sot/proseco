@@ -575,8 +575,7 @@ class AcqTable(ACACatalogTable):
         acqs_init = cand_acqs[acq_indices]
 
         # Transfer to acqs (which at this point is an empty table)
-        for name, col in acqs_init.columns.items():
-            self[name] = col
+        self.add_columns(acqs_init.columns.values())
 
     def calc_p_brightest(self, acq, box_size, man_err=0, bgd=0):
         """
