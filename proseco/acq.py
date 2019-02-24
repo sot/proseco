@@ -739,7 +739,7 @@ class AcqTable(ACACatalogTable):
         :param verbose: include additional information in the run log
         """
         p_safe = self.calc_p_safe()
-        idxs = self.argsort('p_acq')
+        idxs = self['p_acq'].argsort()
 
         # Any updates made?
         any_improved = False
