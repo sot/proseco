@@ -491,9 +491,11 @@ class AcqTable(ACACatalogTable):
             # probability to zero.  This happens for small maneuver angles where
             # acq.box_sizes might be only [60] or [60, 80].
             p_acqs_for_box = np.zeros(len(cand_acqs))
-            for idx, acq in enumerate(cand_acqs):
-                if box_size in acq['box_sizes']:
-                    p_acqs_for_box[idx] = acq['probs'].p_acq_marg(box_size, self)
+            my_box_sizes = cand_acqs['box_sizes']
+            my_probs = cand_acqs['probs']
+            for idx in range(len(cand_acqs)):
+                if box_size in my_box_sizes[idx]:
+                    p_acqs_for_box[idx] = my_probs[idx].p_acq_marg(box_size, self)
 
             self.log(f'Trying search box size {box_size} arcsec', level=1)
 
@@ -639,11 +641,15 @@ class AcqTable(ACACatalogTable):
 
         p_no_safe = 1.0
 
+        self_halfws = self['halfw']
+        self_probs = self['probs']
+
         for man_err, p_man_err in zip(ACQ.man_errs, self.p_man_errs):
             if p_man_err == 0.0:
                 continue
 
-            p_acqs = [acq['probs'].p_acqs(acq['halfw'], man_err, self) for acq in self]
+            p_acqs = [prob.p_acqs(halfw, man_err, self)
+                      for halfw, prob in zip(self_halfws, self_probs)]
 
             p_n_cum = prob_n_acq(p_acqs)[1]  # This returns (p_n, p_n_cum)
 
@@ -782,13 +788,18 @@ class AcqTable(ACACatalogTable):
             # Get the index of the worst p_acq in the catalog, excluding acq stars
             # that are in include_ids (since they are not to be replaced).
             ok = [acq['id'] not in self.include_ids for acq in self]
-            acqs = self[ok]
+            # acqs = self[ok]
+            acqs_probs_ok = self['probs'][ok]
+            acqs_halfw_ok = self['halfw'][ok]
+            acqs_id_ok = self['id'][ok]
 
             # Sort by the marginalized acq probability for the current box size
-            p_acqs = [acq['probs'].p_acq_marg(acq['halfw'], acqs) for acq in acqs]
+            p_acqs = [acq_probs.p_acq_marg(acq_halfw, self)
+                      for acq_probs, acq_halfw in zip(acqs_probs_ok, acqs_halfw_ok)]
+            # TODO: performance?
             idx_worst = np.argsort(p_acqs, kind='mergesort')[0]
 
-            idx = self.get_id_idx(acqs[idx_worst]['id'])
+            idx = self.get_id_idx(acqs_id_ok[idx_worst])
 
             self.log('Trying to use {} mag={:.2f} to replace idx={} with p_acq={:.3f}'
                      .format(cand_id, cand_acq['mag'], idx, p_acqs[idx_worst]), id=cand_id)
