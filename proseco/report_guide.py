@@ -68,8 +68,9 @@ def make_report(obsid, rootdir='.'):
     context['include_ids'] = ", ".join([str(val) for val in guides.include_ids])
     context['exclude_ids'] = ", ".join([str(val) for val in guides.exclude_ids])
 
-    # Get information that is not stored in the acqs pickle for space reasons
-    guides.stars = StarsTable.from_agasc(guides.att, date=guides.date)
+    # Get stars if not already set (e.g. if guides is coming from a pickle).  If
+    # guides.stars is already correctly defined this does nothing.
+    guides.set_stars()
 
     # For include/exclude stars, add some bookkeeping (the forced column)
     cand_guides['forced'] = False
