@@ -317,8 +317,9 @@ def make_report(obsid, rootdir='.'):
     context['include_halfws'] = ", ".join([str(val) for val in acqs.include_halfws])
     context['exclude_ids'] = ", ".join([str(val) for val in acqs.exclude_ids])
 
-    # Get information that is not stored in the acqs pickle for space reasons
-    acqs.stars = StarsTable.from_agasc(acqs.att, date=acqs.date)
+    # Get stars if not already set (e.g. if acqs is coming from a pickle).  If
+    # acqs.stars is already correctly defined this does nothing.
+    acqs.set_stars()
 
     events = make_events(acqs)
     context['events'] = events
