@@ -10,9 +10,7 @@ from .acq import get_acq_catalog, AcqTable
 from .fid import get_fid_catalog, FidTable
 from . import characteristics_acq as ACQ
 from . import characteristics as ACA
-from . import test as test_from_init
-
-VERSION = test_from_init(get_version=True)
+from . import __version__ as VERSION
 
 
 def get_aca_catalog(obsid=0, **kwargs):
