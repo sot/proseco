@@ -211,7 +211,7 @@ def test_fid_hot_pixel_reject():
         fid = FIDS.cand_fids.get_id(fid_id)
         r = int(round(fid['row'] + off))
         c = int(round(fid['col'] + off))
-        dark.aca[r, c] = dc
+        dark[r + 512, c + 512] = dc
 
     fids = get_fid_catalog(stars=StarsTable.empty(), dark=dark, **STD_INFO)
     assert fids['id'].tolist() == [2, 3, 6]

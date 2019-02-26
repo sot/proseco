@@ -15,6 +15,7 @@ from . import characteristics_guide as GUIDE
 from .core import bin2x2, ACACatalogTable, MetaAttribute, AliasAttribute
 
 CCD = ACA.CCD
+APL = AcaPsfLibrary()
 
 STAR_PAIR_DIST_CACHE = {}
 
@@ -55,8 +56,7 @@ def get_guide_catalog(obsid=0, **kwargs):
     selected = guides.run_search_stages()
 
     # Transfer to table (which at this point is an empty table)
-    for name, col in selected.columns.items():
-        guides[name] = col
+    guides.add_columns(selected.columns.values())
 
     guides['idx'] = np.arange(len(guides))
 
@@ -540,7 +540,6 @@ def check_spoil_contrib(cand_stars, ok, stars, regfrac, bgthresh):
     :returns: reg_spoiled, bg_spoiled, rej - two masks on cand_stars and a list of reject debug dicts
     """
     fraction = regfrac
-    APL = AcaPsfLibrary()
     bg_spoiled = np.zeros_like(ok)
     reg_spoiled = np.zeros_like(ok)
     bgpix = CCD['bgpix']
@@ -623,17 +622,20 @@ def check_mag_spoilers(cand_stars, ok, stars, n_sigma):
 
     mag_spoiled = np.zeros(len(ok)).astype(bool)
     rej = []
-    for cand in cand_stars[ok]:
-        pix_dist = np.sqrt(((cand['row'] - stars['row']) ** 2) +
-                           ((cand['col'] - stars['col']) ** 2))
-        spoilers = ((np.abs(cand['row'] - stars['row']) < 10) &
-                    (np.abs(cand['col'] - stars['col']) < 10))
+    cand_idxs = np.flatnonzero(ok)
+
+    for cand_idx in cand_idxs:
+        cand = cand_stars[cand_idx]
+        spoil_idxs = np.flatnonzero(
+            (np.abs(cand['row'] - stars['row']) < 10) &
+            (np.abs(cand['col'] - stars['col']) < 10))
 
         # If there is only one match, it is the candidate so there's nothing to do
-        if np.count_nonzero(spoilers) == 1:
+        if len(spoil_idxs) == 1:
             continue
 
-        for spoil, dist in zip(stars[spoilers], pix_dist[spoilers]):
+        for spoil_idx in spoil_idxs:
+            spoil = stars[spoil_idx]
             if spoil['id'] == cand['id']:
                 continue
             if (cand['mag'] - spoil['mag']) < magdifflim:
@@ -642,6 +644,8 @@ def check_mag_spoilers(cand_stars, ok, stars, n_sigma):
                                   (spoil['MAG_ACA_ERR'] * 0.01) ** 2)
             delmag = cand['mag'] - spoil['mag'] + n_sigma * mag_err_sum
             thsep = intercept + delmag * spoilslope
+            dist = np.sqrt(((cand['row'] - spoil['row']) ** 2) +
+                           ((cand['col'] - spoil['col']) ** 2))
             if dist < thsep:
                 rej.append({'id': cand['id'],
                             'spoiler': spoil['id'],
@@ -751,7 +755,7 @@ def get_imposter_mags(cand_stars, dark, dither):
     for cand in cand_stars:
         rminus, rplus = get_ax_range(cand['row'], row_extent)
         cminus, cplus = get_ax_range(cand['col'], col_extent)
-        pix = np.array(dark.aca[rminus:rplus, cminus:cplus])
+        pix = np.array(dark[rminus + 512:rplus + 512, cminus + 512:cplus + 512])
         pixmax = 0
         max_r = None
         max_c = None

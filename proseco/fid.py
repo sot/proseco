@@ -358,7 +358,7 @@ class FidTable(ACACatalogTable):
         c0 = int(fid['col'] - dp)
         r1 = int(fid['row'] + dp) + 1
         c1 = int(fid['col'] + dp) + 1
-        dark = self.dark.aca[r0:r1, c0:c1]
+        dark = self.dark[r0 + 512:r1 + 512, c0 + 512:c1 + 512]
 
         bad = dark > FID.hot_pixel_spoiler_limit
         if np.any(bad):

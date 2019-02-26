@@ -13,7 +13,7 @@ from astropy.table import Table, Column
 
 from chandra_aca.transform import (yagzag_to_pixels, pixels_to_yagzag,
                                    count_rate_to_mag, mag_to_count_rate)
-from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
+from chandra_aca.aca_image import AcaPsfLibrary
 from Ska.quatutil import radec2yagzag, yagzag2radec
 import agasc
 from Quaternion import Quat
@@ -565,21 +565,18 @@ class ACACatalogTable(BaseCatalogTable):
         self.log(f'Getting dark cal image at date={self.date} t_ccd={self.t_ccd:.1f}')
         self.dark = get_dark_cal_image(date=self.date, select='before',
                                        t_ccd_ref=self.t_ccd,
-                                       aca_image=True)
+                                       aca_image=False)
         return self._dark
 
     @dark.setter
     def dark(self, value):
-        if not isinstance(value, ACAImage):
-            assert value.shape == (1024, 1024)
-            value = ACAImage(value, row0=-512, col0=-512, copy=False)
-
+        assert value.shape == (1024, 1024)
         self._dark = value
 
         # Set pixel regions from ACA.bad_pixels to have acqs.dark=700000 (5.0 mag
         # star) per pixel.
         for r0, r1, c0, c1 in ACA.bad_pixels:
-            self._dark.aca[r0:r1 + 1, c0:c1 + 1] = ACA.bad_pixel_dark_current
+            self._dark[r0 + 512:r1 + 513, c0 + 512:c1 + 513] = ACA.bad_pixel_dark_current
 
     def set_attrs_from_kwargs(self, **kwargs):
         for name, val in kwargs.items():
