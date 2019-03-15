@@ -549,6 +549,7 @@ class ACACatalogTable(BaseCatalogTable):
     include_ids_guide = IntListMetaAttribute(default=[])
     exclude_ids_guide = IntListMetaAttribute(default=[])
     optimize = MetaAttribute(default=True)
+    force_catalog = MetaAttribute(default=False)
     verbose = MetaAttribute(default=False)
     print_log = MetaAttribute(default=False)
     log_info = MetaAttribute(default={}, is_kwarg=False)
@@ -635,6 +636,14 @@ class ACACatalogTable(BaseCatalogTable):
                         if dither_attr == 'dither_acq' and self.dither_acq.max() > 30:
                             dither = 8 if self.detector.startswith('ACIS') else 20
                             self.dither_acq = ACABox(dither)
+
+            if 'force_catalog' in kwargs and kwargs['force_catalog'] == True:
+                cat = obs['cat']
+                ok = np.in1d(cat['type'], ('ACQ', 'BOT'))
+                self.include_ids_acq = cat['id'][ok].tolist()
+                self.include_halfws_acq = cat['halfw'][ok].tolist()
+                ok = np.in1d(cat['type'], ('GUI', 'BOT'))
+                self.include_ids_guide = cat['id'][ok].tolist()
 
             self.starcheck_catalog = obs
 
