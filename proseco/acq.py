@@ -136,6 +136,11 @@ class AcqTable(ACACatalogTable):
     include_halfws = AliasAttribute()
     exclude_ids = AliasAttribute()
 
+    # IDs that are included but with halfw=0 which implies to optimize halfw
+    # instead of freezing at the provided value.  This attribute is set internally
+    # based on the values of include_halfws.
+    include_opt_ids = MetaAttribute(is_kwarg=False)
+
     p_man_errs = MetaAttribute(is_kwarg=False)
     cand_acqs = MetaAttribute(is_kwarg=False)
     p_safe = MetaAttribute(is_kwarg=False)
@@ -459,6 +464,10 @@ class AcqTable(ACACatalogTable):
         # Ensure values are valid box_sizes
         grid_func = interp1d(ACQ.box_sizes, ACQ.box_sizes,
                              kind='nearest', fill_value='extrapolate')
+        self.include_opt_ids = [acq_id for acq_id, halfw,
+                                in zip(self.include_ids, self.include_halfws)
+                                if halfw == 0]
+
         self.include_halfws = grid_func(self.include_halfws).tolist()
 
         super().process_include_ids(cand_acqs, stars)
@@ -751,7 +760,9 @@ class AcqTable(ACACatalogTable):
 
         for idx in idxs:
             # Don't optimize halfw for a star that is specified for inclusion
-            if self['id'][idx] in self.include_ids:
+            # with a valid (non-zero) halfw set.  The set of include_opt_ids is
+            # any ids where halfw=0 was provided.
+            if self['id'][idx] in set(self.include_ids) - set(self.include_opt_ids):
                 continue
 
             p_safe, improved = self.optimize_acq_halfw(idx, p_safe, verbose)
