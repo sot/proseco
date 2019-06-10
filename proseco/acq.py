@@ -614,7 +614,7 @@ class AcqTable(ACACatalogTable):
         # Imposters
         ext_box_size = box_size + dither
         kwargs = dict(star_row=acq['row'], star_col=acq['col'],
-                      maxmag=acq['mag'] + acq['mag_err'],  # + 1.5, TO DO: put to characteristics
+                      maxmag=acq['mag'] + acq['mag_err'],
                       box_size=ext_box_size,
                       dark=dark,
                       bgd=bgd,  # TO DO deal with this

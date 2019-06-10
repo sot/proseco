@@ -425,7 +425,7 @@ def merge_cats(fids=None, guides=None, acqs=None):
     if len(guides) > 0:
         guides['slot'] = 0  # Filled in later
         guides['type'] = 'GUI'
-        guides['maxmag'] = guides['mag'] + 1.5
+        guides['maxmag'] = (guides['mag'] + 1.5).clip(None, ACA.max_maxmag)
         guides['p_acq'] = 0
         guides['dim'] = 1
         guides['res'] = 1
@@ -434,7 +434,7 @@ def merge_cats(fids=None, guides=None, acqs=None):
 
     if len(acqs) > 0:
         acqs['type'] = 'ACQ'
-        acqs['maxmag'] = acqs['mag'] + 1.5
+        acqs['maxmag'] = (acqs['mag'] + 1.5).clip(None, ACA.max_maxmag)
         acqs['dim'] = 20
         acqs['sz'] = guide_size
         acqs['res'] = 1
