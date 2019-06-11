@@ -17,6 +17,10 @@ CCD = {'row_min': -512.0,
 PIX_2_ARC = 4.96289
 ARC_2_PIX = 1.0 / PIX_2_ARC
 
+# Maximum value of star catalog MAXMAG parameter.  Clip value and implications
+# of clipping discussed in emails circa June 7, 2019 with search key "maxmag".
+max_maxmag = 11.2
+
 # Convenience characteristics
 max_ccd_row = CCD['row_max'] - CCD['row_pad']  # Max allowed row for stars (SOURCE?)
 max_ccd_col = CCD['col_max'] - CCD['col_pad']  # Max allow col for stars (SOURCE?)

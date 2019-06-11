@@ -261,6 +261,32 @@ def test_copy_deepcopy_pickle():
             assert val is not val2
 
 
+def test_clip_maxmag():
+    """Test that clipping maxmag for guide and acq stars works
+    """
+    stars = StarsTable.empty()
+    mag0 = ACA.max_maxmag - 1.5  # nominal star mag when clipping occurs (11.2 - 1.5 = 9.7)
+    mags_acq = np.array([-1.5, -1, -0.5, -0.01, 0.01, 0.2, 0.3, 0.4]) + mag0
+    mags_guide = np.array([-0.5, -0.01, 0.01, 0.2, 0.3]) + mag0
+    stars.add_fake_constellation(mag=mags_acq, n_stars=8, size=2000)
+    stars.add_fake_constellation(mag=mags_guide, n_stars=5, size=1000)
+    aca = get_aca_catalog(stars=stars, dark=DARK40, raise_exc=True,
+                          exclude_ids_guide=np.arange(100, 108),
+                          exclude_ids_acq=np.arange(108, 113),
+                          **STD_INFO)
+
+    assert np.all(aca['maxmag'] <= ACA.max_maxmag)
+
+    ok = aca['type'] == 'FID'
+    assert np.allclose(aca['maxmag'][ok], 8.0)
+
+    ok = aca['type'] == 'GUI'
+    assert np.allclose(aca['maxmag'][ok], (mags_guide + 1.5).clip(None, ACA.max_maxmag))
+
+    ok = aca['type'] == 'ACQ'
+    assert np.allclose(aca['maxmag'][ok], (mags_acq + 1.5).clip(None, ACA.max_maxmag))
+
+
 def test_big_sim_offset():
     """
     Check getting a catalog for a large SIM offset that means there are
