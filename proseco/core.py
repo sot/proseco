@@ -17,7 +17,7 @@ from chandra_aca.aca_image import AcaPsfLibrary
 from Ska.quatutil import radec2yagzag, yagzag2radec
 import agasc
 from Quaternion import Quat
-from mica.archive.aca_dark import get_dark_cal_image
+from mica.archive.aca_dark import get_dark_cal_image, get_dark_cal_id
 
 from . import characteristics as ACA
 
@@ -27,6 +27,7 @@ APL = AcaPsfLibrary()
 
 # Cache recently retrieved images which are called with the same args/kwargs
 get_dark_cal_image = functools.lru_cache(maxsize=6)(get_dark_cal_image)
+get_dark_cal_id = functools.lru_cache(maxsize=6)(get_dark_cal_id)
 
 
 def yagzag_to_radec(yag, zag, att):
@@ -566,6 +567,9 @@ class ACACatalogTable(BaseCatalogTable):
         self.dark = get_dark_cal_image(date=self.date, select='before',
                                        t_ccd_ref=self.t_ccd,
                                        aca_image=False)
+        dark_id = get_dark_cal_id(date=self.date, select='before')
+        self.dark_date = dark_id[:4] + ':' + dark_id[4:]
+
         return self._dark
 
     @dark.setter

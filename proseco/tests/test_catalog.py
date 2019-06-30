@@ -71,6 +71,8 @@ def test_get_aca_catalog_20603():
     aca.stars.plot()
     aca.fids.plot()
 
+    assert aca.dark_date == '2018:100'
+
 
 @pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
 def test_get_aca_catalog_20259():
