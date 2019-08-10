@@ -436,7 +436,7 @@ class GuideTable(ACACatalogTable):
 
         11. Filters/removes any candidates that are force excluded (in exclude_ids).
 
-        12. Uses the local date current around each candidate to calculate an "imposter mag"
+        12. Uses the local dark current around each candidate to calculate an "imposter mag"
         describing the brightest 2x2 in the region the star would dither over.  This is
         saved to the candidate star table.
 
