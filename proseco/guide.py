@@ -125,7 +125,7 @@ class GuideTable(ACACatalogTable):
         """
         Run search stages as necessary to select up to the requested number of guide stars.
 
-        This routine first force selects any guide stars supplied as 'include_ids', marking
+        This routine first force selects any guide stars supplied as ``include_ids``, marking
         these as selected in stage 0 in the 'stage' column in the candidate table, and then
         runs search stages.
 
@@ -134,8 +134,8 @@ class GuideTable(ACACatalogTable):
         stage requirements are marked with the allowed stage of selection (by its integer id)
         in the 'stage' column in the candidate table.
 
-        The run_search_stages method loops over the search stages until at least the n
-        requested guide stars are mark with a stage >= 0 or until all stage checks have
+        The run_search_stages method loops over the search stages until at least the 
+        ``n_guide`` requested stars are marked with a stage >= 0 or until all stage checks have
         been exhausted.  This run_search_stages routine then sorts the candidates by
         selected stage and magnitude and returns up to the n requested guide stars as
         the selected stars.
