@@ -688,6 +688,8 @@ class ACACatalogTable(BaseCatalogTable):
         :param kwargs: other keyword args for plot_stars
         """
         kwargs.setdefault('catalog', self.get_catalog_for_plot())
+        if self.stars is None:
+            self.set_stars()
         kwargs.setdefault('stars', self.stars)
         kwargs.setdefault('bad_stars', self.bad_stars_mask)
         return super().plot(ax, **kwargs)
