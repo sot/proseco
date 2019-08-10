@@ -71,6 +71,8 @@ def test_get_aca_catalog_20603():
     aca.stars.plot()
     aca.fids.plot()
 
+    assert aca.dark_date == '2018:100'
+
 
 @pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
 def test_get_aca_catalog_20259():
@@ -248,6 +250,10 @@ def test_copy_deepcopy_pickle():
 
     for func in (f1, f2, f3, f4):
         aca2 = func(aca)
+
+        # Functional test for #303, mostly just for pickle.
+        assert aca2.dark_date == '2017:272'
+
         for attr in ('acqs', 'guides', 'fids'):
             val = getattr(aca, attr)
             val2 = getattr(aca2, attr)

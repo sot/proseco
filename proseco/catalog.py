@@ -116,6 +116,10 @@ def _get_aca_catalog(**kwargs):
     aca.log('Starting get_acq_catalog')
     aca.acqs = get_acq_catalog(stars=aca.stars, **kwargs)
 
+    # Store the date of the dark cal if available.
+    if hasattr(aca.acqs, 'dark_date'):
+        aca.dark_date = aca.acqs.dark_date
+
     # Note that aca.acqs.stars is a filtered version of aca.stars and includes
     # only stars that are in or near ACA FOV.  Use this for fids and guides stars.
     aca.log('Starting get_fid_catalog')
@@ -176,6 +180,7 @@ class ACATable(ACACatalogTable):
     optimize = MetaAttribute(default=True)
     call_args = MetaAttribute(default={})
     version = MetaAttribute()
+    dark_date = MetaAttribute()
 
     # For validation with get_aca_catalog(obsid), store the starcheck
     # catalog in the ACATable meta.
