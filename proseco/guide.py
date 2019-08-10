@@ -127,8 +127,23 @@ class GuideTable(ACACatalogTable):
 
     def run_search_stages(self):
         """
-        Run through search stages to select stars with priority given to "better"
-        stars in the stages.
+        Run search stages as necessary to select up to the requested number of guide stars.
+
+        This routine first force selects any guide stars supplied as ``include_ids``, marking
+        these as selected in stage 0 in the 'stage' column in the candidate table, and then
+        runs search stages.
+
+        In each "search stage", checks are run on each candidate to exclude candidates that
+        do not meet the selection criteria in the stage.  Candidates that satisfy the
+        stage requirements are marked with the allowed stage of selection (by its integer id)
+        in the 'stage' column in the candidate table.
+
+        The run_search_stages method loops over the search stages until at least the 
+        ``n_guide`` requested stars are marked with a stage >= 0 or until all stage checks have
+        been exhausted.  This run_search_stages routine then sorts the candidates by
+        selected stage and magnitude and returns up to the n requested guide stars as
+        the selected stars.
+
         """
         cand_guides = self.cand_guides
         self.log("Starting search stages")
@@ -213,13 +228,84 @@ class GuideTable(ACACatalogTable):
     def search_stage(self, stage):
         """
         Review the candidates with the criteria defined in ``stage`` and return a mask that
-        marks the candidates that are "ok" for this search stage.
+        marks the candidates that are "ok" for this search stage.  This is used to then
+        annotate the candidate table when called from run_search_stages to mark the stars that could
+        be selected in a stage.  As candidate stars are "rejected" in the stage, details
+        of that rejection are also added to self.reject_info .
 
-        This also marks up self.meta.cand_guides with a new column 'stat_{n_stage}' with a bit
-        mask of the errors that the star accrued during this search stage.
+        Additionally, candidate stars that do not pass a check in the stage get their error
+        bitmask in 'stat_{n_stage}' marked up with the error.
 
-        :param stage: dictionary of search stage parameters (needs to be defined)
-        :returns: bool mask of the length of self.meta.cand_guides
+        Candidates are not removed from the tble in this routine; the length of the candidate
+        table should not change after get_initial_guide_candidates (called before this routine).
+        Instead, as mentioned, this routine marks up informational columns in the table and returns
+        a mask of the "ok" stars in the stage.
+
+        Details
+        -------
+
+        In each stage, the dictionary of characteristics for the stage is used to run the checks to
+        see which candidates would be allowed. For example, the Stage 1 dictionary looks like:
+
+         {"Stage": 1,
+           "SigErrMultiplier": 3,
+           "ASPQ1Lim": 0,
+           "MagLimit": [5.9, 10.2],
+           "DoBminusVcheck": 1,
+           "Spoiler": {
+            "BgPixThresh": 25,
+            "RegionFrac": .05,
+            },
+           "Imposter": {
+            "CentroidOffsetLim": .2,
+            }}
+
+        In each stage these checks are run:
+
+        1. Candidate star magnitude is checked to see if it is within the range plus error.
+        For stage 1 for example , each candidate star is checked to see if it is within the
+        5.9 to 10.2 mag range, minus padding for error (SigErrMultiplier * cand['mag_err']).
+
+        2. Candidates with ASPQ1 > stage ASPQ1Lim are marked for exclusion.
+
+        3. Candidates with local dark current that suggests that the candidate centroid could
+        be shifted more that CentroidOffsetLim (in arcsecs) are marked for exclusion.  The value of
+        the local dark current was previously saved during "get_initial_guide_candidates" as
+        "imp_mag".
+
+        4. check_mag_spoilers is used to mark candidate stars that have spoilers that are too
+        close for the magnitude delta to the candidate as defined by the "line" used by that check.
+        The "line" basically works as a check that requires a minimum position separation for
+        a delta magnitude.  A candidate star with a spoiler of the same magnitude would require
+        that spoiler star to be Intercept (9 pixels) away.  A candidate star with a spoiler with
+        no separation would require the spoiler to be 18 mags fainter
+        (9 pixels + (cand['mag'] - spoiler['mag'] + SigErrMultiplier * mag_err_sum) * 0.5 pix / dmag)
+        The parameters of the check are not stage dependent, but the mag err there is defined as
+        SigErrMultiplier * mag_err_sum (MAG_ACA_ERR of candidate and spoiler added in quadrature).
+
+        5. check_spoil_contrib is used to mark candidate stars that have spoilers that contribute
+        too much light onto either the the 8x8 image window or to the 8 background pixels.  "Too
+        much" is defined by the Spoiler parameters of the stage, where in stage 1 a candidate
+        star will be excluded if either:
+
+           - the sum of the light from spoiler stars in the 8x8 contribute more than
+              (candidate star magnitude in counts) * (RegionFrac).
+
+           - the sum of the light from spoiler stars on any background pixel is greater
+             that the BgPixThresh percentile of the current dark current.
+
+        6. check_column_spoilers marks candidates for exclusion if they have column spoilers
+        defined as spoilers between the candidate and the readout register, within
+        characterstics.col_spoiler_pix_sep (10 columns), and 4.5 mags brighter (minus error)
+        than the candidate.  The error is the stage-dependent term where it is set as
+        SigErrMultiplier * (the candidate MAG_ACA_ERR and the spoiler MAG_ACA_ERR added in
+        quadrature).
+
+        7. Candidates are then screened for "bad" color (COLOR1 == 0.700) if DoBMinusVCheck
+        is set for the stage.
+
+        :param stage: dictionary of search stage parameters
+        :returns: bool mask of the length of self.meta.cand_guides with true set for "ok" stars
         """
 
         cand_guides = self.cand_guides
@@ -380,6 +466,48 @@ class GuideTable(ACACatalogTable):
     def get_initial_guide_candidates(self):
         """
         Create a candidate list from the available stars in the field.
+
+        As the initial list of candidates is created this:
+
+        1. Runs get_candidate_mask to limit the "ok" mask to the list of candidates to only those
+        that at least mee the minimum filter (based fields of the AGASC).
+
+        2. Sets the "ok" mask to limit to stars that are on the CCD (with minimum edge padding
+        but no dither padding)
+
+        3. Adds a column ('offchip') to the table of all stars to mark those that aren't on the
+        CCD at all (offchip = True).
+
+        4. Makes one more position filter of the possible candidate stars that limits to those
+        stars that are on the CCD with edge minimum padding, readout window padding, and padding
+        for dither.
+
+        5. Filters the supplied star table (self.stars) using the filters in 1), 2) and 4), to
+        produce a candidate list.
+
+        6. Filters the candidate list to remove any that are spoiled by bad pixel.
+
+        7. Filters the candidate list to remove any that are in the bad stars list.
+
+        8. Filters the candidates to remove any that have a spoiler in a NxN box centered
+        on the star brighter than M magnitudes fainter than the candidate (N is 5 and M is -4
+        from the box_spoiler section of guide characteristics).  This check uses the
+        `has_spoiler_in_box` method and is the first of many spoiler checks.  This spoiler
+        check is not stage dependent.
+
+        9. Filters the candidates to remova any that are spoiled by the fid trap (using
+        `check_fid_trap` method).
+
+        10. Puts any force include candidates from the include_ids parameter back in the candidate
+        list if they were filtered out by an earlier filter in this routine.
+
+        11. Filters/removes any candidates that are force excluded (in exclude_ids).
+
+        12. Uses the local dark current around each candidate to calculate an "imposter mag"
+        describing the brightest 2x2 in the region the star would dither over.  This is
+        saved to the candidate star table.
+
+
         """
         stars = self.stars
         dark = self.dark
