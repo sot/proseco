@@ -250,6 +250,10 @@ def test_copy_deepcopy_pickle():
 
     for func in (f1, f2, f3, f4):
         aca2 = func(aca)
+
+        # Functional test for #303, mostly just for pickle.
+        assert aca2.dark_date == '2017:272'
+
         for attr in ('acqs', 'guides', 'fids'):
             val = getattr(aca, attr)
             val2 = getattr(aca2, attr)
