@@ -30,7 +30,7 @@ col_spoiler_mag_diff = 4.5
 col_spoiler_pix_sep = 10  # pixels
 
 # ACA T_ccd planning limit (degC)
-aca_t_ccd_planning_limit = -9.5
+aca_t_ccd_planning_limit = -8.8
 
 # Dark current that corresponds to a 5.0 mag star in a single pixel.  Apply
 # this value to the region specified by bad_pixels.
