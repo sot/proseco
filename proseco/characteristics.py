@@ -29,8 +29,9 @@ max_ccd_col = CCD['col_max'] - CCD['col_pad']  # Max allow col for stars (SOURCE
 col_spoiler_mag_diff = 4.5
 col_spoiler_pix_sep = 10  # pixels
 
-# ACA T_ccd planning limit (degC)
-aca_t_ccd_planning_limit = -8.8
+# ACA T_ccd penalty limit (degC).
+# Above this limit a temperature "penalty" is applied via get_effective_t_ccd()
+aca_t_ccd_penalty_limit = -8.8
 
 # Dark current that corresponds to a 5.0 mag star in a single pixel.  Apply
 # this value to the region specified by bad_pixels.
