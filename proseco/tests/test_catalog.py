@@ -310,14 +310,14 @@ def test_big_sim_offset():
 def test_calling_with_t_ccd_acq_guide(call_t_ccd):
     """Test that calling get_aca_catalog with t_ccd or t_ccd_acq/guide args sets all
     CCD attributes correctly in the nominal case of a temperature
-    below the planning limit.
+    below the penalty limit.
 
     """
     dark = DARK40.copy()
     stars = StarsTable.empty()
     stars.add_fake_constellation(mag=8.0, n_stars=8)
 
-    t_ccd = np.trunc(ACA.aca_t_ccd_planning_limit - 1.0)
+    t_ccd = np.trunc(ACA.aca_t_ccd_penalty_limit - 1.0)
 
     if call_t_ccd:
         # Call with just t_ccd=t_ccd
@@ -361,13 +361,13 @@ t_ccd_cases = [(-0.5, 0, 0),
 @pytest.mark.parametrize('t_ccd_case', t_ccd_cases)
 def test_t_ccd_effective_acq_guide(t_ccd_case):
     """Test setting of effective T_ccd temperatures for cases above and
-    below the planning limit.
+    below the penalty limit.
 
     """
     stars = StarsTable.empty()
     stars.add_fake_constellation(mag=8.0, n_stars=8)
 
-    t_limit = ACA.aca_t_ccd_planning_limit
+    t_limit = ACA.aca_t_ccd_penalty_limit
 
     t_offset, t_penalty_acq, t_penalty_guide = t_ccd_case
     # Set acq and guide temperatures different

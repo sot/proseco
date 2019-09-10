@@ -165,7 +165,7 @@ def get_effective_t_ccd(t_ccd):
     :param t_ccd:
     :return:
     """
-    t_limit = ACA.aca_t_ccd_planning_limit
+    t_limit = ACA.aca_t_ccd_penalty_limit
     if t_ccd > t_limit:
         return t_ccd + 1 + (t_ccd - t_limit)
     else:
@@ -224,7 +224,7 @@ class ACATable(ACACatalogTable):
 
         In this ACATable object:
         - t_ccd_eff_{acq,guide} are the effective T_ccd values which are adjusted
-          if the actual t_ccd{acq,guide} values are above ACA.aca_t_ccd_planning_limit.
+          if the actual t_ccd{acq,guide} values are above ACA.aca_t_ccd_penalty_limit.
         - t_ccd_{acq,guide} are the actual (or predicted) values from the call
 
         The downstream AcqTable, GuideTable, and FidTable are initialized with the
