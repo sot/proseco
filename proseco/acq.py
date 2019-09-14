@@ -9,7 +9,6 @@ https://docs.google.com/presentation/d/1VtFKAW9he2vWIQAnb6unpK4u1bVAVziIdX9TnqRS
 import numpy as np
 from scipy import ndimage, stats
 from scipy.interpolate import interp1d
-from astropy.table import Table
 
 from chandra_aca.star_probs import acq_success_prob, prob_n_acq
 from chandra_aca.transform import (pixels_to_yagzag, mag_to_count_rate,

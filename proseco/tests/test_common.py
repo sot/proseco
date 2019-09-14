@@ -1,5 +1,4 @@
 import numpy as np
-from chandra_aca.aca_image import ACAImage
 
 # Vanilla observation info
 STD_INFO = dict(att=(0, 0, 0),

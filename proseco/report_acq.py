@@ -16,9 +16,8 @@ from chandra_aca.aca_image import ACAImage
 
 from . import characteristics_acq as ACQ
 from .acq import AcqTable
-from .core import StarsTable, table_to_html
+from .core import table_to_html
 from chandra_aca import plot as plot_aca
-from mica.archive.aca_dark.dark_cal import get_dark_cal_image
 
 
 FILEDIR = Path(__file__).parent
