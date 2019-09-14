@@ -1386,47 +1386,47 @@ def get_kwargs_from_starcheck_text(obs_text, include_cat=False, force_catalog=Fa
           'focus_offset': 0}
     try:
         kw['obsid'] = int(re.search(r"OBSID:\s(\d+).*", obs_text).group(1))
-    except:
+    except Exception:
         # Nothing else will work so raise an exception
         raise ValueError('text does not have OBSID: <obsid>, does not look like appropriate text')
 
     try:
         out = get_coords(obs_text)
         kw['att'] = [out['point_ra'], out['point_dec'], out['point_roll']]
-    except:
+    except Exception:
         try:
             out = get_manvrs(obs_text)[-1]
             kw['att'] = [out['target_Q1'], out['target_Q2'], out['target_Q3'], out['target_Q4']]
-        except:
+        except Exception:
             pass
 
     try:
         out = get_manvrs(obs_text)[-1]
         kw['man_angle'] = out['angle_deg']
-    except:
+    except Exception:
         pass
 
     try:
         out = get_dither(obs_text)
         kw['dither'] = (out['dither_y_amp'], out['dither_z_amp'])
-    except:
+    except Exception:
         pass
 
     try:
         ccd_temp = get_pred_temp(obs_text)
         kw['t_ccd'] = ccd_temp
-    except:
+    except Exception:
         pass
 
     try:
         starcat_hdr = get_starcat_header(obs_text)
         kw['date'] = starcat_hdr['mp_starcat_time']
-    except:
+    except Exception:
         pass
 
     try:
         cat = Table(get_catalog(obs_text))
-    except:
+    except Exception:
         pass
     else:
         fid_or_mon = np.in1d(cat['type'], ('FID', 'MON'))
@@ -1446,7 +1446,7 @@ def get_kwargs_from_starcheck_text(obs_text, include_cat=False, force_catalog=Fa
         kw['detector'] = targ['sci_instr']
         kw['sim_offset'] = targ['sim_z_offset_steps']
         kw['focus_offset'] = 0
-    except:
+    except Exception:
         pass
 
     return kw

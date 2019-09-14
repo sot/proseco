@@ -5,7 +5,7 @@ from copy import copy
 from pathlib import Path
 
 import matplotlib
-matplotlib.use('agg')
+matplotlib.use('agg')  # noqa
 
 from jinja2 import Template
 import numpy as np

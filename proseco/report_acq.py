@@ -5,7 +5,7 @@ from copy import copy, deepcopy
 from pathlib import Path
 
 import matplotlib
-matplotlib.use('agg')
+matplotlib.use('agg')  # noqa
 from matplotlib import patches
 import matplotlib.pyplot as plt
 import numpy as np

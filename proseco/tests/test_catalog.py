@@ -4,7 +4,7 @@ import copy
 import matplotlib
 from Quaternion import Quat
 
-matplotlib.use('agg')
+matplotlib.use('agg')  # noqa
 
 import pickle
 import pytest
