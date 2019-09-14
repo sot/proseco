@@ -333,11 +333,13 @@ class MetaAttribute:
         return (f'<{self.__class__.__name__} name={self.name} default={self.default} '
                 f'pickle={self.pickle}>')
 
+
 class QuatMetaAttribute(MetaAttribute):
     def __set__(self, instance, value):
         if not isinstance(value, Quat):
             value = Quat(value)
         instance.meta[self.name] = value
+
 
 class IntMetaAttribute(MetaAttribute):
     def __set__(self, instance, value):
@@ -1154,7 +1156,7 @@ class StarsTable(BaseCatalogTable):
         self.add_row(stars[0])
 
     def add_fake_constellation(self, n_stars=8, size=1500, mag=7.0, **attrs):
-        """
+        r"""
         Add a fake constellation of up to 8 stars consisting of a cross and square::
 
                 *
@@ -1206,7 +1208,7 @@ class StarsTable(BaseCatalogTable):
             self.add_fake_star(**{name: val for name, val in zip(names, vals)})
 
     def add_fake_star(self, **star):
-        """
+        r"""
         Add a star to the current StarsTable.
 
         The input kwargs must have at least:
@@ -1383,7 +1385,7 @@ def get_kwargs_from_starcheck_text(obs_text, include_cat=False, force_catalog=Fa
           'sim_offset': 0,
           'focus_offset': 0}
     try:
-        kw['obsid'] = int(re.search("OBSID:\s(\d+).*", obs_text).group(1))
+        kw['obsid'] = int(re.search(r"OBSID:\s(\d+).*", obs_text).group(1))
     except:
         # Nothing else will work so raise an exception
         raise ValueError('text does not have OBSID: <obsid>, does not look like appropriate text')

@@ -138,7 +138,7 @@ class GuideTable(ACACatalogTable):
         stage requirements are marked with the allowed stage of selection (by its integer id)
         in the 'stage' column in the candidate table.
 
-        The run_search_stages method loops over the search stages until at least the 
+        The run_search_stages method loops over the search stages until at least the
         ``n_guide`` requested stars are marked with a stage >= 0 or until all stage checks have
         been exhausted.  This run_search_stages routine then sorts the candidates by
         selected stage and magnitude and returns up to the n requested guide stars as
@@ -241,24 +241,23 @@ class GuideTable(ACACatalogTable):
         Instead, as mentioned, this routine marks up informational columns in the table and returns
         a mask of the "ok" stars in the stage.
 
-        Details
-        -------
+        **Details**:
 
         In each stage, the dictionary of characteristics for the stage is used to run the checks to
-        see which candidates would be allowed. For example, the Stage 1 dictionary looks like:
+        see which candidates would be allowed. For example, the Stage 1 dictionary looks like::
 
-         {"Stage": 1,
-           "SigErrMultiplier": 3,
-           "ASPQ1Lim": 0,
-           "MagLimit": [5.9, 10.2],
-           "DoBminusVcheck": 1,
-           "Spoiler": {
-            "BgPixThresh": 25,
-            "RegionFrac": .05,
-            },
-           "Imposter": {
-            "CentroidOffsetLim": .2,
-            }}
+          {"Stage": 1,
+            "SigErrMultiplier": 3,
+            "ASPQ1Lim": 0,
+            "MagLimit": [5.9, 10.2],
+            "DoBminusVcheck": 1,
+            "Spoiler": {
+             "BgPixThresh": 25,
+             "RegionFrac": .05,
+             },
+            "Imposter": {
+             "CentroidOffsetLim": .2,
+             }}
 
         In each stage these checks are run:
 
@@ -278,8 +277,11 @@ class GuideTable(ACACatalogTable):
         The "line" basically works as a check that requires a minimum position separation for
         a delta magnitude.  A candidate star with a spoiler of the same magnitude would require
         that spoiler star to be Intercept (9 pixels) away.  A candidate star with a spoiler with
-        no separation would require the spoiler to be 18 mags fainter
-        (9 pixels + (cand['mag'] - spoiler['mag'] + SigErrMultiplier * mag_err_sum) * 0.5 pix / dmag)
+        no separation would require the spoiler to be 18 mags fainter::
+
+          (9 pixels +
+          (cand['mag'] - spoiler['mag'] + SigErrMultiplier * mag_err_sum) * 0.5 pix / dmag)
+
         The parameters of the check are not stage dependent, but the mag err there is defined as
         SigErrMultiplier * mag_err_sum (MAG_ACA_ERR of candidate and spoiler added in quadrature).
 
@@ -362,7 +364,8 @@ class GuideTable(ACACatalogTable):
                          'type': 'aspq1 outside range',
                          'stage': stage['Stage'],
                          'aspq1_lim': stage['ASPQ1Lim'],
-                         'text': f'Cand {cand_guides["id"][idx]} rejected with aspq1 > {stage["ASPQ1Lim"]}'})
+                         'text': (f'Cand {cand_guides["id"][idx]} rejected with '
+                                  f'aspq1 > {stage["ASPQ1Lim"]}')})
         cand_guides[scol][bad_aspq1] += GUIDE.errs['aspq1']
         ok = ok & ~bad_aspq1
 
@@ -383,7 +386,8 @@ class GuideTable(ACACatalogTable):
                 'imposter_mag': cand['imp_mag'],
                 'imp_row_start': cand['imp_r'],
                 'imp_col_start': cand['imp_c'],
-                'text': (f'Cand {cand["id"]} mag {cand["mag"]:.1f} imposter with "mag" {cand["imp_mag"]:.1f} '
+                'text': (f'Cand {cand["id"]} mag {cand["mag"]:.1f} imposter with '
+                         f'"mag" {cand["imp_mag"]:.1f} '
                          f'limit {pixmag_lims[idx]:.2f} with offset lim {cen_limit} at stage')})
         cand_guides[scol][imp_spoil] += GUIDE.errs['hot pix']
         ok = ok & ~imp_spoil
@@ -665,7 +669,8 @@ def check_spoil_contrib(cand_stars, ok, stars, regfrac, bgthresh):
                     A sum above this fraction will mark the cand_star as spoiled
     :param bgthresh: background pixel threshold (in e-/sec).  If spoilers contribute more
                     than this value to any background pixel, mark the cand_star as spoiled.
-    :returns: reg_spoiled, bg_spoiled, rej - two masks on cand_stars and a list of reject debug dicts
+    :returns: reg_spoiled, bg_spoiled, rej - two masks on cand_stars and a list of reject
+              debug dicts
     """
     fraction = regfrac
     bg_spoiled = np.zeros_like(ok)
@@ -705,7 +710,8 @@ def check_spoil_contrib(cand_stars, ok, stars, regfrac, bgthresh):
                         'limit_for_star': frac_limit,
                         'fraction': fraction,
                         'sum_in_region': sum_in_region,
-                        'text': f'Cand {cand_stars["id"]} has too much contribution to region from spoilers'})
+                        'text': (f'Cand {cand_stars["id"]} has too much contribution '
+                                 'to region from spoilers')})
             continue
 
         # Or consider it spoiled if the star contribution to any background pixel
@@ -961,7 +967,7 @@ def has_spoiler_in_box(cand_guides, stars, halfbox=5, magdiff=-4):
                         'n': n,
                         'text': (f'Cand {cand["id"]} spoiled by {n} stars in {boxsize}x{boxsize} '
                                  f' including {spoiler["id"]}')
-                    })
+                        })
     return box_spoiled, rej
 
 
@@ -1065,5 +1071,5 @@ def run_select_checks(cand_guide_set):
     for n_minus, threshold in enumerate(GUIDE.cluster_thresholds):
         if n_minus < len(cand_guide_set) + 1:
             status.append(check_single_cluster(
-                    cand_guide_set, threshold=threshold, n_minus=n_minus))
+                cand_guide_set, threshold=threshold, n_minus=n_minus))
     return sum(status), len(status)

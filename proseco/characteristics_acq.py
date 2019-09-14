@@ -84,6 +84,7 @@ def _get_fid_acq_stages():
     out.add_index('spoiler_score')
     return out
 
+
 fid_acq_stages = _get_fid_acq_stages()
 
 # For a given box size, set the mag limit to the magnitude where one expects

@@ -121,7 +121,7 @@ def make_p_man_errs_report(context):
     for col in tbl.columns.values():
         col[:] = np.round(col, 4)
 
-    tbl.add_column(Column(man_err, name='err \ angle'), 0)
+    tbl.add_column(Column(man_err, name=r'err \ angle'), 0)
 
     context['p_man_errs_table'] = table_to_html(tbl)
 

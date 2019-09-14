@@ -243,10 +243,14 @@ def test_copy_deepcopy_pickle():
     """
     aca = get_aca_catalog(**STD_INFO)
 
-    f1 = lambda x: pickle.loads(pickle.dumps(x))
+    def f1(x):
+        return pickle.loads(pickle.dumps(x))
+
     f2 = copy.deepcopy
     f3 = copy.copy
-    f4 = lambda x: x.__class__(x)
+
+    def f4(x):
+        return x.__class__(x)
 
     for func in (f1, f2, f3, f4):
         aca2 = func(aca)
@@ -407,7 +411,8 @@ def test_call_args_attr():
 
 
 def test_bad_obsid():
-    aca = get_aca_catalog(obsid='blah blah', raise_exc=False)  # Expects this to be starcheck catalog
+    # Expects this to be starcheck catalog
+    aca = get_aca_catalog(obsid='blah blah', raise_exc=False)
     assert 'ValueError: text does not have OBSID' in aca.exception
 
     assert aca.thumbs_up == 0
