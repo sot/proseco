@@ -48,7 +48,6 @@ import pickle
 from pathlib import Path
 import subprocess
 import shutil
-import pickle
 
 import parse_cm
 from proseco import get_aca_catalog

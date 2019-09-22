@@ -9,7 +9,6 @@ https://docs.google.com/presentation/d/1VtFKAW9he2vWIQAnb6unpK4u1bVAVziIdX9TnqRS
 import numpy as np
 from scipy import ndimage, stats
 from scipy.interpolate import interp1d
-from astropy.table import Table
 
 from chandra_aca.star_probs import acq_success_prob, prob_n_acq
 from chandra_aca.transform import (pixels_to_yagzag, mag_to_count_rate,
@@ -154,7 +153,6 @@ class AcqTable(ACACatalogTable):
         out = super().empty()
         out['halfw'] = np.full(fill_value=0, shape=(0,), dtype=np.int64)
         return out
-
 
     @property
     def fid_set(self):
@@ -1301,7 +1299,7 @@ class AcqProbs:
             fids = acqs.fids
             if fids is None:
                 acqs.add_warning('Requested fid spoiler probability without '
-                                        'setting acqs.fids first')
+                                 'setting acqs.fids first')
                 return 1.0
 
             p_fid_id_spoiler = 1.0
@@ -1311,8 +1309,8 @@ class AcqProbs:
                 # This should not happen, but ignore with a warning in any case.  Non-candidate
                 # fid cannot spoil an acq star.
                 acqs.add_warning(f'Requested fid spoiler probability for fid '
-                                        f'{acqs.detector}-{fid_id} but it is '
-                                        f'not a candidate')
+                                 f'{acqs.detector}-{fid_id} but it is '
+                                 f'not a candidate')
             else:
                 if fids.spoils(fid, self.acq, box_size):
                     p_fid_id_spoiler = 0.0

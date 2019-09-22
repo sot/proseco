@@ -171,6 +171,7 @@ def test_get_kwargs_from_starcheck_text():
            'focus_offset': 0}
     assert kwargs == exp
 
+
 cases = [dict(row=4, col=0, mag0=8, mag1=10.5, exp=(0.16, -0.01, 1.00)),
          dict(row=1, col=0, mag0=8, mag1=10.5, exp=(0.43, -0.00, 1.10)),
          dict(row=1, col=0, mag0=8, mag1=8, exp=(2.37, -0.01, 1.98)),
@@ -270,7 +271,7 @@ def test_starstable_from_stars():
 
     dang = 0.001 / 3600  # limit
     att = [0, 1, 359]
-    att2 = [0, 1 + dang * 2, 359 - 0.0005 / 2 ]
+    att2 = [0, 1 + dang * 2, 359 - 0.0005 / 2]
     att3 = [0, 1 - dang / 2, 359 - dang / 2]
     stars = StarsTable.from_agasc(att=att)
 

@@ -5,7 +5,7 @@ from copy import copy
 from pathlib import Path
 
 import matplotlib
-matplotlib.use('agg')
+matplotlib.use('agg')  # noqa
 
 from jinja2 import Template
 import numpy as np
@@ -14,9 +14,8 @@ from matplotlib import patches
 
 from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
 from chandra_aca.transform import mag_to_count_rate
-from mica.archive.aca_dark.dark_cal import get_dark_cal_image
 
-from .core import StarsTable, table_to_html
+from .core import table_to_html
 from .guide import GuideTable, get_ax_range, GUIDE
 
 # Do reporting for at-most MAX_CAND candidates

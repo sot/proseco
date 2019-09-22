@@ -223,6 +223,7 @@ class ACATable(ACACatalogTable):
         compute the effective T_ccd temperatures.
 
         In this ACATable object:
+
         - t_ccd_eff_{acq,guide} are the effective T_ccd values which are adjusted
           if the actual t_ccd{acq,guide} values are above ACA.aca_t_ccd_penalty_limit.
         - t_ccd_{acq,guide} are the actual (or predicted) values from the call
@@ -239,7 +240,6 @@ class ACATable(ACACatalogTable):
         self.t_ccd_eff_acq = get_effective_t_ccd(self.t_ccd_acq)
         self.t_ccd_eff_guide = get_effective_t_ccd(self.t_ccd_guide)
         self.version = VERSION
-
 
     def get_review_table(self):
         """Get ACAReviewTable object based on self.
