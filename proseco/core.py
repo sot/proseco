@@ -540,6 +540,7 @@ class ACACatalogTable(BaseCatalogTable):
     t_ccd_acq = MetaAttribute()
     t_ccd_guide = MetaAttribute()
     date = MetaAttribute()
+    dark_date = MetaAttribute()
     dither_acq = MetaAttribute()
     dither_guide = MetaAttribute()
     detector = MetaAttribute()
@@ -561,15 +562,28 @@ class ACACatalogTable(BaseCatalogTable):
         if hasattr(self, '_dark'):
             return self._dark
 
+        # If self.dark_date is already set (most likely after unpickling an existing
+        # catalog), then use that instead of the observation date for getting the dark map.
+        if self.dark_date:
+            dark_date = self.dark_date
+            select = 'nearest'
+        else:
+            dark_date = self.date
+            select = 'before'
+
         # Dark current map handling.  If asking for `dark` attribute without having set
         # it then auto-fetch from mica.  Note that get_dark_cal_image caches returned values
         # using LRU cache on all params, so this is efficient for the different
         # catalog tables.
-        self.log(f'Getting dark cal image at date={self.date} t_ccd={self.t_ccd:.1f}')
-        self.dark = get_dark_cal_image(date=self.date, select='before',
+        self.log(f'Getting dark cal image at date={dark_date} t_ccd={self.t_ccd:.1f} '
+                 f'select={select}')
+        self.dark = get_dark_cal_image(date=dark_date, select=select,
                                        t_ccd_ref=self.t_ccd,
                                        aca_image=False)
-        dark_id = get_dark_cal_id(date=self.date, select='before')
+
+        # In all cases set self.dark_date to be the actual date of the dark cal
+        # we are using, not what might have been set on input.
+        dark_id = get_dark_cal_id(date=dark_date, select=select)
         self.dark_date = dark_id[:4] + ':' + dark_id[4:]
 
         return self._dark
