@@ -4,6 +4,7 @@ import functools
 import pickle
 import inspect
 import time
+import warnings
 from copy import copy
 from pathlib import Path
 
@@ -582,9 +583,16 @@ class ACACatalogTable(BaseCatalogTable):
                                        aca_image=False)
 
         # In all cases set self.dark_date to be the actual date of the dark cal
-        # we are using, not what might have been set on input.
+        # we are using, not what might have been set on input. But issue a warning
+        # if there is a mismatch.
         dark_id = get_dark_cal_id(date=dark_date, select=select)
-        self.dark_date = dark_id[:4] + ':' + dark_id[4:]
+        new_dark_date = dark_id[:4] + ':' + dark_id[4:]
+
+        if self.dark_date and self.dark_date != new_dark_date:
+            warnings.warn(f'Mismatch between pickled dark_date {self.dark_date} and nearest '
+                          f'available dark cal in the archive at {new_dark_date}')
+
+        self.dark_date = new_dark_date
 
         return self._dark
 
