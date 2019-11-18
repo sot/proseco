@@ -568,31 +568,33 @@ class ACACatalogTable(BaseCatalogTable):
         if self.dark_date:
             dark_date = self.dark_date
             select = 'nearest'
+            dark_id = get_dark_cal_id(date=dark_date, select=select)
+
+            # Warn if the pickled dark_date is not the same as we would have gotten based
+            # on the observation date.
+            dark_id_for_date = get_dark_cal_id(date=self.date, select='before')
+            if dark_id != dark_id_for_date:
+                warnings.warn(f'Unexpected dark_date: '
+                              f'dark_id nearest dark_date={dark_date} is {dark_id} '
+                              f'but dark_id before obs date={self.date} is {dark_id_for_date}')
         else:
             dark_date = self.date
             select = 'before'
+            dark_id = get_dark_cal_id(date=dark_date, select=select)
 
         # Dark current map handling.  If asking for `dark` attribute without having set
         # it then auto-fetch from mica.  Note that get_dark_cal_image caches returned values
         # using LRU cache on all params, so this is efficient for the different
         # catalog tables.
-        self.log(f'Getting dark cal image at date={dark_date} t_ccd={self.t_ccd:.1f} '
+        self.log(f'Getting dark cal image {dark_id} at date={dark_date} t_ccd={self.t_ccd:.1f} '
                  f'select={select}')
         self.dark = get_dark_cal_image(date=dark_date, select=select,
                                        t_ccd_ref=self.t_ccd,
                                        aca_image=False)
 
         # In all cases set self.dark_date to be the actual date of the dark cal
-        # we are using, not what might have been set on input. But issue a warning
-        # if there is a mismatch.
-        dark_id = get_dark_cal_id(date=dark_date, select=select)
-        new_dark_date = dark_id[:4] + ':' + dark_id[4:]
-
-        if self.dark_date and self.dark_date != new_dark_date:
-            warnings.warn(f'Mismatch between pickled dark_date {self.dark_date} and nearest '
-                          f'available dark cal in the archive at {new_dark_date}')
-
-        self.dark_date = new_dark_date
+        # we are using, not what might have been set on input.
+        self.dark_date = dark_id[:4] + ':' + dark_id[4:]
 
         return self._dark
 
