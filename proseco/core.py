@@ -1450,3 +1450,34 @@ def get_kwargs_from_starcheck_text(obs_text, include_cat=False, force_catalog=Fa
         pass
 
     return kw
+
+
+def includes_for_obsid(obsid):
+    """
+    Return a dict with the include_ids_acq, include_halfws_acq and include_ids_guide
+    lists for the as-run flight catalog of ``obsid``.  Useful for forcing catalog.
+
+    Example::
+
+      >>> from proseco import get_aca_catalog
+      >>> from proseco.core import includes_for_obsid
+      >>> obsid = 8008
+      >>> aca = get_aca_catalog(obsid, **includes_for_obsid(obsid))
+
+    :param obsid: int, obsid
+    """
+    from mica.starcheck import get_starcheck_catalog
+
+    obs = get_starcheck_catalog(obsid)
+
+    cat = obs['cat']
+    out = {}
+
+    ok = np.in1d(cat['type'], ('ACQ', 'BOT'))
+    out['include_ids_acq'] = cat['id'][ok].tolist()
+    out['include_halfws_acq'] = cat['halfw'][ok].tolist()
+
+    ok = np.in1d(cat['type'], ('GUI', 'BOT'))
+    out['include_ids_guide'] = cat['id'][ok].tolist()
+
+    return out

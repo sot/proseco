@@ -14,7 +14,7 @@ import numpy as np
 import mica.starcheck
 
 from .test_common import STD_INFO, mod_std_info, DARK40, OBS_INFO
-from ..core import StarsTable
+from ..core import StarsTable, includes_for_obsid
 from ..catalog import get_aca_catalog, ACATable
 from ..fid import get_fid_catalog
 from .. import characteristics as ACA
@@ -740,3 +740,23 @@ def test_force_catalog_from_starcheck():
                                      120, 120, 120]
     assert np.allclose(aca.att.equatorial, [358.341787, -12.949882, 276.997597], rtol=0, atol=1e-6)
     assert np.allclose(aca.acqs.man_angle, 89.16)
+
+
+@pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
+def test_includes_for_obsid():
+    """
+    Test helper function to get the include_* kwargs for forcing a catalog.
+    """
+    exp = {'include_halfws_acq': [120, 120, 120, 120, 85, 120, 120, 120],
+           'include_ids_acq': [31075128,
+                               31076560,
+                               31463496,
+                               31983336,
+                               32374896,
+                               31075368,
+                               31982136,
+                               32375384],
+           'include_ids_guide': [31075128, 31076560, 31463496, 31983336, 32374896]}
+
+    out = includes_for_obsid(8008)
+    assert out == exp
