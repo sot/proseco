@@ -760,3 +760,17 @@ def test_includes_for_obsid():
 
     out = includes_for_obsid(8008)
     assert out == exp
+
+
+def test_dark_date_warning():
+    aca = get_aca_catalog(**STD_INFO)
+    acap = pickle.loads(pickle.dumps(aca))
+    assert acap.dark_date == '2017:272'
+
+    # Fudge date forward, after the 2018:002 dark cal
+    acap.date = '2018:010'
+    with pytest.warns(None) as warns:
+        acap.dark  # Accessing the `dark` property triggers code to read it (and warn)
+
+    assert len(warns) == 1
+    assert 'Unexpected dark_date: dark_id nearest dark_date' in str(warns[0].message)

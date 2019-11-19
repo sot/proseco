@@ -180,7 +180,6 @@ class ACATable(ACACatalogTable):
     optimize = MetaAttribute(default=True)
     call_args = MetaAttribute(default={})
     version = MetaAttribute()
-    dark_date = MetaAttribute()
 
     # For validation with get_aca_catalog(obsid), store the starcheck
     # catalog in the ACATable meta.
