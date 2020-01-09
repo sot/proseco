@@ -1,4 +1,6 @@
-__version__ = "4.7.1"
+import ska_helpers
+
+__version__ = ska_helpers.get_version(__package__)
 
 
 def get_aca_catalog(*args, **kwargs):
