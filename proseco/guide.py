@@ -5,7 +5,8 @@ import numpy as np
 from itertools import combinations
 
 import chandra_aca.aca_image
-from chandra_aca.transform import mag_to_count_rate, count_rate_to_mag
+from chandra_aca.transform import (mag_to_count_rate, count_rate_to_mag,
+                                   snr_mag_for_t_ccd)
 from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
 from chandra_aca.star_probs import guide_count
 
@@ -456,9 +457,14 @@ class GuideTable(ACACatalogTable):
         :returns: bool mask of acceptable stars
 
         """
+        # Compute faint magnitude limit, ensuring it is no larger (fainter) than ref_faint_mag
+        faint_mag_limit = min(snr_mag_for_t_ccd(self.t_ccd, ref_mag=GUIDE.ref_faint_mag,
+                                                ref_t_ccd=GUIDE.ref_faint_mag_t_ccd),
+                              GUIDE.ref_faint_mag)
+
         ok = ((stars['CLASS'] == 0) &
               (stars['mag'] > 5.8) &
-              (stars['mag'] < 10.3) &
+              (stars['mag'] < faint_mag_limit) &
               (stars['mag_err'] < 1.0) &  # Mag err < 1.0 mag
               (stars['ASPQ1'] < 20) &  # Less than 1 arcsec offset from nearby spoiler
               (stars['ASPQ2'] == 0) &  # Proper motion less than 0.5 arcsec/yr

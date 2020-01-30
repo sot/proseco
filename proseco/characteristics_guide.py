@@ -12,6 +12,17 @@ min_guide_count = 4.0
 # Add this padding to region checked for bad pixels (in addition to dither)
 dither_pix_pad = 0.4
 
+# Reference faint magnitude limit and CCD temperature for guide star candidate
+# selection.  The faint mag limit is scaled via the actual CCD temperature in
+# the selection process (maintaining equivalent SNR relative to dark current).
+#
+# The reference temperature is set to -7.8 to reflect that circa Jan 2020 we had
+# not be applying any scaling and nominally allowing stars as faint as 10.3 mag
+# at temperatures up to -7.8 C.  In practice other constraints may kick in, but
+# for the initial box criteria for candidate selection this is used.
+ref_faint_mag_t_ccd = -7.8
+ref_faint_mag = 10.3
+
 # Error / check labeling
 errs = {'mag range': 1,
         'aspq1': 2,

@@ -13,7 +13,7 @@ from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
 from chandra_aca.transform import mag_to_count_rate, count_rate_to_mag
 
 from ..guide import (get_guide_catalog, check_spoil_contrib, get_pixmag_for_offset,
-                     check_mag_spoilers, get_ax_range, check_column_spoilers)
+                     check_mag_spoilers, get_ax_range, check_column_spoilers, GUIDE)
 from ..report_guide import make_report
 from ..characteristics_guide import mag_spoiler
 from ..characteristics import CCD
@@ -583,3 +583,21 @@ def test_make_report_guide(tmpdir):
             assert np.allclose(val.q, val2.q)
         else:
             assert val == val2
+
+
+def test_guide_faint_mag_limit():
+    stars = StarsTable.empty()
+    ids = np.arange(1, 6)
+
+    # 4 bright stars + one star just slightly brighter than the nominal faint mag limit
+    stars.add_fake_constellation(mag=[7.0] * 4 + [GUIDE.ref_faint_mag - 0.001], n_stars=5, id=ids)
+
+    # Select stars at 0.1 degC colder than reference temperature, expect 5 stars selected
+    guides = get_guide_catalog(**mod_std_info(t_ccd=GUIDE.ref_faint_mag_t_ccd - 0.1),
+                               stars=stars, dark=DARK40)
+    assert np.all(guides['id'] == ids)
+
+    # Select stars at 0.1 degC warmer than reference temperature, expect 4 stars selected
+    guides = get_guide_catalog(**mod_std_info(t_ccd=GUIDE.ref_faint_mag_t_ccd + 0.1),
+                               stars=stars, dark=DARK40)
+    assert np.all(guides['id'] == [1, 2, 3, 4])
