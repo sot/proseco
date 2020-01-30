@@ -117,7 +117,8 @@ def test_exception_handling():
                           t_ccd_acq=-10, t_ccd_guide=-10,
                           detector='ACIS-S', sim_offset=0, focus_offset=0,
                           n_guide=8, n_fid=3, n_acq=8,
-                          include_ids_acq=[1], raise_exc=False)  # Fail
+                          include_ids_acq=[1], include_halfws_acq=[100, 120],
+                          raise_exc=False)  # Fail
     assert 'include_ids and include_halfws must have same length' in aca.exception
 
     for obj in (aca, aca.acqs, aca.guides, aca.fids):

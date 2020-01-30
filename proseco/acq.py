@@ -42,7 +42,8 @@ def get_acq_catalog(obsid=0, **kwargs):
     :param focus_offset: SIM focus offset [steps] (default=0)
     :param stars: table of AGASC stars (will be fetched from agasc if None)
     :param include_ids: list of AGASC IDs of stars to include in selected catalog
-    :param include_halfws: list of acq halfwidths corresponding to ``include_ids``
+    :param include_halfws: list of acq halfwidths corresponding to ``include_ids``.
+                           For values of ``0`` proseco chooses the best halfwidth(s).
     :param exclude_ids: list of AGASC IDs of stars to exclude from selected catalog
     :param optimize: optimize star catalog after initial selection (default=True)
     :param verbose: provide extra logging info (mostly calc_p_safe) (default=False)
@@ -458,6 +459,10 @@ class AcqTable(ACACatalogTable):
         :param stars: stars table
 
         """
+        # Allow for not providing halfws, in which case proseco chooses.
+        if self.include_halfws is None or len(self.include_halfws) == 0:
+            self.include_halfws = [0] * len(self.include_ids)
+
         if len(self.include_ids) != len(self.include_halfws):
             raise ValueError('include_ids and include_halfws must have same length')
 
