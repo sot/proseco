@@ -1,6 +1,7 @@
 import traceback
 import numpy as np
 from itertools import count
+import copy
 
 from astropy.table import Column, Table
 
@@ -190,6 +191,12 @@ class ACATable(ACACatalogTable):
     # method below).
     t_ccd_eff_acq = MetaAttribute(is_kwarg=False)
     t_ccd_eff_guide = MetaAttribute(is_kwarg=False)
+
+    def __copy__(self):
+        # Astropy Table now does a light key-only copy of the `meta` dict, so
+        # copy.copy(aca) does not copy the underlying table attributes.  Force
+        # a deepcopy instead.
+        return copy.deepcopy(self)
 
     @property
     def t_ccd(self):
