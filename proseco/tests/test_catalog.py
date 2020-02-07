@@ -44,7 +44,7 @@ def test_get_aca_catalog_20603():
     # Force not using a bright star so there is a GUI-only (not BOT) star
     aca = get_aca_catalog(20603, exclude_ids_acq=[40113544], n_fid=2, n_guide=6, n_acq=7,
                           raise_exc=True)
-    # Expected 2 fids, 6 guide, 7 acq
+    # Expected 2 fids, 4 guide, 7 acq
     exp = ['slot idx     id    type  sz   yang     zang   dim res halfw',
            '---- --- --------- ---- --- -------- -------- --- --- -----',
            '   0   1         4  FID 8x8  2140.23   166.63   1   1    25',
@@ -55,7 +55,7 @@ def test_get_aca_catalog_20603():
            '   5   6  40113544  GUI 6x6   102.74  1133.37   1   1    25',
            '   5   7 116923496  ACQ 6x6 -1337.79  1049.27  20   1   120',
            '   6   8 116923528  ACQ 6x6 -2418.65  1088.40  20   1   160',
-           '   7   9 116791744  ACQ 6x6   985.38 -1210.19  20   1   140',
+           '   7   9 116791744  ACQ 6x6   985.38 -1210.19  20   1   160',
            '   0  10  40108048  ACQ 6x6     2.21  1619.17  20   1   140']
 
     repr(aca)  # Apply default formats
