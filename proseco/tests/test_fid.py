@@ -84,12 +84,10 @@ def test_get_initial_catalog():
     # Spoil fids 1, 2, 3
     fids3 = get_fid_catalog(stars=stars[:3], **STD_INFO)
     assert np.all(fids3['id'] == [4, 5, 6])
-    assert fids3.thumbs_up
 
     # Spoil fids 1, 2, 3, 4 => no initial catalog gets found
     fids4 = get_fid_catalog(stars=stars[:4], **STD_INFO)
     assert len(fids4) == 0
-    assert not fids4.thumbs_up
     assert all(name in fids4.colnames for name in ['id', 'yang', 'zang', 'row', 'col'])
 
 
@@ -99,7 +97,6 @@ def test_n_fid():
     # Get only 2 fids
     fids = get_fid_catalog(n_fid=2, **STD_INFO)
     assert len(fids) == 2
-    assert fids.thumbs_up
 
 
 @pytest.mark.parametrize('dither_z', [8, 64])

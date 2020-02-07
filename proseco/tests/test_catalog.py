@@ -158,11 +158,6 @@ def test_no_candidates():
     assert 'id' in acas.guides.colnames
     assert 'id' in acas.fids.colnames
 
-    assert acas.thumbs_up == 0
-    assert acas.acqs.thumbs_up == 0
-    assert acas.guides.thumbs_up == 0
-    assert acas.fids.thumbs_up == 0
-
 
 @pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
 def test_big_dither_from_mica_starcheck():
@@ -194,11 +189,6 @@ def test_pickle():
     stars.add_fake_constellation(mag=10.0, n_stars=5)
     aca = get_aca_catalog(stars=stars, dark=DARK40, raise_exc=True, **STD_INFO)
 
-    assert aca.thumbs_up == 0
-    assert aca.acqs.thumbs_up == 0
-    assert aca.guides.thumbs_up == 1
-    assert aca.fids.thumbs_up == 1
-
     aca2 = pickle.loads(pickle.dumps(aca))
 
     assert repr(aca) == repr(aca2)
@@ -215,7 +205,7 @@ def test_pickle():
             obj = aca
             obj2 = aca2
 
-        for attr in ['att', 'date', 't_ccd', 'man_angle', 'dither', 'thumbs_up']:
+        for attr in ['att', 'date', 't_ccd', 'man_angle', 'dither']:
             val = getattr(obj, attr)
             val2 = getattr(obj2, attr)
             if isinstance(val, float):
@@ -415,11 +405,6 @@ def test_bad_obsid():
     aca = get_aca_catalog(obsid='blah blah', raise_exc=False)
     assert 'ValueError: text does not have OBSID' in aca.exception
 
-    assert aca.thumbs_up == 0
-    assert aca.acqs.thumbs_up == 0
-    assert aca.guides.thumbs_up == 0
-    assert aca.fids.thumbs_up == 0
-
 
 def test_bad_pixel_dark_current():
     """
@@ -448,29 +433,6 @@ def test_bad_pixel_dark_current():
     assert sorted(aca.guides['id']) == exp_ids
     assert aca.acqs['id'].tolist() == exp_ids
     assert aca.acqs['halfw'].tolist() == [100, 160, 160, 160, 160]
-
-
-configs = [(8.5, 1, 1, 1),
-           (10.12, 0, 0, 1),
-           (10.25, 0, 0, 0)]
-
-
-@pytest.mark.parametrize('config', configs)
-def test_aca_acq_gui_thumbs_up(config):
-    """
-    Test the thumbs_up property of aca, acq, and guide selection.
-    Fid thumbs up is tested separately.
-    """
-    mag, acat, guit, acqt = config
-    stars = StarsTable.empty()
-    stars.add_fake_constellation(mag=mag, n_stars=8)
-    aca = get_aca_catalog(**mod_std_info(stars=stars, raise_exc=True,
-                                         n_acq=8, n_guide=5))
-
-    assert aca.thumbs_up == acat
-    assert aca.acqs.thumbs_up == acqt
-    assert aca.guides.thumbs_up == guit
-    assert aca.fids.thumbs_up == 1
 
 
 def test_fid_trap_effect():

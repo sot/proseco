@@ -907,12 +907,10 @@ def test_acq_fid_catalog_zero_cand_fid():
                           detector='HRC-S', sim_offset=300000)
     aca = get_aca_catalog(**kwargs)
 
-    assert not aca.fids.thumbs_up
     assert len(aca.fids) == 0
     assert len(aca.fids.cand_fids) == 0
     assert aca.acqs.fid_set == ()
     assert len(aca.acqs) == 5
-    assert aca.acqs.thumbs_up
 
 
 def test_acq_fid_catalog_one_cand_fid():
@@ -959,9 +957,6 @@ def test_acq_fid_catalog_one_cand_fid():
     assert aca.acqs.fid_set == (6,)
 
     # Not enough fids
-    assert aca.thumbs_up == 0
-    assert aca.fids.thumbs_up == 0
-    assert aca.acqs.thumbs_up == 1
     assert aca.warnings == ['WARNING: No acq-fid combination was '
                             'found that met stage requirements']
 
@@ -1008,12 +1003,6 @@ def test_acq_fid_catalog_two_cand_fid(n_fid):
     assert aca.n_fid == n_fid
     assert aca.fids['id'].tolist() == [1, 2]
     assert aca.acqs.fid_set == (1, 2)
-
-    # If n_fid=2 then getting only 2 fids is OK, but otherwise thumbs-down.
-    thumbs_up = (1 if n_fid == 2 else 0)
-    assert aca.thumbs_up == thumbs_up
-    assert aca.fids.thumbs_up == thumbs_up
-    assert aca.acqs.thumbs_up == 1
 
 
 def test_0_5_degree_man_angle_bin():
