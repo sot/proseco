@@ -451,10 +451,10 @@ def test_get_acq_catalog_21007():
            '    1     1 189410928   -62.52  1763.04   160',
            '    2     2 189409160 -2223.75  1998.69   160',
            '    3     3 189417920  1482.94   243.72   160',
-           '    4     4 189015480  2222.47  -580.99   160',
-           '    5     5 189417752  1994.07   699.55    60',
-           '    6     6 189406216 -2311.90  -240.18   120',
-           '    7     7 189416328  1677.88   137.11    80',
+           '    4     4 189015480  2222.47  -580.99    80',
+           '    5     5 189417752  1994.07   699.55    80',
+           '    6     6 189406216 -2311.90  -240.18    80',
+           '    7     7 189416328  1677.88   137.11   100',
            '    8   -99 189416496   333.11   -63.30   120',
            '    9   -99 189410280  -495.21  1712.02   120',
            '   10   -99 189416808  2283.31  2007.54   120',
@@ -472,10 +472,10 @@ def test_get_acq_catalog_21007():
            '    1     1 189410928   -62.52  1763.04   160',
            '    2     2 189409160 -2223.75  1998.69   160',
            '    3     3 189417920  1482.94   243.72   160',
-           '    4     4 189015480  2222.47  -580.99    80',
-           '    5     5 189417752  1994.07   699.55    60',
-           '    6     6 189406216 -2311.90  -240.18   120',
-           '    7     7 189416328  1677.88   137.11    80']
+           '    4     4 189015480  2222.47  -580.99   160',
+           '    5     5 189417752  1994.07   699.55    80',
+           '    6     6 189406216 -2311.90  -240.18    60',
+           '    7     7 189416328  1677.88   137.11    60']
 
     assert repr(acqs[TEST_COLS]).splitlines() == exp
 
@@ -498,8 +498,8 @@ def test_box_strategy_20603():
            '    3     3  40114416   394.22  1204.43   160',
            '    4     4  40112304 -1644.35  2032.47    80',
            '    5     5 116923528 -2418.65  1088.40   160',
-           '    6     6 116791744   985.38 -1210.19   100',
-           '    7     7  40108048     2.21  1619.17   140',
+           '    6     6 116791744   985.38 -1210.19   140',
+           '    7     7  40108048     2.21  1619.17   100',
            '    8   -99 116785920  -673.94 -1575.87   120',
            '    9   -99 116923744  -853.18   937.73   120',
            '   10   -99 116792320   941.59 -1784.10   120',
@@ -685,12 +685,12 @@ def test_n_acq():
            ' idx   slot   id    yang     zang   halfw',
            'int64 int64 int32 float64  float64  int64',
            '----- ----- ----- -------- -------- -----',
-           '    0     0   100  2000.00     0.00   140',
-           '    1     1   108  1500.00     0.00   140',
-           '    2     2   101     0.00  2000.00   140',
-           '    3     3   109     0.00  1500.00   140',
-           '    4     4   102 -2000.00     0.00   120',
-           '    5     5   110 -1500.00     0.00   120',
+           '    0     0   100  2000.00     0.00   160',
+           '    1     1   108  1500.00     0.00   160',
+           '    2     2   101     0.00  2000.00   160',
+           '    3     3   109     0.00  1500.00   160',
+           '    4     4   102 -2000.00     0.00   160',
+           '    5     5   110 -1500.00     0.00   160',
            '    6   -99   103     0.00 -2000.00   120',
            '    7   -99   111     0.00 -1500.00   120',
            '    8   -99   104  1000.00  1000.00   120',
@@ -907,12 +907,10 @@ def test_acq_fid_catalog_zero_cand_fid():
                           detector='HRC-S', sim_offset=300000)
     aca = get_aca_catalog(**kwargs)
 
-    assert not aca.fids.thumbs_up
     assert len(aca.fids) == 0
     assert len(aca.fids.cand_fids) == 0
     assert aca.acqs.fid_set == ()
     assert len(aca.acqs) == 5
-    assert aca.acqs.thumbs_up
 
 
 def test_acq_fid_catalog_one_cand_fid():
@@ -959,9 +957,6 @@ def test_acq_fid_catalog_one_cand_fid():
     assert aca.acqs.fid_set == (6,)
 
     # Not enough fids
-    assert aca.thumbs_up == 0
-    assert aca.fids.thumbs_up == 0
-    assert aca.acqs.thumbs_up == 1
     assert aca.warnings == ['WARNING: No acq-fid combination was '
                             'found that met stage requirements']
 
@@ -1008,12 +1003,6 @@ def test_acq_fid_catalog_two_cand_fid(n_fid):
     assert aca.n_fid == n_fid
     assert aca.fids['id'].tolist() == [1, 2]
     assert aca.acqs.fid_set == (1, 2)
-
-    # If n_fid=2 then getting only 2 fids is OK, but otherwise thumbs-down.
-    thumbs_up = (1 if n_fid == 2 else 0)
-    assert aca.thumbs_up == thumbs_up
-    assert aca.fids.thumbs_up == thumbs_up
-    assert aca.acqs.thumbs_up == 1
 
 
 def test_0_5_degree_man_angle_bin():

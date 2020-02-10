@@ -44,7 +44,7 @@ def test_get_aca_catalog_20603():
     # Force not using a bright star so there is a GUI-only (not BOT) star
     aca = get_aca_catalog(20603, exclude_ids_acq=[40113544], n_fid=2, n_guide=6, n_acq=7,
                           raise_exc=True)
-    # Expected 2 fids, 6 guide, 7 acq
+    # Expected 2 fids, 4 guide, 7 acq
     exp = ['slot idx     id    type  sz   yang     zang   dim res halfw',
            '---- --- --------- ---- --- -------- -------- --- --- -----',
            '   0   1         4  FID 8x8  2140.23   166.63   1   1    25',
@@ -55,7 +55,7 @@ def test_get_aca_catalog_20603():
            '   5   6  40113544  GUI 6x6   102.74  1133.37   1   1    25',
            '   5   7 116923496  ACQ 6x6 -1337.79  1049.27  20   1   120',
            '   6   8 116923528  ACQ 6x6 -2418.65  1088.40  20   1   160',
-           '   7   9 116791744  ACQ 6x6   985.38 -1210.19  20   1   140',
+           '   7   9 116791744  ACQ 6x6   985.38 -1210.19  20   1   160',
            '   0  10  40108048  ACQ 6x6     2.21  1619.17  20   1   140']
 
     repr(aca)  # Apply default formats
@@ -159,11 +159,6 @@ def test_no_candidates():
     assert 'id' in acas.guides.colnames
     assert 'id' in acas.fids.colnames
 
-    assert acas.thumbs_up == 0
-    assert acas.acqs.thumbs_up == 0
-    assert acas.guides.thumbs_up == 0
-    assert acas.fids.thumbs_up == 0
-
 
 @pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
 def test_big_dither_from_mica_starcheck():
@@ -195,11 +190,6 @@ def test_pickle():
     stars.add_fake_constellation(mag=10.0, n_stars=5)
     aca = get_aca_catalog(stars=stars, dark=DARK40, raise_exc=True, **STD_INFO)
 
-    assert aca.thumbs_up == 0
-    assert aca.acqs.thumbs_up == 0
-    assert aca.guides.thumbs_up == 1
-    assert aca.fids.thumbs_up == 1
-
     aca2 = pickle.loads(pickle.dumps(aca))
 
     assert repr(aca) == repr(aca2)
@@ -216,7 +206,7 @@ def test_pickle():
             obj = aca
             obj2 = aca2
 
-        for attr in ['att', 'date', 't_ccd', 'man_angle', 'dither', 'thumbs_up']:
+        for attr in ['att', 'date', 't_ccd', 'man_angle', 'dither']:
             val = getattr(obj, attr)
             val2 = getattr(obj2, attr)
             if isinstance(val, float):
@@ -416,11 +406,6 @@ def test_bad_obsid():
     aca = get_aca_catalog(obsid='blah blah', raise_exc=False)
     assert 'ValueError: text does not have OBSID' in aca.exception
 
-    assert aca.thumbs_up == 0
-    assert aca.acqs.thumbs_up == 0
-    assert aca.guides.thumbs_up == 0
-    assert aca.fids.thumbs_up == 0
-
 
 def test_bad_pixel_dark_current():
     """
@@ -449,29 +434,6 @@ def test_bad_pixel_dark_current():
     assert sorted(aca.guides['id']) == exp_ids
     assert aca.acqs['id'].tolist() == exp_ids
     assert aca.acqs['halfw'].tolist() == [100, 160, 160, 160, 160]
-
-
-configs = [(8.5, 1, 1, 1),
-           (10.12, 0, 0, 1),
-           (10.25, 0, 0, 0)]
-
-
-@pytest.mark.parametrize('config', configs)
-def test_aca_acq_gui_thumbs_up(config):
-    """
-    Test the thumbs_up property of aca, acq, and guide selection.
-    Fid thumbs up is tested separately.
-    """
-    mag, acat, guit, acqt = config
-    stars = StarsTable.empty()
-    stars.add_fake_constellation(mag=mag, n_stars=8)
-    aca = get_aca_catalog(**mod_std_info(stars=stars, raise_exc=True,
-                                         n_acq=8, n_guide=5))
-
-    assert aca.thumbs_up == acat
-    assert aca.acqs.thumbs_up == acqt
-    assert aca.guides.thumbs_up == guit
-    assert aca.fids.thumbs_up == 1
 
 
 def test_fid_trap_effect():
