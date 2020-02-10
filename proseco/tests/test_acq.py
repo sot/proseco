@@ -1072,3 +1072,57 @@ def test_bad_star_list():
 
     idx = acqs.stars.get_id_idx(bad_id)
     assert acqs.bad_stars_mask[idx]
+
+
+def test_acq_include_optimize_halfw_ids():
+    """
+    Test that force-include acq stars with halfw=0 get halfw optimized.
+    """
+    dark = DARK40.copy()
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(mag=7.0, n_stars=8, size=2000)
+    stars.add_fake_star(yang=200, zang=200, mag=7.5, id=200)
+    stars.add_fake_star(yang=-200, zang=200, mag=10.5, id=201)
+    stars.add_fake_star(yang=-200, zang=-200, mag=10.5, id=202)
+
+    kwargs = mod_std_info(stars=stars, dark=dark,
+                          n_guide=8, n_fid=0, n_acq=8, man_angle=90,
+                          include_ids_acq=[200, 201, 202],
+                          include_halfws_acq=[0, 0, 140])
+    aca = get_aca_catalog(**kwargs)
+
+    # Confirm that halfw values are good
+    star = aca.get_id(200)
+    assert star['halfw'] == 160  # Large box for a bright star
+    star = aca.get_id(201)
+    assert star['halfw'] == 80  # Small box for faint star
+    star = aca.get_id(202)
+    assert star['halfw'] == 140  # Specified box size (not optimized)
+
+    assert aca.acqs.include_optimize_halfw_ids == [200, 201]
+
+
+@pytest.mark.parametrize('halfw_kwargs', ({}, {'include_halfws_acq': []}))
+def test_acq_include_ids_no_halfws(halfw_kwargs):
+    """
+    Test that force-include acq stars with no halfw provides works.
+    """
+    dark = DARK40.copy()
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(mag=7.0, n_stars=8, size=2000)
+    stars.add_fake_star(yang=200, zang=200, mag=7.5, id=200)
+    stars.add_fake_star(yang=-200, zang=200, mag=10.5, id=201)
+
+    kwargs = mod_std_info(stars=stars, dark=dark,
+                          n_guide=8, n_fid=0, n_acq=8, man_angle=90,
+                          include_ids_acq=[200, 201],
+                          **halfw_kwargs)
+    aca = get_aca_catalog(**kwargs)
+
+    # Confirm that halfw values are good
+    star = aca.get_id(200)
+    assert star['halfw'] == 160  # Large box for a bright star
+    star = aca.get_id(201)
+    assert star['halfw'] == 80  # Small box for faint star
+
+    assert aca.acqs.include_optimize_halfw_ids == [200, 201]

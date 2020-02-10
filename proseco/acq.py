@@ -42,7 +42,8 @@ def get_acq_catalog(obsid=0, **kwargs):
     :param focus_offset: SIM focus offset [steps] (default=0)
     :param stars: table of AGASC stars (will be fetched from agasc if None)
     :param include_ids: list of AGASC IDs of stars to include in selected catalog
-    :param include_halfws: list of acq halfwidths corresponding to ``include_ids``
+    :param include_halfws: list of acq halfwidths corresponding to ``include_ids``.
+                           For values of ``0`` proseco chooses the best halfwidth(s).
     :param exclude_ids: list of AGASC IDs of stars to exclude from selected catalog
     :param optimize: optimize star catalog after initial selection (default=True)
     :param verbose: provide extra logging info (mostly calc_p_safe) (default=False)
@@ -135,6 +136,11 @@ class AcqTable(ACACatalogTable):
     include_ids = AliasAttribute()
     include_halfws = AliasAttribute()
     exclude_ids = AliasAttribute()
+
+    # IDs that are included but with halfw=0 which implies to optimize halfw
+    # instead of freezing at the provided value.  This attribute is set internally
+    # based on the values of include_halfws.
+    include_optimize_halfw_ids = MetaAttribute(is_kwarg=False, default=())
 
     p_man_errs = MetaAttribute(is_kwarg=False)
     cand_acqs = MetaAttribute(is_kwarg=False)
@@ -453,12 +459,20 @@ class AcqTable(ACACatalogTable):
         :param stars: stars table
 
         """
+        # Allow for not providing halfws, in which case proseco chooses.
+        if self.include_halfws is None or len(self.include_halfws) == 0:
+            self.include_halfws = [0] * len(self.include_ids)
+
         if len(self.include_ids) != len(self.include_halfws):
             raise ValueError('include_ids and include_halfws must have same length')
 
         # Ensure values are valid box_sizes
         grid_func = interp1d(ACQ.box_sizes, ACQ.box_sizes,
                              kind='nearest', fill_value='extrapolate')
+        self.include_optimize_halfw_ids = [
+            acq_id for acq_id, halfw in zip(self.include_ids, self.include_halfws)
+            if halfw == 0]
+
         self.include_halfws = grid_func(self.include_halfws).tolist()
 
         super().process_include_ids(cand_acqs, stars)
@@ -751,7 +765,9 @@ class AcqTable(ACACatalogTable):
 
         for idx in idxs:
             # Don't optimize halfw for a star that is specified for inclusion
-            if self['id'][idx] in self.include_ids:
+            # with a valid (non-zero) halfw set.  The set of include_optimize_halfw_ids is
+            # any ids where halfw=0 was provided.
+            if self['id'][idx] in set(self.include_ids) - set(self.include_optimize_halfw_ids):
                 continue
 
             p_safe, improved = self.optimize_acq_halfw(idx, p_safe, verbose)

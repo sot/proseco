@@ -50,7 +50,8 @@ def get_aca_catalog(obsid=0, **kwargs):
     :param focus_offset: SIM focus offset [steps] (default=0)
     :param stars: table of AGASC stars (will be fetched from agasc if None)
     :param include_ids_acq: list of AGASC IDs of stars to include in acq catalog
-    :param include_halfws_acq: list of acq halfwidths corresponding to ``include_ids``
+    :param include_halfws_acq: list of acq halfwidths corresponding to ``include_ids``.
+                               For values of ``0`` proseco chooses the best halfwidth(s).
     :param exclude_ids_acq: list of AGASC IDs of stars to exclude from acq catalog
     :param include_ids_guide: list of AGASC IDs of stars to include in guide catalog
     :param exclude_ids_guide: list of AGASC IDs of stars to exclude from guide catalog

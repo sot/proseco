@@ -62,6 +62,12 @@ exclude_ids_guide   int or list of AGASC IDs of stars to exclude from guide cata
 stars               table of AGASC stars (will be fetched from agasc if None)
 =================== ===============================================================
 
+Within the ``include_halfws_acq`` list, one can supply the value ``0`` for a
+star instead of a typical legal value such as ``60`` or ``120``.  In that case
+proseco will run the normal optimization and choose the best halfwidth for that
+included star.  If the ``include_halfws_acq`` argument is not supplied or set
+to ``[]`` then all halfwidths will be chosen by proseco.
+
 **Debug**
 
 ============== =========================================================
