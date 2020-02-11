@@ -2,6 +2,7 @@
 *.ipynb
 *.pkl
 *.npz
+/validate
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
