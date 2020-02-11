@@ -590,9 +590,6 @@ class AcqTable(ACACatalogTable):
                     # acq_indices, box_sizes in place
                     self.select_best_p_acqs(cand_acqs[:n_include], min_p_acq,
                                             acq_indices, box_sizes)
-                else:
-                    # Because of the final min_p_acq = -1, this is guaranteed to finish.
-                    break
 
             # This should never happen but be careful
             if len(acq_indices) != n_include:
