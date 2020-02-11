@@ -1133,3 +1133,21 @@ def test_acq_include_ids_no_halfws_full_catalog():
     # Not exactly the same, but close enough.
     exp_halfws = [160, 160, 160, 160, 120, 60, 80, 60]
     assert np.all(aca2.acqs['halfw'] == exp_halfws)
+
+
+def test_acq_include_ids_all_halfws_full_catalog():
+    """Test for all 8 acq_ids provided with no include_halfws provided"""
+    stars = StarsTable.empty()
+    dark = DARK40.copy()
+    stars.add_fake_constellation(mag=np.linspace(9.5, 10.6, 8), n_stars=8, size=2000)
+    kwargs = mod_std_info(stars=stars, dark=dark, n_guide=8, n_fid=0, n_acq=8, man_angle=30)
+    aca = get_aca_catalog(**kwargs)
+    exp_halfws = [160, 160, 160, 160, 60, 60, 80, 60]
+    assert np.all(aca.acqs['halfw'] == exp_halfws)
+
+    # Now force-include all acq stars but with halfws re-optimized.
+    kwargs['include_ids_acq'] = aca.acqs['id']
+    kwargs['include_halfws_acq'] = aca.acqs['halfw']
+    aca2 = get_aca_catalog(**kwargs)
+    # Not exactly the same, but close enough.
+    assert np.all(aca2.acqs['halfw'] == aca.acqs['halfw'])
