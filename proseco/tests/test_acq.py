@@ -1072,7 +1072,7 @@ def test_acq_include_optimize_halfw_ids():
     stars.add_fake_constellation(mag=7.0, n_stars=8, size=2000)
     stars.add_fake_star(yang=200, zang=200, mag=7.5, id=200)
     stars.add_fake_star(yang=-200, zang=200, mag=10.5, id=201)
-    stars.add_fake_star(yang=-200, zang=-200, mag=10.5, id=202)
+    stars.add_fake_star(yang=-200, zang=-200, mag=10.99, id=202)
 
     kwargs = mod_std_info(stars=stars, dark=dark,
                           n_guide=8, n_fid=0, n_acq=8, man_angle=90,
@@ -1100,7 +1100,7 @@ def test_acq_include_ids_no_halfws(halfw_kwargs):
     stars = StarsTable.empty()
     stars.add_fake_constellation(mag=7.0, n_stars=8, size=2000)
     stars.add_fake_star(yang=200, zang=200, mag=7.5, id=200)
-    stars.add_fake_star(yang=-200, zang=200, mag=10.5, id=201)
+    stars.add_fake_star(yang=-200, zang=200, mag=10.99, id=201)
 
     kwargs = mod_std_info(stars=stars, dark=dark,
                           n_guide=8, n_fid=0, n_acq=8, man_angle=90,
