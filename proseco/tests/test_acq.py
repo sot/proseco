@@ -1149,5 +1149,6 @@ def test_acq_include_ids_all_halfws_full_catalog():
     kwargs['include_ids_acq'] = aca.acqs['id']
     kwargs['include_halfws_acq'] = aca.acqs['halfw']
     aca2 = get_aca_catalog(**kwargs)
-    # Not exactly the same, but close enough.
     assert np.all(aca2.acqs['halfw'] == aca.acqs['halfw'])
+
+    assert aca.acqs.calc_p_safe() == aca2.acqs.calc_p_safe()
