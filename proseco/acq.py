@@ -598,13 +598,14 @@ class AcqTable(ACACatalogTable):
             # For include stars where the halfw is not going to be optimized
             # then then override the box size that was just found with the
             # user-supplied value.
-            include_halfw_for_id = {iid: halfw for iid, halfw in zip(self.include_ids, self.include_halfws)}
+            include_halfw_for_id = {iid: halfw for iid, halfw in zip(self.include_ids,
+                                                                     self.include_halfws)}
 
             # We want the boxes to reference the same stars that the acq_indices index
             for box_idx, acq_idx in enumerate(acq_indices):
                 if (cand_acqs[acq_idx]['id'] in self.include_ids and
-                    cand_acqs[acq_idx]['id'] not in self.include_optimize_halfw_ids):
-                        box_sizes[box_idx] = include_halfw_for_id[cand_acqs[acq_idx]['id']]
+                        cand_acqs[acq_idx]['id'] not in self.include_optimize_halfw_ids):
+                    box_sizes[box_idx] = include_halfw_for_id[cand_acqs[acq_idx]['id']]
 
         # Now accumulate indices and box sizes of candidate acq stars that meet
         # successively less stringent minimum p_acq.
