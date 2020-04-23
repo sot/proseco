@@ -474,7 +474,6 @@ class AcqTable(ACACatalogTable):
             if halfw == 0]
 
         self.include_halfws = grid_func(self.include_halfws).tolist()
-
         super().process_include_ids(cand_acqs, stars)
 
     def select_best_p_acqs(self, cand_acqs, min_p_acq, acq_indices, box_sizes):
@@ -577,7 +576,6 @@ class AcqTable(ACACatalogTable):
         if self.include_ids:
             self.log(f'Processing force-include ids={self.include_ids} '
                      f'halfws={self.include_halfws}')
-
             # Re-order candidate acqs to put those in the include list first
             ok = np.in1d(cand_acqs['id'], self.include_ids)
             idxs = np.concatenate([np.where(ok)[0], np.where(~ok)[0]])
@@ -591,6 +589,7 @@ class AcqTable(ACACatalogTable):
                     self.select_best_p_acqs(cand_acqs[:n_include], min_p_acq,
                                             acq_indices, box_sizes)
 
+
             # This should never happen but be careful
             if len(acq_indices) != n_include:
                 raise RuntimeError(f'failure in force-include')
@@ -598,14 +597,13 @@ class AcqTable(ACACatalogTable):
             # For include stars where the halfw is not going to be optimized
             # then then override the box size that was just found with the
             # user-supplied value.
-            for include_id, include_halfw in zip(self.include_ids, self.include_halfws):
-                if include_id not in self.include_optimize_halfw_ids:
-                    # Find the position in box_sizes that corresponds to include_id
-                    # and set to the specified include_halfw.
-                    for idx in range(len(acq_indices)):
-                        if include_id == cand_acqs[idx]['id']:
-                            box_sizes[idx] = include_halfw
-                            break
+            include_halfw_for_id = {iid: halfw for iid, halfw in zip(self.include_ids, self.include_halfws)}
+
+            # We want the boxes to reference the same stars that the acq_indices index
+            for box_idx, acq_idx in enumerate(acq_indices):
+                if (cand_acqs[acq_idx]['id'] in self.include_ids and
+                    cand_acqs[acq_idx]['id'] not in self.include_optimize_halfw_ids):
+                        box_sizes[box_idx] = include_halfw_for_id[cand_acqs[acq_idx]['id']]
 
         # Now accumulate indices and box sizes of candidate acq stars that meet
         # successively less stringent minimum p_acq.
