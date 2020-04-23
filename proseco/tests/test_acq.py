@@ -1152,3 +1152,30 @@ def test_acq_include_ids_all_halfws_full_catalog():
     assert np.all(aca2.acqs['halfw'] == aca.acqs['halfw'])
 
     assert aca.acqs.calc_p_safe() == aca2.acqs.calc_p_safe()
+
+
+def test_obsid_47250():
+    """Test include all 8 acq ids has right halfws for right stars"""
+
+    # This uses the attitude/stars from obsid 47250 in APR2720
+    att = [0.37484371, -0.40057847, -0.79053942,  0.27216999]
+    stars = StarsTable.from_agasc(att, date='2018:230')
+    dark = DARK40.copy()
+    kwargs = mod_std_info(att=att, stars=stars, dark=dark,
+                          n_guide=8, n_fid=0, n_acq=8, man_angle=90)
+    kwargs['include_halfws_acq'] =  [140, 160, 160, 160, 160, 160, 160, 160]
+    kwargs['include_ids_acq'] =  [810423632,
+                                  810428640,
+                                  812125920,
+                                  812130960,
+                                  812131816,
+                                  886441184,
+                                  810427792,
+                                  810428880]
+    aca = get_aca_catalog(**kwargs)
+
+    # Confirm that the included stars have the assigned halfws
+    for id, halfw in zip(kwargs['include_ids_acq'],
+                         kwargs['include_halfws_acq']):
+        assert aca.acqs.get_id(id)['halfw'] == halfw
+
