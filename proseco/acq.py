@@ -474,6 +474,7 @@ class AcqTable(ACACatalogTable):
             if halfw == 0]
 
         self.include_halfws = grid_func(self.include_halfws).tolist()
+
         super().process_include_ids(cand_acqs, stars)
 
     def select_best_p_acqs(self, cand_acqs, min_p_acq, acq_indices, box_sizes):
@@ -576,6 +577,7 @@ class AcqTable(ACACatalogTable):
         if self.include_ids:
             self.log(f'Processing force-include ids={self.include_ids} '
                      f'halfws={self.include_halfws}')
+
             # Re-order candidate acqs to put those in the include list first
             ok = np.in1d(cand_acqs['id'], self.include_ids)
             idxs = np.concatenate([np.where(ok)[0], np.where(~ok)[0]])
@@ -588,7 +590,6 @@ class AcqTable(ACACatalogTable):
                     # acq_indices, box_sizes in place
                     self.select_best_p_acqs(cand_acqs[:n_include], min_p_acq,
                                             acq_indices, box_sizes)
-
 
             # This should never happen but be careful
             if len(acq_indices) != n_include:
