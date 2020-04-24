@@ -1152,3 +1152,30 @@ def test_acq_include_ids_all_halfws_full_catalog():
     assert np.all(aca2.acqs['halfw'] == aca.acqs['halfw'])
 
     assert aca.acqs.calc_p_safe() == aca2.acqs.calc_p_safe()
+
+
+def test_acq_include_ids_all_halfws_full_catalog_with_spoiler():
+    """Test for all 8 acq_ids provided with all include_halfws provided.
+
+    Importantly include stars for which the p_acq is not increasing in the
+    same order as mag. This is the root cause of #323.  For this test two
+    bright acq stars with a strong spoiler are included.
+    """
+    stars = StarsTable.empty()
+    dark = DARK40.copy()
+    ids = np.arange(100, 108)
+    halfws = [60, 80, 100, 120, 140, 160, 60, 80]
+    mags = [10.6, 10.2, 9.8, 7.0, 9.5, 8.5, 7.4, 7.5]
+
+    stars.add_fake_constellation(mag=mags[:6], n_stars=6, size=2000, id=ids[:6])
+    stars.add_fake_star(yang=0, zang=0, mag=mags[6], id=ids[6])
+    stars.add_fake_star(yang=40, zang=0, mag=mags[7], id=ids[7])
+    stars.add_fake_star(yang=20, zang=0, mag=5.0)  # Strong spoiler for 106 and 107
+
+    kwargs = mod_std_info(stars=stars, dark=dark, n_guide=8, n_fid=0, n_acq=8,
+                          man_angle=30, include_ids_acq=ids, include_halfws_acq=halfws)
+    aca = get_aca_catalog(**kwargs)
+    aca.acqs.sort('id')
+    assert np.all(aca.acqs['id'] == ids)
+    assert np.allclose(aca.acqs['mag'], mags)
+    assert np.all(aca.acqs['halfw'] == halfws)
