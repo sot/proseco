@@ -603,7 +603,7 @@ class AcqTable(ACACatalogTable):
                     # Find the position in box_sizes that corresponds to include_id
                     # and set to the specified include_halfw.
                     for idx in range(len(acq_indices)):
-                        if include_id == cand_acqs[idx]['id']:
+                        if include_id == cand_acqs[acq_indices[idx]]['id']:
                             box_sizes[idx] = include_halfw
                             break
 
