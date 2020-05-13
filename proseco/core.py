@@ -976,7 +976,7 @@ AGASC_COLS_DROP = [
 # within an observation, NOT the error on the catalog mag (which is about
 # the error on mean of the sample, not the std-dev of the sample).
 #
-# See skanb/star_selection/star-mag-std-dev.ipynb for the source of numbers.
+# See ASPECT/ipynb/star_selection/star-mag-std-dev.ipynb for the source of numbers.
 #
 # Note that get_mag_std is a function that is called with get_mag_std(mag_aca).
 get_mag_std = interp1d(x=[-10, 6.7, 7.3, 7.8, 8.3, 8.8, 9.2, 9.7, 10.1, 11, 20],  # mag
