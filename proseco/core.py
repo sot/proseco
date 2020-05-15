@@ -507,7 +507,8 @@ class BaseCatalogTable(Table):
         kwargs.setdefault('bad_stars', np.zeros(len(kwargs['stars']), dtype=bool))
 
         fig = plot_stars(attitude=self.att, ax=ax, **kwargs)
-        plt.show()
+        if 'agg' not in plt.get_backend().lower():
+            plt.show()
 
         return fig
 

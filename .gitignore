@@ -3,6 +3,9 @@
 *.pkl
 *.npz
 /validate
+/obs?????
+/.idea
+/.vscode
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
