@@ -40,6 +40,7 @@ def get_aca_catalog(obsid=0, **kwargs):
     :param n_acq: desired number of acquisition stars (default=8)
     :param n_fid: desired number of fid lights (req'd unless obsid spec'd)
     :param n_guide: desired number of guide stars (req'd unless obsid spec'd)
+    :param monitors: N x 5 float array specifying monitor windows
     :param man_angle: maneuver angle (deg)
     :param t_ccd_acq: ACA CCD temperature for acquisition (degC)
     :param t_ccd_guide: ACA CCD temperature for guide (degC)
@@ -49,6 +50,8 @@ def get_aca_catalog(obsid=0, **kwargs):
     :param detector: 'ACIS-S' | 'ACIS-I' | 'HRC-S' | 'HRC-I'
     :param sim_offset: SIM translation offset from nominal [steps] (default=0)
     :param focus_offset: SIM focus offset [steps] (default=0)
+    :param target_offset: (y, z) target offset including dynamical offset
+                          (2-element sequence (y, z), deg)
     :param stars: table of AGASC stars (will be fetched from agasc if None)
     :param include_ids_acq: list of AGASC IDs of stars to include in acq catalog
     :param include_halfws_acq: list of acq halfwidths corresponding to ``include_ids``.
