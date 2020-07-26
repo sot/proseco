@@ -747,7 +747,8 @@ def test_includes_for_obsid():
                                31075368,
                                31982136,
                                32375384],
-           'include_ids_guide': [31075128, 31076560, 31463496, 31983336, 32374896]}
+           'include_ids_guide': [31075128, 31076560, 31463496, 31983336, 32374896],
+           'include_ids_fid': [1, 5, 6]}
 
     out = includes_for_obsid(8008)
     assert out == exp
