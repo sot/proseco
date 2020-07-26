@@ -556,6 +556,8 @@ class ACACatalogTable(BaseCatalogTable):
     exclude_ids_acq = IntListMetaAttribute(default=[])
     include_ids_guide = IntListMetaAttribute(default=[])
     exclude_ids_guide = IntListMetaAttribute(default=[])
+    include_ids_fid = IntListMetaAttribute(default=[])
+    exclude_ids_fid = IntListMetaAttribute(default=[])
     optimize = MetaAttribute(default=True)
     verbose = MetaAttribute(default=False)
     print_log = MetaAttribute(default=False)
@@ -1467,6 +1469,8 @@ def get_kwargs_from_starcheck_text(obs_text, include_cat=False, force_catalog=Fa
             kw['include_halfws_acq'] = cat['halfw'][ok].tolist()
             ok = np.in1d(cat['type'], ('GUI', 'BOT'))
             kw['include_ids_guide'] = cat['id'][ok].tolist()
+            ok = np.in1d(cat['type'], ('FID'))
+            kw['include_ids_fid'] = cat['id'][ok].tolist()
 
     try:
         targ = get_targ(obs_text)
@@ -1506,5 +1510,8 @@ def includes_for_obsid(obsid):
 
     ok = np.in1d(cat['type'], ('GUI', 'BOT'))
     out['include_ids_guide'] = cat['id'][ok].tolist()
+
+    ok = np.in1d(cat['type'], ('FID'))
+    out['include_ids_fid'] = cat['id'][ok].tolist()
 
     return out

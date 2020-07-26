@@ -15,7 +15,7 @@ from . import characteristics as ACA
 from . import characteristics_fid as FID
 from . import characteristics_acq as ACQ
 
-from .core import ACACatalogTable, MetaAttribute
+from .core import ACACatalogTable, MetaAttribute, AliasAttribute
 
 
 def get_fid_catalog(obsid=0, **kwargs):
@@ -38,6 +38,9 @@ def get_fid_catalog(obsid=0, **kwargs):
     :param stars: stars table.  Defaults to acqs.stars if available.
     :param dither_acq: acq dither size (2-element sequence (y, z), arcsec)
     :param dither_guide: guide dither size (2-element sequence (y, z), arcsec)
+    :param include_ids: fid ids to force include. If no possible sets of fids include
+                        the id (aka index), no fids will be selected.
+    :param exclude_ids: fid ids to exclude
     :param n_fid: number of desired fid lights
     :param print_log: print log to stdout (default=False)
 
@@ -91,6 +94,9 @@ class FidTable(ACACatalogTable):
     required_attrs = ('att', 'detector', 'sim_offset', 'focus_offset',
                       't_ccd_guide', 'date',
                       'dither_acq', 'dither_guide')
+
+    include_ids = AliasAttribute()
+    exclude_ids = AliasAttribute()
 
     @property
     def acqs(self):
@@ -172,6 +178,15 @@ class FidTable(ACACatalogTable):
             cand_fid_sets = [fid_set for fid_set in FID.fid_sets[self.detector]
                              if fid_set <= cand_fids_ids]
 
+        if len(self.include_ids_fid) > 0:
+            ok = np.ones(len(cand_fid_sets), dtype=bool)
+            for fidid in self.include_ids_fid:
+                ok = ok & np.array([fidid in fid_set for fid_set in cand_fid_sets])
+            if not np.all(ok):
+                self.log(f'Reducing fid sets from {len(cand_fid_sets)} to '
+                         f'{np.count_nonzero(ok)} via include_ids_fid')
+            cand_fid_sets = [fid_set for idx, fid_set in enumerate(cand_fid_sets)
+                             if ok[idx]]
         return cand_fid_sets
 
     def set_slot_column(self):
@@ -310,7 +325,8 @@ class FidTable(ACACatalogTable):
         for idx, fid in enumerate(cand_fids):
             if (self.off_ccd(fid) or
                     self.near_hot_or_bad_pixel(fid) or
-                    self.has_column_spoiler(fid, self.stars, stars_mask)):
+                    self.has_column_spoiler(fid, self.stars, stars_mask) or
+                    self.is_excluded(fid)):
                 idx_bads.append(idx)
 
         if idx_bads:
@@ -335,6 +351,17 @@ class FidTable(ACACatalogTable):
             self.log(f'Rejecting fid id={fid["id"]} row,col='
                      f'({fid["row"]:.1f}, {fid["col"]:.1f}) off CCD',
                      level=1)
+            return True
+        else:
+            return False
+
+    def is_excluded(self, fid):
+        """Return True if fid id is in exclude_ids_fid manual list
+
+        :param fid: FidTable Row of candidate fid light
+        """
+        if fid['id'] in self.exclude_ids_fid:
+            self.log(f'Rejecting fid {fid["id"]}: manually excluded by exclude_ids_fid')
             return True
         else:
             return False
