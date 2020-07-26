@@ -212,3 +212,66 @@ def test_fid_hot_pixel_reject():
 
     fids = get_fid_catalog(stars=StarsTable.empty(), dark=dark, **STD_INFO)
     assert fids['id'].tolist() == [2, 3, 6]
+
+
+def test_fids_include_exclude():
+    """
+    Test include and exclude stars for guide.  This uses a catalog with 11 stars:
+    - 8 bright stars from 7.0 to 7.7 mag, where the 7.0 is EXCLUDED
+    - 2 faint (but OK) stars 10.0, 10.1 where the 10.0 is INCLUDED
+    - 1 very faint (bad) stars 12.0 mag is INCLUDED
+
+    Both the 7.0 and 10.1 would normally get picked either initially
+    or swapped in during optimization, and 12.0 would never get picked.
+    """
+    fids = get_fid_catalog(stars=StarsTable.empty(), dark=DARK40, **STD_INFO)
+    assert np.all(fids['id'] == [2, 4, 5])
+
+    # Define includes and excludes.
+    include_ids = [1, 4]
+    exclude_ids = [5]
+
+    fids = get_fid_catalog(stars=StarsTable.empty(), dark=DARK40, **STD_INFO,
+                           include_ids=include_ids, exclude_ids=exclude_ids)
+
+    assert fids.include_ids == include_ids
+    assert fids.exclude_ids == exclude_ids
+
+    for cand_set in fids.cand_fid_sets:
+        assert all(id_ in cand_set for id_ in include_ids)
+        assert all(id_ not in cand_set for id_ in exclude_ids)
+
+    assert all(id_ in fids['id'] for id_ in include_ids)
+    assert all(id_ not in fids['id'] for id_ in exclude_ids)
+
+    assert np.all(fids['id'] == [1, 2, 4])
+
+
+def test_fids_include_bad():
+    """
+    Test include bad id fid and fid not on CCD
+    """
+    fids = get_fid_catalog(stars=StarsTable.empty(), dark=DARK40, **STD_INFO)
+    assert np.all(fids['id'] == [2, 4, 5])
+
+    # Define includes and excludes.
+    include_ids = [10]
+    exclude_ids = []
+    fids = get_fid_catalog(stars=StarsTable.empty(), dark=DARK40, **STD_INFO,
+                           include_ids=include_ids, exclude_ids=exclude_ids)
+
+    # If you force-include a non-existent fid, you get nothing
+    assert len(fids) == 0
+
+    # Set up a scenario with large offset so only two are on the CCD
+    include_ids = [4]
+    exclude_ids = []
+    fids = get_fid_catalog(**mod_std_info(stars=StarsTable.empty(), sim_offset=80000))
+    assert np.all(fids.cand_fids['id'] == [1, 2])
+
+    # Force include one that isn't on the CCD
+    fids = get_fid_catalog(**mod_std_info(stars=StarsTable.empty(), sim_offset=80000),
+                           include_ids=include_ids, exclude_ids=exclude_ids)
+
+    # If you force-include a fid that is off the CCD no sets match and you get nothing
+    assert len(fids) == 0
