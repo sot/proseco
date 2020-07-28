@@ -463,6 +463,25 @@ def test_fid_trap_effect():
     assert 1184897704 not in cat.guides['id']
 
 
+def test_monitors_and_target_offset_args():
+    """
+    Test #328 to add monitors and target_offset args to API.
+    """
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(mag=8.0, n_stars=8)
+    aca = get_aca_catalog(**mod_std_info(stars=stars, dark=DARK40))
+    assert aca.monitors is None
+    assert aca.target_offset == (0.0, 0.0)
+
+    monitors = np.arange(10).reshape(2, 5)
+    target_offset = (1, 2)
+    aca = get_aca_catalog(**mod_std_info(monitors=monitors,
+                                         target_offset=target_offset,
+                                         stars=stars, dark=DARK40))
+    assert aca.monitors is monitors
+    assert aca.target_offset is target_offset
+
+
 def test_reject_column_spoilers():
     """
     Test that column spoiler handling is correct for guide, acq and fid selection.
