@@ -220,12 +220,6 @@ class ACATable(ACACatalogTable):
         out.guides = GuideTable.empty()
         return out
 
-    @property
-    def thumbs_up(self):
-        return int(self.acqs.thumbs_up &
-                   self.fids.thumbs_up &
-                   self.guides.thumbs_up)
-
     def set_attrs_from_kwargs(self, **kwargs):
         """Set object attributes from kwargs.
 

@@ -100,19 +100,6 @@ class GuideTable(ACACatalogTable):
     include_ids = AliasAttribute()
     exclude_ids = AliasAttribute()
 
-    @property
-    def thumbs_up(self):
-        if self.n_guide == 0:
-            # If no guides were requested then always OK
-            out = 1
-        elif len(self) == 0:
-            out = 0
-        else:
-            # Evaluate guide catalog quality for thumbs_up
-            count = guide_count(self['mag'], self.t_ccd)
-            out = int(count >= GUIDE.min_guide_count)
-        return out
-
     def make_report(self, rootdir='.'):
         """
         Make summary HTML report for guide selection process and outputs.
