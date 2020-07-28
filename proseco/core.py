@@ -610,7 +610,10 @@ class ACACatalogTable(BaseCatalogTable):
 
     def set_attrs_from_kwargs(self, **kwargs):
         for name, val in kwargs.items():
-            if name in self.allowed_kwargs:
+            # If name is an allowed keyword arg or a settable property on the class
+            # then set now.
+            if (name in self.allowed_kwargs
+                    or inspect.isdatadescriptor(getattr(self.__class__, name, None))):
                 setattr(self, name, val)
             else:
                 raise ValueError(f'unexpected keyword argument "{name}"')
