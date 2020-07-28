@@ -69,6 +69,10 @@ def get_guide_catalog(obsid=0, **kwargs):
 
 
 class GuideTable(ACACatalogTable):
+    # Define base set of allowed keyword args to __init__. Subsequent MetaAttribute
+    # or AliasAttribute properties will add to this.
+    allowed_kwargs = ACACatalogTable.allowed_kwargs | set(['fids'])
+
     # Catalog type when plotting (None | 'FID' | 'ACQ' | 'GUI')
     catalog_type = 'GUI'
 
@@ -79,8 +83,6 @@ class GuideTable(ACACatalogTable):
     # Name of table.  Use to define default file names where applicable.
     # (e.g. `obs19387/guide.pkl`).
     name = 'guide'
-
-    allowed_kwargs = ACACatalogTable.allowed_kwargs | set(['fids'])
 
     # Required attributes
     required_attrs = ('att', 't_ccd_guide', 'date', 'dither_guide', 'n_guide')

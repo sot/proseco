@@ -117,6 +117,10 @@ class AcqTable(ACACatalogTable):
     """
     Catalog of acquisition stars
     """
+    # Define base set of allowed keyword args to __init__. Subsequent MetaAttribute
+    # or AliasAttribute properties will add to this.
+    allowed_kwargs = ACACatalogTable.allowed_kwargs.copy()
+
     # Catalog type when plotting (None | 'FID' | 'ACQ' | 'GUI')
     catalog_type = 'ACQ'
 

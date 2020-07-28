@@ -182,6 +182,10 @@ class ACATable(ACACatalogTable):
     as attributes and other methods relevant to the merged catalog.
 
     """
+    # Define base set of allowed keyword args to __init__. Subsequent MetaAttribute
+    # or AliasAttribute properties will add to this.
+    allowed_kwargs = ACACatalogTable.allowed_kwargs.copy()
+
     optimize = MetaAttribute(default=True)
     call_args = MetaAttribute(default={})
     version = MetaAttribute()
