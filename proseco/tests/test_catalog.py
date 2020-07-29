@@ -14,13 +14,22 @@ import numpy as np
 import mica.starcheck
 
 from .test_common import STD_INFO, mod_std_info, DARK40, OBS_INFO
-from ..core import StarsTable, includes_for_obsid
+from ..core import StarsTable, includes_for_obsid, ACACatalogTable
 from ..catalog import get_aca_catalog, ACATable
-from ..fid import get_fid_catalog
+from ..fid import get_fid_catalog, FidTable
 from .. import characteristics as ACA
 
 HAS_SC_ARCHIVE = Path(mica.starcheck.starcheck.FILES['data_root']).exists()
 TEST_COLS = 'slot idx id type sz yang zang dim res halfw'.split()
+
+
+def test_allowed_kwargs():
+    """Test #332 where allowed_kwargs class attribute is unique for each subclass"""
+    new_kwargs = ACATable.allowed_kwargs - ACACatalogTable.allowed_kwargs
+    assert new_kwargs == {'call_args', 'version'}
+
+    new_kwargs = FidTable.allowed_kwargs - ACACatalogTable.allowed_kwargs
+    assert new_kwargs == {'acqs'}
 
 
 @pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')

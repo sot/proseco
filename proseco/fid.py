@@ -74,6 +74,10 @@ def get_fid_catalog(obsid=0, **kwargs):
 
 
 class FidTable(ACACatalogTable):
+    # Define base set of allowed keyword args to __init__. Subsequent MetaAttribute
+    # or AliasAttribute properties will add to this.
+    allowed_kwargs = ACACatalogTable.allowed_kwargs | set(['acqs'])
+
     # Catalog type when plotting (None | 'FID' | 'ACQ' | 'GUI')
     catalog_type = 'FID'
 
@@ -83,8 +87,6 @@ class FidTable(ACACatalogTable):
 
     cand_fids = MetaAttribute(is_kwarg=False)
     cand_fid_sets = MetaAttribute(is_kwarg=False)
-
-    allowed_kwargs = ACACatalogTable.allowed_kwargs | set(['acqs'])
 
     required_attrs = ('att', 'detector', 'sim_offset', 'focus_offset',
                       't_ccd_guide', 'date',
