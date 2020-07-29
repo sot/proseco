@@ -8,7 +8,6 @@ import chandra_aca.aca_image
 from chandra_aca.transform import (mag_to_count_rate, count_rate_to_mag,
                                    snr_mag_for_t_ccd)
 from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
-from chandra_aca.star_probs import guide_count
 
 from . import characteristics as ACA
 from . import characteristics_guide as GUIDE
