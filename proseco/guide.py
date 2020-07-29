@@ -8,7 +8,6 @@ import chandra_aca.aca_image
 from chandra_aca.transform import (mag_to_count_rate, count_rate_to_mag,
                                    snr_mag_for_t_ccd)
 from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
-from chandra_aca.star_probs import guide_count
 
 from . import characteristics as ACA
 from . import characteristics_guide as GUIDE
@@ -101,19 +100,6 @@ class GuideTable(ACACatalogTable):
     dither = AliasAttribute()  # .. and likewise.
     include_ids = AliasAttribute()
     exclude_ids = AliasAttribute()
-
-    @property
-    def thumbs_up(self):
-        if self.n_guide == 0:
-            # If no guides were requested then always OK
-            out = 1
-        elif len(self) == 0:
-            out = 0
-        else:
-            # Evaluate guide catalog quality for thumbs_up
-            count = guide_count(self['mag'], self.t_ccd)
-            out = int(count >= GUIDE.min_guide_count)
-        return out
 
     def make_report(self, rootdir='.'):
         """

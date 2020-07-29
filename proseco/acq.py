@@ -198,17 +198,6 @@ class AcqTable(ACACatalogTable):
         self.update_p_acq_column(self)
         self.calc_p_safe()
 
-    @property
-    def thumbs_up(self):
-        if self.n_acq == 0:
-            out = 1
-        elif len(self) < 2:
-            out = 0
-        else:
-            self.update_p_acq_column(self)
-            out = int(self.get_log_p_2_or_fewer() <= np.log10(ACQ.acq_prob))
-        return out
-
     def make_report(self, rootdir='.'):
         """
         Make summary HTML report for acq selection process and outputs.

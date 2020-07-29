@@ -147,21 +147,6 @@ attributes::
   37879960 188.579307 2.444460  -567.34  -632.27  119.53 ...   10.70 0.000     1     1    25  6x6
   37882072 188.584100 1.455829  2197.62  1608.89 -436.73 ...   11.66 0.000     1     1    25  6x6
 
-The ``aca`` object provides a ``thumbs_up`` attribute which is
-a rough indicator that the catalog will likely pass or fail ACA review.
-The value of this is ``0`` for NOT OK and ``1`` for OK.  Note in
-this case that too few guide stars have been selected::
-
-  >>> aca.thumbs_up
-  0
-
-  >>> aca.acqs.thumbs_up
-  1
-  >>> aca.guides.thumbs_up
-  0
-  >>> aca.fids.thumbs_up
-  1
-
 Each of the individual catalogs also has a ``warnings`` attribute that is a
 list of any warnings which occurred in processing::
 
