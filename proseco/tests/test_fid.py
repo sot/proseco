@@ -257,11 +257,11 @@ def test_fids_include_bad():
     # Define includes and excludes.
     include_ids = [10]
     exclude_ids = []
-    fids = get_fid_catalog(stars=StarsTable.empty(), dark=DARK40, **STD_INFO,
-                           include_ids=include_ids, exclude_ids=exclude_ids)
 
-    # If you force-include a non-existent fid, you get nothing
-    assert len(fids) == 0
+    # If you force-include a non-existent fid, you raise ValueError
+    with pytest.raises(ValueError):
+        get_fid_catalog(stars=StarsTable.empty(), dark=DARK40, **STD_INFO,
+                        include_ids=include_ids, exclude_ids=exclude_ids)
 
     # Set up a scenario with large offset so only two are on the CCD
     include_ids = [4]
@@ -273,5 +273,7 @@ def test_fids_include_bad():
     fids = get_fid_catalog(**mod_std_info(stars=StarsTable.empty(), sim_offset=80000),
                            include_ids=include_ids, exclude_ids=exclude_ids)
 
-    # If you force-include a fid that is off the CCD no sets match and you get nothing
-    assert len(fids) == 0
+    assert np.all(fids['id'] == [1, 2, 4])
+
+    # If you force-include a fid that is off the CCD, it is still off the CCD
+    assert fids.off_ccd(fids.get_id(4))
