@@ -178,15 +178,11 @@ class FidTable(ACACatalogTable):
             cand_fid_sets = [fid_set for fid_set in FID.fid_sets[self.detector]
                              if fid_set <= cand_fids_ids]
 
-        if len(self.include_ids_fid) > 0:
-            ok = np.ones(len(cand_fid_sets), dtype=bool)
-            for fidid in self.include_ids_fid:
-                ok = ok & np.array([fidid in fid_set for fid_set in cand_fid_sets])
-            if not np.all(ok):
-                self.log(f'Reducing fid sets from {len(cand_fid_sets)} to '
-                         f'{np.count_nonzero(ok)} via include_ids_fid')
-            cand_fid_sets = [fid_set for idx, fid_set in enumerate(cand_fid_sets)
-                             if ok[idx]]
+        # Restrict candidate fid sets to those that entirely contain the include_ids_set
+        include_ids_set = set(self.include_ids_fid)
+        cand_fid_sets = [fid_set for fid_set in cand_fid_sets if fid_set >= include_ids_set]
+        self.log(f'Reducing fid sets to those that include fid ids {self.include_ids_fid}')
+
         return cand_fid_sets
 
     def set_slot_column(self):
