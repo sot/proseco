@@ -216,13 +216,7 @@ def test_fid_hot_pixel_reject():
 
 def test_fids_include_exclude():
     """
-    Test include and exclude stars for guide.  This uses a catalog with 11 stars:
-    - 8 bright stars from 7.0 to 7.7 mag, where the 7.0 is EXCLUDED
-    - 2 faint (but OK) stars 10.0, 10.1 where the 10.0 is INCLUDED
-    - 1 very faint (bad) stars 12.0 mag is INCLUDED
-
-    Both the 7.0 and 10.1 would normally get picked either initially
-    or swapped in during optimization, and 12.0 would never get picked.
+    Test include and exclude fids.
     """
     fids = get_fid_catalog(stars=StarsTable.empty(), dark=DARK40, **STD_INFO)
     assert np.all(fids['id'] == [2, 4, 5])
