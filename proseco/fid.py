@@ -312,17 +312,25 @@ class FidTable(ACACatalogTable):
 
         self.log(f'Initial candidate fid ids are {cand_fids["id"].tolist()}')
 
-        # Reject candidates that are off CCD, have a bad pixel, or are spoiled
+        # First check that any manually included fid ids are valid by seeing if
+        # the supplied fid is in the initial ids for this detector.
+        if id_diff := set(self.include_ids_fid) - set(cand_fids['id']):
+            raise ValueError(f'included fid ids {id_diff} are not valid')
+
+        # Then reject candidates that are off CCD, have a bad pixel, are spoiled,
+        # or are manually excluded, unless the candidates are forced/manually included.
         # Check for spoilers only against stars that are bright enough and on CCD
         # (within dither).
         idx_bads = []
         stars_mask = ((self.stars['mag'] < FID.fid_mag - ACA.col_spoiler_mag_diff) &
                       (np.abs(self.stars['row']) < 512 + self.dither_guide.row))
         for idx, fid in enumerate(cand_fids):
-            if (self.off_ccd(fid) or
-                    self.near_hot_or_bad_pixel(fid) or
-                    self.has_column_spoiler(fid, self.stars, stars_mask) or
-                    self.is_excluded(fid)):
+            excluded = (self.off_ccd(fid)
+                        or self.near_hot_or_bad_pixel(fid)
+                        or self.has_column_spoiler(fid, self.stars, stars_mask)
+                        or self.is_excluded(fid))
+            included = fid['id'] in self.include_ids_fid
+            if not included and excluded:
                 idx_bads.append(idx)
 
         if idx_bads:
