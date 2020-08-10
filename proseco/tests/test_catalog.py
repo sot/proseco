@@ -714,7 +714,7 @@ def test_force_catalog_from_starcheck():
     Dynamic Mag Limits: Yellow 9.99          Red 10.17"""
 
     aca = get_aca_catalog(obs + '--force-catalog')
-    assert aca['id'].tolist() == [1, 5, 6,  # NOTE: fids are not forced (yet)
+    assert aca['id'].tolist() == [1, 4, 5,
                                   764677800,
                                   765069008,
                                   765069552,
@@ -747,7 +747,8 @@ def test_includes_for_obsid():
                                31075368,
                                31982136,
                                32375384],
-           'include_ids_guide': [31075128, 31076560, 31463496, 31983336, 32374896]}
+           'include_ids_guide': [31075128, 31076560, 31463496, 31983336, 32374896],
+           'include_ids_fid': [1, 5, 6]}
 
     out = includes_for_obsid(8008)
     assert out == exp

@@ -57,6 +57,9 @@ def get_aca_catalog(obsid=0, **kwargs):
     :param include_halfws_acq: list of acq halfwidths corresponding to ``include_ids``.
                                For values of ``0`` proseco chooses the best halfwidth(s).
     :param exclude_ids_acq: list of AGASC IDs of stars to exclude from acq catalog
+    :param include_ids_fid: list of fiducial lights to include by index.  If no possible
+                            sets of fids include the id, no fids will be selected.
+    :param exclude_ids_fid: list of fiducial lights to exclude by index
     :param include_ids_guide: list of AGASC IDs of stars to include in guide catalog
     :param exclude_ids_guide: list of AGASC IDs of stars to exclude from guide catalog
     :param optimize: optimize star catalog after initial selection (default=True)
@@ -303,8 +306,10 @@ class ACATable(ACACatalogTable):
         # IF get_fid_catalog returned a good catalog,
         #    OR no fids were requested,
         #    OR no candidate fids are available,
+        #    OR no candidate fid sets are available
         # THEN no optimization action required here.
-        if len(self.fids) > 0 or self.n_fid == 0 or len(self.fids.cand_fids) == 0:
+        if (len(self.fids) > 0 or self.n_fid == 0 or len(self.fids.cand_fids) == 0 or
+                len(self.fids.cand_fid_sets) == 0):
             return
 
         # Start with the no-fids optimum catalog and save required info to restore
