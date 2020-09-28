@@ -766,3 +766,27 @@ def test_dark_date_warning():
 
     assert len(warns) == 1
     assert 'Unexpected dark_date: dark_id nearest dark_date' in str(warns[0].message)
+
+
+def test_star_img_size():
+    """
+    Test star_img_size
+
+    :return: None
+    """
+
+    # Confirm that for an inferred ER, boxes are 8x8
+    aca = get_aca_catalog(**mod_std_info(n_fid=0))
+    assert np.all(aca.guides['sz'] == '8x8')
+
+    # Confirm that for an inferred OR, boxes are 6x6
+    aca = get_aca_catalog(**mod_std_info(n_fid=3))
+    assert np.all(aca.guides['sz'] == '6x6')
+
+    # Confirm that for explicit star_img_size of 8 boxes are '8x8'
+    aca = get_aca_catalog(**mod_std_info(n_fid=3, star_img_size=8))
+    assert np.all(aca.guides['sz'] == '8x8')
+
+    # Confirm that for explicit star_img_size of 6 boxes are '6x6'
+    aca = get_aca_catalog(**mod_std_info(n_fid=0, star_img_size=6))
+    assert np.all(aca.guides['sz'] == '6x6')
