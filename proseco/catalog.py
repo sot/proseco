@@ -62,6 +62,8 @@ def get_aca_catalog(obsid=0, **kwargs):
     :param exclude_ids_fid: list of fiducial lights to exclude by index
     :param include_ids_guide: list of AGASC IDs of stars to include in guide catalog
     :param exclude_ids_guide: list of AGASC IDs of stars to exclude from guide catalog
+    :param star_img_sz: readout window size for stars (6, 8, or None).
+                        With a value of ``None`` infer (8 for no fids, 6 for fids).
     :param optimize: optimize star catalog after initial selection (default=True)
     :param verbose: provide extra logging info (mostly calc_p_safe) (default=False)
     :param print_log: print the run log to stdout (default=False)
@@ -147,7 +149,7 @@ def _get_aca_catalog(**kwargs):
     # impacting operational work (call from Matlab).
     try:
         aca.log('Starting merge_cats')
-        merge_cat = merge_cats(fids=aca.fids, guides=aca.guides, acqs=aca.acqs)
+        merge_cat = merge_cats(fids=aca.fids, guides=aca.guides, acqs=aca.acqs, **kwargs)
         for name in merge_cat.colnames:
             aca[name] = merge_cat[name]
     except Exception:
@@ -420,7 +422,7 @@ class ACATable(ACACatalogTable):
                      warning=True)
 
 
-def merge_cats(fids=None, guides=None, acqs=None):
+def merge_cats(fids=None, guides=None, acqs=None, **kwargs):
 
     fids = [] if fids is None else fids
     guides = [] if guides is None else guides
@@ -439,7 +441,10 @@ def merge_cats(fids=None, guides=None, acqs=None):
         fids['p_acq'] = 0
         fids['sz'] = '8x8'
 
-    guide_size = '8x8' if len(fids) == 0 else '6x6'
+    if 'star_img_size' in kwargs and kwargs['star_img_size'] is not None:
+        guide_size = f"{kwargs['star_img_size']}x{kwargs['star_img_size']}"
+    else:
+        guide_size = '8x8' if len(fids) == 0 else '6x6'
     if len(guides) > 0:
         guides['slot'] = 0  # Filled in later
         guides['type'] = 'GUI'
