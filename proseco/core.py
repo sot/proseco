@@ -558,7 +558,6 @@ class ACACatalogTable(BaseCatalogTable):
     exclude_ids_guide = IntListMetaAttribute(default=[])
     include_ids_fid = IntListMetaAttribute(default=[])
     exclude_ids_fid = IntListMetaAttribute(default=[])
-    star_img_size = MetaAttribute()
     optimize = MetaAttribute(default=True)
     verbose = MetaAttribute(default=False)
     print_log = MetaAttribute(default=False)

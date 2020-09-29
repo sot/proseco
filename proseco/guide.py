@@ -67,6 +67,13 @@ def get_guide_catalog(obsid=0, **kwargs):
     return guides
 
 
+class ImgSizeMetaAttribute(MetaAttribute):
+    def __set__(self, instance, value):
+        if value not in (6, 8, None):
+            raise ValueError('img_size must be 6, 8, or None')
+        instance.meta[self.name] = value
+
+
 class GuideTable(ACACatalogTable):
     # Define base set of allowed keyword args to __init__. Subsequent MetaAttribute
     # or AliasAttribute properties will add to this.
@@ -88,6 +95,7 @@ class GuideTable(ACACatalogTable):
 
     cand_guides = MetaAttribute(is_kwarg=False)
     reject_info = MetaAttribute(default=[], is_kwarg=False)
+    img_size = ImgSizeMetaAttribute()
 
     def reject(self, reject):
         """

@@ -62,8 +62,8 @@ def get_aca_catalog(obsid=0, **kwargs):
     :param exclude_ids_fid: list of fiducial lights to exclude by index
     :param include_ids_guide: list of AGASC IDs of stars to include in guide catalog
     :param exclude_ids_guide: list of AGASC IDs of stars to exclude from guide catalog
-    :param star_img_sz: readout window size for stars (6, 8, or None).
-                        With a value of ``None`` infer (8 for no fids, 6 for fids).
+    :param img_size_guide: readout window size for guide stars (6, 8, or ``None``).
+                           For default value ``None`` use 8 for no fids, 6 for fids.
     :param optimize: optimize star catalog after initial selection (default=True)
     :param verbose: provide extra logging info (mostly calc_p_safe) (default=False)
     :param print_log: print the run log to stdout (default=False)
@@ -104,6 +104,7 @@ def _get_aca_catalog(**kwargs):
     assembling the merged aca catalog.
     """
     raise_exc = kwargs.pop('raise_exc')
+    img_size_guide = kwargs.pop('img_size_guide', None)
 
     aca = ACATable()
     aca.call_args = kwargs.copy()
@@ -143,13 +144,14 @@ def _get_aca_catalog(**kwargs):
     aca.acqs.fid_set = aca.fids['id']
 
     aca.log('Starting get_guide_catalog')
-    aca.guides = get_guide_catalog(stars=aca.acqs.stars, fids=aca.fids, **kwargs)
+    aca.guides = get_guide_catalog(stars=aca.acqs.stars, fids=aca.fids,
+                                   img_size=img_size_guide, **kwargs)
 
     # Make a merged starcheck-like catalog.  Catch any errors at this point to avoid
     # impacting operational work (call from Matlab).
     try:
         aca.log('Starting merge_cats')
-        merge_cat = merge_cats(fids=aca.fids, guides=aca.guides, acqs=aca.acqs, **kwargs)
+        merge_cat = merge_cats(fids=aca.fids, guides=aca.guides, acqs=aca.acqs)
         for name in merge_cat.colnames:
             aca[name] = merge_cat[name]
     except Exception:
@@ -422,7 +424,7 @@ class ACATable(ACACatalogTable):
                      warning=True)
 
 
-def merge_cats(fids=None, guides=None, acqs=None, **kwargs):
+def merge_cats(fids=None, guides=None, acqs=None):
 
     fids = [] if fids is None else fids
     guides = [] if guides is None else guides
@@ -441,10 +443,14 @@ def merge_cats(fids=None, guides=None, acqs=None, **kwargs):
         fids['p_acq'] = 0
         fids['sz'] = '8x8'
 
-    if 'star_img_size' in kwargs and kwargs['star_img_size'] is not None:
-        guide_size = f"{kwargs['star_img_size']}x{kwargs['star_img_size']}"
-    else:
+    # Set guide star image readout size, either from explicit user input or
+    # using the default rule that OR's get 6x6 and ER's (no fids) get 8x8.
+    img_size = guides.img_size
+    if img_size is None:
         guide_size = '8x8' if len(fids) == 0 else '6x6'
+    else:
+        guide_size = f'{img_size}x{img_size}'
+
     if len(guides) > 0:
         guides['slot'] = 0  # Filled in later
         guides['type'] = 'GUI'
