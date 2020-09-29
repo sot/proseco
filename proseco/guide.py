@@ -109,6 +109,32 @@ class GuideTable(ACACatalogTable):
     include_ids = AliasAttribute()
     exclude_ids = AliasAttribute()
 
+    def get_img_size(self, n_fids):
+        """Get guide image readout size from ``img_size`` and ``n_fids``.
+
+        If img_size is None (typical case) then this uses the default rule
+        that OR's get 6x6 and ER's (no fids) get 8x8.
+
+        This requires that the ``fids`` attribute has been set, normally by
+        providing the table as an arg to ``get_guide_catalog()``.
+
+        Parameters
+        ----------
+        n_fids : int
+            Number of fids in the catalog
+
+        Returns
+        -------
+        int
+            Guide star image readout size to be used in a catalog
+        """
+        img_size = self.img_size
+
+        if img_size is None:
+            img_size = 8 if n_fids == 0 else 6
+
+        return img_size
+
     def make_report(self, rootdir='.'):
         """
         Make summary HTML report for guide selection process and outputs.

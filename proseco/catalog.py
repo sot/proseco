@@ -444,12 +444,8 @@ def merge_cats(fids=None, guides=None, acqs=None):
         fids['sz'] = '8x8'
 
     # Set guide star image readout size, either from explicit user input or
-    # using the default rule that OR's get 6x6 and ER's (no fids) get 8x8.
-    img_size = guides.img_size
-    if img_size is None:
-        guide_size = '8x8' if len(fids) == 0 else '6x6'
-    else:
-        guide_size = f'{img_size}x{img_size}'
+    # using the default rule defined in ``get_img_size()``.
+    img_size = guides.get_img_size(len(fids))
 
     if len(guides) > 0:
         guides['slot'] = 0  # Filled in later
@@ -459,13 +455,13 @@ def merge_cats(fids=None, guides=None, acqs=None):
         guides['dim'] = 1
         guides['res'] = 1
         guides['halfw'] = 25
-        guides['sz'] = guide_size
+        guides['sz'] = f'{img_size}x{img_size}'
 
     if len(acqs) > 0:
         acqs['type'] = 'ACQ'
         acqs['maxmag'] = (acqs['mag'] + 1.5).clip(None, ACA.max_maxmag)
         acqs['dim'] = 20
-        acqs['sz'] = guide_size
+        acqs['sz'] = f'{img_size}x{img_size}'
         acqs['res'] = 1
 
     # Accumulate a list of table Row objects to be assembled into the final table.
