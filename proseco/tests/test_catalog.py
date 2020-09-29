@@ -766,3 +766,40 @@ def test_dark_date_warning():
 
     assert len(warns) == 1
     assert 'Unexpected dark_date: dark_id nearest dark_date' in str(warns[0].message)
+
+
+def test_img_size_guide():
+    """
+    Test img_size_guide for setting guide star readout image size
+    """
+    dark = DARK40.copy()
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(mag=8.0, n_stars=8)
+
+    # Confirm that for an inferred ER, boxes are 8x8
+    aca = get_aca_catalog(**mod_std_info(stars=stars, dark=dark, n_fid=0))
+    assert np.all(aca.guides['sz'] == '8x8')
+    assert aca.guides.img_size is None
+
+    # Confirm that for an inferred OR, boxes are 6x6
+    aca = get_aca_catalog(**mod_std_info(stars=stars, dark=dark, n_fid=3))
+    assert np.all(aca.guides['sz'] == '6x6')
+    assert aca.guides.img_size is None
+
+    # Confirm that for explicit img_size_guide of 8 boxes are '8x8'
+    aca = get_aca_catalog(**mod_std_info(stars=stars, dark=dark, n_fid=3, img_size_guide=8))
+    assert np.all(aca.guides['sz'] == '8x8')
+    assert aca.guides.img_size == 8
+
+    # Confirm that for explicit img_size_guide of 6 boxes are '6x6'
+    aca = get_aca_catalog(**mod_std_info(stars=stars, dark=dark, n_fid=0, img_size_guide=6))
+    assert np.all(aca.guides['sz'] == '6x6')
+    assert aca.guides.img_size == 6
+
+    # Confirm that for explicit img_size_guide of 6 boxes are '6x6'
+    aca = get_aca_catalog(**mod_std_info(stars=stars, dark=dark, n_fid=0, img_size_guide=4))
+    assert np.all(aca.guides['sz'] == '4x4')
+    assert aca.guides.img_size == 4
+
+    with pytest.raises(ValueError, match='img_size must be 4, 6, 8, or None'):
+        get_aca_catalog(**mod_std_info(stars=stars, dark=dark, img_size_guide=3))

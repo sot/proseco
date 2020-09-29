@@ -67,6 +67,13 @@ def get_guide_catalog(obsid=0, **kwargs):
     return guides
 
 
+class ImgSizeMetaAttribute(MetaAttribute):
+    def __set__(self, instance, value):
+        if value not in (4, 6, 8, None):
+            raise ValueError('img_size must be 4, 6, 8, or None')
+        instance.meta[self.name] = value
+
+
 class GuideTable(ACACatalogTable):
     # Define base set of allowed keyword args to __init__. Subsequent MetaAttribute
     # or AliasAttribute properties will add to this.
@@ -88,6 +95,7 @@ class GuideTable(ACACatalogTable):
 
     cand_guides = MetaAttribute(is_kwarg=False)
     reject_info = MetaAttribute(default=[], is_kwarg=False)
+    img_size = ImgSizeMetaAttribute()
 
     def reject(self, reject):
         """
@@ -100,6 +108,32 @@ class GuideTable(ACACatalogTable):
     dither = AliasAttribute()  # .. and likewise.
     include_ids = AliasAttribute()
     exclude_ids = AliasAttribute()
+
+    def get_img_size(self, n_fids):
+        """Get guide image readout size from ``img_size`` and ``n_fids``.
+
+        If img_size is None (typical case) then this uses the default rule
+        that OR's get 6x6 and ER's (no fids) get 8x8.
+
+        This requires that the ``fids`` attribute has been set, normally by
+        providing the table as an arg to ``get_guide_catalog()``.
+
+        Parameters
+        ----------
+        n_fids : int
+            Number of fids in the catalog
+
+        Returns
+        -------
+        int
+            Guide star image readout size to be used in a catalog
+        """
+        img_size = self.img_size
+
+        if img_size is None:
+            img_size = 8 if n_fids == 0 else 6
+
+        return img_size
 
     def make_report(self, rootdir='.'):
         """
