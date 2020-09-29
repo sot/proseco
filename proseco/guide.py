@@ -69,8 +69,8 @@ def get_guide_catalog(obsid=0, **kwargs):
 
 class ImgSizeMetaAttribute(MetaAttribute):
     def __set__(self, instance, value):
-        if value not in (6, 8, None):
-            raise ValueError('img_size must be 6, 8, or None')
+        if value not in (4, 6, 8, None):
+            raise ValueError('img_size must be 4, 6, 8, or None')
         instance.meta[self.name] = value
 
 

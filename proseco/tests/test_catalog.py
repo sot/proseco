@@ -796,5 +796,10 @@ def test_img_size_guide():
     assert np.all(aca.guides['sz'] == '6x6')
     assert aca.guides.img_size == 6
 
-    with pytest.raises(ValueError, match='img_size must be 6, 8, or None'):
-        get_aca_catalog(**mod_std_info(stars=stars, dark=dark, img_size_guide=4))
+    # Confirm that for explicit img_size_guide of 6 boxes are '6x6'
+    aca = get_aca_catalog(**mod_std_info(stars=stars, dark=dark, n_fid=0, img_size_guide=4))
+    assert np.all(aca.guides['sz'] == '4x4')
+    assert aca.guides.img_size == 4
+
+    with pytest.raises(ValueError, match='img_size must be 4, 6, 8, or None'):
+        get_aca_catalog(**mod_std_info(stars=stars, dark=dark, img_size_guide=3))
