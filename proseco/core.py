@@ -13,9 +13,9 @@ from scipy.interpolate import interp1d
 from astropy.table import Table, Column
 
 from chandra_aca.transform import (yagzag_to_pixels, pixels_to_yagzag,
-                                   count_rate_to_mag, mag_to_count_rate)
+                                   count_rate_to_mag, mag_to_count_rate,
+                                   radec_to_yagzag, yagzag_to_radec)
 from chandra_aca.aca_image import AcaPsfLibrary
-from Ska.quatutil import radec2yagzag, yagzag2radec
 import agasc
 from Quaternion import Quat
 from mica.archive.aca_dark import get_dark_cal_image, get_dark_cal_id
@@ -29,29 +29,6 @@ APL = AcaPsfLibrary()
 # Cache recently retrieved images which are called with the same args/kwargs
 get_dark_cal_image = functools.lru_cache(maxsize=6)(get_dark_cal_image)
 get_dark_cal_id = functools.lru_cache(maxsize=6)(get_dark_cal_id)
-
-
-def yagzag_to_radec(yag, zag, att):
-    """
-    Convert yag, zag [arcsec] to ra, dec [deg] for attitude ``att``.
-
-    :param yag: y-angle [arcsec]
-    :param zag: z-angle [arcsec]
-    :returns: ra, dec [deg]
-    """
-    return yagzag2radec(yag / 3600, zag / 3600, att)
-
-
-def radec_to_yagzag(ra, dec, att):
-    """
-    Convert ra, dec [deg] to yag, zag [arcsec] for attitude ``att``.
-
-    :param ra: RA [deg]
-    :param dec: Dec [deg]
-    :returns: yag, zag [arcsec]
-    """
-    yag, zag = radec2yagzag(ra, dec, att)
-    return yag * 3600, zag * 3600
 
 
 def to_python(val):
@@ -1123,9 +1100,7 @@ class StarsTable(BaseCatalogTable):
         logger(f'Updating star columns for attitude and convenience')
 
         stars.meta['q_att'] = q_att
-        yag, zag = radec2yagzag(stars['RA_PMCORR'], stars['DEC_PMCORR'], q_att)
-        yag *= 3600
-        zag *= 3600
+        yag, zag = radec_to_yagzag(stars['RA_PMCORR'], stars['DEC_PMCORR'], q_att)
         row, col = yagzag_to_pixels(yag, zag, allow_bad=True, pix_zero_loc='edge')
 
         stars.remove_columns([name for name in AGASC_COLS_DROP
