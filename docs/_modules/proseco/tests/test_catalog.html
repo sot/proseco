@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>proseco.tests.test_catalog &#8212; proseco 4.8.2.dev39+g28739c0 documentation</title>
+    <title>proseco.tests.test_catalog &#8212; proseco 4.9.0 documentation</title>
     <link rel="stylesheet" href="../../../_static/bootstrap-astropy.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
     
@@ -47,7 +47,7 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../../index.html">proseco 4.8.2.dev39+g28739c0 documentation</a>
+	<a href="../../../index.html">proseco 4.9.0 documentation</a>
 	 &#187;
       </li>
       <li><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
@@ -94,7 +94,7 @@
     <span class="k">assert</span> <span class="n">new_kwargs</span> <span class="o">==</span> <span class="p">{</span><span class="s1">&#39;call_args&#39;</span><span class="p">,</span> <span class="s1">&#39;version&#39;</span><span class="p">}</span>
 
     <span class="n">new_kwargs</span> <span class="o">=</span> <span class="n">FidTable</span><span class="o">.</span><span class="n">allowed_kwargs</span> <span class="o">-</span> <span class="n">ACACatalogTable</span><span class="o">.</span><span class="n">allowed_kwargs</span>
-    <span class="k">assert</span> <span class="n">new_kwargs</span> <span class="o">==</span> <span class="p">{</span><span class="s1">&#39;acqs&#39;</span><span class="p">}</span></div>
+    <span class="k">assert</span> <span class="n">new_kwargs</span> <span class="o">==</span> <span class="p">{</span><span class="s1">&#39;acqs&#39;</span><span class="p">,</span> <span class="s1">&#39;include_ids&#39;</span><span class="p">,</span> <span class="s1">&#39;exclude_ids&#39;</span><span class="p">}</span></div>
 
 
 <div class="viewcode-block" id="test_get_aca_catalog_49531"><a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_catalog.test_get_aca_catalog_49531">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">skipif</span><span class="p">(</span><span class="s1">&#39;not HAS_SC_ARCHIVE&#39;</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s1">&#39;Test requires starcheck archive&#39;</span><span class="p">)</span>
@@ -831,6 +831,43 @@
 
     <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">warns</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
     <span class="k">assert</span> <span class="s1">&#39;Unexpected dark_date: dark_id nearest dark_date&#39;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">warns</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="test_img_size_guide"><a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_catalog.test_img_size_guide">[docs]</a><span class="k">def</span> <span class="nf">test_img_size_guide</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Test img_size_guide for setting guide star readout image size</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">dark</span> <span class="o">=</span> <span class="n">DARK40</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">stars</span> <span class="o">=</span> <span class="n">StarsTable</span><span class="o">.</span><span class="n">empty</span><span class="p">()</span>
+    <span class="n">stars</span><span class="o">.</span><span class="n">add_fake_constellation</span><span class="p">(</span><span class="n">mag</span><span class="o">=</span><span class="mf">8.0</span><span class="p">,</span> <span class="n">n_stars</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+
+    <span class="c1"># Confirm that for an inferred ER, boxes are 8x8</span>
+    <span class="n">aca</span> <span class="o">=</span> <span class="n">get_aca_catalog</span><span class="p">(</span><span class="o">**</span><span class="n">mod_std_info</span><span class="p">(</span><span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span> <span class="n">dark</span><span class="o">=</span><span class="n">dark</span><span class="p">,</span> <span class="n">n_fid</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">aca</span><span class="o">.</span><span class="n">guides</span><span class="p">[</span><span class="s1">&#39;sz&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;8x8&#39;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">aca</span><span class="o">.</span><span class="n">guides</span><span class="o">.</span><span class="n">img_size</span> <span class="ow">is</span> <span class="kc">None</span>
+
+    <span class="c1"># Confirm that for an inferred OR, boxes are 6x6</span>
+    <span class="n">aca</span> <span class="o">=</span> <span class="n">get_aca_catalog</span><span class="p">(</span><span class="o">**</span><span class="n">mod_std_info</span><span class="p">(</span><span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span> <span class="n">dark</span><span class="o">=</span><span class="n">dark</span><span class="p">,</span> <span class="n">n_fid</span><span class="o">=</span><span class="mi">3</span><span class="p">))</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">aca</span><span class="o">.</span><span class="n">guides</span><span class="p">[</span><span class="s1">&#39;sz&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;6x6&#39;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">aca</span><span class="o">.</span><span class="n">guides</span><span class="o">.</span><span class="n">img_size</span> <span class="ow">is</span> <span class="kc">None</span>
+
+    <span class="c1"># Confirm that for explicit img_size_guide of 8 boxes are &#39;8x8&#39;</span>
+    <span class="n">aca</span> <span class="o">=</span> <span class="n">get_aca_catalog</span><span class="p">(</span><span class="o">**</span><span class="n">mod_std_info</span><span class="p">(</span><span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span> <span class="n">dark</span><span class="o">=</span><span class="n">dark</span><span class="p">,</span> <span class="n">n_fid</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">img_size_guide</span><span class="o">=</span><span class="mi">8</span><span class="p">))</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">aca</span><span class="o">.</span><span class="n">guides</span><span class="p">[</span><span class="s1">&#39;sz&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;8x8&#39;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">aca</span><span class="o">.</span><span class="n">guides</span><span class="o">.</span><span class="n">img_size</span> <span class="o">==</span> <span class="mi">8</span>
+
+    <span class="c1"># Confirm that for explicit img_size_guide of 6 boxes are &#39;6x6&#39;</span>
+    <span class="n">aca</span> <span class="o">=</span> <span class="n">get_aca_catalog</span><span class="p">(</span><span class="o">**</span><span class="n">mod_std_info</span><span class="p">(</span><span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span> <span class="n">dark</span><span class="o">=</span><span class="n">dark</span><span class="p">,</span> <span class="n">n_fid</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">img_size_guide</span><span class="o">=</span><span class="mi">6</span><span class="p">))</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">aca</span><span class="o">.</span><span class="n">guides</span><span class="p">[</span><span class="s1">&#39;sz&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;6x6&#39;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">aca</span><span class="o">.</span><span class="n">guides</span><span class="o">.</span><span class="n">img_size</span> <span class="o">==</span> <span class="mi">6</span>
+
+    <span class="c1"># Confirm that for explicit img_size_guide of 6 boxes are &#39;6x6&#39;</span>
+    <span class="n">aca</span> <span class="o">=</span> <span class="n">get_aca_catalog</span><span class="p">(</span><span class="o">**</span><span class="n">mod_std_info</span><span class="p">(</span><span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span> <span class="n">dark</span><span class="o">=</span><span class="n">dark</span><span class="p">,</span> <span class="n">n_fid</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">img_size_guide</span><span class="o">=</span><span class="mi">4</span><span class="p">))</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">aca</span><span class="o">.</span><span class="n">guides</span><span class="p">[</span><span class="s1">&#39;sz&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;4x4&#39;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">aca</span><span class="o">.</span><span class="n">guides</span><span class="o">.</span><span class="n">img_size</span> <span class="o">==</span> <span class="mi">4</span>
+
+    <span class="k">with</span> <span class="n">pytest</span><span class="o">.</span><span class="n">raises</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="n">match</span><span class="o">=</span><span class="s1">&#39;img_size must be 4, 6, 8, or None&#39;</span><span class="p">):</span>
+        <span class="n">get_aca_catalog</span><span class="p">(</span><span class="o">**</span><span class="n">mod_std_info</span><span class="p">(</span><span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span> <span class="n">dark</span><span class="o">=</span><span class="n">dark</span><span class="p">,</span> <span class="n">img_size_guide</span><span class="o">=</span><span class="mi">3</span><span class="p">))</span></div>
 </pre></div>
 
             <div class="clearer"></div>
