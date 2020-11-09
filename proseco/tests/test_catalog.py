@@ -13,7 +13,7 @@ from pathlib import Path
 import numpy as np
 import mica.starcheck
 
-from .test_common import STD_INFO, mod_std_info, DARK40, OBS_INFO
+from .test_common import STD_INFO, disable_agasc_use_mag_est, mod_std_info, DARK40, OBS_INFO
 from ..core import StarsTable, includes_for_obsid, ACACatalogTable
 from ..catalog import get_aca_catalog, ACATable
 from ..fid import get_fid_catalog, FidTable
@@ -46,6 +46,7 @@ def test_get_aca_catalog_49531():
     assert len(aca.fids) == 0
 
 
+@disable_agasc_use_mag_est
 @pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
 def test_get_aca_catalog_20603():
     """Put it all together.  Regression test for selected stars.
@@ -83,6 +84,7 @@ def test_get_aca_catalog_20603():
     assert aca.dark_date == '2018:100'
 
 
+@disable_agasc_use_mag_est
 @pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
 def test_get_aca_catalog_20259():
     """
@@ -561,6 +563,7 @@ def test_dark_property():
     assert aca.dark.mean() > aca.acqs.dark.mean()
 
 
+@disable_agasc_use_mag_est
 def test_dense_star_field_regress():
     """
     Test getting stars at the most dense star field in the sky.  Taken from:

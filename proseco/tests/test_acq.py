@@ -17,7 +17,7 @@ from ..acq import (get_p_man_err, bin2x2,
                    )
 from ..catalog import get_aca_catalog
 from ..core import ACABox, StarsTable
-from .test_common import OBS_INFO, STD_INFO, mod_std_info, DARK40
+from .test_common import OBS_INFO, STD_INFO, mod_std_info, DARK40, disable_agasc_use_mag_est
 
 from .. import characteristics as ACA
 from .. import characteristics_fid as FID
@@ -396,6 +396,7 @@ def test_calc_p_on_ccd_asymmetric_dither():
         assert np.isclose(p_in_box, exp)
 
 
+@disable_agasc_use_mag_est
 def test_get_acq_catalog_19387():
     """Put it all together.  Regression test for selected stars.  This obsid
     actually changes out one of the initial catalog candidates.
@@ -430,6 +431,7 @@ def test_get_acq_catalog_19387():
     assert repr(acqs.cand_acqs[TEST_COLS]).splitlines() == exp
 
 
+@disable_agasc_use_mag_est
 def test_get_acq_catalog_21007():
     """Put it all together.  Regression test for selected stars.
 
@@ -480,6 +482,7 @@ def test_get_acq_catalog_21007():
     assert repr(acqs[TEST_COLS]).splitlines() == exp
 
 
+@disable_agasc_use_mag_est
 def test_box_strategy_20603():
     """Test for PR #32 that doesn't allow p_acq to be reduced below 0.1.
 

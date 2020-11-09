@@ -64,3 +64,24 @@ OBS_INFO[19605] = {'att': [350.897404, 58.836913, 75.068745],
                    'obsid': 19605,
                    'sim_offset': 0,
                    't_ccd': -10.8}
+
+
+def disable_agasc_use_mag_est(func):
+    """Decorator to set constant ``proseco.core.AGASC_USE_MAG_EST`` to False.
+
+    This is mostly for testing or specialized applications to override the
+    default behavior to use the AGASC supplement star mags when available.
+    """
+    from proseco import core
+
+    def wrap(*args, **kwargs):
+        orig = core.AGASC_USE_MAG_EST
+        try:
+            core.AGASC_USE_MAG_EST = False
+            return func(*args, **kwargs)
+        finally:
+            core.AGASC_USE_MAG_EST = orig
+
+    return wrap
+
+
