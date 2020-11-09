@@ -83,5 +83,3 @@ def disable_agasc_use_mag_est(func):
             core.AGASC_USE_MAG_EST = orig
 
     return wrap
-
-

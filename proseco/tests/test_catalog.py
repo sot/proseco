@@ -46,6 +46,23 @@ def test_get_aca_catalog_49531():
     assert len(aca.fids) == 0
 
 
+@pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
+def test_get_aca_catalog_20603_with_supplement():
+    """Test that results for 20603 are different if the AGASC supplement is used.
+    """
+    get_aca_catalog_no_suppl = disable_agasc_use_mag_est(get_aca_catalog)
+
+    kwargs = dict(obsid=20603, exclude_ids_acq=[40113544],
+                  n_fid=2, n_guide=6, n_acq=7, raise_exc=True)
+    aca_no = get_aca_catalog_no_suppl(**kwargs)
+    aca = get_aca_catalog(**kwargs)
+
+    assert (len(aca_no.guides) != len(aca.guides)
+            or np.any(aca_no.guides['mag'] != aca.guides['mag']))
+    assert (len(aca_no.acqs) != len(aca.acqs)
+            or np.any(aca_no.acqs['mag'] != aca.acqs['mag']))
+
+
 @disable_agasc_use_mag_est
 @pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
 def test_get_aca_catalog_20603():
