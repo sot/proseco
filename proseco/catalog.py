@@ -424,6 +424,36 @@ class ACATable(ACACatalogTable):
                      warning=True)
 
 
+def get_dim_res(halfws):
+    """Get ACA search command ``dim`` and ``res`` corresponding to ``halfws``
+
+    From DM11, where ``dim`` is a 6-bit uint and ``res`` is a 1-bit uint with
+    0 => "L" and 1 => H".
+
+    Define the search region (``dim``) for any image data slot to be a square
+    centered at the commanded angular Z and Y coordinates. When the high
+    resolution flag (H) (``res``) in command word 3 is true (=1), the half width
+    of the square, in arc seconds, is (20 + 5D) where D is the dimension field
+    in command word 2. When the H flag is false (=0), the half width, is (20 +
+    40D) arc seconds.
+    """
+    # Max value of dim is 2**6 = 64, so high res is up to 20 + 5 * 63 = 335
+    ok = halfws <= 335
+    dim = np.zeros_like(halfws)
+    res = np.zeros_like(halfws)
+    # High-resolution halfws
+    res[ok] = 1
+    dim[ok] = np.round((halfws[ok] - 20) / 5)
+    # Low-resolution halfws
+    res[~ok] = 0
+    dim[~ok] = np.round((halfws[~ok] - 20) / 40)
+
+    if np.any((dim < 0) | (dim > 63)):
+        raise ValueError(f'halfws {halfws} leading to bad value(s) of dim {dim}')
+
+    return dim, res
+
+
 def merge_cats(fids=None, guides=None, acqs=None):
 
     fids = [] if fids is None else fids
@@ -437,9 +467,8 @@ def merge_cats(fids=None, guides=None, acqs=None):
         fids['type'] = 'FID'
         fids['mag'] = 7.0
         fids['maxmag'] = 8.0
-        fids['dim'] = 1
-        fids['res'] = 1
         fids['halfw'] = 25
+        fids['dim'], fids['res'] = get_dim_res(fids['halfw'])
         fids['p_acq'] = 0
         fids['sz'] = '8x8'
 
@@ -452,17 +481,15 @@ def merge_cats(fids=None, guides=None, acqs=None):
         guides['type'] = 'GUI'
         guides['maxmag'] = (guides['mag'] + 1.5).clip(None, ACA.max_maxmag)
         guides['p_acq'] = 0
-        guides['dim'] = 1
-        guides['res'] = 1
         guides['halfw'] = 25
+        guides['dim'], guides['res'] = get_dim_res(guides['halfw'])
         guides['sz'] = f'{img_size}x{img_size}'
 
     if len(acqs) > 0:
         acqs['type'] = 'ACQ'
         acqs['maxmag'] = (acqs['mag'] + 1.5).clip(None, ACA.max_maxmag)
-        acqs['dim'] = 20
+        acqs['dim'], acqs['res'] = get_dim_res(acqs['halfw'])
         acqs['sz'] = f'{img_size}x{img_size}'
-        acqs['res'] = 1
 
     # Accumulate a list of table Row objects to be assembled into the final table.
     # This has the desired side effect of back-populating 'slot' and 'type' columns
