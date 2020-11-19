@@ -177,6 +177,20 @@ def _get_aca_catalog(**kwargs):
 
 
 def _get_aca_catalog_monitors(**kwargs):
+    """Get the ACA catalog for a case with possible monitor windows / stars.
+
+    If there are only pure MON windows or Guide-From-Mon windows (no possible
+    auto-conversion to GUI) then just run the standard _get_aca_catalog, which
+    handles these cases.
+
+    Otherwise, first get the catalog forcing tracking MON window commanding.
+    This will be short a guide star for each MON window. Second get the catalog
+    forcing MON conversion to GUI. This requires that an acceptable guide star
+    is within 2 arcsec of the MON position. "Acceptable" means that ``guides``
+    has a candidate (``cand_guides``) guide star within 2 arcsec. If the catalog
+    with the converted GUI star has no new critical warnings then it is
+    accepted.
+    """
     kwargs_orig = kwargs.copy()
     kwargs.pop('raise_exc')
 
@@ -184,11 +198,13 @@ def _get_aca_catalog_monitors(**kwargs):
     aca = ACATable()
     aca.set_attrs_from_kwargs(**kwargs)
 
+    # If no auto-convert mon stars then do the normal star selection.
     monitors = aca.monitors
     if np.all(monitors['function'] != 0):
         return _get_aca_catalog(**kwargs_orig)
 
-    is_auto = monitors['function'] == 0
+    # Find the entries with auto-convert
+    is_auto = monitors['function'] == 0  # Auto-convert to guide
 
     # First get the catalog with automon entries scheduled as tracking MON windows.
     kwargs = kwargs_orig.copy()
@@ -206,8 +222,8 @@ def _get_aca_catalog_monitors(**kwargs):
     try:
         aca_gui = _get_aca_catalog(**kwargs)
     except BadMonitorError as exc:
-        print(f'Bad monitor error: {exc}')
-        return crits_mon
+        aca_mon.log(f'unable to convert monitor to guide: {exc}')
+        return aca_mon
 
     acar_gui = aca_gui.get_review_table()
     acar_gui.run_aca_review()

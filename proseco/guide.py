@@ -414,6 +414,7 @@ class GuideTable(ACACatalogTable):
         # code runs fine even if we have fewer-than-expected stage_cands to start
         choose_m = min(len(stage_cands), self.n_guide)
 
+        n_tries = 0
         for n_tries, comb in enumerate(index_combinations(len(stage_cands), choose_m), start=1):
             cands = stage_cands[list(comb)]  # (note that [(1,2)] is not the same as list((1,2))
             n_pass, n_tests = run_select_checks(cands)  # This function knows how many tests get run
