@@ -6,7 +6,7 @@ import copy
 from astropy.table import Column, Table
 
 from .core import ACACatalogTable, get_kwargs_from_starcheck_text, MetaAttribute, get_dim_res
-from .guide import get_guide_catalog, GuideTable
+from .guide import BadMonitorError, get_guide_catalog, GuideTable
 from .acq import get_acq_catalog, AcqTable
 from .fid import get_fid_catalog, FidTable
 from . import characteristics_acq as ACQ
@@ -85,7 +85,10 @@ def get_aca_catalog(obsid=0, **kwargs):
                 if key not in kwargs:
                     kwargs[key] = val
 
-        aca = _get_aca_catalog(obsid=obsid, raise_exc=raise_exc, **kwargs)
+        if 'monitors' in kwargs:
+            aca = _get_aca_catalog_monitors(obsid=obsid, raise_exc=raise_exc, **kwargs)
+        else:
+            aca = _get_aca_catalog(obsid=obsid, raise_exc=raise_exc, **kwargs)
 
     except Exception:
         if raise_exc:
@@ -166,6 +169,49 @@ def _get_aca_catalog(**kwargs):
 
     aca.log('Finished aca_get_catalog')
     return aca
+
+
+def _get_aca_catalog_monitors(**kwargs):
+    kwargs_orig = kwargs.copy()
+    kwargs.pop('raise_exc')
+
+    # Make a stub aca to get monitors attribute
+    aca = ACATable()
+    aca.set_attrs_from_kwargs(**kwargs)
+
+    monitors = aca.monitors
+    if np.all(monitors['function'] != 0):
+        return _get_aca_catalog(**kwargs_orig)
+
+    is_auto = monitors['function'] == 0
+
+    # First get the catalog with automon entries scheduled as tracking MON windows.
+    kwargs = kwargs_orig.copy()
+    monitors['function'][is_auto] = 2  # Tracking MON window
+    kwargs['monitors'] = monitors
+
+    aca_mon = _get_aca_catalog(**kwargs)
+    acar_mon = aca_mon.get_review_table()
+    acar_mon.run_aca_review()
+    crits_mon = set(msg['text'] for msg in (acar_mon.messages >= 'critical'))
+
+    # Now get the catalog with automon entries scheduled as guide stars
+    monitors['function'][is_auto] = 1
+    kwargs['raise_exc'] = True
+    try:
+        aca_gui = _get_aca_catalog(**kwargs)
+    except BadMonitorError as exc:
+        print(f'Bad monitor error: {exc}')
+        return crits_mon
+
+    acar_gui = aca_gui.get_review_table()
+    acar_gui.run_aca_review()
+    crits_gui = set(msg['text'] for msg in (acar_gui.messages >= 'critical'))
+
+    # If there are no new critical messages then schedule as guide star(s).
+    # This checks that every critical in crit_gui is also in crits_mon.
+    out = aca_gui if crits_gui <= crits_mon else aca_mon
+    return out
 
 
 def get_effective_t_ccd(t_ccd):

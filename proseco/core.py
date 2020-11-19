@@ -801,7 +801,6 @@ class ACACatalogTable(BaseCatalogTable):
                 else:
                     cand_stars.add_row(star)
                     self.log(f'Included star id={include_id} in candidates table')
-                    print(f'Included star id={include_id} in candidates table')
 
     def log(self, data, **kwargs):
         """
@@ -1284,6 +1283,11 @@ class StarsTable(BaseCatalogTable):
         out['RA_PMCORR'] = out['ra']
         out['DEC_PMCORR'] = out['dec']
         out['MAG_ACA'] = out['mag']
+
+        if 'fake_code' in star:
+            if 'fake_code' not in self.colnames:
+                self['fake_code'] = 0
+            out['fake_code'] = star['fake_code']
 
         self.add_row(out)
 
