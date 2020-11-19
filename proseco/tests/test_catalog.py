@@ -549,7 +549,11 @@ def test_monitors_and_target_offset_args():
     aca = get_aca_catalog(**mod_std_info(monitors=monitors,
                                          target_offset=target_offset,
                                          stars=stars, dark=DARK40))
-    assert aca.monitors is monitors
+    exp = ['coord0 coord1 coord_type mag function',
+           '------ ------ ---------- --- --------',
+           '   0.0    1.0          2 3.0        4',
+           '   5.0    6.0          7 8.0        9']
+    assert aca.monitors.pformat_all() == exp
     assert aca.target_offset is target_offset
 
 
