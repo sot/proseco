@@ -49,11 +49,16 @@ def get_guide_catalog(obsid=0, **kwargs):
     guides = GuideTable()
     guides.set_attrs_from_kwargs(obsid=obsid, **kwargs)
     guides.set_stars()
+
+    # Process monitor window requests, converting them into fake stars that
+    # are added to the include_ids list.
     guides.process_monitors_pre1()
 
     # Do a first cut of the stars to get a set of reasonable candidates
     guides.cand_guides = guides.get_initial_guide_candidates()
 
+    # Process guide-from-monitor requests by finding corresponding star in
+    # cand_guides and adding to the include_ids list.
     guides.process_monitors_pre2()
 
     # Run through search stages to select stars
@@ -123,9 +128,13 @@ class GuideTable(ACACatalogTable):
     exclude_ids = AliasAttribute()
 
     def process_monitors_pre1(self):
+        """Process monitor window requests, converting them into fake stars that
+        are added to the include_ids list.
+        """
         if self.monitors is None:
             return
 
+        # Add columns for each of the three coordinate representations
         monitors = self.monitors
         monitors['ra'] = 0.0
         monitors['dec'] = 0.0
@@ -134,10 +143,6 @@ class GuideTable(ACACatalogTable):
         monitors['row'] = 0.0
         monitors['col'] = 0.0
 
-        # We may modify this so make a local copy for guide selection
-        self.dark = self.dark.copy()
-
-        fake_id = 100
         for monitor in monitors:
             if monitor['coord_type'] == 0:
                 # RA, Dec
@@ -163,27 +168,40 @@ class GuideTable(ACACatalogTable):
                 monitor['ra'], monitor['dec'] = yagzag_to_radec(
                     monitor['yang'], monitor['zang'], self.att)
 
-        fake_id = 100
+        # For function=3 (fixed MON) the dark cal map gets hacked to make a local
+        # blob of hot pixels, so make a copy to avoid modifying the global dark
+        # map which is shared by reference between acqs, guides and fids.
+        if np.any(monitors['function'] == 3):
+            self.dark = self.dark.copy()
+
+        id_track = 100
+        id_fixed = 200
         for monitor in monitors:
             if monitor['function'] == 2:
                 # Schedule as monitor window that tracks the brightest star.
-                # Insert a pseudo-star with the appropriate mag.
-                self.stars.add_fake_star(id=fake_id, ra=monitor['ra'], dec=monitor['dec'],
+                # Insert a pseudo-star with the appropriate mag. These have id
+                # between 100 and 107.
+                self.stars.add_fake_star(id=id_track, ra=monitor['ra'], dec=monitor['dec'],
                                          mag=monitor['mag'], mag_err=0.01)
-                self.include_ids.append(fake_id)
-                fake_id += 1
+                self.include_ids.append(id_track)
+                id_track += 1
 
             elif monitor['function'] == 3:
-                # Schedule as monitor window that is fixed (no tracking).  Other guide windows
-                # avoid this by making a super-hot spot covering the fixed 8x8 pixels of mon window.
+                # Schedule as monitor window that is fixed (no tracking).  Other
+                # guide windows avoid this by making a super-hot spot covering
+                # the fixed 8x8 pixels of mon window. These have id between 200
+                # and 207.
                 row, col = int(monitor['row']) + 512, int(monitor['col']) + 512
                 self.dark[row - 4: row + 4, col - 4: col + 4] = ACA.bad_pixel_dark_current
-                self.stars.add_fake_star(id=fake_id + 100, ra=monitor['ra'], dec=monitor['dec'],
+                self.stars.add_fake_star(id=id_fixed, ra=monitor['ra'], dec=monitor['dec'],
                                          mag=monitor['mag'], mag_err=0.01)
-                self.include_ids.append(fake_id + 100)
-                fake_id += 1
+                self.include_ids.append(id_fixed)
+                id_fixed += 1
 
     def process_monitors_pre2(self):
+        """Process guide-from-monitor requests by finding corresponding star in
+        and_guides and adding to the include_ids list.
+        """
         if self.monitors is None:
             return
 
@@ -205,36 +223,43 @@ class GuideTable(ACACatalogTable):
                                      '2 arcsec of monitor position')
 
     def process_monitors_post(self):
+        """Post-processing of monitor windows.
+
+        - Clean up fake stars from stars and cand_guides
+        - Restore the dark current map
+        - Set type, sz, res, dim columns for relevant entries to reflect
+          status as monitor or guide-from-monitor in the guides catalog.
+        """
         if self.monitors is None:
             return
 
-        # Stars with 100 <= id < 200 are monitor stars tracking brightest star.
-        # Stars with 200 <= id < 300 are monitor stars fixed on CCD.
+        # Stars with 100 <= id < 108 are monitor stars tracking brightest star.
+        # Stars with 200 <= id < 208 are monitor stars fixed on CCD.
 
         # Remove fake stars
-        idxs = np.flatnonzero(self.stars['id'] < 300)
-        # self.stars.remove_rows(idxs)
+        idxs = np.flatnonzero(self.stars['id'] < 208)
+        self.stars.remove_rows(idxs)
 
         # Put the dark current back to the standard one if possible
         if self.acqs is not None:
             self.dark = self.acqs.dark
 
         # Remove fake stars from cand_guides
-        idxs = np.flatnonzero(self.cand_guides['id'] < 300)
-        # self.cand_guides.remove_rows(idxs)
+        idxs = np.flatnonzero(self.cand_guides['id'] < 208)
+        self.cand_guides.remove_rows(idxs)
 
         # Common settings for any MON window
-        is_mon = (100 <= self['id']) & (self['id'] < 300)
+        is_mon = self['id'] < 208
         if np.any(is_mon):
             self['type'][is_mon] = 'MON'
             self['sz'][is_mon] = '8x8'
             self['res'][is_mon] = 0  # Do not convert to track
 
         # Monitors tracking brightest star
-        is_mon = (100 <= self['id']) & (self['id'] < 200)
+        is_mon = (100 <= self['id']) & (self['id'] < 108)
         if np.any(is_mon):
             # Find the ID of the designated track star (brightest guide star)
-            ok = self['id'] > 300  # bona-fide guide stars
+            ok = self['id'] > 208  # bona-fide guide stars
             guide_ids = self['id'][ok]
             guide_mags = self['mag'][ok]
             dts_id = guide_ids[np.argmin(guide_mags)]
@@ -242,7 +267,7 @@ class GuideTable(ACACatalogTable):
             self['dim'][is_mon] = dts_id
 
         # Monitors fixed on CCD (no tracking). Set DTS to the ID of this star
-        is_mon = (200 <= self['id']) & (self['id'] < 300)
+        is_mon = (200 <= self['id']) & (self['id'] < 208)
         if np.any(is_mon):
             self['type'][is_mon] = 'MON'
             self['sz'][is_mon] = '8x8'
