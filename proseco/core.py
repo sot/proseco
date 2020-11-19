@@ -312,6 +312,27 @@ class MetaAttribute:
                 f'pickle={self.pickle}>')
 
 
+class MonitorsMetaAttribute(MetaAttribute):
+    def __set__(self, instance, value):
+        if isinstance(value, Table):
+            colnames = ['coord0', 'coord1', 'coord_type', 'mag', 'function']
+            if not set(colnames) <= set(value.colnames):
+                raise ValueError(f'monitors input table must have {", ".join(colnames)} columns')
+        else:
+            value = np.asarray(value)
+            if value.ndim != 2 or value.shape[1] != 5:
+                raise ValueError('monitors input must have shape (N, 5)')
+            out = Table()
+            out['coord0'] = value[:, 0].astype(np.float64)
+            out['coord1'] = value[:, 1].astype(np.float64)
+            out['coord_type'] = value[:, 2].astype(np.uint8)
+            out['mag'] = value[:, 3].astype(np.float64)
+            out['function'] = value[:, 4].astype(np.uint8)
+            value = out
+
+        instance.meta[self.name] = value
+
+
 class QuatMetaAttribute(MetaAttribute):
     def __set__(self, instance, value):
         if not isinstance(value, Quat):
@@ -515,7 +536,7 @@ class ACACatalogTable(BaseCatalogTable):
     n_acq = MetaAttribute(default=8)
     n_guide = MetaAttribute()
     n_fid = MetaAttribute(default=3)
-    monitors = MetaAttribute()
+    monitors = MonitorsMetaAttribute()
     man_angle = MetaAttribute()
     t_ccd_acq = MetaAttribute()
     t_ccd_guide = MetaAttribute()
