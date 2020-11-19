@@ -1,6 +1,7 @@
 # coding: utf-8
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
+from proseco.characteristics import MonCoord, MonFunc
 import numpy as np
 from itertools import combinations
 
@@ -149,7 +150,7 @@ class GuideTable(ACACatalogTable):
         monitors['col'] = 0.0
 
         for monitor in monitors:
-            if monitor['coord_type'] == 0:
+            if monitor['coord_type'] == MonCoord.RADEC:
                 # RA, Dec
                 monitor['ra'], monitor['dec'] = monitor['coord0'], monitor['coord1']
                 monitor['yang'], monitor['zang'] = radec_to_yagzag(
@@ -157,7 +158,7 @@ class GuideTable(ACACatalogTable):
                 monitor['row'], monitor['col'] = yagzag_to_pixels(
                     monitor['yang'], monitor['zang'], allow_bad=True)
 
-            elif monitor['coord_type'] == 1:
+            elif monitor['coord_type'] == MonCoord.ROWCOL:
                 # Row, col
                 monitor['row'], monitor['col'] = monitor['coord0'], monitor['coord1']
                 monitor['yang'], monitor['zang'] = pixels_to_yagzag(
@@ -165,7 +166,7 @@ class GuideTable(ACACatalogTable):
                 monitor['ra'], monitor['dec'] = yagzag_to_radec(
                     monitor['yang'], monitor['zang'], self.att)
 
-            elif monitor['coord_type'] == 2:
+            elif monitor['coord_type'] == MonCoord.YAGZAG:
                 # Yag, zag
                 monitor['yang'], monitor['zang'] = monitor['coord0'], monitor['coord1']
                 monitor['row'], monitor['col'] = pixels_to_yagzag(
@@ -176,21 +177,22 @@ class GuideTable(ACACatalogTable):
         # For function=3 (fixed MON) the dark cal map gets hacked to make a local
         # blob of hot pixels, so make a copy to avoid modifying the global dark
         # map which is shared by reference between acqs, guides and fids.
-        if np.any(monitors['function'] == 3):
+        if np.any(monitors['function'] == MonFunc.MON_FIXED):
             self.dark = self.dark.copy()
 
         id_fake = 1000
         for monitor in monitors:
-            if monitor['function'] == 2:
+            if monitor['function'] == MonFunc.MON_TRACK:
                 # Schedule as monitor window that tracks the brightest star.
                 # Insert a pseudo-star with the appropriate mag. These have id
                 # between 1000 and 1007.
                 self.stars.add_fake_star(id=id_fake, ra=monitor['ra'], dec=monitor['dec'],
-                                         mag=monitor['mag'], mag_err=0.01, fake_code=2)
+                                         mag=monitor['mag'], mag_err=0.01,
+                                         fake_code=MonFunc.MON_TRACK)
                 self.include_ids.append(id_fake)
                 id_fake += 1
 
-            elif monitor['function'] == 3:
+            elif monitor['function'] == MonFunc.MON_FIXED:
                 # Schedule as monitor window that is fixed (no tracking).  Other
                 # guide windows avoid this by making a super-hot spot covering
                 # the fixed 8x8 pixels of mon window. These have id between 2000
@@ -198,7 +200,8 @@ class GuideTable(ACACatalogTable):
                 row, col = int(monitor['row']) + 512, int(monitor['col']) + 512
                 self.dark[row - 4: row + 4, col - 4: col + 4] = ACA.bad_pixel_dark_current
                 self.stars.add_fake_star(id=id_fake, ra=monitor['ra'], dec=monitor['dec'],
-                                         mag=monitor['mag'], mag_err=0.01, fake_code=3)
+                                         mag=monitor['mag'], mag_err=0.01,
+                                         fake_code=MonFunc.MON_FIXED)
                 self.include_ids.append(id_fake)
                 id_fake += 1
 
@@ -210,7 +213,7 @@ class GuideTable(ACACatalogTable):
             return
 
         for monitor in self.monitors:
-            if monitor['function'] == 1:
+            if monitor['function'] == MonFunc.GUIDE:
                 # Schedule as a guide star if it is a candidate guide star
                 # (raises an exception if not)
                 dist = np.linalg.norm([self.cand_guides['yang'] - monitor['yang'],
@@ -264,7 +267,7 @@ class GuideTable(ACACatalogTable):
                 self['res'][is_mon] = 0  # Do not convert to track
 
             # Monitors tracking brightest star
-            is_mon = self['fake_code'] == 2
+            is_mon = self['fake_code'] == MonFunc.MON_TRACK
             if np.any(is_mon):
                 # Find the ID of the designated track star (brightest guide star)
                 ok = self['id'] > 100000  # bona-fide guide stars (min AGASC_ID is 131080)
@@ -275,7 +278,7 @@ class GuideTable(ACACatalogTable):
                 self['dim'][is_mon] = dts_id
 
             # Monitors fixed on CCD (no tracking). Set DTS to the ID of this star
-            is_mon = self['fake_code'] == 3
+            is_mon = self['fake_code'] == MonFunc.MON_FIXED
             if np.any(is_mon):
                 self['type'][is_mon] = 'MON'
                 self['sz'][is_mon] = '8x8'
