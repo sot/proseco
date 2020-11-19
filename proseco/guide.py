@@ -5,8 +5,9 @@ import numpy as np
 from itertools import combinations
 
 import chandra_aca.aca_image
-from chandra_aca.transform import (mag_to_count_rate, count_rate_to_mag,
-                                   snr_mag_for_t_ccd)
+from chandra_aca.transform import (mag_to_count_rate, count_rate_to_mag, pixels_to_yagzag,
+                                   radec_to_yagzag, snr_mag_for_t_ccd, yagzag_to_pixels,
+                                   yagzag_to_radec)
 from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
 
 from . import characteristics as ACA
@@ -49,6 +50,9 @@ def get_guide_catalog(obsid=0, **kwargs):
     guides.set_attrs_from_kwargs(obsid=obsid, **kwargs)
     guides.set_stars()
 
+    if guides.monitors is not None:
+        guides.process_monitors_pre()
+
     # Do a first cut of the stars to get a set of reasonable candidates
     guides.cand_guides = guides.get_initial_guide_candidates()
 
@@ -63,6 +67,9 @@ def get_guide_catalog(obsid=0, **kwargs):
     if len(guides) < guides.n_guide:
         guides.log(f'Selected only {len(guides)} guide stars versus requested {guides.n_guide}',
                    warning=True)
+
+    if guides.monitors is not None:
+        guides.process_monitors_post()
 
     return guides
 
@@ -108,6 +115,75 @@ class GuideTable(ACACatalogTable):
     dither = AliasAttribute()  # .. and likewise.
     include_ids = AliasAttribute()
     exclude_ids = AliasAttribute()
+
+    def process_monitors_pre(self):
+        monitors = self.monitors
+        monitors['ra'] = 0.0
+        monitors['dec'] = 0.0
+        monitors['yang'] = 0.0
+        monitors['zang'] = 0.0
+        monitors['row'] = 0.0
+        monitors['col'] = 0.0
+
+        # We may modify this so make a local copy for guide selection
+        self.dark = self.dark.copy()
+
+        fake_id = -1
+        for monitor in monitors:
+            if monitor['coord_type'] == 0:
+                # RA, Dec
+                monitor['ra'], monitor['dec'] = monitor['coord0'], monitor['coord1']
+                monitor['yang'], monitor['zang'] = radec_to_yagzag(
+                    monitor['ra'], monitor['dec'], self.att)
+                monitor['row'], monitor['col'] = yagzag_to_pixels(
+                    monitor['yang'], monitor['zang'], allow_bad=True)
+
+            elif monitor['coord_type'] == 1:
+                # Row, col
+                monitor['row'], monitor['col'] = monitor['coord0'], monitor['coord1']
+                monitor['yang'], monitor['zang'] = pixels_to_yagzag(
+                    monitor['row'], monitor['col'], allow_bad=True, flight=True)
+                monitor['ra'], monitor['dec'] = yagzag_to_radec(
+                    monitor['yang'], monitor['zang'], self.att)
+
+            elif monitor['coord_type'] == 2:
+                # Yag, zag
+                monitor['yang'], monitor['zang'] = monitor['coord0'], monitor['coord1']
+                monitor['row'], monitor['col'] = pixels_to_yagzag(
+                    monitor['yang'], monitor['zang'], allow_bad=True)
+                monitor['ra'], monitor['dec'] = yagzag_to_radec(
+                    monitor['yang'], monitor['zang'], self.att)
+
+            if monitor['function'] == 2:
+                # Schedule as monitor window that tracks the brightest star.
+                # Insert a pseudo-star with the appropriate mag.
+                self.stars.add_fake_star(id=fake_id - 100, ra=monitor['ra'], dec=monitor['dec'],
+                                         mag=monitor['mag'], mag_err=0.01)
+                self.include_ids.append(fake_id - 100)
+                fake_id -= 1
+
+            elif monitor['function'] == 3:
+                # Schedule as monitor window that is fixed (no tracking).  Other guide windows
+                # avoid this by making a super-hot spot covering the fixed 8x8 pixels of mon window.
+                row, col = int(monitor['row']) + 512, int(monitor['col']) + 512
+                self.dark[row - 4: row + 4, col - 4: col + 4] = ACA.bad_pixel_dark_current
+                self.stars.add_fake_star(id=fake_id, ra=monitor['ra'], dec=monitor['dec'],
+                                         mag=monitor['mag'], mag_err=0.01)
+                self.include_ids.append(fake_id)
+                fake_id -= 1
+
+    def process_monitors_post(self):
+        # Remove fake stars
+        idxs = np.flatnonzero(self.stars['id'] < 20)
+        self.stars.remove_rows(idxs)
+
+        # Put the dark current back to the standard one if possible
+        if self.acqs is not None:
+            self.dark = self.acqs.dark
+
+        # Remove fake stars from cand_guides
+        idxs = np.flatnonzero(self.cand_guides['id'] < 20)
+        self.cand_guides.remove_rows(idxs)
 
     def get_img_size(self, n_fids):
         """Get guide image readout size from ``img_size`` and ``n_fids``.
