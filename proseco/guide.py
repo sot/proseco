@@ -13,7 +13,7 @@ from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
 from . import characteristics as ACA
 from . import characteristics_guide as GUIDE
 
-from .core import bin2x2, ACACatalogTable, MetaAttribute, AliasAttribute
+from .core import bin2x2, ACACatalogTable, MetaAttribute, AliasAttribute, get_dim_res
 
 CCD = ACA.CCD
 APL = AcaPsfLibrary()
@@ -49,12 +49,12 @@ def get_guide_catalog(obsid=0, **kwargs):
     guides = GuideTable()
     guides.set_attrs_from_kwargs(obsid=obsid, **kwargs)
     guides.set_stars()
-
-    if guides.monitors is not None:
-        guides.process_monitors_pre()
+    guides.process_monitors_pre1()
 
     # Do a first cut of the stars to get a set of reasonable candidates
     guides.cand_guides = guides.get_initial_guide_candidates()
+
+    guides.process_monitors_pre2()
 
     # Run through search stages to select stars
     selected = guides.run_search_stages()
@@ -68,8 +68,14 @@ def get_guide_catalog(obsid=0, **kwargs):
         guides.log(f'Selected only {len(guides)} guide stars versus requested {guides.n_guide}',
                    warning=True)
 
-    if guides.monitors is not None:
-        guides.process_monitors_post()
+    img_size = guides.get_img_size()
+    guides['sz'] = f'{img_size}x{img_size}'
+    guides['type'] = 'GUI'
+    guides['maxmag'] = (guides['mag'] + 1.5).clip(None, ACA.max_maxmag)
+    guides['halfw'] = 25
+    guides['dim'], guides['res'] = get_dim_res(guides['halfw'])
+
+    guides.process_monitors_post()
 
     return guides
 
@@ -116,7 +122,10 @@ class GuideTable(ACACatalogTable):
     include_ids = AliasAttribute()
     exclude_ids = AliasAttribute()
 
-    def process_monitors_pre(self):
+    def process_monitors_pre1(self):
+        if self.monitors is None:
+            return
+
         monitors = self.monitors
         monitors['ra'] = 0.0
         monitors['dec'] = 0.0
@@ -128,7 +137,7 @@ class GuideTable(ACACatalogTable):
         # We may modify this so make a local copy for guide selection
         self.dark = self.dark.copy()
 
-        fake_id = -1
+        fake_id = 100
         for monitor in monitors:
             if monitor['coord_type'] == 0:
                 # RA, Dec
@@ -150,42 +159,106 @@ class GuideTable(ACACatalogTable):
                 # Yag, zag
                 monitor['yang'], monitor['zang'] = monitor['coord0'], monitor['coord1']
                 monitor['row'], monitor['col'] = pixels_to_yagzag(
-                    monitor['yang'], monitor['zang'], allow_bad=True)
+                    monitor['yang'], monitor['zang'], allow_bad=True, flight=True)
                 monitor['ra'], monitor['dec'] = yagzag_to_radec(
                     monitor['yang'], monitor['zang'], self.att)
 
+        fake_id = 100
+        for monitor in monitors:
             if monitor['function'] == 2:
                 # Schedule as monitor window that tracks the brightest star.
                 # Insert a pseudo-star with the appropriate mag.
-                self.stars.add_fake_star(id=fake_id - 100, ra=monitor['ra'], dec=monitor['dec'],
+                self.stars.add_fake_star(id=fake_id, ra=monitor['ra'], dec=monitor['dec'],
                                          mag=monitor['mag'], mag_err=0.01)
-                self.include_ids.append(fake_id - 100)
-                fake_id -= 1
+                self.include_ids.append(fake_id)
+                fake_id += 1
 
             elif monitor['function'] == 3:
                 # Schedule as monitor window that is fixed (no tracking).  Other guide windows
                 # avoid this by making a super-hot spot covering the fixed 8x8 pixels of mon window.
                 row, col = int(monitor['row']) + 512, int(monitor['col']) + 512
                 self.dark[row - 4: row + 4, col - 4: col + 4] = ACA.bad_pixel_dark_current
-                self.stars.add_fake_star(id=fake_id, ra=monitor['ra'], dec=monitor['dec'],
+                self.stars.add_fake_star(id=fake_id + 100, ra=monitor['ra'], dec=monitor['dec'],
                                          mag=monitor['mag'], mag_err=0.01)
-                self.include_ids.append(fake_id)
-                fake_id -= 1
+                self.include_ids.append(fake_id + 100)
+                fake_id += 1
+
+    def process_monitors_pre2(self):
+        if self.monitors is None:
+            return
+
+        for monitor in self.monitors:
+            if monitor['function'] == 1:
+                # Schedule as a guide star if it is a candidate guide star
+                # (raises an exception if not)
+                dist = np.linalg.norm([self.cand_guides['yang'] - monitor['yang'],
+                                       self.cand_guides['zang'] - monitor['zang']], axis=0)
+                idxs = np.flatnonzero(dist < 2.0)
+                if len(idxs) == 0:
+                    raise ValueError('no acceptable AGASC star within 2 arcsec of monitor position')
+                elif len(idxs) == 1:
+                    self.include_ids.append(self.cand_guides['id'][idxs[0]])
+                else:
+                    # Do something better like choose the brightest?  Probably in all realistic
+                    # cases this just doesn't happen.
+                    raise ValueError('multiple guide candidates within '
+                                     '2 arcsec of monitor position')
 
     def process_monitors_post(self):
+        if self.monitors is None:
+            return
+
+        # Stars with 100 <= id < 200 are monitor stars tracking brightest star.
+        # Stars with 200 <= id < 300 are monitor stars fixed on CCD.
+
         # Remove fake stars
-        idxs = np.flatnonzero(self.stars['id'] < 20)
-        self.stars.remove_rows(idxs)
+        idxs = np.flatnonzero(self.stars['id'] < 300)
+        # self.stars.remove_rows(idxs)
 
         # Put the dark current back to the standard one if possible
         if self.acqs is not None:
             self.dark = self.acqs.dark
 
         # Remove fake stars from cand_guides
-        idxs = np.flatnonzero(self.cand_guides['id'] < 20)
-        self.cand_guides.remove_rows(idxs)
+        idxs = np.flatnonzero(self.cand_guides['id'] < 300)
+        # self.cand_guides.remove_rows(idxs)
 
-    def get_img_size(self, n_fids):
+        # Common settings for any MON window
+        is_mon = (100 <= self['id']) & (self['id'] < 300)
+        if np.any(is_mon):
+            self['type'][is_mon] = 'MON'
+            self['sz'][is_mon] = '8x8'
+            self['res'][is_mon] = 0  # Do not convert to track
+
+        # Monitors tracking brightest star
+        is_mon = (100 <= self['id']) & (self['id'] < 200)
+        if np.any(is_mon):
+            # Find the ID of the designated track star (brightest guide star)
+            ok = self['id'] > 300  # bona-fide guide stars
+            guide_ids = self['id'][ok]
+            guide_mags = self['mag'][ok]
+            dts_id = guide_ids[np.argmin(guide_mags)]
+            # Since we don't know the slots yet store the DST id instead of slot
+            self['dim'][is_mon] = dts_id
+
+        # Monitors fixed on CCD (no tracking). Set DTS to the ID of this star
+        is_mon = (200 <= self['id']) & (self['id'] < 300)
+        if np.any(is_mon):
+            self['type'][is_mon] = 'MON'
+            self['sz'][is_mon] = '8x8'
+            self['res'][is_mon] = 0  # Do not convert to track
+            self['dim'][is_mon] = self['id'][is_mon]
+
+        # Find any MON windows scheduled as guide and set size to 8x8
+        for monitor in self.monitors:
+            if monitor['function'] == 1:
+                dist = np.linalg.norm([self['yang'] - monitor['yang'],
+                                       self['zang'] - monitor['zang']], axis=0)
+                ok = dist < 2.0
+                self['sz'][ok] = '8x8'
+                self['type'][ok] = 'GFM'  # Guide From Monitor
+
+    def get_img_size(self, n_fids=None):
         """Get guide image readout size from ``img_size`` and ``n_fids``.
 
         If img_size is None (typical case) then this uses the default rule
@@ -196,7 +269,7 @@ class GuideTable(ACACatalogTable):
 
         Parameters
         ----------
-        n_fids : int
+        n_fids : int or None
             Number of fids in the catalog
 
         Returns
@@ -204,6 +277,9 @@ class GuideTable(ACACatalogTable):
         int
             Guide star image readout size to be used in a catalog
         """
+        if n_fids is None:
+            n_fids = 0 if self.fids is None else len(self.fids)
+
         img_size = self.img_size
 
         if img_size is None:

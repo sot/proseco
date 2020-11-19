@@ -801,6 +801,7 @@ class ACACatalogTable(BaseCatalogTable):
                 else:
                     cand_stars.add_row(star)
                     self.log(f'Included star id={include_id} in candidates table')
+                    print(f'Included star id={include_id} in candidates table')
 
     def log(self, data, **kwargs):
         """
@@ -1511,3 +1512,33 @@ def includes_for_obsid(obsid):
     out['include_ids_fid'] = cat['id'][ok].tolist()
 
     return out
+
+
+def get_dim_res(halfws):
+    """Get ACA search command ``dim`` and ``res`` corresponding to ``halfws``
+
+    From DM11, where ``dim`` is a 6-bit uint and ``res`` is a 1-bit uint with
+    0 => "L" and 1 => H".
+
+    Define the search region (``dim``) for any image data slot to be a square
+    centered at the commanded angular Z and Y coordinates. When the high
+    resolution flag (H) (``res``) in command word 3 is true (=1), the half width
+    of the square, in arc seconds, is (20 + 5D) where D is the dimension field
+    in command word 2. When the H flag is false (=0), the half width, is (20 +
+    40D) arc seconds.
+    """
+    # Max value of dim is 2**6 = 64, so high res is up to 20 + 5 * 63 = 335
+    ok = halfws <= 335
+    dim = np.zeros_like(halfws)
+    res = np.zeros_like(halfws)
+    # High-resolution halfws
+    res[ok] = 1
+    dim[ok] = np.round((halfws[ok] - 20) / 5)
+    # Low-resolution halfws
+    res[~ok] = 0
+    dim[~ok] = np.round((halfws[~ok] - 20) / 40)
+
+    if np.any((dim < 0) | (dim > 63)):
+        raise ValueError(f'halfws {halfws} leading to bad value(s) of dim {dim}')
+
+    return dim, res

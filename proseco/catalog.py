@@ -5,7 +5,7 @@ import copy
 
 from astropy.table import Column, Table
 
-from .core import ACACatalogTable, get_kwargs_from_starcheck_text, MetaAttribute
+from .core import ACACatalogTable, get_kwargs_from_starcheck_text, MetaAttribute, get_dim_res
 from .guide import get_guide_catalog, GuideTable
 from .acq import get_acq_catalog, AcqTable
 from .fid import get_fid_catalog, FidTable
@@ -438,41 +438,13 @@ class ACATable(ACACatalogTable):
                      warning=True)
 
 
-def get_dim_res(halfws):
-    """Get ACA search command ``dim`` and ``res`` corresponding to ``halfws``
-
-    From DM11, where ``dim`` is a 6-bit uint and ``res`` is a 1-bit uint with
-    0 => "L" and 1 => H".
-
-    Define the search region (``dim``) for any image data slot to be a square
-    centered at the commanded angular Z and Y coordinates. When the high
-    resolution flag (H) (``res``) in command word 3 is true (=1), the half width
-    of the square, in arc seconds, is (20 + 5D) where D is the dimension field
-    in command word 2. When the H flag is false (=0), the half width, is (20 +
-    40D) arc seconds.
-    """
-    # Max value of dim is 2**6 = 64, so high res is up to 20 + 5 * 63 = 335
-    ok = halfws <= 335
-    dim = np.zeros_like(halfws)
-    res = np.zeros_like(halfws)
-    # High-resolution halfws
-    res[ok] = 1
-    dim[ok] = np.round((halfws[ok] - 20) / 5)
-    # Low-resolution halfws
-    res[~ok] = 0
-    dim[~ok] = np.round((halfws[~ok] - 20) / 40)
-
-    if np.any((dim < 0) | (dim > 63)):
-        raise ValueError(f'halfws {halfws} leading to bad value(s) of dim {dim}')
-
-    return dim, res
-
-
 def merge_cats(fids=None, guides=None, acqs=None):
 
     fids = [] if fids is None else fids
     guides = [] if guides is None else guides
     acqs = [] if acqs is None else acqs
+    gfms = []  # Guide from monitor
+    mons = []
 
     colnames = ['slot', 'id', 'type', 'sz', 'p_acq', 'mag', 'maxmag',
                 'yang', 'zang', 'dim', 'res', 'halfw']
@@ -492,12 +464,12 @@ def merge_cats(fids=None, guides=None, acqs=None):
 
     if len(guides) > 0:
         guides['slot'] = 0  # Filled in later
-        guides['type'] = 'GUI'
-        guides['maxmag'] = (guides['mag'] + 1.5).clip(None, ACA.max_maxmag)
         guides['p_acq'] = 0
-        guides['halfw'] = 25
-        guides['dim'], guides['res'] = get_dim_res(guides['halfw'])
-        guides['sz'] = f'{img_size}x{img_size}'
+
+        if not np.all(ok := (guides['type'] == 'GUI')):
+            mons = guides[guides['type'] == 'MON']  # Monitor window
+            gfms = guides[guides['type'] == 'GFM']  # Guide From Mon
+            guides = guides[ok]  # "Normal" guide stars
 
     if len(acqs) > 0:
         acqs['type'] = 'ACQ'
@@ -525,6 +497,8 @@ def merge_cats(fids=None, guides=None, acqs=None):
 
     n_fid = len(fids)
     n_bot = len(bot_ids)
+    n_mon = len(mons)
+    n_gfm = len(gfms)
 
     # FIDs.  Slot starts at 0.
     for slot, fid in zip(count(0), fids):
@@ -545,6 +519,17 @@ def merge_cats(fids=None, guides=None, acqs=None):
         guide['slot'] = slot
         rows.append(guide[colnames])
 
+    # Start with Guide From Mon stars
+    for slot, gfm in zip(count(8 - n_mon - n_gfm), gfms):
+        gfm['slot'] = slot
+        gfm['type'] = 'GUI'
+        rows.append(gfm[colnames])
+
+    # Finally monitor windows
+    for slot, mon in zip(count(8 - n_mon), mons):
+        mon['slot'] = slot
+        rows.append(mon[colnames])
+
     # ACQ-only stars. Slot stars after fid and BOT slots.
     for slot, acq_id in zip(count(n_fid + n_bot), acq_ids):
         acq = acqs.get_id(acq_id)
@@ -555,5 +540,12 @@ def merge_cats(fids=None, guides=None, acqs=None):
     aca = ACACatalogTable(rows=rows, names=colnames)
     idx = Column(np.arange(1, len(aca) + 1), name='idx')
     aca.add_column(idx, index=1)
+
+    # For monitor windows, at this point the `dim` column corresponds to the
+    # id of the tracking slot. Here we convert that to the correct slot.
+    if len(mons) > 0:
+        for row in aca:
+            if row['type'] == 'MON':
+                row['dim'] = aca.get_id(row['dim'])['slot']
 
     return aca
