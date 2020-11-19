@@ -16,6 +16,20 @@ CCD = {'row_min': -512.0,
 PIX_2_ARC = 4.96289
 ARC_2_PIX = 1.0 / PIX_2_ARC
 
+
+class MonFunc:
+    AUTO = 0
+    GUIDE = 1
+    MON_TRACK = 2
+    MON_FIXED = 3
+
+
+class MonCoord:
+    RADEC = 0
+    ROWCOL = 1
+    YAGZAG = 2
+
+
 # Maximum value of star catalog MAXMAG parameter.  Clip value and implications
 # of clipping discussed in emails circa June 7, 2019 with search key "maxmag".
 max_maxmag = 11.2

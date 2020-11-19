@@ -1,3 +1,4 @@
+from proseco.characteristics import MonFunc
 import traceback
 import numpy as np
 from itertools import count
@@ -195,24 +196,25 @@ def _get_aca_catalog_monitors(**kwargs):
 
     # If no auto-convert mon stars then do the normal star selection.
     monitors = aca.monitors
-    if np.all(monitors['function'] != 0):
+    if np.all(monitors['function'] != MonFunc.AUTO):
         return _get_aca_catalog(**kwargs_orig)
 
     # Find the entries with auto-convert
-    is_auto = monitors['function'] == 0  # Auto-convert to guide
+    is_auto = monitors['function'] == MonFunc.AUTO  # Auto-convert to guide
 
     # First get the catalog with automon entries scheduled as tracking MON windows.
     kwargs = kwargs_orig.copy()
-    monitors['function'][is_auto] = 2  # Tracking MON window
+    monitors['function'][is_auto] = MonFunc.MON_TRACK  # Tracking MON window
     kwargs['monitors'] = monitors
 
+    # Get the catalog and do a sparkles review
     aca_mon = _get_aca_catalog(**kwargs)
     acar_mon = aca_mon.get_review_table()
     acar_mon.run_aca_review()
     crits_mon = set(msg['text'] for msg in (acar_mon.messages >= 'critical'))
 
     # Now get the catalog with automon entries scheduled as guide stars
-    monitors['function'][is_auto] = 1
+    monitors['function'][is_auto] = MonFunc.GUIDE
     kwargs['raise_exc'] = True
     try:
         aca_gui = _get_aca_catalog(**kwargs)
@@ -220,6 +222,7 @@ def _get_aca_catalog_monitors(**kwargs):
         aca_mon.log(f'unable to convert monitor to guide: {exc}')
         return aca_mon
 
+    # Get the catalog and do a sparkles review
     acar_gui = aca_gui.get_review_table()
     acar_gui.run_aca_review()
     crits_gui = set(msg['text'] for msg in (acar_gui.messages >= 'critical'))
