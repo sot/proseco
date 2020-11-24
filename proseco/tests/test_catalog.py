@@ -869,3 +869,45 @@ def test_img_size_guide():
 
     with pytest.raises(ValueError, match='img_size must be 4, 6, 8, or None'):
         get_aca_catalog(**mod_std_info(stars=stars, dark=dark, img_size_guide=3))
+
+
+def test_monitor_mon_fixed_auto():
+    monitors = [[-1700, 1900, ACA.MonCoord.YAGZAG, 7.5, ACA.MonFunc.MON_FIXED],
+                [50, -50, ACA.MonCoord.ROWCOL, 7.5, ACA.MonFunc.MON_TRACK],
+                [1053.38, -275.16, ACA.MonCoord.YAGZAG, 8.0, ACA.MonFunc.AUTO]
+                ]
+    aca = get_aca_catalog(monitors=monitors, **mod_std_info(n_guide=6, n_fid=2),
+                          include_ids_guide=[611192064])
+
+    exp = ['slot idx     id    type  sz   yang     zang   dim res halfw',
+           '---- --- --------- ---- --- -------- -------- --- --- -----',
+           '   0   1         4  FID 8x8  2140.23   166.63   1   1    25',
+           '   1   2         5  FID 8x8 -1826.28   160.17   1   1    25',
+           '   2   3    139192  BOT 6x6   587.27   802.49  28   1   160',
+           '   3   4 611190016  BOT 6x6   175.44 -1297.92  28   1   160',
+           '   7   5 611192384  BOT 8x8  1053.38  -275.16  28   1   160',
+           '   4   6 611192064  GUI 6x6  2003.89 -1746.97   1   1    25',
+           '   6   7      1000  MON 8x8 -1700.00  1900.00   6   0    25',
+           '   7   8      1001  MON 8x8  -219.72  -273.87   3   0    25',
+           '   4   9 688523960  ACQ 6x6  -202.71 -1008.91  28   1   160',
+           '   5  10 688521312  ACQ 6x6  -739.68 -1799.85  28   1   160',
+           '   6  11 611189488  ACQ 6x6  1536.83  -786.12  28   1   160',
+           '   7  12 688522008  ACQ 6x6  -743.78 -2100.94  28   1   160',
+           '   0  13    134680  ACQ 6x6  1314.00  1085.73  28   1   160']
+
+    repr(aca)
+    assert aca[TEST_COLS].pformat_all() == exp
+
+    mon = aca.get_id(1000)
+    assert mon['dim'] == mon['slot']  # Fixed MON
+    assert mon['res'] == 0  # No convert to track
+
+    mon = aca.get_id(1001)
+    assert mon['dim'] == 3  # Tracking brightest star
+    assert mon['res'] == 0  # No convert to track
+
+    # BOT from Monitor
+    star = aca.get_id(611192384)
+    assert star['slot'] == 7
+    assert star['type'] == 'BOT'
+    assert star['sz'] == '8x8'
