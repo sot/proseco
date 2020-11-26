@@ -489,6 +489,40 @@ class ACATable(ACACatalogTable):
                      warning=True)
 
 
+# Slot-based catalogs corresponding to OBC 8-element acq and guide catalogs
+class ObcCat(list):
+    def __init__(self, *args, **kwargs):
+        self._last_slot = -1
+        super().__init__([None] * 8)
+
+    def __setitem__(self, item, value):
+        if self[item] is not None:
+            raise IndexError(f'slot {item} is already set => program logic error')
+        value['slot'] = item
+        self._last_slot = item
+        super().__setitem__(item, value)
+
+    def add(self, value, descending=False):
+        # First check if item is already there, if so then return that slot
+        for slot in range(8):
+            if (row := self[slot]) is not None and row['id'] == value['id']:
+                self._last_slot = slot
+                return slot
+
+        # Else fill in the next available slot
+        next_slot = self._last_slot + 1
+        next_slots = (slot % 8 for slot in range(next_slot, next_slot + 8))
+        descending_slots = range(7, -1, -1)
+        slots = descending_slots if descending else next_slots
+
+        for slot in slots:
+            if self[slot] is None:
+                self[slot] = value
+                return slot
+        else:
+            raise IndexError('catalog is full')
+
+
 def merge_cats(fids=None, guides=None, acqs=None):
     if acqs is not None:
         empty = acqs[0:0]
@@ -536,93 +570,99 @@ def merge_cats(fids=None, guides=None, acqs=None):
         acqs['dim'], acqs['res'] = get_dim_res(acqs['halfw'])
         acqs['sz'] = f'{img_size}x{img_size}'
 
-    # Slot-based catalogs corresponding to OBC 8-element acq and guide catalogs
-    class ObcCat(list):
-        def __init__(self, *args, **kwargs):
-            super().__init__([None] * 8)
+    cat_guides = ObcCat()
+    cat_acqs = ObcCat()
 
-        def __setitem__(self, item, value):
-            if self[item] is not None:
-                raise IndexError(f'slot {item} is already set => program logic error')
-            value['slot'] = item
-            super().__setitem__(item, value)
+    # Guide from Monitors (descending from slot 7)
+    for gfm in gfms:
+        gfm['type'] = 'GUI'
+        slot = cat_guides.add(gfm, descending=True)
+        # If the GFM is also an acq then add to same slot
+        if len(acqs) > 0 and gfm['id'] in acqs['id']:
+            acq = acqs.get_id(gfm['id'])
+            acq['sz'] = gfm['sz']  # Set size to 8x8
+            cat_acqs[slot] = acq
 
-        def add(self, value, descending=False):
-            # First check if item is already there, if so then return that slot
-            for slot in range(8):
-                if (row := self[slot]) is not None and row['id'] == value['id']:
-                    return slot
+    # Monitors (descending from slot 7)
+    for mon in mons:
+        cat_guides.add(mon, descending=True)
 
-            # Else fill in the next available slot
-            slots = range(7, -1) if descending else range(8)
-            for slot in slots:
-                if self[slot] is None:
-                    self[slot] = value
-                    return slot
-            else:
-                raise IndexError('catalog is full')
+    # Now do fids (ascending from slot 0)
+    for fid in fids:
+        cat_guides.add(fid[colnames])
 
-    if False:
-        cat_guides = ObcCat()
-        cat_acqs = ObcCat()
-
-        # Guide from Monitors (descending from slot 7)
-        for gfm in gfms:
-            gfm['type'] = 'GUI'
-            slot = cat_guides.add(gfm, descending=True)
-            # If the GFM is also an acq then add to same slot
-            if len(acqs) > 0 and gfm['id'] in acqs['id']:
-                acq = acqs.get_id(gfm['id'])
-                acq['sz'] = gfm['sz']  # Set size to 8x8
-                cat_acqs[slot] = acq
-
-        # Monitors (descending from slot 7)
-        for mon in mons:
-            cat_guides.add(mon, descending=True)
-
-        # Now do fids (ascending from slot 0)
-        for fid in fids:
-            cat_guides.add(fid[colnames])
-
-        # Next guides (ascending from slot 0)
-        for guide in guides:
+    # BOT stars, ascending in slot
+    for acq_id in acqs['id']:
+        if acq_id in guides['id']:
+            acq = acqs.get_id(acq_id)
+            guide = guides.get_id(acq_id)
             slot = cat_guides.add(guide)
-            # If the guide is also an acq then add to same slot
-            if len(acqs) > 0 and guide['id'] in acqs['id']:
-                cat_acqs[slot] = acqs.get_id(guide['id'])
+            print('BOT')
+            print(acq['id'])
+            print(cat_acqs._last_slot)
+            cat_acqs[slot] = acq
+            print(cat_acqs._last_slot)
+            print(slot)
 
-        # Acquisition (ascending from slot 0) except any acqs that were already
-        # added are left in place.
-        for acq in acqs:
-            cat_acqs.add(acq)
+    # Fill in the rest of the guides (ascending from slot 0). Any pre-existing
+    # ones are ignored.
+    for guide in guides:
+        cat_guides.add(guide)
 
-        # Accumulate a list of table Row objects to be assembled into the final table.
-        rows = []
+    # Fill in the rest of the acqs (ascending from slot 0). Any pre-existing
+    # ones are ignored.
+    for acq in acqs:
+        print('ACQ')
+        print(acq['id'])
+        print(cat_acqs._last_slot)
+        print(cat_acqs.add(acq))
+        print(cat_acqs._last_slot)
 
-        # Fids
-        for fid in cat_guides.get_type('FID'):
+    # Accumulate a list of table Row objects to be assembled into the final table.
+    rows = []
+
+    # Fids
+    for fid in cat_guides:
+        if fid['type'] == 'FID':
             rows.append(fid[colnames])
 
-        # Add BOT stars, with a special rule to sort by AGASC ID to match legacy
-        # MATLAB ordering
-        bots = []
-        for guide, acq in zip(cat_guides, cat_acqs):
-            if guide['id'] == acq['id']:
-                guide['type'] = 'BOT'
-                acq['type'] = 'BOT'
-                bots.append(acq)
-        rows.extend(sorted(bots, key=lambda x: x['id']))
+    # Add BOT stars
+    for guide, acq in zip(cat_guides, cat_acqs):
+        if guide['type'] == 'GUI' and guide['id'] == acq['id']:
+            guide['type'] = 'BOT'
+            acq['type'] = 'BOT'
+            rows.append(acq[colnames])
 
-        # Guide only
-        for guide, acq in zip(cat_guides, cat_acqs):
-            if guide['id'] != acq['id']:
-                rows.append(guide)
+    # Guide only
+    for guide, acq in zip(cat_guides, cat_acqs):
+        if guide['type'] == 'GUI' and guide['id'] != acq['id']:
+            rows.append(guide[colnames])
 
-        # Acq only
-        for guide, acq in zip(cat_guides, cat_acqs):
-            if guide['id'] != acq['id']:
-                rows.append(guide)
+    # Monitor stars
+    for guide in cat_guides:
+        if guide['type'] == 'MON':
+            rows.append(guide[colnames])
 
+    # Acq only
+    for guide, acq in zip(cat_guides, cat_acqs):
+        if guide['id'] != acq['id']:
+            rows.append(acq[colnames])
+
+    # Create final table and assign idx
+    aca = ACACatalogTable(rows=rows, names=colnames)
+    aca.add_column(np.arange(1, len(aca) + 1), name='idx', index=1)
+
+    # For monitor windows, at this point the `dim` column corresponds to the
+    # id of the tracking slot. Here we convert that to the correct slot.
+    if len(mons) > 0:
+        for row in aca:
+            if row['type'] == 'MON':
+                row['dim'] = aca.get_id(row['dim'])['slot']
+
+    return aca
+
+
+def the_other_way():
     rows = []
 
     # Generate a list of AGASC IDs for the BOT, GUI, and ACQ stars
