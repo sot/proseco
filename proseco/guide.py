@@ -14,7 +14,8 @@ from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
 from . import characteristics as ACA
 from . import characteristics_guide as GUIDE
 
-from .core import bin2x2, ACACatalogTable, MetaAttribute, AliasAttribute, get_dim_res
+from .core import (bin2x2, ACACatalogTable, MetaAttribute, AliasAttribute,
+                   get_dim_res, get_img_size)
 
 CCD = ACA.CCD
 APL = AcaPsfLibrary()
@@ -319,7 +320,8 @@ class GuideTable(ACACatalogTable):
         img_size = self.img_size
 
         if img_size is None:
-            img_size = 8 if n_fids == 0 else 6
+            # Call the function from core as the single source for the rule.
+            img_size = get_img_size(n_fids)
 
         return img_size
 
