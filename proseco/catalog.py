@@ -1,10 +1,9 @@
 from proseco.characteristics import MonFunc
 import traceback
 import numpy as np
-from itertools import count
 import copy
 
-from astropy.table import Column, Table
+from astropy.table import Table
 
 from .core import (ACACatalogTable, get_kwargs_from_starcheck_text, MetaAttribute,
                    get_dim_res, get_img_size)
