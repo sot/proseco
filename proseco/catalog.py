@@ -565,10 +565,6 @@ def merge_cats(fids=None, guides=None, acqs=None):
         fids['p_acq'] = 0
         fids['sz'] = '8x8'
 
-    # Set guide star image readout size, either from explicit user input or
-    # using the default rule defined in ``get_img_size()``.
-    img_size = guides.get_img_size(len(fids))
-
     if len(guides) > 0:
         guides['slot'] = 0  # Filled in later
         guides['p_acq'] = 0
@@ -579,6 +575,7 @@ def merge_cats(fids=None, guides=None, acqs=None):
             guides = guides[ok]  # "Normal" guide stars
 
     if len(acqs) > 0:
+        img_size = get_img_size(len(fids))
         acqs['type'] = 'ACQ'
         acqs['maxmag'] = (acqs['mag'] + 1.5).clip(None, ACA.max_maxmag)
         acqs['dim'], acqs['res'] = get_dim_res(acqs['halfw'])
@@ -610,13 +607,9 @@ def merge_cats(fids=None, guides=None, acqs=None):
         if acq_id in guides['id']:
             acq = acqs.get_id(acq_id)
             guide = guides.get_id(acq_id)
+            acq['sz'] = guide['sz']
             slot = cat_guides.add(guide)
-            print('BOT')
-            print(acq['id'])
-            print(cat_acqs._last_slot)
             cat_acqs[slot] = acq
-            print(cat_acqs._last_slot)
-            print(slot)
 
     # Fill in the rest of the guides (ascending from slot 0). Any pre-existing
     # ones are ignored.

@@ -1546,3 +1546,22 @@ def get_dim_res(halfws):
         raise ValueError(f'halfws {halfws} leading to bad value(s) of dim {dim}')
 
     return dim, res
+
+
+def get_img_size(n_fids):
+    """Get guide image readout size from ``n_fids``.
+
+    This is the core definition for the default rule that OR's (with fids) get
+    6x6 and ER's (no fids) get 8x8. This might change in the future.
+
+    Parameters
+    ----------
+    n_fids : int
+        Number of fids in the catalog
+
+    Returns
+    -------
+    int
+        Guide star image readout size to be used in a catalog (6 or 8)
+    """
+    return 6 if n_fids > 0 else 8
