@@ -12,7 +12,7 @@ from astropy.table import vstack
 """
 
 
-def get_lines(cat, names=None, label=None, section_lines=True):
+def get_lines(cat, names=None, label=None, section_lines=True, sort_name='id'):
     """Get list of lines representing catalog suitable for diffing.
 
     This function sorts the catalog into fids, guides, monitors,and acquisition
@@ -38,13 +38,13 @@ def get_lines(cat, names=None, label=None, section_lines=True):
     :returns: list
     """
     if names is None:
-        names = 'idx id slot type sz dim res halfw'
+        names = 'idx id slot type mag sz dim res halfw'
     if isinstance(names, str):
         names = names.split()
 
     ok = np.in1d(cat['type'], ['FID'])
     fids = cat[ok]
-    fids.sort('id')
+    fids.sort(sort_name)
     fids['dim'] = 1
     fids['res'] = 1
     fids['halfw'] = 25
@@ -57,7 +57,7 @@ def get_lines(cat, names=None, label=None, section_lines=True):
 
     ok = np.in1d(cat['type'], ['GUI', 'BOT'])
     guides = cat[ok]
-    guides.sort('id')
+    guides.sort(sort_name)
     guides['dim'] = 1
     guides['res'] = 1
     guides['halfw'] = 25
@@ -66,11 +66,12 @@ def get_lines(cat, names=None, label=None, section_lines=True):
     # Make MON catalog and convert slot in dim (designated track star).
     ok = np.in1d(cat['type'], ['MON'])
     mons = cat[ok]
+    mons.sort(sort_name)
     mons['halfw'] = 25
 
     ok = np.in1d(cat['type'], ['ACQ', 'BOT'])
     acqs = cat[ok]
-    acqs.sort('id')
+    acqs.sort(sort_name)
     acqs['type'][acqs['type'] == 'BOT'] = 'AC*'
 
     out = vstack([fids, guides, mons, acqs], metadata_conflicts='silent')
@@ -130,7 +131,7 @@ class CatalogDiff:
 
 
 def catalog_diff(cats1, cats2, style='html', names=None, labels=None,
-                 section_lines=True, n_context=3):
+                 sort_name='id', section_lines=True, n_context=3):
     """
     Return the diff of ACA catalogs ``cats1`` and ``cats2``.
 
@@ -148,6 +149,8 @@ def catalog_diff(cats1, cats2, style='html', names=None, labels=None,
         Default = 'idx id slot type sz dim res halfw'
     :param label: str, None
         Label for catalog used in banner at top of lines
+    :param sort_name: str
+        Column name for sorting catalog within sections (default='id')
     :param section_lines: bool
         Add separator lines between types (default=True)
     :param n_context: int
@@ -168,7 +171,9 @@ def catalog_diff(cats1, cats2, style='html', names=None, labels=None,
     for cats, lines in ((cats1, lines1),
                         (cats2, lines2)):
         for cat, label in zip(cats, labels):
-            lines.extend(get_lines(cat, names, label))
+            cat_lines = get_lines(cat, names, label, section_lines=section_lines,
+                                  sort_name=sort_name)
+            lines.extend(cat_lines)
             lines.append('')
 
     if style == 'html':
