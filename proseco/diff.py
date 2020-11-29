@@ -1,6 +1,8 @@
 # coding: utf-8
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
+import re
+import os
 import difflib
 
 import numpy as np
@@ -101,30 +103,56 @@ def get_lines(cat, names=None, label=None, section_lines=True):
     return lines
 
 
-class DiffHTML:
-    def __init__(self, html):
-        self.html = html
+class CatalogDiff:
+    """Represent an ACA catalog diff as either HTML or plain text
+    """
+    def __init__(self, text, is_html=False):
+        self.text = text
+        self.is_html = is_html
 
     def _repr_html_(self):
-        return self.html
+        if self.is_html:
+            return self.text
+        else:
+            return f'<pre>{self.text}</pre>'
+
+    def __repr__(self):
+        return self.text
+
+    def write(self, out_file):
+        """Write output to ``out_file``
+
+        :param out_file: str, Path
+            Output file
+        """
+        with open(out_file, 'w') as fh:
+            fh.write(self.text)
 
 
-def diff_html(cats1, cats2, out_file=None, names=None, labels=None, section_lines=True):
+def catalog_diff(cats1, cats2, style='html', names=None, labels=None,
+                 section_lines=True, n_context=3):
     """
-    Return the diff of ACA catalogs ``cats1`` and ``cats2`` as HTML.
+    Return the diff of ACA catalogs ``cats1`` and ``cats2``.
 
-    If ``out_file`` is supplied the output is written to that file name, otherwise
     the output is returned in a ``DiffHTML`` object that will display the
     diff in Jupyter notebook, or return the HTML via the ``html`` attribute.
 
-    :param cat1: Table or list of Table, first ACA catalog(s)
-    :param cat2: Table or list of Table, second ACA catalog(s)
-    :param out_file: str, output file name or Path
-    :param names: list of column names (either as list or space-delimited str).
+    :param cat1: Table, list of Table
+        First ACA catalog(s)
+    :param cat2: Table, list of Table
+        Second ACA catalog(s)
+    :param style: str
+        Diff style, either 'html', 'content', or 'unified'
+    :param names: list, str
+        Column names in output as list or space-delimited str.
         Default = 'idx id slot type sz dim res halfw'
-    :param label: str, None, label for catalog used in banner at top of lines
-    :param section_lines: bool, add separator lines between types (default=True)
-    :returns: None or DiffHTML object
+    :param label: str, None
+        Label for catalog used in banner at top of lines
+    :param section_lines: bool
+        Add separator lines between types (default=True)
+    :param n_context: int
+        Number of context lines for unified, context diffs (default=3)
+    :returns: CatalogDiff
     """
     if not isinstance(cats1, list):
         cats1 = [cats1]
@@ -143,11 +171,22 @@ def diff_html(cats1, cats2, out_file=None, names=None, labels=None, section_line
             lines.extend(get_lines(cat, names, label))
             lines.append('')
 
-    differ = difflib.HtmlDiff()
-    diff_html = differ.make_file(lines1, lines2)
-
-    if out_file is not None:
-        with open(out_file, 'w') as fh:
-            fh.write(diff_html)
+    if style == 'html':
+        differ = difflib.HtmlDiff()
+        text = differ.make_file(lines1, lines2)
+        # Jupyter notebook has a default td padding of 0.5em which looks
+        # terrible, so override that for table diff cells.
+        text = re.sub('<style type="text/css">',
+                      '<style type="text/css">'
+                      + os.linesep
+                      + 'table.diff td {padding-top: 0em; padding-bottom: 0em; '
+                      'padding-right: 0.5em; padding-left: 0.5em}',
+                      text)
+    elif style in ('context', 'unified'):
+        func = getattr(difflib, f'{style}_diff')
+        text = '\n'.join(func(lines1, lines2, fromfile='catalog 1',
+                              tofile='catalog 2', n=n_context))
     else:
-        return DiffHTML(diff_html)
+        raise ValueError("style arg must be one of 'html', 'unified', 'context'")
+
+    return CatalogDiff(text, is_html=(style == 'html'))
