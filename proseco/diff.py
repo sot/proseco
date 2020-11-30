@@ -11,8 +11,10 @@ from astropy.table import vstack
 """Output diff of catalog or catalogs
 """
 
+__all__ = ['get_catalog_lines', 'catalog_diff', 'CatalogDiff']
 
-def get_lines(cat, names=None, label=None, section_lines=True, sort_name='id'):
+
+def get_catalog_lines(cat, names=None, label=None, section_lines=True, sort_name='id'):
     """Get list of lines representing catalog suitable for diffing.
 
     This function sorts the catalog into fids, guides, monitors,and acquisition
@@ -31,10 +33,14 @@ def get_lines(cat, names=None, label=None, section_lines=True, sort_name='id'):
       that are BOT are labeled as AC*. This gives some visibility into BOT stars
       while keeping the diffs clean.
 
-    :param cat: Table, star catalog
-    :param names: str, list of column names in the output lines for diffing
-    :param label: str, label for catalog used in banner at top of lines
-    :param section_lines: bool, add separator lines between types (default=True)
+    :param cat: Table
+        Star catalog
+    :param names: str, list
+        Column names in the output lines for diffing
+    :param label: str
+        Label for catalog used in banner at top of lines
+    :param section_lines: bool
+        Add separator lines between types (default=True)
     :returns: list
     """
     if names is None:
@@ -135,8 +141,10 @@ def catalog_diff(cats1, cats2, style='html', names=None, labels=None,
     """
     Return the diff of ACA catalogs ``cats1`` and ``cats2``.
 
-    the output is returned in a ``DiffHTML`` object that will display the
-    diff in Jupyter notebook, or return the HTML via the ``html`` attribute.
+    The output is returned in a ``CatalogDiff`` object that will display the
+    formatted diff in Jupyter notebook, or return the diff text via the ``text``
+    attribute. The difference text can be written to file with the
+    ``CatalogDiff.write`` method
 
     :param cat1: Table, list of Table
         First ACA catalog(s)
@@ -171,8 +179,8 @@ def catalog_diff(cats1, cats2, style='html', names=None, labels=None,
     for cats, lines in ((cats1, lines1),
                         (cats2, lines2)):
         for cat, label in zip(cats, labels):
-            cat_lines = get_lines(cat, names, label, section_lines=section_lines,
-                                  sort_name=sort_name)
+            cat_lines = get_catalog_lines(
+                cat, names, label, section_lines=section_lines, sort_name=sort_name)
             lines.extend(cat_lines)
             lines.append('')
 
