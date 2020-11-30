@@ -179,9 +179,9 @@ def catalog_diff(cats1, cats2, style='html', names=None, labels=None,
     attribute. The difference text can be written to file with the
     ``CatalogDiff.write`` method
 
-    :param cat1: Table, list of Table
+    :param cats1: Table, list of Table
         First ACA catalog(s)
-    :param cat2: Table, list of Table
+    :param cats2: Table, list of Table
         Second ACA catalog(s)
     :param style: str
         Diff style, either 'html', 'content', or 'unified'
