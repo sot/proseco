@@ -509,10 +509,10 @@ class ACATable(ACACatalogTable):
 # Slot-based catalogs corresponding to OBC 8-element acq and guide catalogs
 class ObcCat(list):
     def __init__(self, *args, **kwargs):
-        super().__init__([None] * 8)
+        super().__init__([{'id': None, 'type': None}] * 8)
 
     def __setitem__(self, item, value):
-        if self[item] is not None:
+        if self[item]['type'] is not None:
             raise IndexError(f'slot {item} is already set => program logic error')
         value['slot'] = item
         super().__setitem__(item, value)
@@ -520,14 +520,14 @@ class ObcCat(list):
     def add(self, value, descending=False):
         # First check if item is already there, if so then return that slot
         for slot in range(8):
-            if (row := self[slot]) is not None and row['id'] == value['id']:
+            if self[slot]['id'] == value['id']:
                 return slot
 
         # Else fill in the next available slot
         slots = range(7, -1, -1) if descending else range(8)
 
         for slot in slots:
-            if self[slot] is None:
+            if self[slot]['type'] is None:
                 self[slot] = value
                 return slot
         else:
@@ -646,7 +646,7 @@ def merge_cats(fids=None, guides=None, acqs=None):
 
     # Acq only
     for guide, acq in zip(cat_guides, cat_acqs):
-        if guide['id'] != acq['id']:
+        if acq['type'] is not None and guide['id'] != acq['id']:
             rows.append(acq[colnames])
 
     # Create final table and assign idx
