@@ -101,7 +101,7 @@ def test_diff_context():
         '    5 105    4  AC*  7.5 6x6  20   1   160',
         '    6 106    5  AC*  7.0 6x6  20   1   160',
         '   11 108    1  ACQ 10.5 6x6  20   1    60',
-        ]
+    ]
 
 
 def test_diff_section_lines():
