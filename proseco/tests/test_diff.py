@@ -44,7 +44,7 @@ def test_diff_unified():
         '',
         '+++ catalog 2',
         '',
-        '@@ -12,13 +12,13 @@',
+        '@@ -8,12 +8,12 @@',
         '',
         '   8 103    7  GUI  8.5 6x6   1   1    25',
         '   5 105    4  GU*  7.5 6x6   1   1    25',
@@ -60,7 +60,6 @@ def test_diff_unified():
         '   6 106    5  AC*  7.0 6x6  20   1   160',
         '-  7 107    6  AC*  6.5 6x6  20   1   160',
         '  11 108    1  ACQ 10.5 6x6  20   1    60',
-        ' '
     ]
 
 
@@ -74,7 +73,7 @@ def test_diff_context():
         '',
         '***************',
         '',
-        '*** 12,24 ****',
+        '*** 8,19 ****',
         '',
         '    8 103    7  GUI  8.5 6x6   1   1    25',
         '    5 105    4  GU*  7.5 6x6   1   1    25',
@@ -88,8 +87,7 @@ def test_diff_context():
         '    6 106    5  AC*  7.0 6x6  20   1   160',
         '-   7 107    6  AC*  6.5 6x6  20   1   160',
         '   11 108    1  ACQ 10.5 6x6  20   1    60',
-        '  ',
-        '--- 12,24 ----',
+        '--- 8,19 ----',
         '',
         '    8 103    7  GUI  8.5 6x6   1   1    25',
         '    5 105    4  GU*  7.5 6x6   1   1    25',
@@ -103,7 +101,7 @@ def test_diff_context():
         '    5 105    4  AC*  7.5 6x6  20   1   160',
         '    6 106    5  AC*  7.0 6x6  20   1   160',
         '   11 108    1  ACQ 10.5 6x6  20   1    60',
-        '  ']
+        ]
 
 
 def test_diff_section_lines():
@@ -114,7 +112,7 @@ def test_diff_section_lines():
         '',
         '+++ catalog 2',
         '',
-        '@@ -11,12 +11,11 @@',
+        '@@ -7,11 +7,10 @@',
         '',
         '   8 103    7  GUI  8.5 6x6   1   1    25',
         '   5 105    4  GU*  7.5 6x6   1   1    25',
@@ -128,7 +126,6 @@ def test_diff_section_lines():
         '   6 106    5  AC*  7.0 6x6  20   1   160',
         '-  7 107    6  AC*  6.5 6x6  20   1   160',
         '  11 108    1  ACQ 10.5 6x6  20   1    60',
-        ' '
     ]
 
 
@@ -140,7 +137,7 @@ def test_diff_sort_name():
         '',
         '+++ catalog 2',
         '',
-        '@@ -8,13 +8,13 @@',
+        '@@ -4,13 +4,13 @@',
         '',
         '   2   4    1  FID  7.0 8x8   1   1    25',
         '   3   5    2  FID  7.0 8x8   1   1    25',
@@ -162,12 +159,8 @@ def test_diff_sort_name():
 
 def test_diff_get_catalog_lines():
     names = 'slot idx id type  sz p_acq  mag zang dim halfw'
-    lines = get_catalog_lines(CAT2, names=names, label='Catalog 1', sort_name='mag')
+    lines = get_catalog_lines(CAT2, names=names, sort_name='mag')
     assert lines == [
-        '===================================================',
-        'Catalog 1',
-        '===================================================',
-        '',
         'slot idx  id type  sz p_acq mag    zang   dim halfw',
         '---- --- --- ---- --- ----- ---- -------- --- -----',
         '   0   1   2  FID 8x8   0.0  7.0 -1742.03   1    25',

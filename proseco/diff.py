@@ -11,10 +11,58 @@ from astropy.table import vstack
 """Output diff of catalog or catalogs
 """
 
+# The header and footer are copied from the output of difflib.HtmlDiff.make_file.
+# Note that Jupyter notebook has a default td padding of 0.5em which looks
+# terrible, so override that for table diff cells (the "table.diff td" style
+# is added to the make_file() output).
+
+HTML_HEADER = """
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+          "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+    <meta http-equiv="Content-Type"
+          content="text/html; charset=utf-8" />
+    <title></title>
+    <style type="text/css">
+        table.diff {font-family:Courier; border:medium;}
+        table.diff td {padding-top: 0em; padding-bottom: 0em;
+                       padding-right: 0.5em; padding-left: 0.5em}
+        .diff_header {background-color:#e0e0e0}
+        td.diff_header {text-align:right}
+        .diff_next {background-color:#c0c0c0}
+        .diff_add {background-color:#aaffaa}
+        .diff_chg {background-color:#ffff77}
+        .diff_sub {background-color:#ffaaaa}
+    </style>
+</head>
+<body>
+"""
+HTML_FOOTER = """
+        <table class="diff" summary="Legends">
+        <tr> <th colspan="2"> Legends </th> </tr>
+        <tr> <td> <table border="" summary="Colors">
+                      <tr><th> Colors </th> </tr>
+                      <tr><td class="diff_add">&nbsp;Added&nbsp;</td></tr>
+                      <tr><td class="diff_chg">Changed</td> </tr>
+                      <tr><td class="diff_sub">Deleted</td> </tr>
+                  </table></td>
+             <td> <table border="" summary="Links">
+                      <tr><th colspan="2"> Links </th> </tr>
+                      <tr><td>(f)irst change</td> </tr>
+                      <tr><td>(n)ext change</td> </tr>
+                      <tr><td>(t)op</td> </tr>
+                  </table></td> </tr>
+    </table>
+</body>
+
+</html>
+"""
+
 __all__ = ['get_catalog_lines', 'catalog_diff', 'CatalogDiff']
 
 
-def get_catalog_lines(cat, names=None, label=None, section_lines=True, sort_name='id'):
+def get_catalog_lines(cat, names=None, section_lines=True, sort_name='id'):
     """Get list of lines representing catalog suitable for diffing.
 
     This function sorts the catalog into fids, guides, monitors,and acquisition
@@ -37,8 +85,6 @@ def get_catalog_lines(cat, names=None, label=None, section_lines=True, sort_name
         Star catalog
     :param names: str, list
         Column names in the output lines for diffing
-    :param label: str
-        Label for catalog used in banner at top of lines
     :param section_lines: bool
         Add separator lines between types (default=True)
     :returns: list
@@ -85,7 +131,7 @@ def get_catalog_lines(cat, names=None, label=None, section_lines=True, sort_name
 
     # Text representation of table with separator lines between GUI, MON, and
     # ACQ sections.
-    table_lines = out.pformat_all()
+    lines = out.pformat_all()
 
     # Optionally divide the fid, guide, mon, and acq sections
     if section_lines:
@@ -93,19 +139,7 @@ def get_catalog_lines(cat, names=None, label=None, section_lines=True, sort_name
         types = np.array(out['type'], dtype='U2')
         idxs = np.flatnonzero(types[:-1] != types[1:])
         for idx in reversed(idxs):
-            table_lines.insert(idx + 3, table_lines[1])
-
-    # Finally make a banner and add the table lines
-    lines = []
-    if label is not None:
-        table_width = max(len(line) for line in table_lines)
-        sep = '=' * max(table_width, len(label))
-        lines.append(sep)
-        lines.append(label)
-        lines.append(sep)
-        lines.append('')
-
-    lines.extend(table_lines)
+            lines.insert(idx + 3, lines[1])
 
     return lines
 
@@ -155,7 +189,7 @@ def catalog_diff(cats1, cats2, style='html', names=None, labels=None,
     :param names: list, str
         Column names in output as list or space-delimited str.
         Default = 'idx id slot type sz dim res halfw'
-    :param label: str, None
+    :param labels: list, None
         Label for catalog used in banner at top of lines
     :param sort_name: str
         Column name for sorting catalog within sections (default='id')
@@ -171,35 +205,43 @@ def catalog_diff(cats1, cats2, style='html', names=None, labels=None,
     if not isinstance(cats2, list):
         cats2 = [cats2]
 
-    lines1 = []
-    lines2 = []
+    if len(cats1) != len(cats2):
+        raise ValueError('different number of catalogs in cat1 and cat2')
+
+    header = HTML_HEADER if style == 'html' else ''
+    footer = HTML_FOOTER if style == 'html' else ''
+
     if labels is None:
-        labels = [f'Catalog {ii + 1}' for ii in range(len(cats1))]
+        ok = len(cats1) > 1
+        labels = [(f'Catalog {ii + 1}' if ok else None) for ii in range(len(cats1))]
 
-    for cats, lines in ((cats1, lines1),
-                        (cats2, lines2)):
-        for cat, label in zip(cats, labels):
+    text_all = ''
+    for cat1, cat2, label in zip(cats1, cats2, labels):
+        lines1 = []
+        lines2 = []
+
+        for cat, lines in ((cat1, lines1),
+                           (cat2, lines2)):
             cat_lines = get_catalog_lines(
-                cat, names, label, section_lines=section_lines, sort_name=sort_name)
+                cat, names, section_lines=section_lines, sort_name=sort_name)
             lines.extend(cat_lines)
-            lines.append('')
 
-    if style == 'html':
-        differ = difflib.HtmlDiff()
-        text = differ.make_file(lines1, lines2)
-        # Jupyter notebook has a default td padding of 0.5em which looks
-        # terrible, so override that for table diff cells.
-        text = re.sub('<style type="text/css">',
-                      '<style type="text/css">'
-                      + os.linesep
-                      + 'table.diff td {padding-top: 0em; padding-bottom: 0em; '
-                      'padding-right: 0.5em; padding-left: 0.5em}',
-                      text)
-    elif style in ('context', 'unified'):
-        func = getattr(difflib, f'{style}_diff')
-        text = '\n'.join(func(lines1, lines2, fromfile='catalog 1',
-                              tofile='catalog 2', n=n_context))
-    else:
-        raise ValueError("style arg must be one of 'html', 'unified', 'context'")
+        if style == 'html':
+            differ = difflib.HtmlDiff()
+            text = differ.make_table(lines1, lines2)
+            if label:
+                text = f'<h3>{label}</h3>' + os.linesep + text
+        elif style in ('context', 'unified'):
+            func = getattr(difflib, f'{style}_diff')
+            ls = os.linesep
+            text = ls.join(
+                func(lines1, lines2, fromfile='catalog 1', tofile='catalog 2', n=n_context))
+            if label:
+                sep = '=' * max(30, len(label))
+                text = sep + ls + label + ls + sep + ls + text + ls + ls
+        else:
+            raise ValueError("style arg must be one of 'html', 'unified', 'context'")
 
-    return CatalogDiff(text, is_html=(style == 'html'))
+        text_all += text
+
+    return CatalogDiff(header + text_all + footer, is_html=(style == 'html'))
