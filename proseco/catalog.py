@@ -554,19 +554,25 @@ def merge_cats(fids=None, guides=None, acqs=None):
     colnames = ['slot', 'id', 'type', 'sz', 'p_acq', 'mag', 'maxmag',
                 'yang', 'zang', 'dim', 'res', 'halfw']
 
+    # First add or modify columns for the fids, guides, and acqs tables so that
+    # they are all consistent and ready for merging into a single final catalog.
+
     if len(fids) > 0:
         fids['type'] = 'FID'
         fids['mag'] = 7.0
         fids['maxmag'] = 8.0
         fids['halfw'] = 25
         fids['dim'], fids['res'] = get_dim_res(fids['halfw'])
-        fids['p_acq'] = 0
+        fids['p_acq'] = 0.0
         fids['sz'] = '8x8'
 
     if len(guides) > 0:
         guides['slot'] = 0  # Filled in later
-        guides['p_acq'] = 0
+        guides['p_acq'] = 0.0
 
+        # Guides table can include three sub-types: GUI (plain guide star), MON
+        # (monitor window), and GFM (guide from monitor, required to be sz=8x8
+        # and fill from slot 7 down).
         if not np.all(ok := (guides['type'] == 'GUI')):
             mons = guides[guides['type'] == 'MON']  # Monitor window
             gfms = guides[guides['type'] == 'GFM']  # Guide From Mon
@@ -579,8 +585,19 @@ def merge_cats(fids=None, guides=None, acqs=None):
         acqs['dim'], acqs['res'] = get_dim_res(acqs['halfw'])
         acqs['sz'] = f'{img_size}x{img_size}'
 
-    cat_guides = ObcCat()
+    # Create two 8-slot tables where all slots are initially empty. These
+    # correspond to the OBC acquisition and guide tables. The guide table
+    # includes fids and guides.
     cat_acqs = ObcCat()
+    cat_guides = ObcCat()
+
+    # Fill in the acq and guide tables in a specific order:
+    # - GUI from MON (GFM) in descending slot order (starting from 7)
+    # - MON in descending slot order
+    # - FID in ascending slot order (starting from 0)
+    # - BOT in ascending slot order
+    # - GUI-only in ascending slot order
+    # - ACQ-only in ascending slot order
 
     # Guide from Monitors (descending from slot 7)
     for gfm in gfms:
@@ -619,7 +636,8 @@ def merge_cats(fids=None, guides=None, acqs=None):
     for acq in acqs:
         cat_acqs.add(acq)
 
-    # Accumulate a list of table Row objects to be assembled into the final table.
+    # Accumulate a list of star/fid entries in the specific order FID, BOT, GUI,
+    # MON, ACQ, to be assembled into the final table.
     rows = []
 
     # Fids
