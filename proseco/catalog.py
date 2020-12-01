@@ -673,9 +673,8 @@ def merge_cats(fids=None, guides=None, acqs=None):
 
     # For monitor windows, at this point the `dim` column corresponds to the
     # id of the tracking slot. Here we convert that to the correct slot.
-    if len(mons) > 0:
-        for row in aca:
-            if row['type'] == 'MON':
-                row['dim'] = aca.get_id(row['dim'])['slot']
+    for mon in mons:
+        row = aca.get_id(mon['id'])
+        row['dim'] = aca.get_id(row['dim'])['slot']
 
     return aca
