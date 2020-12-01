@@ -271,11 +271,11 @@ class GuideTable(ACACatalogTable):
             is_mon = self['fake_code'] == MonFunc.MON_TRACK
             if np.any(is_mon):
                 # Find the ID of the designated track star (brightest guide star)
-                ok = self['id'] > 100000  # bona-fide guide stars (min AGASC_ID is 131080)
-                guide_ids = self['id'][ok]
-                guide_mags = self['mag'][ok]
+                # ok = self['id'] > 100000  # bona-fide guide stars (min AGASC_ID is 131080)
+                guide_ids = self['id'][~is_mon]
+                guide_mags = self['mag'][~is_mon]
                 dts_id = guide_ids[np.argmin(guide_mags)]
-                # Since we don't know the slots yet store the DST id instead of slot
+                # Since we don't know the slots yet store the DTS id instead of slot
                 self['dim'][is_mon] = dts_id
 
             # Monitors fixed on CCD (no tracking). Set DTS to the ID of this star
