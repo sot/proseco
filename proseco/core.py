@@ -1287,6 +1287,10 @@ class StarsTable(BaseCatalogTable):
         out['DEC_PMCORR'] = out['dec']
         out['MAG_ACA'] = out['mag']
 
+        # The fake_code attribute is used for monitor window handling to
+        # indicate that this star has been added as a fake star so that guide
+        # selection can select it as a force-include star. Subsequently the
+        # code is used to infer the provenance of that star.
         if 'fake_code' in star:
             if 'fake_code' not in self.colnames:
                 self['fake_code'] = 0
