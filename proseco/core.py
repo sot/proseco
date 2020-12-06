@@ -371,11 +371,19 @@ class BaseCatalogTable(Table):
         # Make printed table look nicer.  This is defined in advance
         # and will be applied the first time the table is represented.
         self._default_formats = {}
-        self._default_formats['p_acq'] = '.3f'
-        for name in ('yang', 'zang', 'row', 'col', 'mag', 'maxmag', 'mag_err', 'color', 'COLOR1'):
-            self._default_formats[name] = '.2f'
-        for name in ('ra', 'dec', 'RA_PMCORR', 'DEC_PMCORR'):
-            self._default_formats[name] = '.6f'
+        formats = {('p_acq',): '5.3f',  # 0.912
+                   ('yang', 'zang'): '8.2f',  # -2500.12
+                   ('mag', 'maxmag', 'mag_err', 'color', 'COLOR1'): '5.2f',  # -1.12
+                   ('row', 'col'): '7.2f',  # -500.12
+                   ('ra', 'dec', 'RA_PMCORR', 'DEC_PMCORR'): '11.6f',  # -160.123561
+                   ('dec', 'DEC_PMCORR'): '10.5f',  # -89.12345
+                   ('idx', 'dim'): '2d',
+                   ('halfw',): '3d'
+                   }
+
+        for names, format in formats.items():
+            for name in names:
+                self._default_formats[name] = format
 
     def __getstate__(self):
         """Set the pickle state from self.
@@ -864,15 +872,27 @@ class ACACatalogTable(BaseCatalogTable):
     def exception(self, val):
         self.meta['exception'] = val
 
-    def _base_repr_(self, *args, **kwargs):
-        names = [name for name in self.colnames
-                 if self[name].dtype.kind != 'O']
-
+    def _set_formats(self):
         # Apply default formats to applicable columns and delete
         # that default format so it doesn't get set again next time.
+        names = self.colnames
         for name in list(self._default_formats.keys()):
             if name in names:
                 self[name].format = self._default_formats.pop(name)
+
+    def pformat(self, *args, **kwargs):
+        self._set_formats()
+        return super().pformat(*args, **kwargs)
+
+    def pprint(self, *args, **kwargs):
+        self._set_formats()
+        return super().pprint(*args, **kwargs)
+
+    def _base_repr_(self, *args, **kwargs):
+        self._set_formats()
+
+        names = [name for name in self.colnames
+                 if self[name].dtype.kind != 'O']
 
         tmp = self.__class__([self[name] for name in names], names=names, copy=False)
         return super(BaseCatalogTable, tmp)._base_repr_(*args, **kwargs)
