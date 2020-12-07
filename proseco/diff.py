@@ -133,9 +133,8 @@ def get_catalog_lines(cat, names=None, section_lines=True, sort_name='id'):
     for name in out.colnames:
         col = out[name]
         if col.dtype.kind == 'O':
-            bad = (col == None)  # noqa
-            out['mag'][bad] = 0
-            out['mag'] = col.tolist()
+            col[col == None] = 0  # noqa
+            out[name] = col.tolist()
 
     # Text representation of table with separator lines between GUI, MON, and
     # ACQ sections.
