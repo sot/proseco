@@ -426,36 +426,47 @@ class BaseCatalogTable(Table):
     def make_index(self):
         # Low-tech index to quickly get a row or the row index by `id` column.
         self._id_index = {}
+        self._id_index_mon = {}
 
+        has_type = 'type' in self.colnames
         for idx, row in enumerate(self):
-            self._id_index[row['id']] = idx
+            if has_type and row['type'] == 'MON':
+                self._id_index_mon[row['id']] = idx
+            else:
+                self._id_index[row['id']] = idx
 
-    def get_id(self, id):
+    def get_id(self, id, mon=False):
         """
         Return row corresponding to ``id`` in id column.
 
-        :param id: row ``id`` column value
+        :param id: int
+            row ``id`` column value
+        :param mon: bool
+            return ID for corresponding MON star (default=False)
         :returns: table Row
         """
-        return self[self.get_id_idx(id)]
+        return self[self.get_id_idx(id, mon)]
 
-    def get_id_idx(self, id):
+    def get_id_idx(self, id, mon=False):
         """
         Return row corresponding to ``id`` in id column.
 
-        :param id: row ``id`` column value
+        :param id: int
+            row ``id`` column value
+        :param mon: bool
+            return ID for corresponding MON star (default=False)
         :returns: table row index (int)
         """
-        if not hasattr(self, '_index'):
+        if not hasattr(self, '_id_index'):
             self.make_index()
 
         try:
-            idx = self._id_index[id]
+            idx = (self._id_index_mon if mon else self._id_index)[id]
             assert self['id'][idx] == id
         except (KeyError, IndexError, AssertionError):
             self.make_index()
             try:
-                idx = self._id_index[id]
+                idx = (self._id_index_mon if mon else self._id_index)[id]
                 assert self['id'][idx] == id
             except (KeyError, IndexError, AssertionError):
                 raise KeyError(f'{id} is not in table')
