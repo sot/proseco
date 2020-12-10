@@ -208,7 +208,7 @@ class GuideTable(ACACatalogTable):
 
     def process_monitors_pre2(self):
         """Process guide-from-monitor requests by finding corresponding star in
-        and_guides and adding to the include_ids list.
+        cand_guides and adding to the include_ids list.
         """
         if self.monitors is None:
             return
@@ -277,6 +277,16 @@ class GuideTable(ACACatalogTable):
                 dts_id = guide_ids[np.argmin(guide_mags)]
                 # Since we don't know the slots yet store the DTS id instead of slot
                 self['dim'][is_mon] = dts_id
+
+                for mon_id in self['id'][is_mon]:
+                    row = self.get_id(mon_id, mon=True)
+                    # Try to get AGASC ID
+                    dist = np.linalg.norm([self.stars['yang'] - row['yang'],
+                                           self.stars['zang'] - row['zang']], axis=0)
+                    idx = np.argmin(dist)
+                    if dist[idx] < 2.0:
+                        row['id'] = self.stars['id'][idx]
+                        self.make_index()
 
             # Monitors fixed on CCD (no tracking). Set DTS to the ID of this star
             is_mon = self['fake_code'] == MonFunc.MON_FIXED

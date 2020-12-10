@@ -674,7 +674,13 @@ def merge_cats(fids=None, guides=None, acqs=None):
     # For monitor windows, at this point the `dim` column corresponds to the
     # id of the tracking slot. Here we convert that to the correct slot.
     for mon in mons:
-        row = aca.get_id(mon['id'])
-        row['dim'] = aca.get_id(row['dim'])['slot']
+        row = aca.get_id(mon['id'], mon=True)
+        # If the ID in dim (DTS) is the same as the ID for this MON then it is
+        # a fixed MON window. Otherwise the DTS is a guide star slot.
+        if row['dim'] == mon['id']:
+            row['dim'] = mon['slot']
+        else:
+            # Find the guide star slot by ID
+            row['dim'] = aca.get_id(row['dim'])['slot']
 
     return aca
