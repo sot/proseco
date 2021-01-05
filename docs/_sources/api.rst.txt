@@ -33,3 +33,9 @@ Core
 
 .. automodule:: proseco.core
    :members:
+
+Diff
+----
+
+.. automodule:: proseco.diff
+   :members:

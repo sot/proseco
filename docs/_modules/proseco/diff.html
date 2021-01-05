@@ -1,0 +1,340 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>proseco.diff &#8212; proseco 4.11.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/bootstrap-astropy.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <script type="text/javascript" src="../../_static/sidebar.js"></script>
+    <script type="text/javascript" src="../../_static/copybutton.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,600' rel='stylesheet' type='text/css'/>
+
+  </head><body>
+<div class="topbar">
+  <a class="brand" title="Documentation Home" href="../../index.html"><span id="logotext1">Ska!</span><span id="logotext2">proseco</span><span id="logotext3"></span></a>
+  <ul>
+    
+    <li><a class="home" title="Homepage" href="https://cxc.cfa.harvard.edu/mta/ASPECT/tool_doc">
+        <span id="logotext1">ska</span><span id="logotext2">tools</span>
+    </a></li>
+    <li><a title="General Index" href="../../genindex.html">Index</a></li>
+    <li><a title="Module Index" href="../../py-modindex.html">Modules</a></li>
+    <li>
+      
+      
+<form action="../../search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+      
+    </li>
+  </ul>
+</div>
+
+<div class="related">
+    <h3>Navigation</h3>
+    <ul>
+      <li>
+	<a href="../../index.html">proseco 4.11.0 documentation</a>
+	 &#187;
+      </li>
+      <li><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+      
+       
+    </ul>
+</div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for proseco.diff</h1><div class="highlight"><pre>
+<span></span><span class="c1"># coding: utf-8</span>
+<span class="c1"># Licensed under a 3-clause BSD style license - see LICENSE.rst</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">difflib</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">astropy.table</span> <span class="kn">import</span> <span class="n">vstack</span>
+
+<span class="sd">&quot;&quot;&quot;Output diff of catalog or catalogs</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1"># The header and footer are copied from the output of difflib.HtmlDiff.make_file.</span>
+<span class="c1"># Note that Jupyter notebook has a default td padding of 0.5em which looks</span>
+<span class="c1"># terrible, so override that for table diff cells (the &quot;table.diff td&quot; style</span>
+<span class="c1"># is added to the make_file() output).</span>
+
+<span class="n">HTML_HEADER</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">&lt;!DOCTYPE html PUBLIC &quot;-//W3C//DTD XHTML 1.0 Transitional//EN&quot;</span>
+<span class="s2">          &quot;http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd&quot;&gt;</span>
+<span class="s2">&lt;html&gt;</span>
+<span class="s2">&lt;head&gt;</span>
+<span class="s2">    &lt;meta http-equiv=&quot;Content-Type&quot;</span>
+<span class="s2">          content=&quot;text/html; charset=utf-8&quot; /&gt;</span>
+<span class="s2">    &lt;title&gt;&lt;/title&gt;</span>
+<span class="s2">    &lt;style type=&quot;text/css&quot;&gt;</span>
+<span class="s2">        table.diff {font-family:Courier; border:medium;}</span>
+<span class="s2">        table.diff td {padding-top: 0em; padding-bottom: 0em;</span>
+<span class="s2">                       padding-right: 0.5em; padding-left: 0.5em}</span>
+<span class="s2">        .diff_header {background-color:#e0e0e0}</span>
+<span class="s2">        td.diff_header {text-align:right}</span>
+<span class="s2">        .diff_next {background-color:#c0c0c0}</span>
+<span class="s2">        .diff_add {background-color:#aaffaa}</span>
+<span class="s2">        .diff_chg {background-color:#ffff77}</span>
+<span class="s2">        .diff_sub {background-color:#ffaaaa}</span>
+<span class="s2">    &lt;/style&gt;</span>
+<span class="s2">&lt;/head&gt;</span>
+<span class="s2">&lt;body&gt;</span>
+<span class="s2">&quot;&quot;&quot;</span>
+<span class="n">HTML_FOOTER</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">        &lt;table class=&quot;diff&quot; summary=&quot;Legends&quot;&gt;</span>
+<span class="s2">        &lt;tr&gt; &lt;th colspan=&quot;2&quot;&gt; Legends &lt;/th&gt; &lt;/tr&gt;</span>
+<span class="s2">        &lt;tr&gt; &lt;td&gt; &lt;table border=&quot;&quot; summary=&quot;Colors&quot;&gt;</span>
+<span class="s2">                      &lt;tr&gt;&lt;th&gt; Colors &lt;/th&gt; &lt;/tr&gt;</span>
+<span class="s2">                      &lt;tr&gt;&lt;td class=&quot;diff_add&quot;&gt;&amp;nbsp;Added&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="s2">                      &lt;tr&gt;&lt;td class=&quot;diff_chg&quot;&gt;Changed&lt;/td&gt; &lt;/tr&gt;</span>
+<span class="s2">                      &lt;tr&gt;&lt;td class=&quot;diff_sub&quot;&gt;Deleted&lt;/td&gt; &lt;/tr&gt;</span>
+<span class="s2">                  &lt;/table&gt;&lt;/td&gt;</span>
+<span class="s2">             &lt;td&gt; &lt;table border=&quot;&quot; summary=&quot;Links&quot;&gt;</span>
+<span class="s2">                      &lt;tr&gt;&lt;th colspan=&quot;2&quot;&gt; Links &lt;/th&gt; &lt;/tr&gt;</span>
+<span class="s2">                      &lt;tr&gt;&lt;td&gt;(f)irst change&lt;/td&gt; &lt;/tr&gt;</span>
+<span class="s2">                      &lt;tr&gt;&lt;td&gt;(n)ext change&lt;/td&gt; &lt;/tr&gt;</span>
+<span class="s2">                      &lt;tr&gt;&lt;td&gt;(t)op&lt;/td&gt; &lt;/tr&gt;</span>
+<span class="s2">                  &lt;/table&gt;&lt;/td&gt; &lt;/tr&gt;</span>
+<span class="s2">    &lt;/table&gt;</span>
+<span class="s2">&lt;/body&gt;</span>
+
+<span class="s2">&lt;/html&gt;</span>
+<span class="s2">&quot;&quot;&quot;</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;get_catalog_lines&#39;</span><span class="p">,</span> <span class="s1">&#39;catalog_diff&#39;</span><span class="p">,</span> <span class="s1">&#39;CatalogDiff&#39;</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="get_catalog_lines"><a class="viewcode-back" href="../../api.html#proseco.diff.get_catalog_lines">[docs]</a><span class="k">def</span> <span class="nf">get_catalog_lines</span><span class="p">(</span><span class="n">cat</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">section_lines</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">sort_name</span><span class="o">=</span><span class="s1">&#39;id&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get list of lines representing catalog suitable for diffing.</span>
+
+<span class="sd">    This function sorts the catalog into fids, guides, monitors,and acquisition</span>
+<span class="sd">    stars and outputs the table into a separate list of lines. In addition:</span>
+
+<span class="sd">    - Translate HRC fid ids 7-10 and 11-14 to 1-4. Values in the range 7-14</span>
+<span class="sd">      come from starcheck, but proseco uses 1-4.</span>
+<span class="sd">    - Change the MON halfwidth to 25. Starcheck uses 20 to match what effective</span>
+<span class="sd">      happens on the ACA, but in reality this parameter is fictional.</span>
+<span class="sd">    - For guides, set dim=1, res=1, and halfw=25. The guide search parameters</span>
+<span class="sd">      are hardwired in the OBC so the catalog values do not matter.</span>
+<span class="sd">    - Optionally add a banner at the top with a label identifying the catalog,</span>
+<span class="sd">      e.g. with the obsid. This banner is useful for diffing all the catalogs</span>
+<span class="sd">      from a load, and helps to ensure that the diff algorithm stays on track.</span>
+<span class="sd">    - Guide stars that are BOT are labeled as GU*, and conversely acq stars</span>
+<span class="sd">      that are BOT are labeled as AC*. This gives some visibility into BOT stars</span>
+<span class="sd">      while keeping the diffs clean.</span>
+
+<span class="sd">    :param cat: Table</span>
+<span class="sd">        Star catalog</span>
+<span class="sd">    :param names: str, list</span>
+<span class="sd">        Column names in the output lines for diffing</span>
+<span class="sd">    :param section_lines: bool</span>
+<span class="sd">        Add separator lines between types (default=True)</span>
+<span class="sd">    :returns: list</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">names</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="s1">&#39;idx id slot type mag sz dim res halfw&#39;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">names</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="n">names</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+
+    <span class="n">ok</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">cat</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;FID&#39;</span><span class="p">])</span>
+    <span class="n">fids</span> <span class="o">=</span> <span class="n">cat</span><span class="p">[</span><span class="n">ok</span><span class="p">]</span>
+    <span class="n">fids</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">sort_name</span><span class="p">)</span>
+    <span class="n">fids</span><span class="p">[</span><span class="s1">&#39;dim&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">fids</span><span class="p">[</span><span class="s1">&#39;res&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">fids</span><span class="p">[</span><span class="s1">&#39;halfw&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">25</span>
+    <span class="c1"># Translate fid IDs in the range 11-14 =&gt; 1-4, 7-10 =&gt; 1-4. The fully</span>
+    <span class="c1"># independent fid ID comes from starcheck typically.</span>
+    <span class="n">ok</span> <span class="o">=</span> <span class="n">fids</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">10</span>
+    <span class="n">fids</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">][</span><span class="n">ok</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">10</span>
+    <span class="n">ok</span> <span class="o">=</span> <span class="n">fids</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">6</span>
+    <span class="n">fids</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">][</span><span class="n">ok</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">6</span>
+
+    <span class="n">ok</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">cat</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;GUI&#39;</span><span class="p">,</span> <span class="s1">&#39;BOT&#39;</span><span class="p">])</span>
+    <span class="n">guides</span> <span class="o">=</span> <span class="n">cat</span><span class="p">[</span><span class="n">ok</span><span class="p">]</span>
+    <span class="n">guides</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">sort_name</span><span class="p">)</span>
+    <span class="n">guides</span><span class="p">[</span><span class="s1">&#39;dim&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">guides</span><span class="p">[</span><span class="s1">&#39;res&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">guides</span><span class="p">[</span><span class="s1">&#39;halfw&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">25</span>
+    <span class="n">guides</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">][</span><span class="n">guides</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;BOT&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;GU*&#39;</span>
+
+    <span class="c1"># Make MON catalog and convert slot in dim (designated track star).</span>
+    <span class="n">ok</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">cat</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;MON&#39;</span><span class="p">])</span>
+    <span class="n">mons</span> <span class="o">=</span> <span class="n">cat</span><span class="p">[</span><span class="n">ok</span><span class="p">]</span>
+    <span class="n">mons</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">sort_name</span><span class="p">)</span>
+    <span class="n">mons</span><span class="p">[</span><span class="s1">&#39;halfw&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">25</span>
+
+    <span class="n">ok</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">cat</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;ACQ&#39;</span><span class="p">,</span> <span class="s1">&#39;BOT&#39;</span><span class="p">])</span>
+    <span class="n">acqs</span> <span class="o">=</span> <span class="n">cat</span><span class="p">[</span><span class="n">ok</span><span class="p">]</span>
+    <span class="n">acqs</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">sort_name</span><span class="p">)</span>
+    <span class="n">acqs</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">][</span><span class="n">acqs</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;BOT&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;AC*&#39;</span>
+
+    <span class="n">out</span> <span class="o">=</span> <span class="n">vstack</span><span class="p">([</span><span class="n">fids</span><span class="p">,</span> <span class="n">guides</span><span class="p">,</span> <span class="n">mons</span><span class="p">,</span> <span class="n">acqs</span><span class="p">],</span> <span class="n">metadata_conflicts</span><span class="o">=</span><span class="s1">&#39;silent&#39;</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">out</span><span class="p">[</span><span class="n">names</span><span class="p">]</span>
+
+    <span class="c1"># Text representation of table with separator lines between GUI, MON, and</span>
+    <span class="c1"># ACQ sections.</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">pformat_all</span><span class="p">()</span>
+
+    <span class="c1"># Optionally divide the fid, guide, mon, and acq sections</span>
+    <span class="k">if</span> <span class="n">section_lines</span><span class="p">:</span>
+        <span class="c1"># Look for diffs in the first two characters of FID, GUI, GU*, MON, ACQ, AC*</span>
+        <span class="n">types</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;U2&#39;</span><span class="p">)</span>
+        <span class="n">idxs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">types</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">types</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+        <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">idxs</span><span class="p">):</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">3</span><span class="p">,</span> <span class="n">lines</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">lines</span></div>
+
+
+<div class="viewcode-block" id="CatalogDiff"><a class="viewcode-back" href="../../api.html#proseco.diff.CatalogDiff">[docs]</a><span class="k">class</span> <span class="nc">CatalogDiff</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Represent an ACA catalog diff as either HTML or plain text</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">is_html</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">text</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_html</span> <span class="o">=</span> <span class="n">is_html</span>
+
+    <span class="k">def</span> <span class="nf">_repr_html_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_html</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">text</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;&lt;pre&gt;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="si">}</span><span class="s1">&lt;/pre&gt;&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">text</span>
+
+<div class="viewcode-block" id="CatalogDiff.write"><a class="viewcode-back" href="../../api.html#proseco.diff.CatalogDiff.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">out_file</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Write output to ``out_file``</span>
+
+<span class="sd">        :param out_file: str, Path</span>
+<span class="sd">            Output file</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">out_file</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+            <span class="n">fh</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="catalog_diff"><a class="viewcode-back" href="../../api.html#proseco.diff.catalog_diff">[docs]</a><span class="k">def</span> <span class="nf">catalog_diff</span><span class="p">(</span><span class="n">cats1</span><span class="p">,</span> <span class="n">cats2</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s1">&#39;html&#39;</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">sort_name</span><span class="o">=</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">section_lines</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">n_context</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return the diff of ACA catalogs ``cats1`` and ``cats2``.</span>
+
+<span class="sd">    The output is returned in a ``CatalogDiff`` object that will display the</span>
+<span class="sd">    formatted diff in Jupyter notebook, or return the diff text via the ``text``</span>
+<span class="sd">    attribute. The difference text can be written to file with the</span>
+<span class="sd">    ``CatalogDiff.write`` method</span>
+
+<span class="sd">    :param cats1: Table, list of Table</span>
+<span class="sd">        First ACA catalog(s)</span>
+<span class="sd">    :param cats2: Table, list of Table</span>
+<span class="sd">        Second ACA catalog(s)</span>
+<span class="sd">    :param style: str</span>
+<span class="sd">        Diff style, either &#39;html&#39;, &#39;content&#39;, or &#39;unified&#39;</span>
+<span class="sd">    :param names: list, str</span>
+<span class="sd">        Column names in output as list or space-delimited str.</span>
+<span class="sd">        Default = &#39;idx id slot type sz dim res halfw&#39;</span>
+<span class="sd">    :param labels: list, None</span>
+<span class="sd">        Label for catalog used in banner at top of lines</span>
+<span class="sd">    :param sort_name: str</span>
+<span class="sd">        Column name for sorting catalog within sections (default=&#39;id&#39;)</span>
+<span class="sd">    :param section_lines: bool</span>
+<span class="sd">        Add separator lines between types (default=True)</span>
+<span class="sd">    :param n_context: int</span>
+<span class="sd">        Number of context lines for unified, context diffs (default=3)</span>
+<span class="sd">    :returns: CatalogDiff</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cats1</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">cats1</span> <span class="o">=</span> <span class="p">[</span><span class="n">cats1</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cats2</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">cats2</span> <span class="o">=</span> <span class="p">[</span><span class="n">cats2</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cats1</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">cats2</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;different number of catalogs in cat1 and cat2&#39;</span><span class="p">)</span>
+
+    <span class="n">header</span> <span class="o">=</span> <span class="n">HTML_HEADER</span> <span class="k">if</span> <span class="n">style</span> <span class="o">==</span> <span class="s1">&#39;html&#39;</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+    <span class="n">footer</span> <span class="o">=</span> <span class="n">HTML_FOOTER</span> <span class="k">if</span> <span class="n">style</span> <span class="o">==</span> <span class="s1">&#39;html&#39;</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+
+    <span class="k">if</span> <span class="n">labels</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ok</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">cats1</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="p">[(</span><span class="sa">f</span><span class="s1">&#39;Catalog </span><span class="si">{</span><span class="n">ii</span> <span class="o">+</span> <span class="mi">1</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">if</span> <span class="n">ok</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span> <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cats1</span><span class="p">))]</span>
+
+    <span class="n">text_all</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="k">for</span> <span class="n">cat1</span><span class="p">,</span> <span class="n">cat2</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">cats1</span><span class="p">,</span> <span class="n">cats2</span><span class="p">,</span> <span class="n">labels</span><span class="p">):</span>
+        <span class="n">lines1</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">lines2</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">cat</span><span class="p">,</span> <span class="n">lines</span> <span class="ow">in</span> <span class="p">((</span><span class="n">cat1</span><span class="p">,</span> <span class="n">lines1</span><span class="p">),</span>
+                           <span class="p">(</span><span class="n">cat2</span><span class="p">,</span> <span class="n">lines2</span><span class="p">)):</span>
+            <span class="n">cat_lines</span> <span class="o">=</span> <span class="n">get_catalog_lines</span><span class="p">(</span>
+                <span class="n">cat</span><span class="p">,</span> <span class="n">names</span><span class="p">,</span> <span class="n">section_lines</span><span class="o">=</span><span class="n">section_lines</span><span class="p">,</span> <span class="n">sort_name</span><span class="o">=</span><span class="n">sort_name</span><span class="p">)</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">cat_lines</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">style</span> <span class="o">==</span> <span class="s1">&#39;html&#39;</span><span class="p">:</span>
+            <span class="n">differ</span> <span class="o">=</span> <span class="n">difflib</span><span class="o">.</span><span class="n">HtmlDiff</span><span class="p">()</span>
+            <span class="n">text</span> <span class="o">=</span> <span class="n">differ</span><span class="o">.</span><span class="n">make_table</span><span class="p">(</span><span class="n">lines1</span><span class="p">,</span> <span class="n">lines2</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">label</span><span class="p">:</span>
+                <span class="n">text</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;&lt;h3&gt;</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s1">&lt;/h3&gt;&#39;</span> <span class="o">+</span> <span class="n">os</span><span class="o">.</span><span class="n">linesep</span> <span class="o">+</span> <span class="n">text</span>
+        <span class="k">elif</span> <span class="n">style</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;context&#39;</span><span class="p">,</span> <span class="s1">&#39;unified&#39;</span><span class="p">):</span>
+            <span class="n">func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">difflib</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">style</span><span class="si">}</span><span class="s1">_diff&#39;</span><span class="p">)</span>
+            <span class="n">ls</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">linesep</span>
+            <span class="n">text</span> <span class="o">=</span> <span class="n">ls</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="n">func</span><span class="p">(</span><span class="n">lines1</span><span class="p">,</span> <span class="n">lines2</span><span class="p">,</span> <span class="n">fromfile</span><span class="o">=</span><span class="s1">&#39;catalog 1&#39;</span><span class="p">,</span> <span class="n">tofile</span><span class="o">=</span><span class="s1">&#39;catalog 2&#39;</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">n_context</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">label</span><span class="p">:</span>
+                <span class="n">sep</span> <span class="o">=</span> <span class="s1">&#39;=&#39;</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">label</span><span class="p">))</span>
+                <span class="n">text</span> <span class="o">=</span> <span class="n">sep</span> <span class="o">+</span> <span class="n">ls</span> <span class="o">+</span> <span class="n">label</span> <span class="o">+</span> <span class="n">ls</span> <span class="o">+</span> <span class="n">sep</span> <span class="o">+</span> <span class="n">ls</span> <span class="o">+</span> <span class="n">text</span> <span class="o">+</span> <span class="n">ls</span> <span class="o">+</span> <span class="n">ls</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;style arg must be one of &#39;html&#39;, &#39;unified&#39;, &#39;context&#39;&quot;</span><span class="p">)</span>
+
+        <span class="n">text_all</span> <span class="o">+=</span> <span class="n">text</span>
+
+    <span class="k">return</span> <span class="n">CatalogDiff</span><span class="p">(</span><span class="n">header</span> <span class="o">+</span> <span class="n">text_all</span> <span class="o">+</span> <span class="n">footer</span><span class="p">,</span> <span class="n">is_html</span><span class="o">=</span><span class="p">(</span><span class="n">style</span> <span class="o">==</span> <span class="s1">&#39;html&#39;</span><span class="p">))</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><h3>Page Contents</h3>
+
+
+<form action="../../search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+<footer class="footer">
+  <p class="pull-right"> &nbsp;
+    <a href="#">Back to Top</a></p>
+  <p>
+    &copy; Copyright 2018, Tom Aldcroft, Jean Connelly.<br/>
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.1.2. &nbsp;
+  </p>
+</footer>
+  </body>
+</html>
