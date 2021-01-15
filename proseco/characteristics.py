@@ -1,7 +1,6 @@
-import os
-import warnings
-from pathlib import Path
-from astropy.table import Table
+from ska_helpers.utils import LazyDict
+import agasc
+
 
 CCD = {'row_min': -512.0,
        'row_max': 512.0,
@@ -43,10 +42,10 @@ bad_pixels = [[-245, 0, 454, 454],  # Bad column
               [-374, -374, 347, 347]]  # Fid trap
 
 
-# Add in entries from the AGASC supplement file, if possible, warn otherwise
-agasc_supplement_file = Path(os.environ['SKA']) / 'data' / 'agasc' / 'agasc_supplement.h5'
-if agasc_supplement_file.exists():
-    bad_star_table = Table.read(str(agasc_supplement_file), path='bad')
-    bad_star_set.update(set(bad_star_table['agasc_id'].tolist()))
-else:
-    warnings.warn(f'Unable to find {agasc_supplement_file}, using limited bad star set')
+def _load_bad_star_set():
+    # Add in entries from the AGASC supplement file, if possible, warn otherwise
+    out = agasc.get_supplement_table('bad', as_dict=True)
+    return out
+
+
+bad_star_set = LazyDict(_load_bad_star_set)
