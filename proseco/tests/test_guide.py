@@ -35,8 +35,8 @@ def test_select():
     assert selected['id'].tolist() == expected_star_ids
 
 
-@agasc.disable_supplement
-@pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
+@pytest.mark.skipif(not HAS_SC_ARCHIVE, reason='Test requires starcheck archive')
+@agasc.disable_supplement()
 def test_obsid_19461():
     """
     Regression tests that 5 expected agasc ids are selected in a poor star field
@@ -47,6 +47,7 @@ def test_obsid_19461():
     assert selected['id'].tolist() == expected_star_ids
 
 
+@agasc.disable_supplement()
 def test_common_column_obsid_19904():
     """
     Confirm in a specific configuration that a star with a column spoiler,
@@ -92,6 +93,7 @@ def test_common_column(case):
     assert col_spoil[0] == case['spoils']
 
 
+@agasc.disable_supplement()
 def test_box_mag_spoiler():
     """
     Test spoiled star rejection by manipulating a star position and magnitude
@@ -119,6 +121,7 @@ def test_box_mag_spoiler():
     assert 688523960 not in selected2['id']
 
 
+@agasc.disable_supplement()
 def test_region_contrib():
     """Regression test of stars rejected by contributing starlight to readout region.
 
@@ -163,6 +166,7 @@ def test_bad_star_list():
     assert guides.bad_stars_mask[idx]
 
 
+@agasc.disable_supplement()
 def test_avoid_trap():
     """
     Set up a scenario where a star is selected fine at one roll, and then
@@ -190,7 +194,8 @@ def test_avoid_trap():
     assert 156381600 not in selected2['id'].tolist()
 
 
-@pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
+@pytest.mark.skipif(not HAS_SC_ARCHIVE, reason='Test requires starcheck archive')
+@agasc.disable_supplement()
 def test_big_dither():
     """Regression test that the expected set of agasc ids selected for "big
     dither" obsid 20168 are selected.
@@ -550,6 +555,7 @@ def test_get_ax_range():
         assert n - extent - 2 < minus
 
 
+@agasc.disable_supplement()
 def test_make_report_guide(tmpdir):
     """
     Test making a guide report.  Use a big-box dither here
