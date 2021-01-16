@@ -8,6 +8,7 @@ from Quaternion import Quat
 from astropy.table import Table
 import pytest
 
+import agasc
 import mica.starcheck
 from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
 from chandra_aca.transform import mag_to_count_rate, count_rate_to_mag
@@ -18,7 +19,7 @@ from ..report_guide import make_report
 from ..characteristics_guide import mag_spoiler
 from ..characteristics import CCD
 from ..core import StarsTable
-from .test_common import STD_INFO, disable_agasc_use_mag_est, mod_std_info, OBS_INFO, DARK40
+from .test_common import STD_INFO, mod_std_info, OBS_INFO, DARK40
 
 
 HAS_SC_ARCHIVE = Path(mica.starcheck.starcheck.FILES['data_root']).exists()
@@ -34,7 +35,7 @@ def test_select():
     assert selected['id'].tolist() == expected_star_ids
 
 
-@disable_agasc_use_mag_est
+@agasc.disable_supplement
 @pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
 def test_obsid_19461():
     """

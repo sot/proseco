@@ -12,8 +12,9 @@ from pathlib import Path
 
 import numpy as np
 import mica.starcheck
+import agasc
 
-from .test_common import STD_INFO, disable_agasc_use_mag_est, mod_std_info, DARK40, OBS_INFO
+from .test_common import STD_INFO, mod_std_info, DARK40, OBS_INFO
 from ..core import StarsTable, includes_for_obsid, ACACatalogTable
 from ..catalog import get_aca_catalog, ACATable
 from ..fid import get_fid_catalog, FidTable
@@ -50,7 +51,7 @@ def test_get_aca_catalog_49531():
 def test_get_aca_catalog_20603_with_supplement():
     """Test that results for 20603 are different if the AGASC supplement is used.
     """
-    get_aca_catalog_no_suppl = disable_agasc_use_mag_est(get_aca_catalog)
+    get_aca_catalog_no_suppl = agasc.disable_supplement(get_aca_catalog)
 
     kwargs = dict(obsid=20603, exclude_ids_acq=[40113544],
                   n_fid=2, n_guide=6, n_acq=7, raise_exc=True)
@@ -63,7 +64,7 @@ def test_get_aca_catalog_20603_with_supplement():
             or np.any(aca_no.acqs['mag'] != aca.acqs['mag']))
 
 
-@disable_agasc_use_mag_est
+@agasc.disable_supplement
 @pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
 def test_get_aca_catalog_20603():
     """Put it all together.  Regression test for selected stars.
@@ -101,7 +102,7 @@ def test_get_aca_catalog_20603():
     assert aca.dark_date == '2018:100'
 
 
-@disable_agasc_use_mag_est
+@agasc.disable_supplement
 @pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
 def test_get_aca_catalog_20259():
     """
@@ -580,7 +581,7 @@ def test_dark_property():
     assert aca.dark.mean() > aca.acqs.dark.mean()
 
 
-@disable_agasc_use_mag_est
+@agasc.disable_supplement
 def test_dense_star_field_regress():
     """
     Test getting stars at the most dense star field in the sky.  Taken from:

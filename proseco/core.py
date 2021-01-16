@@ -22,8 +22,6 @@ from mica.archive.aca_dark import get_dark_cal_image, get_dark_cal_id
 
 from . import characteristics as ACA
 
-AGASC_USE_MAG_EST = True
-
 # For testing this is used to cache fid tables for a detector
 FIDS_CACHE = {}
 APL = AcaPsfLibrary()
@@ -1032,7 +1030,7 @@ class StarsTable(BaseCatalogTable):
         agasc_file = Path(os.environ['SKA'], 'data', 'agasc', 'proseco_agasc_1p7.h5')
         agasc_stars = agasc.get_agasc_cone(q_att.ra, q_att.dec, radius=radius, date=date,
                                            agasc_file=agasc_file,
-                                           use_mag_est=AGASC_USE_MAG_EST)
+                                           use_supplement=True)
         stars = StarsTable.from_stars(att, agasc_stars, copy=False)
 
         logger = StarsTable.get_logger(logger)
