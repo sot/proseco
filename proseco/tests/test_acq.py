@@ -1,5 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
+import os
 import numpy as np
 import pytest
 from pathlib import Path
@@ -29,6 +30,9 @@ TEST_DATE = '2018:144'  # Fixed date for doing tests
 ATT = [10, 20, 3]  # Arbitrary test attitude
 CACHE = {}  # Cache stuff for speed
 TEST_COLS = ('idx', 'slot', 'id', 'yang', 'zang', 'halfw')
+
+# Do not use the AGASC supplement in testing by default since mags can change
+os.environ[agasc.SUPPLEMENT_ENABLED_ENV] = 'False'
 
 
 def calc_p_brightest(acq, box_size, stars, dark, man_err=0, dither=20, bgd=0):
@@ -397,7 +401,6 @@ def test_calc_p_on_ccd_asymmetric_dither():
         assert np.isclose(p_in_box, exp)
 
 
-@agasc.disable_supplement()
 def test_get_acq_catalog_19387():
     """Put it all together.  Regression test for selected stars.  This obsid
     actually changes out one of the initial catalog candidates.
@@ -432,7 +435,6 @@ def test_get_acq_catalog_19387():
     assert repr(acqs.cand_acqs[TEST_COLS]).splitlines() == exp
 
 
-@agasc.disable_supplement()
 def test_get_acq_catalog_21007():
     """Put it all together.  Regression test for selected stars.
 
@@ -483,7 +485,6 @@ def test_get_acq_catalog_21007():
     assert repr(acqs[TEST_COLS]).splitlines() == exp
 
 
-@agasc.disable_supplement()
 def test_box_strategy_20603():
     """Test for PR #32 that doesn't allow p_acq to be reduced below 0.1.
 
@@ -528,7 +529,6 @@ def test_box_strategy_20603():
     assert repr(acqs[TEST_COLS]).splitlines() == exp
 
 
-@agasc.disable_supplement()
 def test_make_report(tmpdir):
     """Test making an acquisition report.
 

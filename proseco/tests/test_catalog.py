@@ -1,5 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 import copy
+import os
 
 import matplotlib
 from Quaternion import Quat
@@ -22,6 +23,11 @@ from .. import characteristics as ACA
 
 HAS_SC_ARCHIVE = Path(mica.starcheck.starcheck.FILES['data_root']).exists()
 TEST_COLS = 'slot idx id type sz yang zang dim res halfw'.split()
+
+# Do not use the AGASC supplement in testing by default since mags can change
+os.environ[agasc.SUPPLEMENT_ENABLED_ENV] = 'False'
+
+HAS_MAG_SUPPLEMENT = len(agasc.get_supplement_table('mags')) > 0
 
 
 def test_allowed_kwargs():
@@ -48,14 +54,15 @@ def test_get_aca_catalog_49531():
 
 
 @pytest.mark.skipif(not HAS_SC_ARCHIVE, reason='Test requires starcheck archive')
+@pytest.mark.skipif(not HAS_MAG_SUPPLEMENT, reason='No estimated mags in AGASC supplement')
 def test_get_aca_catalog_20603_with_supplement():
     """Test that results for 20603 are different if the AGASC supplement is used.
     """
     kwargs = dict(obsid=20603, exclude_ids_acq=[40113544],
                   n_fid=2, n_guide=6, n_acq=7, raise_exc=True)
-    with agasc.disable_supplement():
-        aca_no = get_aca_catalog(**kwargs)
-    aca = get_aca_catalog(**kwargs)
+    aca_no = get_aca_catalog(**kwargs)
+    with agasc.set_supplement_enabled(True):
+        aca = get_aca_catalog(**kwargs)
 
     assert (len(aca_no.guides) != len(aca.guides)
             or np.any(aca_no.guides['mag'] != aca.guides['mag']))
@@ -64,7 +71,6 @@ def test_get_aca_catalog_20603_with_supplement():
 
 
 @pytest.mark.skipif(not HAS_SC_ARCHIVE, reason='Test requires starcheck archive')
-@agasc.disable_supplement()
 def test_get_aca_catalog_20603():
     """Put it all together.  Regression test for selected stars.
     """
@@ -102,7 +108,6 @@ def test_get_aca_catalog_20603():
 
 
 @pytest.mark.skipif(not HAS_SC_ARCHIVE, reason='Test requires starcheck archive')
-@agasc.disable_supplement()
 def test_get_aca_catalog_20259():
     """
     Test obsid 20259 which has two spoiled fids: HRC-2 is yellow and HRC-4 is red.
@@ -580,7 +585,6 @@ def test_dark_property():
     assert aca.dark.mean() > aca.acqs.dark.mean()
 
 
-@agasc.disable_supplement()
 def test_dense_star_field_regress():
     """
     Test getting stars at the most dense star field in the sky.  Taken from:
