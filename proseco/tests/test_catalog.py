@@ -1,5 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 import copy
+import os
 
 import matplotlib
 from Quaternion import Quat
@@ -12,6 +13,7 @@ from pathlib import Path
 
 import numpy as np
 import mica.starcheck
+import agasc
 
 from .test_common import STD_INFO, mod_std_info, DARK40, OBS_INFO
 from ..core import StarsTable, includes_for_obsid, ACACatalogTable
@@ -21,6 +23,11 @@ from .. import characteristics as ACA
 
 HAS_SC_ARCHIVE = Path(mica.starcheck.starcheck.FILES['data_root']).exists()
 TEST_COLS = 'slot idx id type sz yang zang dim res halfw'.split()
+
+# Do not use the AGASC supplement in testing by default since mags can change
+os.environ[agasc.SUPPLEMENT_ENABLED_ENV] = 'False'
+
+HAS_MAG_SUPPLEMENT = len(agasc.get_supplement_table('mags')) > 0
 
 
 def test_allowed_kwargs():
@@ -32,7 +39,7 @@ def test_allowed_kwargs():
     assert new_kwargs == {'acqs', 'include_ids', 'exclude_ids'}
 
 
-@pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
+@pytest.mark.skipif(not HAS_SC_ARCHIVE, reason='Test requires starcheck archive')
 def test_get_aca_catalog_49531():
     """
     Test of getting an ER using the mica.starcheck archive for getting the
@@ -46,7 +53,24 @@ def test_get_aca_catalog_49531():
     assert len(aca.fids) == 0
 
 
-@pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
+@pytest.mark.skipif(not HAS_SC_ARCHIVE, reason='Test requires starcheck archive')
+@pytest.mark.skipif(not HAS_MAG_SUPPLEMENT, reason='No estimated mags in AGASC supplement')
+def test_get_aca_catalog_20603_with_supplement():
+    """Test that results for 20603 are different if the AGASC supplement is used.
+    """
+    kwargs = dict(obsid=20603, exclude_ids_acq=[40113544],
+                  n_fid=2, n_guide=6, n_acq=7, raise_exc=True)
+    aca_no = get_aca_catalog(**kwargs)
+    with agasc.set_supplement_enabled(True):
+        aca = get_aca_catalog(**kwargs)
+
+    assert (len(aca_no.guides) != len(aca.guides)
+            or np.any(aca_no.guides['mag'] != aca.guides['mag']))
+    assert (len(aca_no.acqs) != len(aca.acqs)
+            or np.any(aca_no.acqs['mag'] != aca.acqs['mag']))
+
+
+@pytest.mark.skipif(not HAS_SC_ARCHIVE, reason='Test requires starcheck archive')
 def test_get_aca_catalog_20603():
     """Put it all together.  Regression test for selected stars.
     """
@@ -83,7 +107,7 @@ def test_get_aca_catalog_20603():
     assert aca.dark_date == '2018:100'
 
 
-@pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
+@pytest.mark.skipif(not HAS_SC_ARCHIVE, reason='Test requires starcheck archive')
 def test_get_aca_catalog_20259():
     """
     Test obsid 20259 which has two spoiled fids: HRC-2 is yellow and HRC-4 is red.
@@ -169,7 +193,7 @@ def test_no_candidates():
     assert 'id' in acas.fids.colnames
 
 
-@pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
+@pytest.mark.skipif(not HAS_SC_ARCHIVE, reason='Test requires starcheck archive')
 def test_big_dither_from_mica_starcheck():
     """
     Test code that infers dither_acq and dither_guide for a big-dither
@@ -733,7 +757,7 @@ def test_force_catalog_from_starcheck():
     assert np.allclose(aca.acqs.man_angle, 89.16)
 
 
-@pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
+@pytest.mark.skipif(not HAS_SC_ARCHIVE, reason='Test requires starcheck archive')
 def test_includes_for_obsid():
     """
     Test helper function to get the include_* kwargs for forcing a catalog.

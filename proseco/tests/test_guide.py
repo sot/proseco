@@ -1,5 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
+import os
 from pathlib import Path
 import numpy as np
 import itertools
@@ -8,6 +9,7 @@ from Quaternion import Quat
 from astropy.table import Table
 import pytest
 
+import agasc
 import mica.starcheck
 from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
 from chandra_aca.transform import mag_to_count_rate, count_rate_to_mag
@@ -23,6 +25,9 @@ from .test_common import STD_INFO, mod_std_info, OBS_INFO, DARK40
 
 HAS_SC_ARCHIVE = Path(mica.starcheck.starcheck.FILES['data_root']).exists()
 
+# Do not use the AGASC supplement in testing by default since mags can change
+os.environ[agasc.SUPPLEMENT_ENABLED_ENV] = 'False'
+
 
 def test_select():
     """
@@ -34,7 +39,7 @@ def test_select():
     assert selected['id'].tolist() == expected_star_ids
 
 
-@pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
+@pytest.mark.skipif(not HAS_SC_ARCHIVE, reason='Test requires starcheck archive')
 def test_obsid_19461():
     """
     Regression tests that 5 expected agasc ids are selected in a poor star field
@@ -188,7 +193,7 @@ def test_avoid_trap():
     assert 156381600 not in selected2['id'].tolist()
 
 
-@pytest.mark.skipif('not HAS_SC_ARCHIVE', reason='Test requires starcheck archive')
+@pytest.mark.skipif(not HAS_SC_ARCHIVE, reason='Test requires starcheck archive')
 def test_big_dither():
     """Regression test that the expected set of agasc ids selected for "big
     dither" obsid 20168 are selected.

@@ -1,5 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
+import os
 import numpy as np
 import pytest
 from pathlib import Path
@@ -7,6 +8,7 @@ from pathlib import Path
 from Quaternion import Quat
 from chandra_aca.aca_image import AcaPsfLibrary
 from chandra_aca.transform import mag_to_count_rate, yagzag_to_pixels
+import agasc
 
 from ..report_acq import make_report
 from ..acq import (get_p_man_err, bin2x2,
@@ -28,6 +30,9 @@ TEST_DATE = '2018:144'  # Fixed date for doing tests
 ATT = [10, 20, 3]  # Arbitrary test attitude
 CACHE = {}  # Cache stuff for speed
 TEST_COLS = ('idx', 'slot', 'id', 'yang', 'zang', 'halfw')
+
+# Do not use the AGASC supplement in testing by default since mags can change
+os.environ[agasc.SUPPLEMENT_ENABLED_ENV] = 'False'
 
 
 def calc_p_brightest(acq, box_size, stars, dark, man_err=0, dither=20, bgd=0):
