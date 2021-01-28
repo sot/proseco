@@ -1029,8 +1029,7 @@ class StarsTable(BaseCatalogTable):
         q_att = Quat(att)
         agasc_file = Path(os.environ['SKA'], 'data', 'agasc', 'proseco_agasc_1p7.h5')
         agasc_stars = agasc.get_agasc_cone(q_att.ra, q_att.dec, radius=radius, date=date,
-                                           agasc_file=agasc_file,
-                                           use_supplement=True)
+                                           agasc_file=agasc_file)
         stars = StarsTable.from_stars(att, agasc_stars, copy=False)
 
         logger = StarsTable.get_logger(logger)
