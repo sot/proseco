@@ -56,7 +56,7 @@ def get_guide_catalog(obsid=0, **kwargs):
     selected = guides.run_search_stages()
 
     # Transfer to table (which at this point is an empty table)
-    guides.add_columns(selected.columns.values())
+    guides.add_columns(list(selected.columns.values()))
 
     guides['idx'] = np.arange(len(guides))
 
