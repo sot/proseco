@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>proseco.tests.test_acq &#8212; proseco 4.11.1 documentation</title>
+    <title>proseco.tests.test_acq &#8212; proseco 4.12.0 documentation</title>
     <link rel="stylesheet" href="../../../_static/bootstrap-astropy.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
     
@@ -47,7 +47,7 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../../index.html">proseco 4.11.1 documentation</a>
+	<a href="../../../index.html">proseco 4.12.0 documentation</a>
 	 &#187;
       </li>
       <li><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
@@ -65,6 +65,7 @@
   <h1>Source code for proseco.tests.test_acq</h1><div class="highlight"><pre>
 <span></span><span class="c1"># Licensed under a 3-clause BSD style license - see LICENSE.rst</span>
 
+<span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pytest</span>
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
@@ -72,6 +73,7 @@
 <span class="kn">from</span> <span class="nn">Quaternion</span> <span class="kn">import</span> <span class="n">Quat</span>
 <span class="kn">from</span> <span class="nn">chandra_aca.aca_image</span> <span class="kn">import</span> <span class="n">AcaPsfLibrary</span>
 <span class="kn">from</span> <span class="nn">chandra_aca.transform</span> <span class="kn">import</span> <span class="n">mag_to_count_rate</span><span class="p">,</span> <span class="n">yagzag_to_pixels</span>
+<span class="kn">import</span> <span class="nn">agasc</span>
 
 <span class="kn">from</span> <span class="nn">..report_acq</span> <span class="kn">import</span> <span class="n">make_report</span>
 <span class="kn">from</span> <span class="nn">..acq</span> <span class="kn">import</span> <span class="p">(</span><span class="n">get_p_man_err</span><span class="p">,</span> <span class="n">bin2x2</span><span class="p">,</span>
@@ -93,6 +95,9 @@
 <span class="n">ATT</span> <span class="o">=</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>  <span class="c1"># Arbitrary test attitude</span>
 <span class="n">CACHE</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># Cache stuff for speed</span>
 <span class="n">TEST_COLS</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;idx&#39;</span><span class="p">,</span> <span class="s1">&#39;slot&#39;</span><span class="p">,</span> <span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="s1">&#39;yang&#39;</span><span class="p">,</span> <span class="s1">&#39;zang&#39;</span><span class="p">,</span> <span class="s1">&#39;halfw&#39;</span><span class="p">)</span>
+
+<span class="c1"># Do not use the AGASC supplement in testing by default since mags can change</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="n">agasc</span><span class="o">.</span><span class="n">SUPPLEMENT_ENABLED_ENV</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;False&#39;</span>
 
 
 <div class="viewcode-block" id="calc_p_brightest"><a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.calc_p_brightest">[docs]</a><span class="k">def</span> <span class="nf">calc_p_brightest</span><span class="p">(</span><span class="n">acq</span><span class="p">,</span> <span class="n">box_size</span><span class="p">,</span> <span class="n">stars</span><span class="p">,</span> <span class="n">dark</span><span class="p">,</span> <span class="n">man_err</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">dither</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">bgd</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>

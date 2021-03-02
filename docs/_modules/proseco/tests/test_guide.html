@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>proseco.tests.test_guide &#8212; proseco 4.11.1 documentation</title>
+    <title>proseco.tests.test_guide &#8212; proseco 4.12.0 documentation</title>
     <link rel="stylesheet" href="../../../_static/bootstrap-astropy.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
     
@@ -47,7 +47,7 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../../index.html">proseco 4.11.1 documentation</a>
+	<a href="../../../index.html">proseco 4.12.0 documentation</a>
 	 &#187;
       </li>
       <li><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
@@ -65,6 +65,7 @@
   <h1>Source code for proseco.tests.test_guide</h1><div class="highlight"><pre>
 <span></span><span class="c1"># Licensed under a 3-clause BSD style license - see LICENSE.rst</span>
 
+<span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">itertools</span>
@@ -73,6 +74,7 @@
 <span class="kn">from</span> <span class="nn">astropy.table</span> <span class="kn">import</span> <span class="n">Table</span>
 <span class="kn">import</span> <span class="nn">pytest</span>
 
+<span class="kn">import</span> <span class="nn">agasc</span>
 <span class="kn">import</span> <span class="nn">mica.starcheck</span>
 <span class="kn">from</span> <span class="nn">chandra_aca.aca_image</span> <span class="kn">import</span> <span class="n">ACAImage</span><span class="p">,</span> <span class="n">AcaPsfLibrary</span>
 <span class="kn">from</span> <span class="nn">chandra_aca.transform</span> <span class="kn">import</span> <span class="n">mag_to_count_rate</span><span class="p">,</span> <span class="n">count_rate_to_mag</span>
@@ -88,6 +90,9 @@
 
 <span class="n">HAS_SC_ARCHIVE</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">mica</span><span class="o">.</span><span class="n">starcheck</span><span class="o">.</span><span class="n">starcheck</span><span class="o">.</span><span class="n">FILES</span><span class="p">[</span><span class="s1">&#39;data_root&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
 
+<span class="c1"># Do not use the AGASC supplement in testing by default since mags can change</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="n">agasc</span><span class="o">.</span><span class="n">SUPPLEMENT_ENABLED_ENV</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;False&#39;</span>
+
 
 <div class="viewcode-block" id="test_select"><a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_guide.test_select">[docs]</a><span class="k">def</span> <span class="nf">test_select</span><span class="p">():</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -99,7 +104,7 @@
     <span class="k">assert</span> <span class="n">selected</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="o">==</span> <span class="n">expected_star_ids</span></div>
 
 
-<div class="viewcode-block" id="test_obsid_19461"><a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_guide.test_obsid_19461">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">skipif</span><span class="p">(</span><span class="s1">&#39;not HAS_SC_ARCHIVE&#39;</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s1">&#39;Test requires starcheck archive&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="test_obsid_19461"><a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_guide.test_obsid_19461">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">skipif</span><span class="p">(</span><span class="ow">not</span> <span class="n">HAS_SC_ARCHIVE</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s1">&#39;Test requires starcheck archive&#39;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">test_obsid_19461</span><span class="p">():</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Regression tests that 5 expected agasc ids are selected in a poor star field</span>
@@ -253,7 +258,7 @@
     <span class="k">assert</span> <span class="mi">156381600</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">selected2</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span></div>
 
 
-<div class="viewcode-block" id="test_big_dither"><a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_guide.test_big_dither">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">skipif</span><span class="p">(</span><span class="s1">&#39;not HAS_SC_ARCHIVE&#39;</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s1">&#39;Test requires starcheck archive&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="test_big_dither"><a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_guide.test_big_dither">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">skipif</span><span class="p">(</span><span class="ow">not</span> <span class="n">HAS_SC_ARCHIVE</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s1">&#39;Test requires starcheck archive&#39;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">test_big_dither</span><span class="p">():</span>
     <span class="sd">&quot;&quot;&quot;Regression test that the expected set of agasc ids selected for &quot;big</span>
 <span class="sd">    dither&quot; obsid 20168 are selected.</span>
