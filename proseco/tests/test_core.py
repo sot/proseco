@@ -7,7 +7,7 @@ from astropy.io import ascii
 
 import agasc
 from ..core import (ACABox, get_kwargs_from_starcheck_text, calc_spoiler_impact,
-                    StarsTable)
+                    StarsTable, get_dim_res)
 from ..acq import AcqTable
 from ..guide import GuideTable
 from ..characteristics import bad_star_set
@@ -281,3 +281,14 @@ def test_starstable_from_stars():
 
     stars3 = StarsTable.from_stars(att3, stars)
     assert stars3 is stars
+
+
+def test_get_dim_res():
+    """Test getting ACA DIM and RES for an array of halfws"""
+    halfws = np.array([20, 40, 337, 338, 420], dtype=np.int64)
+    exp_dim = np.array([0, 4, 63, 8, 10], dtype=np.int64)
+    exp_res = np.array([1, 1, 1, 0, 0], dtype=np.int64)
+
+    dim, res = get_dim_res(halfws)
+    assert np.all(dim == exp_dim)
+    assert np.all(res == exp_res)
