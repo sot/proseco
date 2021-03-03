@@ -242,14 +242,17 @@ class GuideTable(ACACatalogTable):
         if self.monitors is None:
             return
 
-        # Stars with 1000 <= id < 1008 are monitor stars tracking brightest star.
-        # Stars with 2000 <= id < 2008 are monitor stars fixed on CCD.
+        # Monitor stars (either tracking brightest star or fixed on the CCD)
+        # have 'fake_code' > 0, either MonFunc.MON_FIXED or MonFunc.MON_TRACK.
+        # They also have `id` between 1000 and 1007.
 
-        # Remove fake stars
+        # Mon window processing uses fake stars in the star catalog to help in
+        # selection and processing. Remove these fake stars now.
         if 'fake_code' in self.stars.colnames:
             idxs = np.flatnonzero(self.stars['fake_code'] > 0)
             self.stars.remove_rows(idxs)
 
+        # Mon window processing munges the dark cal to impose a keep-out zone.
         # Put the dark current back to the standard one if possible
         if self.acqs is not None:
             self.dark = self.acqs.dark
@@ -259,7 +262,8 @@ class GuideTable(ACACatalogTable):
             idxs = np.flatnonzero(self.cand_guides['fake_code'] > 0)
             self.cand_guides.remove_rows(idxs)
 
-        # Common settings for any MON window
+        # Common settings for any MON window. Fake_code gets added to the guides
+        # table by `add_fake_star` for monitor windows.
         if 'fake_code' in self.colnames:
             is_mon = self['fake_code'] > 0
             if np.any(is_mon):
@@ -268,17 +272,16 @@ class GuideTable(ACACatalogTable):
                 self['res'][is_mon] = 0  # Do not convert to track
 
             # Monitors tracking brightest star
-            is_mon = self['fake_code'] == MonFunc.MON_TRACK
-            if np.any(is_mon):
+            is_mon_track = self['fake_code'] == MonFunc.MON_TRACK
+            if np.any(is_mon_track):
                 # Find the ID of the designated track star (brightest guide star)
-                # ok = self['id'] > 100000  # bona-fide guide stars (min AGASC_ID is 131080)
                 guide_ids = self['id'][~is_mon]
                 guide_mags = self['mag'][~is_mon]
                 dts_id = guide_ids[np.argmin(guide_mags)]
                 # Since we don't know the slots yet store the DTS id instead of slot
-                self['dim'][is_mon] = dts_id
+                self['dim'][is_mon_track] = dts_id
 
-                for mon_id in self['id'][is_mon]:
+                for mon_id in self['id'][is_mon_track]:
                     row = self.get_id(mon_id, mon=True)
                     # Try to get AGASC ID
                     dist = np.linalg.norm([self.stars['yang'] - row['yang'],
@@ -289,12 +292,12 @@ class GuideTable(ACACatalogTable):
                         self.make_index()
 
             # Monitors fixed on CCD (no tracking). Set DTS to the ID of this star
-            is_mon = self['fake_code'] == MonFunc.MON_FIXED
-            if np.any(is_mon):
-                self['type'][is_mon] = 'MON'
-                self['sz'][is_mon] = '8x8'
-                self['res'][is_mon] = 0  # Do not convert to track
-                self['dim'][is_mon] = self['id'][is_mon]
+            is_mon_fixed = self['fake_code'] == MonFunc.MON_FIXED
+            if np.any(is_mon_fixed):
+                self['type'][is_mon_fixed] = 'MON'
+                self['sz'][is_mon_fixed] = '8x8'
+                self['res'][is_mon_fixed] = 0  # Do not convert to track
+                self['dim'][is_mon_fixed] = self['id'][is_mon_fixed]
 
         # Find any MON windows scheduled as guide and set size to 8x8
         for monitor in self.monitors:
