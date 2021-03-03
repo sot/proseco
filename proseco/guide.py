@@ -196,8 +196,8 @@ class GuideTable(ACACatalogTable):
             elif monitor['function'] == MonFunc.MON_FIXED:
                 # Schedule as monitor window that is fixed (no tracking).  Other
                 # guide windows avoid this by making a super-hot spot covering
-                # the fixed 8x8 pixels of mon window. These have id between 2000
-                # and 2007.
+                # the fixed 8x8 pixels of mon window. These have id between 1000
+                # and 1007.
                 row, col = int(monitor['row']) + 512, int(monitor['col']) + 512
                 self.dark[row - 4: row + 4, col - 4: col + 4] = ACA.bad_pixel_dark_current
                 self.stars.add_fake_star(id=id_fake, ra=monitor['ra'], dec=monitor['dec'],
@@ -205,6 +205,8 @@ class GuideTable(ACACatalogTable):
                                          fake_code=MonFunc.MON_FIXED)
                 self.include_ids.append(id_fake)
                 id_fake += 1
+
+            # Note other two options for `function` are not relevant at this stage
 
     def process_monitors_pre2(self):
         """Process guide-from-monitor requests by finding corresponding star in
