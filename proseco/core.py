@@ -1568,9 +1568,17 @@ def get_dim_res(halfws):
     of the square, in arc seconds, is (20 + 5D) where D is the dimension field
     in command word 2. When the H flag is false (=0), the half width, is (20 +
     40D) arc seconds.
+
+    :param halfws: array of int
+        Half-widths (arcsec)
+    :returns: tuple (int array, int array)
+        ACA search DIM and RES entries corresponding to halfws
     """
-    # Max value of dim is 2**6 = 64, so high res is up to 20 + 5 * 63 = 335
-    ok = halfws <= 335
+    # Max value of dim is 2**6 = 64, so high res is up to 20 + 5 * 63 = 335.
+    # But values up to 335 + 2.5 would have dim=63 because of rounding. Select
+    # the high-res and low-res values at that cutoff.
+    ok = halfws < 335 + 2.5
+
     dim = np.zeros_like(halfws)
     res = np.zeros_like(halfws)
     # High-resolution halfws
