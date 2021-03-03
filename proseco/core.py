@@ -333,6 +333,12 @@ class MonitorsMetaAttribute(MetaAttribute):
             out['function'] = value[:, 4].astype(np.uint8)
             value = out
 
+            if np.any(out['coord_type'] < 0) or np.any(out['coord_type'] > 2):
+                raise ValueError('monitors coord type must be 0, 1, or 2')
+
+            if np.any(out['function'] < 0) or np.any(out['function'] > 3):
+                raise ValueError('monitors function must be 0, 1, 2, or 3')
+
         instance.meta[self.name] = value
 
 
