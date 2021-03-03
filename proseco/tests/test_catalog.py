@@ -542,15 +542,19 @@ def test_monitors_and_target_offset_args():
     assert aca.monitors is None
     assert aca.target_offset == (0.0, 0.0)
 
-    monitors = np.arange(10).reshape(2, 5)
-    target_offset = (1, 2)
+    # Both of these are brighter than the brightest bona-fide star, stressing
+    # the processing somewhat.
+    monitors = [[-1700, 1900, ACA.MonCoord.YAGZAG, 7.5, ACA.MonFunc.MON_FIXED],
+                [500, -500, ACA.MonCoord.YAGZAG, 7.5, ACA.MonFunc.MON_TRACK]]
+    target_offset = (0.05, 0.1)
     aca = get_aca_catalog(**mod_std_info(monitors=monitors,
+                                         n_guide=6, n_fid=0,
                                          target_offset=target_offset,
                                          stars=stars, dark=DARK40))
-    exp = ['coord0 coord1 coord_type mag function',
-           '------ ------ ---------- --- --------',
-           '   0.0    1.0          2 3.0        4',
-           '   5.0    6.0          7 8.0        9']
+    exp = [' coord0 coord1 coord_type mag function',
+           '------- ------ ---------- --- --------',
+           '-1700.0 1900.0          2 7.5        3',
+           '  500.0 -500.0          2 7.5        2']
     assert aca.monitors.pformat_all() == exp
     assert aca.target_offset is target_offset
 
