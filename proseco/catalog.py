@@ -506,18 +506,55 @@ class ACATable(ACACatalogTable):
                      warning=True)
 
 
-# Slot-based catalogs corresponding to OBC 8-element acq and guide catalogs
 class ObcCat(list):
+    """Slot-based catalog corresponding to OBC 8-element acq and guide catalogs.
+
+    Each row is a catalog object (acq, guide, fid, mon) with a dict-like
+    interface (dict or Table Row). This class is a list subclass with special
+    properties:
+
+    - Initialized as a length 8 list of dict {'id': None, 'type': None}
+    - Each of the 8 items correspond to that ACA slot.
+    - The default value corresponds to a "empty" slot.
+    - Setting an entry in a slot that is occupied raises an exception.
+    - Allows adding an entry to the first/last available slot, doing nothing if
+      the ``id`` is already in the catalog.
+    """
     def __init__(self, *args, **kwargs):
-        super().__init__([{'id': None, 'type': None}] * 8)
+        super().__init__()
+        for _ in range(8):
+            self.append({'id': None, 'type': None})
 
     def __setitem__(self, item, value):
+        """Set list ``item`` to ``value``
+
+        Raises an exception if row ``item`` already has a non-default value.
+
+        :param item: int
+            List item to set
+        :param value: dict, Row
+            Value to set
+        """
         if self[item]['type'] is not None:
             raise IndexError(f'slot {item} is already set => program logic error')
         value['slot'] = item
         super().__setitem__(item, value)
 
     def add(self, value, descending=False):
+        """Add ``value`` to catalog in first/last empty slot, returning the slot.
+
+        If ``value['id']`` is already in the catalog then return that slot.
+
+        If the catalog already has 8 entries then an IndexError is raised.
+
+        :param value: dict, Row
+            Catalog entry to add
+        :param descending: bool
+            Direction in which to find the first empty slot (starting from
+            beginning or end of catalog)
+        :returns: int
+            Slot in which ``value`` was placed
+        """
         # First check if item is already there, if so then return that slot
         for slot in range(8):
             if self[slot]['id'] == value['id']:
@@ -535,7 +572,24 @@ class ObcCat(list):
 
 
 def merge_cats(fids=None, guides=None, acqs=None):
-    # Make an empty (zero-length) catalog with the right columns
+    """Merge ``fids``, ``guides``, and ``acqs`` catalogs into one catalog.
+
+    The output of this function is a catalog which corresponds to the final
+    "flight" catalog that can be translated directly to appropriate OBC
+    spacecraft commanding, e.g. a DOT ACQ command. The ordering of entries
+    is intended to match the legacy behavior of MATLAB tools.
+
+    :param fids: FidTable, None (optional)
+        Table of fids
+    :param guides: GuideTable, None (optional)
+        Table of guide stars
+    :param acqs: AcqTable, None (optional)
+        Table of acquisition stars
+    :returns: ACACatalogTable
+        Merged catalog
+    """
+    # Make an empty (zero-length) catalog with the right columns. This is used
+    # just below to replace any missing catalogs.
     if acqs is not None:
         empty = acqs[0:0]
     elif guides is not None:
@@ -548,9 +602,11 @@ def merge_cats(fids=None, guides=None, acqs=None):
     fids = empty if fids is None else fids
     guides = empty if guides is None else guides
     acqs = empty if acqs is None else acqs
+
     gfms = empty  # Guide converted from monitor (must be 8x8)
     mons = empty  # Monitor stars
 
+    # Columns in the final merged catalog
     colnames = ['slot', 'id', 'type', 'sz', 'p_acq', 'mag', 'maxmag',
                 'yang', 'zang', 'dim', 'res', 'halfw']
 
@@ -579,6 +635,7 @@ def merge_cats(fids=None, guides=None, acqs=None):
             guides = guides[ok]  # "Normal" guide stars
 
     if len(acqs) > 0:
+        # TODO: move these into acq.py where possible
         img_size = get_img_size(len(fids))
         acqs['type'] = 'ACQ'
         acqs['maxmag'] = (acqs['mag'] + 1.5).clip(None, ACA.max_maxmag)
@@ -604,9 +661,10 @@ def merge_cats(fids=None, guides=None, acqs=None):
         gfm['type'] = 'GUI'
         slot = cat_guides.add(gfm, descending=True)
         # If the GFM is also an acq then add to same slot
+        # TODO: probably don't need the len(acqs) > 0 check.
         if len(acqs) > 0 and gfm['id'] in acqs['id']:
             acq = acqs.get_id(gfm['id'])
-            acq['sz'] = gfm['sz']  # Set size to 8x8
+            acq['sz'] = gfm['sz']  # Set acq size to 8x8
             cat_acqs[slot] = acq
 
     # Monitors (descending from slot 7)
@@ -615,6 +673,7 @@ def merge_cats(fids=None, guides=None, acqs=None):
 
     # Now do fids (ascending from slot 0)
     for fid in fids:
+        # TODO: why is this fid[colnames], unlike guides and acqs?
         cat_guides.add(fid[colnames])
 
     # BOT stars, ascending in slot
@@ -641,9 +700,9 @@ def merge_cats(fids=None, guides=None, acqs=None):
     rows = []
 
     # Fids
-    for fid in cat_guides:
-        if fid['type'] == 'FID':
-            rows.append(fid[colnames])
+    for guide in cat_guides:
+        if guide['type'] == 'FID':
+            rows.append(guide[colnames])
 
     # Add BOT stars
     for guide, acq in zip(cat_guides, cat_acqs):
@@ -675,8 +734,12 @@ def merge_cats(fids=None, guides=None, acqs=None):
     # id of the tracking slot. Here we convert that to the correct slot.
     for mon in mons:
         row = aca.get_id(mon['id'], mon=True)
-        # If the ID in dim (DTS) is the same as the ID for this MON then it is
-        # a fixed MON window. Otherwise the DTS is a guide star slot.
+        # If the ID in dim (DTS) is the same as the ID for this MON then it is a
+        # fixed MON window. Otherwise the DTS is a guide star slot.
+        #
+        # TODO: probably don't need this if statement since I think the
+        # statement within the else: should work in both cases. With good tests
+        # just try it.
         if row['dim'] == mon['id']:
             row['dim'] = mon['slot']
         else:
