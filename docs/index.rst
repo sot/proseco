@@ -60,6 +60,7 @@ exclude_ids_acq     int or list of AGASC IDs of stars to exclude from acq catalo
 include_ids_guide   int or list of AGASC IDs of stars to include in guide catalog
 exclude_ids_guide   int or list of AGASC IDs of stars to exclude from guide catalog
 stars               table of AGASC stars (will be fetched from agasc if None)
+monitors            N x 5 array of monitor star specifications (see `Monitor stars`_)
 =================== ===============================================================
 
 Within the ``include_halfws_acq`` list, one can supply the value ``0`` for a
@@ -175,6 +176,83 @@ with a single ``id`` column::
     File "/Users/aldcroft/git/proseco/proseco/fid.py", line 416, in get_fid_positions
       ypos = FID.fidpos[detector][:, 0]
   KeyError: 'FAIL'
+
+Monitor stars
+-------------
+
+Monitor stars in a catalog are specified withe the ``monitors`` keyword.
+This can accept a list of lists (or 2-d array of floats) in the form::
+
+  [
+    [coord0, coord1, coord_type, mag, function],  # Monitor window 1 (req'd)
+    [coord0, coord1, coord_type, mag, function],  # Monitor windows 2, 3, ... N (optional)
+    ..
+  ]
+
+
+If passed as a list of lists, the input will be converted to a numpy 2-d array
+(``np.array(monitors)``) which will have shape ``(N, 5)`` where ``N`` is the number of
+monitor windows. Enumeration codes related to the ``monitors`` keyword are
+defined in the module ``proseco.characteristics``::
+
+  class MonFunc:
+      AUTO = 0
+      GUIDE = 1
+      MON_TRACK = 2
+      MON_FIXED = 3
+
+  class MonCoord:
+      RADEC = 0
+      ROWCOL = 1
+      YAGZAG = 2
+
+The 5 values ``[coord0, coord1, coord_type, mag, function]`` in a monitor window
+specification are:
+
+- ``coord0``: first coordinate: RA (deg), row (pixel), or Y angle (arcsec))
+- ``coord1``: second coordinate: Dec (deg), column (pixel), or Z angle (arcsec)
+- ``coord_type``:
+
+  - ``MonCoord.RADEC``: RA/Dec (deg)
+  - ``MonCoord.ROWCOL``: row/column (pixel)
+  - ``MonCoord.YAGZAG``: Y/Z angle (arcsec)
+
+- ``mag``: star magnitude (used for commanded MAXMAG for monitor window requests)
+- ``function``:
+
+  - ``MonFunc.AUTO``: Schedule as a guide star if it meets requirements and does not introduce
+    critical warnings, otherwise schedule as a monitor window that tracks the brightest star.
+  - ``MonFunc.GUIDE``: Schedule as a guide star if a corresponding star is found
+    in the AGASC within 2 arcsec, otherwise raise an exception.
+  - ``MonFunc.MON_TRACK``: Schedule as monitor window that tracks the brightest star.
+  - ``MonFunc.MON_FIXED``: Schedule as monitor window that is fixed on the CCD
+     with no tracking.
+
+The typical use cases are as follows:
+
+- OR-specified monitor target with ``function=MonFunc.AUTO``
+
+  - This is the most common configuration and lets proseco decide how to schedule the OR.
+  - Coordinates provided as RA, Dec.
+
+- OR-specified monitor target ``function=MonFunc.GUIDE``
+
+  - Force scheduling as a guide star in a case where proseco would normally
+    schedule as a monitor window.
+  - For instance a star where the observer provides information on mag or
+    variability that is different from the AGASC (e.g. brighter).
+
+- OR-specified monitor target ``function=MonFunc.MON_TRACK``
+
+  - Force scheduling as a monitor window in a case where proseco
+    would normally schedule as a guide star.
+  - For instance a star where the observer provides information on mag or
+    variability that is different from the AGASC (e.g. fainter or more variable).
+
+- Fixed-location ER monitor window ``function=MonFunc.MON_FIXED``
+
+  - Used for engineering investigation, e.g. looking at a specific flickering pixel.
+  - ``coord0,1`` as Y/Z angle or (most commonly) row/column.
 
 Data requirements
 -----------------
