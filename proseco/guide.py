@@ -58,14 +58,14 @@ def get_guide_catalog(obsid=0, **kwargs):
 
     # Process monitor window requests, converting them into fake stars that
     # are added to the include_ids list.
-    guides.process_monitors_pre1()
+    guides.process_monitors_pre()
 
     # Do a first cut of the stars to get a set of reasonable candidates
     guides.cand_guides = guides.get_initial_guide_candidates()
 
     # Process guide-from-monitor requests by finding corresponding star in
     # cand_guides and adding to the include_ids list.
-    guides.process_monitors_pre2()
+    # guides.process_monitors_pre2()
 
     # Run through search stages to select stars
     selected = guides.run_search_stages()
@@ -134,7 +134,7 @@ class GuideTable(ACACatalogTable):
     include_ids = AliasAttribute()
     exclude_ids = AliasAttribute()
 
-    def process_monitors_pre1(self):
+    def process_monitors_pre(self):
         """Process monitor window requests, converting them into fake stars that
         are added to the include_ids list.
         """
@@ -175,63 +175,47 @@ class GuideTable(ACACatalogTable):
                 monitor['ra'], monitor['dec'] = yagzag_to_radec(
                     monitor['yang'], monitor['zang'], self.att)
 
-        # For function=3 (fixed MON) the dark cal map gets hacked to make a local
-        # blob of hot pixels, so make a copy to avoid modifying the global dark
-        # map which is shared by reference between acqs, guides and fids.
-        if np.any(monitors['function'] == MonFunc.MON_FIXED):
+        is_mon = np.isin(monitors['function'], [MonFunc.MON_FIXED,
+                                                MonFunc.MON_TRACK])
+        if np.any(is_mon):
+            # For MON fixed and tracked, the dark cal map gets hacked to make a
+            # local blob of hot pixels. Make a copy to avoid modifying the global
+            # dark map which is shared by reference between acqs, guides and fids.
             self.dark = self.dark.copy()
 
-        id_fake = 1000
-        for monitor in monitors:
-            if monitor['function'] == MonFunc.MON_TRACK:
-                # Schedule as monitor window that tracks the brightest star.
-                # Insert a pseudo-star with the appropriate mag. These have id
-                # between 1000 and 1007.
-                self.stars.add_fake_star(id=id_fake, ra=monitor['ra'], dec=monitor['dec'],
-                                         mag=monitor['mag'], mag_err=0.01,
-                                         fake_code=MonFunc.MON_TRACK)
-                self.include_ids.append(id_fake)
-                id_fake += 1
+        for monitor in monitors[is_mon]:
+            # Make a square blob of saturated pixels that will keep away any
+            # star selection.
+            is_track = (monitor['function'] == MonFunc.MON_TRACK)
+            dr = int(4 + np.ceil(self.dither.row if is_track else 0))
+            dc = int(4 + np.ceil(self.dither.col if is_track else 0))
+            row, col = int(monitor['row']) + 512, int(monitor['col']) + 512
+            self.dark[row-dr: row+dr, col-dc: col+dc] = ACA.bad_pixel_dark_current  # noqa
 
-            elif monitor['function'] == MonFunc.MON_FIXED:
-                # Schedule as monitor window that is fixed (no tracking).  Other
-                # guide windows avoid this by making a super-hot spot covering
-                # the fixed 8x8 pixels of mon window. These have id between 1000
-                # and 1007.
-                row, col = int(monitor['row']) + 512, int(monitor['col']) + 512
-                self.dark[row - 4: row + 4, col - 4: col + 4] = ACA.bad_pixel_dark_current
-                self.stars.add_fake_star(id=id_fake, ra=monitor['ra'], dec=monitor['dec'],
-                                         mag=monitor['mag'], mag_err=0.01,
-                                         fake_code=MonFunc.MON_FIXED)
-                self.include_ids.append(id_fake)
-                id_fake += 1
+            # Temporarily reduce n_guide for each MON. Globally n_guide is the
+            # number of GUI + MON, but for guide selection we need to make the
+            # MON slots unavailable. This reduction gets undone in post.
+            self.n_guide -= 1
+            if self.n_guide < 2:
+                raise ValueError('too many MON requests leaving < 2 guide stars')
 
-            # Note other two options for `function` are not relevant at this stage
-
-    def process_monitors_pre2(self):
-        """Process guide-from-monitor requests by finding corresponding star in
-        cand_guides and adding to the include_ids list.
-        """
-        if self.monitors is None:
-            return
-
-        for monitor in self.monitors:
-            if monitor['function'] == MonFunc.GUIDE:
-                # Schedule as a guide star if it is a candidate guide star
-                # (raises an exception if not)
-                dist = np.linalg.norm([self.cand_guides['yang'] - monitor['yang'],
-                                       self.cand_guides['zang'] - monitor['zang']], axis=0)
-                idxs = np.flatnonzero(dist < 2.0)
-                if len(idxs) == 0:
-                    raise BadMonitorError('no acceptable AGASC star within '
-                                          '2 arcsec of monitor position')
-                elif len(idxs) == 1:
-                    self.include_ids.append(self.cand_guides['id'][idxs[0]])
-                else:
-                    # Do something better like choose the brightest?  Probably in all realistic
-                    # cases this just doesn't happen.
-                    raise BadMonitorError('multiple guide candidates within '
-                                          '2 arcsec of monitor position')
+        is_guide = monitors['function'] == MonFunc.GUIDE
+        for monitor in monitors[is_guide]:
+            # Schedule as a guide star if it is in the AGASC, and raise an
+            # exception if not.
+            dist = np.linalg.norm([self.stars['yang'] - monitor['yang'],
+                                   self.stars['zang'] - monitor['zang']], axis=0)
+            idxs = np.flatnonzero(dist < 2.0)
+            if len(idxs) == 0:
+                raise BadMonitorError('no acceptable AGASC star within '
+                                      '2 arcsec of monitor position')
+            elif len(idxs) == 1:
+                self.include_ids.append(self.stars['id'][idxs[0]])
+            else:
+                # Do something better like choose the brightest?  Probably in all realistic
+                # cases this just doesn't happen.
+                raise BadMonitorError('multiple guide candidates within '
+                                        '2 arcsec of monitor position')
 
     def process_monitors_post(self):
         """Post-processing of monitor windows.
@@ -244,71 +228,55 @@ class GuideTable(ACACatalogTable):
         if self.monitors is None:
             return
 
-        # Monitor stars (either tracking brightest star or fixed on the CCD)
-        # have 'fake_code' > 0, either MonFunc.MON_FIXED or MonFunc.MON_TRACK.
-        # They also have `id` between 1000 and 1007.
-
-        # Mon window processing uses fake stars in the star catalog to help in
-        # selection and processing. Remove these fake stars now.
-        if 'fake_code' in self.stars.colnames:
-            idxs = np.flatnonzero(self.stars['fake_code'] > 0)
-            self.stars.remove_rows(idxs)
-
         # Mon window processing munges the dark cal to impose a keep-out zone.
         # Put the dark current back to the standard one if possible
         if self.acqs is not None:
             self.dark = self.acqs.dark
 
-        # Remove fake stars from cand_guides
-        if 'fake_code' in self.cand_guides.colnames:
-            idxs = np.flatnonzero(self.cand_guides['fake_code'] > 0)
-            self.cand_guides.remove_rows(idxs)
-
-        # Common settings for any MON window. Fake_code gets added to the guides
-        # table by `add_fake_star` for monitor windows.
-        if 'fake_code' in self.colnames:
-            is_mon = self['fake_code'] > 0
-            if np.any(is_mon):
-                self['type'][is_mon] = 'MON'
-                self['sz'][is_mon] = '8x8'
-                self['res'][is_mon] = 0  # Do not convert to track
-
-            # Monitors tracking brightest star
-            is_mon_track = self['fake_code'] == MonFunc.MON_TRACK
-            if np.any(is_mon_track):
-                # Find the ID of the designated track star (brightest guide star)
-                guide_ids = self['id'][~is_mon]
-                guide_mags = self['mag'][~is_mon]
-                dts_id = guide_ids[np.argmin(guide_mags)]
-                # Since we don't know the slots yet store the DTS id instead of slot
-                self['dim'][is_mon_track] = dts_id
-
-                for mon_id in self['id'][is_mon_track]:
-                    row = self.get_id(mon_id, mon=True)
-                    # Try to get AGASC ID
-                    dist = np.linalg.norm([self.stars['yang'] - row['yang'],
-                                           self.stars['zang'] - row['zang']], axis=0)
-                    idx = np.argmin(dist)
-                    if dist[idx] < 2.0:
-                        row['id'] = self.stars['id'][idx]
-                        self.make_index()
-
-            # Monitors fixed on CCD (no tracking). Set DTS to the ID of this star
-            is_mon_fixed = self['fake_code'] == MonFunc.MON_FIXED
-            if np.any(is_mon_fixed):
-                self['type'][is_mon_fixed] = 'MON'
-                self['sz'][is_mon_fixed] = '8x8'
-                self['res'][is_mon_fixed] = 0  # Do not convert to track
-                self['dim'][is_mon_fixed] = self['id'][is_mon_fixed]
-
-        # Find any MON windows scheduled as guide and set size to 8x8
+        # Process monitor windows according to function
         for monitor in self.monitors:
-            if monitor['function'] == 1:
+            if monitor['function'] == MonFunc.GUIDE:
                 dist = np.linalg.norm([self['yang'] - monitor['yang'],
                                        self['zang'] - monitor['zang']], axis=0)
                 ok = dist < 2.0
+                if np.count_nonzero(ok) != 1:
+                    # Should never happen.
+                    raise RuntimeError('code logic error: expected exactly one '
+                                       'match to a Guide from MON request')
                 self['sz'][ok] = '8x8'
-                self['type'][ok] = 'GFM'  # Guide From Monitor
+                self['type'][ok] = 'GFM'  # Guide From Monitor, changed in merge_catalog
+
+            elif monitor['function'] in (MonFunc.MON_FIXED, MonFunc.MON_TRACK):
+                # Undo the temporary reduction in n_guide for MON windows.
+                # n_guide refers to the number of GUI + MON in the guide catalog.
+                self.n_guide += 1
+
+                # Make a stub row for a MON entry using zero everywhere. This
+                # also works for str (giving '0').
+                mon = {col.name: col.dtype.type(0) for col in self.itercols()}
+                # These type codes get fixed later in merge_catalog
+                mon['type'] = 'MFX' if monitor['function'] == MonFunc.MON_FIXED else 'MTR'
+                mon['sz'] = '8x8'
+                mon['dim'] = -999  # Obviously bad value for DTS, gets fixed later.
+                mon['res'] = 0
+                mon['halfw'] = 25
+                for name in ('mag', 'yang', 'zang', 'row', 'col', 'ra', 'dec'):
+                    mon[name] = monitor[name]
+
+                # Try to get AGASC ID
+                dist = np.linalg.norm([self.stars['yang'] - mon['yang'],
+                                       self.stars['zang'] - mon['zang']], axis=0)
+                idx = np.argmin(dist)
+                if dist[idx] < 2.0:
+                    star = self.stars[idx]
+                    for name in set(mon) & set(star.colnames):
+                        mon[name] = star[name]
+
+                # Finally add the MON as a guide row
+                self.add_row(mon)
+
+            else:
+                raise ValueError(f'unexpected monitor function {monitor["function"]}')
 
     def get_img_size(self, n_fids=None):
         """Get guide image readout size from ``img_size`` and ``n_fids``.
