@@ -234,6 +234,7 @@ class GuideTable(ACACatalogTable):
             self.dark = self.acqs.dark
 
         # Process monitor windows according to function
+        mon_id = 1000
         for monitor in self.monitors:
             if monitor['function'] == MonFunc.GUIDE:
                 dist = np.linalg.norm([self['yang'] - monitor['yang'],
@@ -260,6 +261,8 @@ class GuideTable(ACACatalogTable):
                 mon['dim'] = -999  # Obviously bad value for DTS, gets fixed later.
                 mon['res'] = 0
                 mon['halfw'] = 25
+                mon['id'] = mon_id
+                mon_id += 1
                 for name in ('mag', 'yang', 'zang', 'row', 'col', 'ra', 'dec'):
                     mon[name] = monitor[name]
 
