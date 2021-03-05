@@ -33,7 +33,8 @@ HAS_MAG_SUPPLEMENT = len(agasc.get_supplement_table('mags')) > 0
 def test_allowed_kwargs():
     """Test #332 where allowed_kwargs class attribute is unique for each subclass"""
     new_kwargs = ACATable.allowed_kwargs - ACACatalogTable.allowed_kwargs
-    assert new_kwargs == {'call_args', 'version', 't_ccd_penalty_limit'}
+    assert new_kwargs == {'call_args', 'version', 't_ccd_eff_acq', 't_ccd_eff_guide',
+                          't_ccd_penalty_limit'}
 
     new_kwargs = FidTable.allowed_kwargs - ACACatalogTable.allowed_kwargs
     assert new_kwargs == {'acqs', 'include_ids', 'exclude_ids'}
@@ -957,7 +958,7 @@ def test_mon_takes_guide():
            '   1   2 100002  BOT 8x8 -1500.00     0.00  28   1   160  7.50',
            '   2   3 100003  BOT 8x8     0.00 -1500.00  28   1   160  8.00',
            '   3   4 100004  BOT 8x8   750.00   750.00  28   1   160  8.50',
-           '   7   5 100000  MON 8x8  1500.00     0.00   0   0    25  6.12',
+           '   7   5 100000  MON 8x8  1500.00     0.00   0   0    25  6.50',
            '   4   6 100000  ACQ 8x8  1500.00     0.00  28   1   160  6.50']
 
     assert aca[TEST_COLS + ['mag']].pformat_all() == exp
