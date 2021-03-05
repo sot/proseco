@@ -73,8 +73,6 @@ def get_guide_catalog(obsid=0, **kwargs):
     # Transfer to table (which at this point is an empty table)
     guides.add_columns(list(selected.columns.values()))
 
-    guides['idx'] = np.arange(len(guides))
-
     if len(guides) < guides.n_guide:
         guides.log(f'Selected only {len(guides)} guide stars versus requested {guides.n_guide}',
                    warning=True)
@@ -88,6 +86,8 @@ def get_guide_catalog(obsid=0, **kwargs):
         guides['dim'], guides['res'] = get_dim_res(guides['halfw'])
 
         guides.process_monitors_post()
+
+    guides['idx'] = np.arange(len(guides))
 
     return guides
 
@@ -170,8 +170,8 @@ class GuideTable(ACACatalogTable):
             elif monitor['coord_type'] == MonCoord.YAGZAG:
                 # Yag, zag
                 monitor['yang'], monitor['zang'] = monitor['coord0'], monitor['coord1']
-                monitor['row'], monitor['col'] = pixels_to_yagzag(
-                    monitor['yang'], monitor['zang'], allow_bad=True, flight=True)
+                monitor['row'], monitor['col'] = yagzag_to_pixels(
+                    monitor['yang'], monitor['zang'], allow_bad=True)
                 monitor['ra'], monitor['dec'] = yagzag_to_radec(
                     monitor['yang'], monitor['zang'], self.att)
 
@@ -215,7 +215,7 @@ class GuideTable(ACACatalogTable):
                 # Do something better like choose the brightest?  Probably in all realistic
                 # cases this just doesn't happen.
                 raise BadMonitorError('multiple guide candidates within '
-                                        '2 arcsec of monitor position')
+                                      '2 arcsec of monitor position')
 
     def process_monitors_post(self):
         """Post-processing of monitor windows.
