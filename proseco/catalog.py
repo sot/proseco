@@ -48,6 +48,8 @@ def get_aca_catalog(obsid=0, **kwargs):
     :param man_angle: maneuver angle (deg)
     :param t_ccd_acq: ACA CCD temperature for acquisition (degC)
     :param t_ccd_guide: ACA CCD temperature for guide (degC)
+    :param t_ccd_eff_acq: ACA CCD effective temperature for acquisition (degC)
+    :param t_ccd_eff_guide: ACA CCD effective temperature for guide (degC)
     :param date: date of acquisition (any DateTime-compatible format)
     :param dither_acq: acq dither size (2-element sequence (y, z), arcsec)
     :param dither_guide: guide dither size (2-element sequence (y, z), arcsec)
@@ -114,22 +116,35 @@ def _get_aca_catalog(**kwargs):
     img_size_guide = kwargs.pop('img_size_guide', None)
 
     aca = ACATable()
-    aca.call_args = kwargs.copy()
     aca.set_attrs_from_kwargs(**kwargs)
+    aca.call_args = kwargs.copy()
+    aca.version = VERSION
 
     # Override t_ccd related inputs with effective temperatures for downstream
-    # action by AcqTable, GuideTable, FidTable.  See set_attrs_from_kwargs()
-    # method for more details.
-    if 't_ccd' in kwargs:
-        del kwargs['t_ccd']
+    # action by AcqTable, GuideTable, FidTable.
+    # - t_ccd_eff_{acq,guide} are the effective T_ccd values which are adjusted
+    #   if the actual t_ccd{acq,guide} values are above ACA.aca_t_ccd_penalty_limit.
+    # - t_ccd_{acq,guide} are the actual (or predicted) values from the call
+    # The downstream AcqTable, GuideTable, and FidTable are initialized with the
+    # *effective* values as t_ccd.  Those classes do not have the concept of effective
+    # temperature.
+    if aca.t_ccd_eff_acq is None:
+        aca.t_ccd_eff_acq = get_effective_t_ccd(aca.t_ccd_acq)
+    if aca.t_ccd_eff_guide is None:
+        aca.t_ccd_eff_guide = get_effective_t_ccd(aca.t_ccd_guide)
+
     kwargs['t_ccd_acq'] = aca.t_ccd_eff_acq
     kwargs['t_ccd_guide'] = aca.t_ccd_eff_guide
+
+    # These are allowed inputs to get_aca_catalog but should not be passed to
+    # get_{acq,guide,fid}_catalog. Pop them from kwargs.
+    for kwarg in ('t_ccd', 't_ccd_eff_acq', 't_ccd_eff_guide', 'stars'):
+        kwargs.pop(kwarg, None)
 
     # Get stars (typically from AGASC) and do not filter for stars near
     # the ACA FOV.  This leaves the full radial selection available for
     # later roll optimization.  Use aca.stars or aca.acqs.stars from here.
     aca.set_stars(filter_near_fov=False)
-    kwargs.pop('stars', None)
 
     aca.log('Starting get_acq_catalog')
     aca.acqs = get_acq_catalog(stars=aca.stars, **kwargs)
@@ -271,8 +286,8 @@ class ACATable(ACACatalogTable):
 
     # Effective T_ccd used for dynamic ACA limits (see updates_for_t_ccd_effective()
     # method below).
-    t_ccd_eff_acq = MetaAttribute(is_kwarg=False)
-    t_ccd_eff_guide = MetaAttribute(is_kwarg=False)
+    t_ccd_eff_acq = MetaAttribute()
+    t_ccd_eff_guide = MetaAttribute()
 
     def __copy__(self):
         # Astropy Table now does a light key-only copy of the `meta` dict, so
@@ -298,31 +313,6 @@ class ACATable(ACACatalogTable):
         out.fids = FidTable.empty()
         out.guides = GuideTable.empty()
         return out
-
-    def set_attrs_from_kwargs(self, **kwargs):
-        """Set object attributes from kwargs.
-
-        After calling the base class method which does all the real work, then
-        compute the effective T_ccd temperatures.
-
-        In this ACATable object:
-
-        - t_ccd_eff_{acq,guide} are the effective T_ccd values which are adjusted
-          if the actual t_ccd{acq,guide} values are above ACA.aca_t_ccd_penalty_limit.
-        - t_ccd_{acq,guide} are the actual (or predicted) values from the call
-
-        The downstream AcqTable, GuideTable, and FidTable are initialized with the
-        *effective* values as t_ccd.  Those classes do not have the concept of effective
-        temperature.
-
-        :param kwargs: dict of input kwargs
-        :return: dict
-        """
-        super().set_attrs_from_kwargs(**kwargs)
-
-        self.t_ccd_eff_acq = get_effective_t_ccd(self.t_ccd_acq)
-        self.t_ccd_eff_guide = get_effective_t_ccd(self.t_ccd_guide)
-        self.version = VERSION
 
     def get_review_table(self):
         """Get ACAReviewTable object based on self.

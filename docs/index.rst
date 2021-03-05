@@ -45,23 +45,30 @@ date          date of acquisition (any DateTime-compatible format)
 dither_acq    acq dither size (2-element sequence (y, z), arcsec)
 dither_guide  guide dither size (2-element sequence (y, z), arcsec)
 detector      'ACIS-S' | 'ACIS-I' | 'HRC-S' | 'HRC-I'
-sim_offset    SIM translation offset from nominal [steps] (default=0)
-focus_offset  SIM focus offset [steps] (default=0)
 ============= =========================================================
 
 **Optional**
 
-=================== ===============================================================
+=================== =================================================================
 Argument            Description
-=================== ===============================================================
+=================== =================================================================
+sim_offset          SIM translation offset from nominal [steps] (default=0)
+focus_offset        SIM focus offset [steps] (default=0)
+target_offset       target offset including dynamical offset (y, z, deg)
 include_ids_acq     int or list of AGASC IDs of stars to include in acq catalog
 include_halfws_acq  int or list of acq halfwidths corresponding to ``include_ids``
 exclude_ids_acq     int or list of AGASC IDs of stars to exclude from acq catalog
 include_ids_guide   int or list of AGASC IDs of stars to include in guide catalog
 exclude_ids_guide   int or list of AGASC IDs of stars to exclude from guide catalog
+include_ids_fid     int or list of fid IDs to include from fid catalog
+exclude_ids_fid     int or list of fid IDs to exclude from fid catalog
+img_size_guide      readout window size for guide stars (6, 8, or ``None``)
 stars               table of AGASC stars (will be fetched from agasc if None)
 monitors            N x 5 array of monitor star specifications (see `Monitor stars`_)
-=================== ===============================================================
+t_ccd_eff_acq       ACA CCD effective temperature for acquisition (degC)
+t_ccd_eff_guide     ACA CCD effective temperature for guide (degC)
+dark_date           date of dark cal
+=================== =================================================================
 
 Within the ``include_halfws_acq`` list, one can supply the value ``0`` for a
 star instead of a typical legal value such as ``60`` or ``120``.  In that case
@@ -69,15 +76,22 @@ proseco will run the normal optimization and choose the best halfwidth for that
 included star.  If the ``include_halfws_acq`` argument is not supplied or set
 to ``[]`` then all halfwidths will be chosen by proseco.
 
+The two optional effective temperatures are normally not supplied and will be
+computed based on the current ACA penalty limit. Likewise, the ``dark_date`` is
+normally derived as the date of the most recent dark cal before ``date``.
+However, for reproducing catalog selection it may be required to provide all of
+those arguments.
+
 **Debug**
 
-============== =========================================================
+============== ================================================================
 Argument       Description
-============== =========================================================
+============== ================================================================
 optimize       optimize star catalog after initial selection (default=True)
 verbose        provide extra logging info (mostly calc_p_safe) (default=False)
-print_log      print the run log to stdout (default=False)
-============== =========================================================
+print_log      print the run log to stdout (default=False)'
+raise_exc      raise exception if it occurs in processing (default=True)
+============== ================================================================
 
 Examples
 ^^^^^^^^
