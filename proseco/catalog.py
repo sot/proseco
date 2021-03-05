@@ -606,7 +606,8 @@ def merge_cats(fids=None, guides=None, acqs=None):
         # (monitor window), and GFM (guide from monitor, required to be sz=8x8
         # and fill from slot 7 down).
         if not np.all(ok := (guides['type'] == 'GUI')):
-            mons = guides[guides['type'] == 'MON']  # Monitor window
+            # Monitor windows MFX = MON fixed, MTR = Mon tracked
+            mons = guides[np.isin(guides['type'], ['MFX', 'MTR'])]
             gfms = guides[guides['type'] == 'GFM']  # Guide From Mon
             guides = guides[ok]  # "Normal" guide stars
 
@@ -694,7 +695,7 @@ def merge_cats(fids=None, guides=None, acqs=None):
 
     # Monitor stars
     for guide in cat_guides:
-        if guide['type'] == 'MON':
+        if guide['type'] in ('MTR', 'MFX'):
             rows.append(guide[colnames])
 
     # Acq only
@@ -706,20 +707,20 @@ def merge_cats(fids=None, guides=None, acqs=None):
     aca = ACACatalogTable(rows=rows, names=colnames)
     aca.add_column(np.arange(1, len(aca) + 1), name='idx', index=1)
 
-    # For monitor windows, at this point the `dim` column corresponds to the
-    # id of the tracking slot. Here we convert that to the correct slot.
-    for mon in mons:
-        row = aca.get_id(mon['id'], mon=True)
-        # If the ID in dim (DTS) is the same as the ID for this MON then it is a
-        # fixed MON window. Otherwise the DTS is a guide star slot.
-        #
-        # TODO: probably don't need this if statement since I think the
-        # statement within the else: should work in both cases. With good tests
-        # just try it.
-        if row['dim'] == mon['id']:
-            row['dim'] = mon['slot']
+    # Finally, fix up the monitor window designated track slots (DIM/DTS)
+    for row in aca:
+        if row['type'] not in ('MTR', 'MFX'):
+            continue
+
+        if row['type'] == 'MTR':
+            # Find the slot of the brightest guide star
+            guides = aca[np.isin(aca['type'], ['GUI', 'BOT'])]
+            idx = np.argmin(guides['mag'])
+            aca_id = guides['id'][idx]
+            row['dim'] = aca.get_id(aca_id)['slot']  # Mon window tracks this slot
         else:
-            # Find the guide star slot by ID
-            row['dim'] = aca.get_id(row['dim'])['slot']
+            row['dim'] = row['slot']  # Fixed (desig track slot is self slot)
+        # Change type to standard MON
+        row['type'] = 'MON'
 
     return aca
