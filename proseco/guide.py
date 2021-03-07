@@ -260,7 +260,7 @@ class GuideTable(ACACatalogTable):
                 mon['sz'] = '8x8'
                 mon['dim'] = -999  # Obviously bad value for DTS, gets fixed later.
                 mon['res'] = 0
-                mon['halfw'] = 25
+                mon['halfw'] = 20
                 mon['id'] = mon_id
                 mon_id += 1
                 for name in ('mag', 'yang', 'zang', 'row', 'col', 'ra', 'dec'):
