@@ -10,12 +10,31 @@ from astropy.table import Table
 
 from .core import (ACACatalogTable, get_kwargs_from_starcheck_text, MetaAttribute,
                    get_dim_res, get_img_size)
-from .guide import BadMonitorError, get_guide_catalog, GuideTable
+from .guide import get_guide_catalog, GuideTable
 from .acq import get_acq_catalog, AcqTable
 from .fid import get_fid_catalog, FidTable
+from .monitor import BadMonitorError, get_mon_catalog
 from . import characteristics_acq as ACQ
 from . import characteristics as ACA
 from . import __version__ as VERSION
+
+
+# Colnames and types for final ACA catalog
+ACA_CATALOG_DTYPES = {
+    'slot': np.int64,
+    'idx': np.int64,
+    'id': np.int64,
+    'type': 'U3',
+    'sz': 'U3',
+    'p_acq': np.float64,
+    'mag': np.float64,
+    'maxmag': np.float64,
+    'yang': np.float64,
+    'zang': np.float64,
+    'dim': np.int64,
+    'res': np.int64,
+    'halfw': np.int64
+}
 
 
 def get_aca_catalog(obsid=0, **kwargs):
@@ -165,15 +184,18 @@ def _get_aca_catalog(**kwargs):
 
     aca.acqs.fid_set = aca.fids['id']
 
+    aca.log('Starting get_mon_catalog')
+    aca.mons = get_mon_catalog(stars=aca.acqs.stars, **kwargs)
+
     aca.log('Starting get_guide_catalog')
-    aca.guides = get_guide_catalog(stars=aca.acqs.stars, fids=aca.fids,
+    aca.guides = get_guide_catalog(stars=aca.acqs.stars, fids=aca.fids, mons=aca.mons,
                                    img_size=img_size_guide, **kwargs)
 
     # Make a merged starcheck-like catalog.  Catch any errors at this point to avoid
     # impacting operational work (call from Matlab).
     try:
         aca.log('Starting merge_cats')
-        merge_cat = merge_cats(fids=aca.fids, guides=aca.guides, acqs=aca.acqs)
+        merge_cat = merge_cats(fids=aca.fids, guides=aca.guides, acqs=aca.acqs, mons=aca.mons)
         for name in merge_cat.colnames:
             aca[name] = merge_cat[name]
     except Exception:
@@ -547,7 +569,7 @@ class ObcCat(list):
             raise IndexError('catalog is full')
 
 
-def merge_cats(fids=None, guides=None, acqs=None):
+def merge_cats(fids=None, guides=None, acqs=None, mons=None):
     """Merge ``fids``, ``guides``, and ``acqs`` catalogs into one catalog.
 
     The output of this function is a catalog which corresponds to the final
@@ -566,25 +588,22 @@ def merge_cats(fids=None, guides=None, acqs=None):
     """
     # Make an empty (zero-length) catalog with the right columns. This is used
     # just below to replace any missing catalogs.
-    if acqs is not None:
-        empty = acqs[0:0]
-    elif guides is not None:
-        empty = guides[0:0]
-    elif fids is not None:
-        empty = fids[0:0]
+    for cat in (acqs, guides, fids, mons):
+        if cat is not None:
+            empty = cat[0:0]
+            break
     else:
         raise ValueError('cannot call merge_cats with no catalog inputs')
 
     fids = empty if fids is None else fids
     guides = empty if guides is None else guides
     acqs = empty if acqs is None else acqs
-
+    mons = empty if mons is None else mons
     gfms = empty  # Guide converted from monitor (must be 8x8)
-    mons = empty  # Monitor stars
 
-    # Columns in the final merged catalog
-    colnames = ['slot', 'id', 'type', 'sz', 'p_acq', 'mag', 'maxmag',
-                'yang', 'zang', 'dim', 'res', 'halfw']
+    # Columns in the final merged catalog, except we leave out idx since that
+    # is included just at the end.
+    colnames = [key for key in ACA_CATALOG_DTYPES if key != 'idx']
 
     # First add or modify columns for the fids, guides, and acqs tables so that
     # they are all consistent and ready for merging into a single final catalog.
@@ -607,7 +626,6 @@ def merge_cats(fids=None, guides=None, acqs=None):
         # and fill from slot 7 down).
         if not np.all(ok := (guides['type'] == 'GUI')):
             # Monitor windows MFX = MON fixed, MTR = Mon tracked
-            mons = guides[np.isin(guides['type'], ['MFX', 'MTR'])]
             gfms = guides[guides['type'] == 'GFM']  # Guide From Mon
             guides = guides[ok]  # "Normal" guide stars
 
@@ -704,8 +722,10 @@ def merge_cats(fids=None, guides=None, acqs=None):
             rows.append(acq[colnames])
 
     # Create final table and assign idx
-    aca = ACACatalogTable(rows=rows, names=colnames)
-    aca.add_column(np.arange(1, len(aca) + 1), name='idx', index=1)
+    aca = ACACatalogTable(rows=rows, names=colnames,
+                          dtype=[ACA_CATALOG_DTYPES[name] for name in colnames])
+    aca.add_column(np.arange(1, len(aca) + 1, dtype=ACA_CATALOG_DTYPES['idx']),
+                   name='idx', index=1)
 
     # Finally, fix up the monitor window designated track slots (DIM/DTS)
     for row in aca:

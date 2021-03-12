@@ -810,6 +810,14 @@ class ACACatalogTable(BaseCatalogTable):
     def guides(self, val):
         self.meta['guides'] = val
 
+    @property
+    def mons(self):
+        return self.meta.get('mons')
+
+    @mons.setter
+    def mons(self, val):
+        self.meta['mons'] = val
+
     def process_include_ids(self, cand_stars, stars):
         """Ensure that the candidate acqs/guides table has stars that were forced to be included.
 

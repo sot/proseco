@@ -1,16 +1,14 @@
-# coding: utf-8
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-from proseco.characteristics import MonCoord, MonFunc
 import numpy as np
 from itertools import combinations
 
 import chandra_aca.aca_image
-from chandra_aca.transform import (mag_to_count_rate, count_rate_to_mag, pixels_to_yagzag,
-                                   radec_to_yagzag, snr_mag_for_t_ccd, yagzag_to_pixels,
-                                   yagzag_to_radec)
+from chandra_aca.transform import (mag_to_count_rate, count_rate_to_mag,
+                                   snr_mag_for_t_ccd)
 from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
 
+from proseco.characteristics import MonFunc
 from . import characteristics as ACA
 from . import characteristics_guide as GUIDE
 
@@ -21,10 +19,6 @@ CCD = ACA.CCD
 APL = AcaPsfLibrary()
 
 STAR_PAIR_DIST_CACHE = {}
-
-
-class BadMonitorError(ValueError):
-    pass
 
 
 def get_guide_catalog(obsid=0, **kwargs):
@@ -135,46 +129,11 @@ class GuideTable(ACACatalogTable):
     exclude_ids = AliasAttribute()
 
     def process_monitors_pre(self):
-        """Process monitor window requests, converting them into fake stars that
-        are added to the include_ids list.
-        """
-        if self.monitors is None:
+        # No action required if there are no monitor stars requested
+        if self.mons is None or self.mons.monitors is None:
             return
 
-        # Add columns for each of the three coordinate representations
-        monitors = self.monitors
-        monitors['ra'] = 0.0
-        monitors['dec'] = 0.0
-        monitors['yang'] = 0.0
-        monitors['zang'] = 0.0
-        monitors['row'] = 0.0
-        monitors['col'] = 0.0
-
-        for monitor in monitors:
-            if monitor['coord_type'] == MonCoord.RADEC:
-                # RA, Dec
-                monitor['ra'], monitor['dec'] = monitor['coord0'], monitor['coord1']
-                monitor['yang'], monitor['zang'] = radec_to_yagzag(
-                    monitor['ra'], monitor['dec'], self.att)
-                monitor['row'], monitor['col'] = yagzag_to_pixels(
-                    monitor['yang'], monitor['zang'], allow_bad=True)
-
-            elif monitor['coord_type'] == MonCoord.ROWCOL:
-                # Row, col
-                monitor['row'], monitor['col'] = monitor['coord0'], monitor['coord1']
-                monitor['yang'], monitor['zang'] = pixels_to_yagzag(
-                    monitor['row'], monitor['col'], allow_bad=True, flight=True)
-                monitor['ra'], monitor['dec'] = yagzag_to_radec(
-                    monitor['yang'], monitor['zang'], self.att)
-
-            elif monitor['coord_type'] == MonCoord.YAGZAG:
-                # Yag, zag
-                monitor['yang'], monitor['zang'] = monitor['coord0'], monitor['coord1']
-                monitor['row'], monitor['col'] = yagzag_to_pixels(
-                    monitor['yang'], monitor['zang'], allow_bad=True)
-                monitor['ra'], monitor['dec'] = yagzag_to_radec(
-                    monitor['yang'], monitor['zang'], self.att)
-
+        monitors = self.mons.monitors
         is_mon = np.isin(monitors['function'], [MonFunc.MON_FIXED,
                                                 MonFunc.MON_TRACK])
         if np.any(is_mon):
@@ -201,21 +160,7 @@ class GuideTable(ACACatalogTable):
 
         is_guide = monitors['function'] == MonFunc.GUIDE
         for monitor in monitors[is_guide]:
-            # Schedule as a guide star if it is in the AGASC, and raise an
-            # exception if not.
-            dist = np.linalg.norm([self.stars['yang'] - monitor['yang'],
-                                   self.stars['zang'] - monitor['zang']], axis=0)
-            idxs = np.flatnonzero(dist < 2.0)
-            if len(idxs) == 0:
-                raise BadMonitorError('no acceptable AGASC star within '
-                                      '2 arcsec of monitor position')
-            elif len(idxs) == 1:
-                self.include_ids.append(self.stars['id'][idxs[0]])
-            else:
-                # Do something better like choose the brightest?  Probably in all realistic
-                # cases this just doesn't happen.
-                raise BadMonitorError('multiple guide candidates within '
-                                      '2 arcsec of monitor position')
+            self.include_ids.append(monitor['id'])
 
     def process_monitors_post(self):
         """Post-processing of monitor windows.
@@ -225,7 +170,8 @@ class GuideTable(ACACatalogTable):
         - Set type, sz, res, dim columns for relevant entries to reflect
           status as monitor or guide-from-monitor in the guides catalog.
         """
-        if self.monitors is None:
+        # No action required if there are no monitor stars requested
+        if self.mons is None or self.mons.monitors is None:
             return
 
         # Mon window processing munges the dark cal to impose a keep-out zone.
@@ -233,54 +179,13 @@ class GuideTable(ACACatalogTable):
         if self.acqs is not None:
             self.dark = self.acqs.dark
 
-        # Process monitor windows according to function
-        mon_id = 1000
-        for monitor in self.monitors:
+        # Find the guide stars that are actually from a MON request (converted
+        # to guide) and set the size and type.
+        for monitor in self.mons.monitors:
             if monitor['function'] == MonFunc.GUIDE:
-                dist = np.linalg.norm([self['yang'] - monitor['yang'],
-                                       self['zang'] - monitor['zang']], axis=0)
-                ok = dist < 2.0
-                if np.count_nonzero(ok) != 1:
-                    # Should never happen.
-                    raise RuntimeError('code logic error: expected exactly one '
-                                       'match to a Guide from MON request')
-                self['sz'][ok] = '8x8'
-                self['type'][ok] = 'GFM'  # Guide From Monitor, changed in merge_catalog
-
-            elif monitor['function'] in (MonFunc.MON_FIXED, MonFunc.MON_TRACK):
-                # Undo the temporary reduction in n_guide for MON windows.
-                # n_guide refers to the number of GUI + MON in the guide catalog.
-                self.n_guide += 1
-
-                # Make a stub row for a MON entry using zero everywhere. This
-                # also works for str (giving '0').
-                mon = {col.name: col.dtype.type(0) for col in self.itercols()}
-                # These type codes get fixed later in merge_catalog
-                mon['type'] = 'MFX' if monitor['function'] == MonFunc.MON_FIXED else 'MTR'
-                mon['sz'] = '8x8'
-                mon['dim'] = -999  # Obviously bad value for DTS, gets fixed later.
-                mon['res'] = 0
-                mon['halfw'] = 20
-                mon['id'] = mon_id
-                mon['maxmag'] = ACA.monitor_maxmag
-                mon_id += 1
-                for name in ('mag', 'yang', 'zang', 'row', 'col', 'ra', 'dec'):
-                    mon[name] = monitor[name]
-
-                # Try to get AGASC ID
-                dist = np.linalg.norm([self.stars['yang'] - mon['yang'],
-                                       self.stars['zang'] - mon['zang']], axis=0)
-                idx = np.argmin(dist)
-                if dist[idx] < 2.0:
-                    star = self.stars[idx]
-                    for name in set(mon) & set(star.colnames):
-                        mon[name] = star[name]
-
-                # Finally add the MON as a guide row
-                self.add_row(mon)
-
-            else:
-                raise ValueError(f'unexpected monitor function {monitor["function"]}')
+                row = self.get_id(monitor['id'])
+                row['sz'] = '8x8'
+                row['type'] = 'GFM'  # Guide From Monitor, changed in merge_catalog
 
     def get_img_size(self, n_fids=None):
         """Get guide image readout size from ``img_size`` and ``n_fids``.
