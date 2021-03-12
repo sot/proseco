@@ -101,13 +101,19 @@ def test_monitor_mon_fixed_auto():
 
 
 def test_full_catalog():
+    """Test a full catalog
+
+    - 3 monitor requests:
+      - 2 forced as GUIDE
+      - 1 AUTO which is not an OK star and becomes MON
+    """
     stars = StarsTable.empty()
     stars.add_fake_constellation(mag=10.5 - np.arange(8) * 0.5, id=np.arange(100000, 100008))
     stars.add_fake_star(yang=400, zang=400, mag=10.5, id=100008)
     stars.add_fake_star(yang=100, zang=200, mag=6.5, id=50)
     stars.add_fake_star(yang=-1000, zang=-2000, mag=6.25, id=51)
     monitors = [[100, 200, MonCoord.YAGZAG, 6.123, MonFunc.GUIDE],
-                [-1000, -2000, MonCoord.YAGZAG, 6.123, MonFunc.GUIDE],
+                [-1001, -2001, MonCoord.YAGZAG, 6.123, MonFunc.GUIDE],
                 [0, 0, MonCoord.YAGZAG, 6.123, MonFunc.AUTO]]
 
     aca = get_aca_catalog(**mod_std_info(att=stars.att, n_fid=1, n_guide=7), stars=stars,
@@ -121,8 +127,15 @@ def test_full_catalog():
            '   3   4 100005  BOT 6x6   750.00  -750.00  28   1   160  8.00',
            '   6   5     50  BOT 8x8   100.00   200.00  28   1   160  6.50',
            '   4   6 100003  GUI 6x6     0.00 -1500.00   1   1    25  9.00',
+
+           # Mag from star cat not monitors and sz=8x8. Position is also from
+           # star cat since monitors yag/zag = -1001, -2001.
            '   7   7     51  GUI 8x8 -1000.00 -2000.00   1   1    25  6.25',
+
+           # Mag from monitors and dim=7 (=> tracking brightest star in slot 7,
+           # which happens to be a GUI from MON).
            '   5   8   1000  MON 8x8     0.00     0.00   7   0    20  6.12',
+
            '   0   9 100004  ACQ 6x6   750.00   750.00  28   1   160  8.50',
            '   4  10 100002  ACQ 6x6 -1500.00     0.00  28   1   160  9.50',
            '   5  11 100008  ACQ 6x6   400.00   400.00   8   1    60 10.50']
@@ -131,20 +144,32 @@ def test_full_catalog():
 
 
 def test_mon_takes_guide():
+    """Test that commanding a MON on top of a potential GUI star correctly
+    precludes use of that star and takes one of the available n_guide slots.
+
+    Also checks that when a MON is identified as a star in the catalog, the
+    'id' and 'mag' correspond to the catalog. This overrides the mag in
+    `monitors`.
+    """
     stars = StarsTable.empty()
     stars.add_fake_constellation(mag=6.5 + np.arange(8) * 0.5, id=np.arange(100000, 100008))
-    monitors = [[1500, 0, MonCoord.YAGZAG, 6.123, MonFunc.MON_TRACK]]
+    monitors = [[1500, 0, MonCoord.YAGZAG, 8.123, MonFunc.MON_TRACK]]
 
     aca = get_aca_catalog(**mod_std_info(att=stars.att, n_fid=0, n_guide=5, n_acq=5), stars=stars,
                           monitors=monitors)
 
+    # This has 4 + 1 stars in the "guide" catalog, where the MON has taken one slot.
     exp = ['slot idx   id   type  sz   yang     zang   dim res halfw  mag ',
            '---- --- ------ ---- --- -------- -------- --- --- ----- -----',
            '   0   1 100001  BOT 8x8     0.00  1500.00  28   1   160  7.00',
            '   1   2 100002  BOT 8x8 -1500.00     0.00  28   1   160  7.50',
            '   2   3 100003  BOT 8x8     0.00 -1500.00  28   1   160  8.00',
            '   3   4 100004  BOT 8x8   750.00   750.00  28   1   160  8.50',
+
+           # MON below is associated with id=100000 and has mag=6.50 not 8.12
+           # The dim (DTS) value is 0, which is the slot of the brightest GUI.
            '   7   5 100000  MON 8x8  1500.00     0.00   0   0    20  6.50',
+
            '   4   6 100000  ACQ 8x8  1500.00     0.00  28   1   160  6.50']
 
     assert aca[TEST_COLS + ['mag']].pformat_all() == exp
