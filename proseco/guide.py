@@ -262,6 +262,7 @@ class GuideTable(ACACatalogTable):
                 mon['res'] = 0
                 mon['halfw'] = 20
                 mon['id'] = mon_id
+                mon['maxmag'] = ACA.monitor_maxmag
                 mon_id += 1
                 for name in ('mag', 'yang', 'zang', 'row', 'col', 'ra', 'dec'):
                     mon[name] = monitor[name]
