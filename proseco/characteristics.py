@@ -34,6 +34,11 @@ class MonCoord:
 # of clipping discussed in emails circa June 7, 2019 with search key "maxmag".
 max_maxmag = 11.2
 
+# Monitor window MAXMAG. This value comes from the commanded MAXMAG parameter
+# in the backstop AOSTRCAT command for obsid 23382 in MAR0821A. This also
+# corresponds to the max mag value that the ACA can put into telemetry.
+monitor_maxmag = 13.9375
+
 # Convenience characteristics
 max_ccd_row = CCD['row_max'] - CCD['row_pad']  # Max allowed row for stars (SOURCE?)
 max_ccd_col = CCD['col_max'] - CCD['col_pad']  # Max allow col for stars (SOURCE?)
