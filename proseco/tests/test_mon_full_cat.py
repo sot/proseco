@@ -36,17 +36,17 @@ def test_monitor_input_processing_ra_dec(stars):
     monitors = [[ra, dec, MonCoord.RADEC, mag, MonFunc.MON_FIXED]]
     aca = get_aca_catalog(**mod_std_info(att=stars.att, n_fid=0, n_guide=5),
                           stars=stars, monitors=monitors)
-    mons = aca.guides.monitors
-    assert len(mons) == 1
-    assert isinstance(mons, Table)
+    monitors = aca.mons.monitors
+    assert len(monitors) == 1
+    assert isinstance(monitors, Table)
     yang, zang = radec_to_yagzag(ra, dec, aca.att)
     row, col = yagzag_to_pixels(yang, zang)
-    assert np.allclose(mons['yang'][0], yang)
-    assert np.allclose(mons['zang'][0], zang)
-    assert np.allclose(mons['ra'][0], ra)
-    assert np.allclose(mons['dec'][0], dec)
-    assert np.allclose(mons['row'][0], row)
-    assert np.allclose(mons['col'][0], col)
+    assert np.allclose(monitors['yang'][0], yang)
+    assert np.allclose(monitors['zang'][0], zang)
+    assert np.allclose(monitors['ra'][0], ra)
+    assert np.allclose(monitors['dec'][0], dec)
+    assert np.allclose(monitors['row'][0], row)
+    assert np.allclose(monitors['col'][0], col)
 
     ok = aca['type'] == 'MON'
     assert np.count_nonzero(ok) == 1
