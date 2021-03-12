@@ -1,5 +1,7 @@
 import numpy as np
 
+from proseco.core import get_kwargs_from_starcheck_text
+
 # Vanilla observation info
 STD_INFO = dict(att=(0, 0, 0),
                 detector='ACIS-S',
@@ -64,3 +66,30 @@ OBS_INFO[19605] = {'att': [350.897404, 58.836913, 75.068745],
                    'obsid': 19605,
                    'sim_offset': 0,
                    't_ccd': -10.8}
+
+
+def get_starcheck_obs_kwargs(filename):
+    """
+    Parse the starcheck.txt file to get keyword arg dicts for get_aca_catalog()
+
+    :param filename: file name of starcheck.txt in load products
+    :returns: dict (by obsid) of kwargs for get_aca_catalog()
+
+    """
+    delim = "==================================================================================== "
+    with open(filename, 'r') as fh:
+        text = fh.read()
+    chunks = text.split(delim)
+    outs = {}
+    for chunk in chunks:
+        if "No star catalog for obsid" in chunk:
+            continue
+        try:
+            out = get_kwargs_from_starcheck_text(chunk, include_cat=True)
+
+        except ValueError:
+            continue
+        else:
+            outs[out['obsid']] = out
+
+    return outs
