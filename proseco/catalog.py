@@ -1,6 +1,7 @@
 # coding: utf-8
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
+import os
 from proseco.characteristics import MonFunc
 import traceback
 import numpy as np
@@ -560,6 +561,8 @@ class ObcCat(list):
       the ``id`` is already in the catalog.
     """
     def __init__(self, *args, **kwargs):
+        self.name = kwargs.pop('name', '')
+        self.debug = kwargs.pop('debug', None)
         super().__init__()
         for _ in range(8):
             self.append({'id': None, 'type': None})
@@ -578,6 +581,8 @@ class ObcCat(list):
             raise IndexError(f'slot {item} is already set => program logic error')
         value['slot'] = item
         super().__setitem__(item, value)
+        if self.debug:
+            print(self)
 
     def add(self, value, descending=False):
         """Add ``value`` to catalog in first/last empty slot, returning the slot.
@@ -608,6 +613,24 @@ class ObcCat(list):
                 return slot
         else:
             raise IndexError('catalog is full')
+
+    def as_table(self):
+        colnames = list(ACA_CATALOG_DTYPES)
+        colnames.remove('idx')
+        rows = []
+        for row in self:
+            out = {}
+            for name in ACA_CATALOG_DTYPES:
+                try:
+                    out[name] = row[name]
+                except KeyError:
+                    pass
+            rows.append(out)
+        return ACACatalogTable(rows)[colnames]
+
+    def __repr__(self):
+        out = '\n'.join([self.name, str(self.as_table()), ''])
+        return out
 
 
 def merge_cats(fids=None, guides=None, acqs=None, mons=None):
@@ -680,9 +703,11 @@ def merge_cats(fids=None, guides=None, acqs=None, mons=None):
 
     # Create two 8-slot tables where all slots are initially empty. These
     # correspond to the OBC acquisition and guide tables. The guide table
-    # includes fids and guides.
-    cat_acqs = ObcCat()
-    cat_guides = ObcCat()
+    # includes fids and guides. This includes a special debug flag to print
+    # the catalog each time an entry is added.
+    cat_debug = 'PROSECO_PRINT_OBC_CAT' in os.environ
+    cat_acqs = ObcCat(name='Acquisition catalog', debug=cat_debug)
+    cat_guides = ObcCat(name='Fid/guide/mon catalog', debug=cat_debug)
 
     # Fill in the acq and guide tables in a specific order:
     # - GUI from MON (GFM) in descending slot order (starting from 7)
@@ -783,5 +808,9 @@ def merge_cats(fids=None, guides=None, acqs=None, mons=None):
             row['dim'] = row['slot']  # Fixed (desig track slot is self slot)
         # Change type to standard MON
         row['type'] = 'MON'
+
+    if cat_debug:
+        print(cat_acqs)
+        print(cat_guides)
 
     return aca
