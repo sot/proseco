@@ -17,6 +17,8 @@ from chandra_aca.transform import (yagzag_to_pixels, pixels_to_yagzag,
                                    radec_to_yagzag, yagzag_to_radec)
 from chandra_aca.aca_image import AcaPsfLibrary
 import agasc
+import agasc.agasc
+from agasc import get_supplement_table
 from Quaternion import Quat
 from mica.archive.aca_dark import get_dark_cal_image, get_dark_cal_id
 
@@ -521,6 +523,8 @@ class ACACatalogTable(BaseCatalogTable):
     t_ccd_guide = MetaAttribute()
     date = MetaAttribute()
     dark_date = MetaAttribute()
+    supp_agasc_version = MetaAttribute()
+    supp_last_updated = MetaAttribute()
     dither_acq = MetaAttribute()
     dither_guide = MetaAttribute()
     detector = MetaAttribute()
@@ -669,6 +673,7 @@ class ACACatalogTable(BaseCatalogTable):
                 stars = StarsTable.from_agasc(self.att, date=self.date, logger=self.log)
             else:
                 stars = StarsTable.from_stars(self.att, self.stars, logger=self.log)
+            stars.set_agasc_supp_version()
         else:
             stars = acqs.stars
 
@@ -982,6 +987,8 @@ class StarsTable(BaseCatalogTable):
 
     """
     att = QuatMetaAttribute()
+    supp_agasc_version = MetaAttribute()
+    supp_last_updated = MetaAttribute()
 
     # StarsTable attributes, gets set in MetaAttribute or AliasAttribute
     allowed_kwargs = set()
@@ -995,6 +1002,28 @@ class StarsTable(BaseCatalogTable):
                 pass
 
             return null_logger
+
+    def set_agasc_supp_version(self):
+        """
+        Get the versions of the agasc supplement used for the star data for catalog
+        determination and save in the appropriate MetaAttributes.
+        """
+
+        # It seems incorrect to save the supplement versions that were used to
+        # update stars if the supplement was not actually enabled/used.
+        # This block copies the logic from agasc.update_from_supplement
+        # (which perhaps should be generalized in the interface).
+        supplement_enabled_env = os.environ.get(agasc.SUPPLEMENT_ENABLED_ENV,
+                                                agasc.agasc.SUPPLEMENT_ENABLED_DEFAULT)
+        if supplement_enabled_env not in ('True', 'False'):
+            raise ValueError(
+                f'{agasc.SUPPLEMENT_ENABLED_ENV} env var must be either "True" or "False" '
+                f'got {supplement_enabled_env}')
+        if supplement_enabled_env == 'True':
+            agasc_versions = get_supplement_table('agasc_versions')
+            self.supp_agasc_version = agasc_versions['supplement'][0]
+            last_updated = get_supplement_table('last_updated')
+            self.supp_last_updated = last_updated['supplement'][0]
 
     def get_catalog_for_plot(self):
         """Return value of ``catalog`` for plot_stars() call for this object
@@ -1157,6 +1186,7 @@ class StarsTable(BaseCatalogTable):
         :param agasc_id: AGASC ID of the star to add
         """
         stars = StarsTable.from_agasc_ids(self.meta['q_att'], [agasc_id])
+        stars.set_agasc_supp_version()
         self.add_row(stars[0])
 
     def add_fake_constellation(self, n_stars=8, size=1500, mag=7.0, **attrs):

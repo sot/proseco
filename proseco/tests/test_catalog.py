@@ -2,6 +2,7 @@
 import copy
 import os
 
+from distutils.version import LooseVersion
 import matplotlib
 from Quaternion import Quat
 
@@ -11,6 +12,7 @@ import pickle
 import pytest
 from pathlib import Path
 
+from cxotime import CxoTime
 import numpy as np
 import mica.starcheck
 import agasc
@@ -68,6 +70,11 @@ def test_get_aca_catalog_20603_with_supplement():
             or np.any(aca_no.guides['mag'] != aca.guides['mag']))
     assert (len(aca_no.acqs) != len(aca.acqs)
             or np.any(aca_no.acqs['mag'] != aca.acqs['mag']))
+
+    assert LooseVersion(aca.supp_agasc_version) > LooseVersion('4.10')
+    assert CxoTime(aca.supp_last_updated) > CxoTime('2021-03-01')
+
+    assert aca_no.supp_agasc_version is None
 
 
 @pytest.mark.skipif(not HAS_SC_ARCHIVE, reason='Test requires starcheck archive')
