@@ -131,6 +131,12 @@ def _get_aca_catalog(**kwargs):
     if hasattr(aca.acqs, 'dark_date'):
         aca.dark_date = aca.acqs.dark_date
 
+    # Store the agasc supplement meta info if available
+    if hasattr(aca.stars, 'supp_agasc_version'):
+        aca.supp_agasc_version = aca.stars.supp_agasc_version
+    if hasattr(aca.stars, 'supp_last_updated'):
+        aca.supp_last_updated = aca.stars.supp_last_updated
+
     # Note that aca.acqs.stars is a filtered version of aca.stars and includes
     # only stars that are in or near ACA FOV.  Use this for fids and guides stars.
     aca.log('Starting get_fid_catalog')
