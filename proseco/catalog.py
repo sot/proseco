@@ -592,6 +592,13 @@ class ObcCat(list):
         return out
 
 
+def _merge_cats_debug(cat_debug, tbl, message):
+    if cat_debug and len(tbl) > 0:
+        print('*' * 80)
+        print(f'Adding {message}')
+        print('*' * 80)
+
+
 def merge_cats(fids=None, guides=None, acqs=None, mons=None):
     """Merge ``fids``, ``guides``, and ``acqs`` catalogs into one catalog.
 
@@ -677,6 +684,7 @@ def merge_cats(fids=None, guides=None, acqs=None, mons=None):
     # - ACQ-only in ascending slot order
 
     # Guide from Monitors (descending from slot 7)
+    _merge_cats_debug(cat_debug, gfms, 'Guide from Monitors (GFM)')
     for gfm in gfms:
         gfm['type'] = 'GUI'
         slot = cat_guides.add(gfm, descending=True)
@@ -688,15 +696,18 @@ def merge_cats(fids=None, guides=None, acqs=None, mons=None):
             cat_acqs[slot] = acq
 
     # Monitors (descending from slot 7)
+    _merge_cats_debug(cat_debug, mons, 'Monitors (MON)')
     for mon in mons:
         cat_guides.add(mon, descending=True)
 
     # Now do fids (ascending from slot 0)
+    _merge_cats_debug(cat_debug, fids, 'Fids (FID)')
     for fid in fids:
         # TODO: why is this fid[colnames], unlike guides and acqs?
         cat_guides.add(fid[colnames])
 
     # BOT stars, ascending in slot
+    _merge_cats_debug(cat_debug, gfms, 'Both stars (BOT)')
     for acq_id in acqs['id']:
         if acq_id in guides['id']:
             acq = acqs.get_id(acq_id)
@@ -707,11 +718,13 @@ def merge_cats(fids=None, guides=None, acqs=None, mons=None):
 
     # Fill in the rest of the guides (ascending from slot 0). Any pre-existing
     # ones are ignored.
+    _merge_cats_debug(cat_debug, gfms, 'Guide-only stars (GUI)')
     for guide in guides:
         cat_guides.add(guide)
 
     # Fill in the rest of the acqs (ascending from slot 0). Any pre-existing
     # ones are ignored.
+    _merge_cats_debug(cat_debug, gfms, 'Acq-only stars (ACQ)')
     for acq in acqs:
         cat_acqs.add(acq)
 
@@ -769,6 +782,9 @@ def merge_cats(fids=None, guides=None, acqs=None, mons=None):
         row['type'] = 'MON'
 
     if cat_debug:
+        print('*' * 80)
+        print('Final catalogs')
+        print('*' * 80)
         print(cat_acqs)
         print(cat_guides)
 
