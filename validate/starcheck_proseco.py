@@ -51,7 +51,7 @@ import shutil
 
 import parse_cm
 from proseco import get_aca_catalog
-from proseco.core import get_kwargs_from_starcheck_text
+from proseco.tests.test_common import get_starcheck_obs_kwargs
 import Ska.File
 
 
@@ -131,33 +131,6 @@ def copy_load_products(load_name, out_root, load_root):
             dest = out_dir / src.relative_to(load_dir)
             dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(src, dest)
-
-
-def get_starcheck_obs_kwargs(filename):
-    """
-    Parse the starcheck.txt file to get keyword arg dicts for get_aca_catalog()
-
-    :param filename: file name of starcheck.txt in load products
-    :returns: dict (by obsid) of kwargs for get_aca_catalog()
-
-    """
-    delim = "==================================================================================== "
-    with open(filename, 'r') as fh:
-        text = fh.read()
-    chunks = text.split(delim)
-    outs = {}
-    for chunk in chunks:
-        if "No star catalog for obsid" in chunk:
-            continue
-        try:
-            out = get_kwargs_from_starcheck_text(chunk, include_cat=True)
-
-        except ValueError:
-            continue
-        else:
-            outs[out['obsid']] = out
-
-    return outs
 
 
 def update_products(load_name, out_root, orv_pickle=None):

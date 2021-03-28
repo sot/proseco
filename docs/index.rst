@@ -45,22 +45,30 @@ date          date of acquisition (any DateTime-compatible format)
 dither_acq    acq dither size (2-element sequence (y, z), arcsec)
 dither_guide  guide dither size (2-element sequence (y, z), arcsec)
 detector      'ACIS-S' | 'ACIS-I' | 'HRC-S' | 'HRC-I'
-sim_offset    SIM translation offset from nominal [steps] (default=0)
-focus_offset  SIM focus offset [steps] (default=0)
 ============= =========================================================
 
 **Optional**
 
-=================== ===============================================================
+=================== =================================================================
 Argument            Description
-=================== ===============================================================
+=================== =================================================================
+sim_offset          SIM translation offset from nominal [steps] (default=0)
+focus_offset        SIM focus offset [steps] (default=0)
+target_offset       target offset including dynamical offset (y, z, deg)
 include_ids_acq     int or list of AGASC IDs of stars to include in acq catalog
 include_halfws_acq  int or list of acq halfwidths corresponding to ``include_ids``
 exclude_ids_acq     int or list of AGASC IDs of stars to exclude from acq catalog
 include_ids_guide   int or list of AGASC IDs of stars to include in guide catalog
 exclude_ids_guide   int or list of AGASC IDs of stars to exclude from guide catalog
+include_ids_fid     int or list of fid IDs to include from fid catalog
+exclude_ids_fid     int or list of fid IDs to exclude from fid catalog
+img_size_guide      readout window size for guide stars (6, 8, or ``None``)
 stars               table of AGASC stars (will be fetched from agasc if None)
-=================== ===============================================================
+monitors            N x 5 array of monitor star specifications (see `Monitor stars`_)
+t_ccd_eff_acq       ACA CCD effective temperature for acquisition (degC)
+t_ccd_eff_guide     ACA CCD effective temperature for guide (degC)
+dark_date           date of dark cal
+=================== =================================================================
 
 Within the ``include_halfws_acq`` list, one can supply the value ``0`` for a
 star instead of a typical legal value such as ``60`` or ``120``.  In that case
@@ -68,15 +76,22 @@ proseco will run the normal optimization and choose the best halfwidth for that
 included star.  If the ``include_halfws_acq`` argument is not supplied or set
 to ``[]`` then all halfwidths will be chosen by proseco.
 
+The two optional effective temperatures are normally not supplied and will be
+computed based on the current ACA penalty limit. Likewise, the ``dark_date`` is
+normally derived as the date of the most recent dark cal before ``date``.
+However, for reproducing catalog selection it may be required to provide all of
+those arguments.
+
 **Debug**
 
-============== =========================================================
+============== ================================================================
 Argument       Description
-============== =========================================================
+============== ================================================================
 optimize       optimize star catalog after initial selection (default=True)
 verbose        provide extra logging info (mostly calc_p_safe) (default=False)
-print_log      print the run log to stdout (default=False)
-============== =========================================================
+print_log      print the run log to stdout (default=False)'
+raise_exc      raise exception if it occurs in processing (default=True)
+============== ================================================================
 
 Examples
 ^^^^^^^^
@@ -175,6 +190,83 @@ with a single ``id`` column::
     File "/Users/aldcroft/git/proseco/proseco/fid.py", line 416, in get_fid_positions
       ypos = FID.fidpos[detector][:, 0]
   KeyError: 'FAIL'
+
+Monitor stars
+-------------
+
+Monitor stars in a catalog are specified withe the ``monitors`` keyword.
+This can accept a list of lists (or 2-d array of floats) in the form::
+
+  [
+    [coord0, coord1, coord_type, mag, function],  # Monitor window 1 (req'd)
+    [coord0, coord1, coord_type, mag, function],  # Monitor windows 2, 3, ... N (optional)
+    ..
+  ]
+
+
+If passed as a list of lists, the input will be converted to a numpy 2-d array
+(``np.array(monitors)``) which will have shape ``(N, 5)`` where ``N`` is the number of
+monitor windows. Enumeration codes related to the ``monitors`` keyword are
+defined in the module ``proseco.characteristics``::
+
+  class MonFunc:
+      AUTO = 0
+      GUIDE = 1
+      MON_TRACK = 2
+      MON_FIXED = 3
+
+  class MonCoord:
+      RADEC = 0
+      ROWCOL = 1
+      YAGZAG = 2
+
+The 5 values ``[coord0, coord1, coord_type, mag, function]`` in a monitor window
+specification are:
+
+- ``coord0``: first coordinate: RA (deg), row (pixel), or Y angle (arcsec))
+- ``coord1``: second coordinate: Dec (deg), column (pixel), or Z angle (arcsec)
+- ``coord_type``:
+
+  - ``MonCoord.RADEC``: RA/Dec (deg)
+  - ``MonCoord.ROWCOL``: row/column (pixel)
+  - ``MonCoord.YAGZAG``: Y/Z angle (arcsec)
+
+- ``mag``: star magnitude (used for commanded MAXMAG for monitor window requests)
+- ``function``:
+
+  - ``MonFunc.AUTO``: Schedule as a guide star if it meets requirements and does not introduce
+    critical warnings, otherwise schedule as a monitor window that tracks the brightest star.
+  - ``MonFunc.GUIDE``: Schedule as a guide star if a corresponding star is found
+    in the AGASC within 2 arcsec, otherwise raise an exception.
+  - ``MonFunc.MON_TRACK``: Schedule as monitor window that tracks the brightest star.
+  - ``MonFunc.MON_FIXED``: Schedule as monitor window that is fixed on the CCD
+     with no tracking.
+
+The typical use cases are as follows:
+
+- OR-specified monitor target with ``function=MonFunc.AUTO``
+
+  - This is the most common configuration and lets proseco decide how to schedule the OR.
+  - Coordinates provided as RA, Dec.
+
+- OR-specified monitor target ``function=MonFunc.GUIDE``
+
+  - Force scheduling as a guide star in a case where proseco would normally
+    schedule as a monitor window.
+  - For instance a star where the observer provides information on mag or
+    variability that is different from the AGASC (e.g. brighter).
+
+- OR-specified monitor target ``function=MonFunc.MON_TRACK``
+
+  - Force scheduling as a monitor window in a case where proseco
+    would normally schedule as a guide star.
+  - For instance a star where the observer provides information on mag or
+    variability that is different from the AGASC (e.g. fainter or more variable).
+
+- Fixed-location ER monitor window ``function=MonFunc.MON_FIXED``
+
+  - Used for engineering investigation, e.g. looking at a specific flickering pixel.
+  - ``coord0,1`` as Y/Z angle or (most commonly) row/column.
 
 Data requirements
 -----------------

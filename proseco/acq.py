@@ -282,7 +282,7 @@ class AcqTable(ACACatalogTable):
               (stars['mag'] < 11.0) &
               (~np.isclose(stars['COLOR1'], 0.7)) &
               (stars['mag_err'] < 1.0) &  # Mag err < 1.0 mag
-              (stars['ASPQ1'] < 40) &  # Less than 2 arcsec offset from nearby spoiler
+              (stars['ASPQ1'] < 40) &  # Less than 2 arcsec centroid offset due to nearby spoiler
               (stars['ASPQ2'] == 0) &  # Proper motion less than 0.5 arcsec/yr
               (stars['POS_ERR'] < 3000) &  # Position error < 3.0 arcsec
               ((stars['VAR'] == -9999) | (stars['VAR'] == 5))  # Not known to vary > 0.2 mag

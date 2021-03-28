@@ -431,7 +431,6 @@ def test_get_acq_catalog_19387():
            '   11   -99 37880584 -2005.80  2449.74    60',
            '   12   -99 38273720  -672.32 -2474.85    60']
 
-    repr(acqs.cand_acqs)
     assert repr(acqs.cand_acqs[TEST_COLS]).splitlines() == exp
 
 

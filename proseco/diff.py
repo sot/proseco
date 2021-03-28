@@ -61,7 +61,8 @@ HTML_FOOTER = """
 __all__ = ['get_catalog_lines', 'catalog_diff', 'CatalogDiff']
 
 
-def get_catalog_lines(cat, names=None, section_lines=True, sort_name='id'):
+def get_catalog_lines(cat, names=None, section_lines=True, sort_name='id',
+                      formats=None):
     """Get list of lines representing catalog suitable for diffing.
 
     This function sorts the catalog into fids, guides, monitors,and acquisition
@@ -69,10 +70,6 @@ def get_catalog_lines(cat, names=None, section_lines=True, sort_name='id'):
 
     - Translate HRC fid ids 7-10 and 11-14 to 1-4. Values in the range 7-14
       come from starcheck, but proseco uses 1-4.
-    - Change the MON halfwidth to 25. Starcheck uses 20 to match what effective
-      happens on the ACA, but in reality this parameter is fictional.
-    - For guides, set dim=1, res=1, and halfw=25. The guide search parameters
-      are hardwired in the OBC so the catalog values do not matter.
     - Optionally add a banner at the top with a label identifying the catalog,
       e.g. with the obsid. This banner is useful for diffing all the catalogs
       from a load, and helps to ensure that the diff algorithm stays on track.
@@ -86,6 +83,8 @@ def get_catalog_lines(cat, names=None, section_lines=True, sort_name='id'):
         Column names in the output lines for diffing
     :param section_lines: bool
         Add separator lines between types (default=True)
+    :param formats: dict, None
+        Dict of column names and format specifiers
     :returns: list
     """
     if names is None:
@@ -109,16 +108,16 @@ def get_catalog_lines(cat, names=None, section_lines=True, sort_name='id'):
     ok = np.in1d(cat['type'], ['GUI', 'BOT'])
     guides = cat[ok]
     guides.sort(sort_name)
-    guides['dim'] = 1
-    guides['res'] = 1
-    guides['halfw'] = 25
-    guides['type'][guides['type'] == 'BOT'] = 'GU*'
+    bot = guides['type'] == 'BOT'
+    guides['dim'][bot] = 1
+    guides['res'][bot] = 1
+    guides['halfw'][bot] = 25
+    guides['type'][bot] = 'GU*'
 
     # Make MON catalog and convert slot in dim (designated track star).
     ok = np.in1d(cat['type'], ['MON'])
     mons = cat[ok]
     mons.sort(sort_name)
-    mons['halfw'] = 25
 
     ok = np.in1d(cat['type'], ['ACQ', 'BOT'])
     acqs = cat[ok]
@@ -126,7 +125,24 @@ def get_catalog_lines(cat, names=None, section_lines=True, sort_name='id'):
     acqs['type'][acqs['type'] == 'BOT'] = 'AC*'
 
     out = vstack([fids, guides, mons, acqs], metadata_conflicts='silent')
-    out = out[names]
+    from .core import ACACatalogTable
+    out = ACACatalogTable(out[names])
+
+    # Handle odd case of catalog from starcheck with None in field
+    for name in out.colnames:
+        col = out[name]
+        if col.dtype.kind == 'O':
+            col[col == None] = 0  # noqa
+            out[name] = col.tolist()
+
+    # Allow specifying custom formats. For instance starcheck uses 3 digits for
+    # mag. Rounding to the default 2 from proseco causes spuriuous diffs when
+    # comparing to starcheck, so go back to 3 for diffs. Need the silly hack of
+    # calling repr first to do the format auto-initialize.
+    if formats:
+        repr(out)
+        for name in formats:
+            out[name].format = formats[name]
 
     # Text representation of table with separator lines between GUI, MON, and
     # ACQ sections.
@@ -169,7 +185,7 @@ class CatalogDiff:
             fh.write(self.text)
 
 
-def catalog_diff(cats1, cats2, style='html', names=None, labels=None,
+def catalog_diff(cats1, cats2, style='html', names=None, labels=None, formats=None,
                  sort_name='id', section_lines=True, n_context=3):
     """
     Return the diff of ACA catalogs ``cats1`` and ``cats2``.
@@ -190,6 +206,8 @@ def catalog_diff(cats1, cats2, style='html', names=None, labels=None,
         Default = 'idx id slot type sz dim res halfw'
     :param labels: list, None
         Label for catalog used in banner at top of lines
+    :param formats: dict, None
+        Dict of column names and format specifiers e.g. {'mag': '6.3f'}
     :param sort_name: str
         Column name for sorting catalog within sections (default='id')
     :param section_lines: bool
@@ -222,7 +240,7 @@ def catalog_diff(cats1, cats2, style='html', names=None, labels=None,
         for cat, lines in ((cat1, lines1),
                            (cat2, lines2)):
             cat_lines = get_catalog_lines(
-                cat, names, section_lines=section_lines, sort_name=sort_name)
+                cat, names, section_lines=section_lines, sort_name=sort_name, formats=formats)
             lines.extend(cat_lines)
 
         if style == 'html':
