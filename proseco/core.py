@@ -1508,22 +1508,30 @@ def get_kwargs_from_starcheck_text(obs_text, include_cat=False, force_catalog=Fa
 
     try:
         cat = Table(get_catalog(obs_text))
+        monitor, is_gfm, mon_id = get_monitor(kw['obsid'], kw['date'], cat)
     except Exception:
         pass
     else:
-        fid_or_mon = np.in1d(cat['type'], ('FID', 'MON'))
-        kw['n_guide'] = 8 - np.count_nonzero(fid_or_mon)
         kw['n_fid'] = np.count_nonzero(cat['type'] == 'FID')
+        kw['n_guide'] = 8 - kw['n_fid']
         if include_cat:
             kw['cat'] = cat
         if force_catalog:
             ok = np.in1d(cat['type'], ('ACQ', 'BOT'))
             kw['include_ids_acq'] = cat['id'][ok].tolist()
+            kw['n_acq'] = np.count_nonzero(ok)
             kw['include_halfws_acq'] = cat['halfw'][ok].tolist()
-            ok = np.in1d(cat['type'], ('GUI', 'BOT'))
+            ok = np.in1d(cat['type'], ('GUI', 'BOT', 'MON'))
+            kw['n_guide'] = np.count_nonzero(ok)
             kw['include_ids_guide'] = cat['id'][ok].tolist()
             ok = np.in1d(cat['type'], ('FID'))
             kw['include_ids_fid'] = cat['id'][ok].tolist()
+            if monitor is not None:
+                monitor[4] = ACA.MonFunc.GUIDE if is_gfm else ACA.MonFunc.MON_TRACK
+                if mon_id is not None and mon_id in kw['include_ids_guide']:
+                    kw['include_ids_guide'].remove(mon_id)
+        if monitor is not None:
+            kw['monitors'] = [monitor]
 
     try:
         targ = get_targ(obs_text)
@@ -1534,6 +1542,31 @@ def get_kwargs_from_starcheck_text(obs_text, include_cat=False, force_catalog=Fa
         pass
 
     return kw
+
+
+def get_monitor(obsid, date, cat):
+    """
+    Generate a monitor request for an existing catalog
+
+    :param obsid: int, obsid
+    :param date: cxotime/cxctime compatible date for agasc.get_star
+    :param cat: starcheck catalog from get_catalog
+    :returns: tuple of monitor request list, guide-from-monitor boolean, agasc_id of monitor star
+    """
+    ok = ((cat['type'] == 'MON')
+          | (np.in1d(cat['type'], ('GUI', 'BOT'))
+             & (cat['slot'] == 7) & (cat['sz'] == '8x8')))
+    if not np.any(ok) or obsid > 38000:
+        return None, None, None
+    mon_row = cat[ok][0]
+    if mon_row['id'] is None:
+        monitor = [mon_row['yang'], mon_row['zang'], ACA.MonCoord.YAGZAG,
+                   mon_row['maxmag'], ACA.MonFunc.AUTO]
+    else:
+        star = agasc.get_star(mon_row['id'], date=date)
+        monitor = [star['RA_PMCORR'], star['DEC_PMCORR'], ACA.MonCoord.RADEC,
+                   mon_row['maxmag'], ACA.MonFunc.AUTO]
+    return monitor, not np.any(cat['type'] == 'MON'), mon_row['id']
 
 
 def includes_for_obsid(obsid):
