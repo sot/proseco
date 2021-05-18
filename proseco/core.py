@@ -1508,30 +1508,35 @@ def get_kwargs_from_starcheck_text(obs_text, include_cat=False, force_catalog=Fa
 
     try:
         cat = Table(get_catalog(obs_text))
-        monitor, is_gfm, mon_id = get_monitor(kw['obsid'], kw['date'], cat)
     except Exception:
-        pass
-    else:
+        cat = None
+
+    if cat is not None:
+        monitors = get_monitors(kw['obsid'], cat)
+        if monitors:
+            kw['monitors'] = monitors
+
         kw['n_fid'] = np.count_nonzero(cat['type'] == 'FID')
-        kw['n_guide'] = 8 - kw['n_fid']
+
         if include_cat:
             kw['cat'] = cat
+
         if force_catalog:
             ok = np.in1d(cat['type'], ('ACQ', 'BOT'))
-            kw['include_ids_acq'] = cat['id'][ok].tolist()
             kw['n_acq'] = np.count_nonzero(ok)
+            kw['include_ids_acq'] = cat['id'][ok].tolist()
             kw['include_halfws_acq'] = cat['halfw'][ok].tolist()
-            ok = np.in1d(cat['type'], ('GUI', 'BOT', 'MON'))
-            kw['n_guide'] = np.count_nonzero(ok)
+
+            ok = np.in1d(cat['type'], ('GUI', 'BOT'))
+            # n_guide kwarg needs to include guide stars + MON stars
+            kw['n_guide'] = np.count_nonzero(ok) + np.count_nonzero(cat['type'] == 'MON')
             kw['include_ids_guide'] = cat['id'][ok].tolist()
-            ok = np.in1d(cat['type'], ('FID'))
+
+            ok = np.in1d(cat['type'], 'FID')
             kw['include_ids_fid'] = cat['id'][ok].tolist()
-            if monitor is not None:
-                monitor[4] = ACA.MonFunc.GUIDE if is_gfm else ACA.MonFunc.MON_TRACK
-                if mon_id is not None and mon_id in kw['include_ids_guide']:
-                    kw['include_ids_guide'].remove(mon_id)
-        if monitor is not None:
-            kw['monitors'] = [monitor]
+        else:
+            kw['n_acq'] = 8
+            kw['n_guide'] = 8 - kw['n_fid']
 
     try:
         targ = get_targ(obs_text)
@@ -1544,29 +1549,43 @@ def get_kwargs_from_starcheck_text(obs_text, include_cat=False, force_catalog=Fa
     return kw
 
 
-def get_monitor(obsid, date, cat):
+def get_monitors(obsid, cat):
     """
-    Generate a monitor request for an existing catalog
+    Generate a list of monitor requests for an existing catalog
 
     :param obsid: int, obsid
-    :param date: cxotime/cxctime compatible date for agasc.get_star
     :param cat: starcheck catalog from get_catalog
-    :returns: tuple of monitor request list, guide-from-monitor boolean, agasc_id of monitor star
+    :returns: list of monitor requests
     """
-    ok = ((cat['type'] == 'MON')
-          | (np.in1d(cat['type'], ('GUI', 'BOT'))
-             & (cat['slot'] == 7) & (cat['sz'] == '8x8')))
-    if not np.any(ok) or obsid > 38000:
-        return None, None, None
-    mon_row = cat[ok][0]
-    if mon_row['id'] is None:
-        monitor = [mon_row['yang'], mon_row['zang'], ACA.MonCoord.YAGZAG,
-                   mon_row['maxmag'], ACA.MonFunc.AUTO]
-    else:
-        star = agasc.get_star(mon_row['id'], date=date)
-        monitor = [star['RA_PMCORR'], star['DEC_PMCORR'], ACA.MonCoord.RADEC,
-                   mon_row['maxmag'], ACA.MonFunc.AUTO]
-    return monitor, not np.any(cat['type'] == 'MON'), mon_row['id']
+    monitors = []
+
+    # Sort catalog by slot and index, and then iterate over catalog in reverse
+    # order. This guarantees that any GFM or MON in slot 7 comes first so that
+    # `monitors` is in the correct order. In particular the first entry is
+    # always put into slot 7.
+    cat = cat.copy()
+    cat.sort(['slot', 'idx'])
+
+    for row in cat[::-1]:
+        # Will need to remove when we start scheduling OR's with 8x8 guides.
+        if (row['type'] in ('GUI', 'BOT')
+            and row['slot'] == 7
+            and row['sz'] == '8x8'
+                and obsid <= 38000):
+            # Guide from MON (GFM) so force scheduling as GUI
+            monitor = [row['yang'], row['zang'], ACA.MonCoord.YAGZAG,
+                       row['mag'], ACA.MonFunc.GUIDE]
+            monitors.append(monitor)
+
+        elif row['type'] == 'MON':
+            # Bona fide MON entry
+            mon_func = (ACA.MonFunc.MON_FIXED if row['slot'] == row['dim']
+                        else ACA.MonFunc.MON_TRACK)
+            monitor = [row['yang'], row['zang'], ACA.MonCoord.YAGZAG,
+                       row['maxmag'], mon_func]
+            monitors.append(monitor)
+
+    return monitors
 
 
 def includes_for_obsid(obsid):
