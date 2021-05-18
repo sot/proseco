@@ -11,6 +11,7 @@ from ..core import (ACABox, get_kwargs_from_starcheck_text, calc_spoiler_impact,
 from ..acq import AcqTable
 from ..guide import GuideTable
 from ..characteristics import bad_star_set
+from proseco import get_aca_catalog
 
 
 def test_agasc_1p7():
@@ -141,7 +142,7 @@ def test_get_kwargs_from_starcheck_text():
     [ 4]  3   995373760   BOT  6x6   0.985   8.227   9.734    571   1383  32   1  180
     [ 5]  4  1058803776   BOT  6x6   0.985   8.591  10.094  -1871    288  28   1  160    a2
     [ 6]  5  1058806384   BOT  6x6   0.945   9.144  10.641  -1541   -971  28   1  160    a2
-    [ 7]  6   995368032   GUI  6x6     ---   8.639  10.141   1711    912   1   1   25
+    [ 7]  6         ---   MON  8x8     ---     ---  13.938    500    500   6   0   20    mX
     [ 8]  7         ---   MON  8x8     ---     ---  13.938     66     31   3   0   20    mX
     [ 9]  6   995373040   ACQ  6x6   0.944   9.470  10.969    642   1162  23   1  135    a2
     [10]  7   995371984   ACQ  6x6   0.934   9.684  11.188    427    974  23   1  135    a2
@@ -164,14 +165,29 @@ def test_get_kwargs_from_starcheck_text():
            'dither': (8.0, 8.0),
            't_ccd': -10.6,
            'date': '2018:273:05:06:58.506',
+           'n_acq': 8,
            'n_guide': 5,
            'n_fid': 3,
            'detector': 'ACIS-S',
            'sim_offset': 0,
            'focus_offset': 0,
-           'monitors': [[66, 31, 2, 13.938, 0]]}
+           'monitors': [[66, 31, 2, 13.938, 2], [500, 500, 2, 13.938, 3]]}
     assert kwargs == exp
 
+    cat = get_aca_catalog(**kwargs)
+    mon = cat.get_id(1000, mon=True)
+    assert mon['type'] == 'MON'
+    assert mon['slot'] == 7
+    assert mon['yang'] == 66.0
+    assert mon['zang'] == 31.0
+    mon = cat.get_id(1001, mon=True)
+    assert mon['type'] == 'MON'
+    assert mon['slot'] == 6
+    assert mon['yang'] == 500.0
+    assert mon['zang'] == 500.0
+
+
+def test_get_kwargs_from_starcheck_text2():
     text2 = """
     OBSID: 23156  WR 140                 ACIS-S SIM Z offset:0     (0.00mm) Grating: HETG
     RA, Dec, Roll (deg):   305.083054    43.865507   310.023234
@@ -208,7 +224,8 @@ def test_get_kwargs_from_starcheck_text():
     Dynamic Mag Limits: Yellow 10.30  Red 10.56
     """
 
-    kwargs = get_kwargs_from_starcheck_text(text2, force_catalog=True)
+    kwargs = get_kwargs_from_starcheck_text(text2, force_catalog=True, include_cat=True)
+    cat_exp = kwargs.pop('cat')
     exp = {'dither': (8.0, 8.0),
            't_ccd': -11.2,
            'date': '2020:337:13:05:59.452',
@@ -224,10 +241,16 @@ def test_get_kwargs_from_starcheck_text():
                                414725232, 414583128, 414588808, 414724728],
            'n_acq': 8,
            'include_halfws_acq': [160, 160, 160, 160, 160, 160, 160, 160],
-           'include_ids_guide': [414583264, 414583848, 414585176, 414718744],
+           'include_ids_guide': [414583264, 414583848, 414585176, 414718744, 414725232],
            'include_ids_fid': [2, 4, 5],
-           'monitors': [[305.1165247776087, 43.85452155, 0, 8.547, 1]]}
+           'monitors': [[86, 41, 2, 7.037, 1]]}
     assert kwargs == exp
+
+    cat = get_aca_catalog(**kwargs)
+    cat.sort('id')
+    cat_exp.sort('id')
+    for attr in ('id', 'type', 'sz'):
+        assert np.all(cat[attr] == cat_exp[attr])
 
 
 cases = [dict(row=4, col=0, mag0=8, mag1=10.5, exp=(0.16, -0.01, 1.00)),
