@@ -33,7 +33,7 @@ HAS_MAG_SUPPLEMENT = len(agasc.get_supplement_table('mags')) > 0
 def test_allowed_kwargs():
     """Test #332 where allowed_kwargs class attribute is unique for each subclass"""
     new_kwargs = ACATable.allowed_kwargs - ACACatalogTable.allowed_kwargs
-    assert new_kwargs == {'call_args', 'version'}
+    assert new_kwargs == {'call_args', 'version', 't_ccd_penalty_limit'}
 
     new_kwargs = FidTable.allowed_kwargs - ACACatalogTable.allowed_kwargs
     assert new_kwargs == {'acqs', 'include_ids', 'exclude_ids'}
@@ -404,6 +404,39 @@ def test_t_ccd_effective_acq_guide(t_ccd_case):
 
     kwargs = mod_std_info(stars=stars, t_ccd_acq=t_ccd_acq, t_ccd_guide=t_ccd_guide)
     aca = get_aca_catalog(**kwargs)
+    assert aca.t_ccd_penalty_limit == t_limit
+
+    assert np.isclose(aca.t_ccd_acq, t_ccd_acq)
+    assert np.isclose(aca.t_ccd_guide, t_ccd_guide)
+
+    # t_ccd + 1 + (t_ccd - t_limit) from proseco.catalog.get_effective_t_ccd()
+    assert np.isclose(aca.t_ccd_eff_acq, t_ccd_acq + t_penalty_acq)
+    assert np.isclose(aca.t_ccd_eff_guide, t_ccd_guide + t_penalty_guide)
+
+    assert np.isclose(aca.t_ccd_eff_acq, aca.acqs.t_ccd)
+    assert np.isclose(aca.t_ccd_eff_guide, aca.guides.t_ccd)
+
+
+@pytest.mark.parametrize('t_ccd_case', t_ccd_cases)
+def test_t_ccd_effective_acq_guide_via_kwarg(t_ccd_case):
+    """Test setting of effective T_ccd temperatures for cases above and
+    below a manually specified limit
+    """
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(mag=8.0, n_stars=8)
+
+    t_limit = -np.pi  # some number different from ACA.aca_t_ccd_penalty_limit
+
+    t_offset, t_penalty_acq, t_penalty_guide = t_ccd_case
+    # Set acq and guide temperatures different
+    t_ccd_acq = t_limit + t_offset
+    t_ccd_guide = t_ccd_acq - 0.1
+
+    kwargs = mod_std_info(stars=stars, t_ccd_acq=t_ccd_acq, t_ccd_guide=t_ccd_guide)
+    kwargs['t_ccd_penalty_limit'] = t_limit
+    aca = get_aca_catalog(**kwargs)
+
+    assert aca.t_ccd_penalty_limit == t_limit
 
     assert np.isclose(aca.t_ccd_acq, t_ccd_acq)
     assert np.isclose(aca.t_ccd_guide, t_ccd_guide)

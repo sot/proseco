@@ -44,6 +44,8 @@ def get_aca_catalog(obsid=0, **kwargs):
     :param man_angle: maneuver angle (deg)
     :param t_ccd_acq: ACA CCD temperature for acquisition (degC)
     :param t_ccd_guide: ACA CCD temperature for guide (degC)
+    :param t_ccd_penalty_limit: ACA CCD penalty limit for planning (degC). If not
+        provided this defaults to value from the ACA xija thermal model.
     :param date: date of acquisition (any DateTime-compatible format)
     :param dither_acq: acq dither size (2-element sequence (y, z), arcsec)
     :param dither_guide: guide dither size (2-element sequence (y, z), arcsec)
@@ -110,11 +112,14 @@ def _get_aca_catalog(**kwargs):
     aca.call_args = kwargs.copy()
     aca.set_attrs_from_kwargs(**kwargs)
 
+    # Remove kwargs that are specific to AcaTable
+    for kwarg in ('t_ccd', 't_ccd_penalty_limit'):
+        if kwarg in kwargs:
+            del kwargs[kwarg]
+
     # Override t_ccd related inputs with effective temperatures for downstream
     # action by AcqTable, GuideTable, FidTable.  See set_attrs_from_kwargs()
     # method for more details.
-    if 't_ccd' in kwargs:
-        del kwargs['t_ccd']
     kwargs['t_ccd_acq'] = aca.t_ccd_eff_acq
     kwargs['t_ccd_guide'] = aca.t_ccd_eff_guide
 
@@ -168,16 +173,22 @@ def _get_aca_catalog(**kwargs):
     return aca
 
 
-def get_effective_t_ccd(t_ccd):
+def get_effective_t_ccd(t_ccd, t_ccd_penalty_limit=None):
     """Return the effective T_ccd used for selection and catalog evaluation.
 
     For details see Dynamic ACA limits in baby steps section in:
     https://occweb.cfa.harvard.edu/twiki/bin/view/Aspect/StarWorkingGroupMeeting2019x02x13
 
-    :param t_ccd:
-    :return:
+    :param t_ccd: float
+        Actual (predicted) CCD temperature
+    :param t_ccd_penalty_limit: float, None
+        ACA penalty limit to use (degC). Default = aca_t_ccd_penalty_limit from
+        proseco.characteristics.
+    :returns: t_ccd_eff
+        Effective CCD temperature (degC) for use in star selection
     """
-    t_limit = ACA.aca_t_ccd_penalty_limit
+    t_limit = (ACA.aca_t_ccd_penalty_limit if t_ccd_penalty_limit is None
+               else t_ccd_penalty_limit)
     if t_ccd > t_limit:
         return t_ccd + 1 + (t_ccd - t_limit)
     else:
@@ -205,6 +216,7 @@ class ACATable(ACACatalogTable):
     # method below).
     t_ccd_eff_acq = MetaAttribute(is_kwarg=False)
     t_ccd_eff_guide = MetaAttribute(is_kwarg=False)
+    t_ccd_penalty_limit = MetaAttribute()
 
     def __copy__(self):
         # Astropy Table now does a light key-only copy of the `meta` dict, so
@@ -252,8 +264,10 @@ class ACATable(ACACatalogTable):
         """
         super().set_attrs_from_kwargs(**kwargs)
 
-        self.t_ccd_eff_acq = get_effective_t_ccd(self.t_ccd_acq)
-        self.t_ccd_eff_guide = get_effective_t_ccd(self.t_ccd_guide)
+        if self.t_ccd_penalty_limit is None:
+            self.t_ccd_penalty_limit = ACA.aca_t_ccd_penalty_limit
+        self.t_ccd_eff_acq = get_effective_t_ccd(self.t_ccd_acq, self.t_ccd_penalty_limit)
+        self.t_ccd_eff_guide = get_effective_t_ccd(self.t_ccd_guide, self.t_ccd_penalty_limit)
         self.version = VERSION
 
     def get_review_table(self):
