@@ -28,10 +28,6 @@ max_ccd_col = CCD['col_max'] - CCD['col_pad']  # Max allow col for stars (SOURCE
 col_spoiler_mag_diff = 4.5
 col_spoiler_pix_sep = 10  # pixels
 
-# ACA T_ccd penalty limit (degC).
-# Above this limit a temperature "penalty" is applied via get_effective_t_ccd()
-aca_t_ccd_penalty_limit = -7.5
-
 # Dark current that corresponds to a 5.0 mag star in a single pixel.  Apply
 # this value to the region specified by bad_pixels.
 bad_pixel_dark_current = 700_000
@@ -49,3 +45,57 @@ def _load_bad_star_set():
 
 
 bad_star_set = LazyDict(_load_bad_star_set)
+
+# Version of chandra_models to use for the ACA xija model from which the
+# planning and penalty limits are extracted. Default of None means use the
+# current flight-approved version. For testing or other rare circumstances this
+# can be overridden prior to calling get_aca_catalog(). This module variable
+# gets set to the actual chandra_models version when the ACA attributes are
+# first accessed.
+chandra_models_version = None
+
+# The next two characteristics are lazily defined to ensure import succeeds.
+
+# aca_t_ccd_penalty_limit : ACA T_ccd penalty limit (degC).
+# Above this limit a temperature "penalty" is applied via get_effective_t_ccd()
+
+# aca_t_ccd_planning_limit : ACA T_ccd planning limit (degC).
+# Predicted ACA CCD temperatures must be below this limit.
+
+
+def __getattr__(name):
+    """Lazily define module attributes for the ACA planning and penalty limits"""
+    if name in ('aca_t_ccd_penalty_limit', 'aca_t_ccd_planning_limit'):
+        _set_aca_limits()
+        return globals()[name]
+    else:
+        raise AttributeError(f"module {__name__} has no attribute {name}")
+
+
+def _set_aca_limits():
+    """Set global variables for ACA thermal planning and penalty limits"""
+    global chandra_models_version
+    from xija.get_model_spec import get_xija_model_spec
+    spec, chandra_models_version = get_xija_model_spec('aca', version=chandra_models_version)
+
+    names = ('aca_t_ccd_penalty_limit', 'aca_t_ccd_planning_limit')
+    spec_names = ('planning.penalty.high', 'planning.warning.high')
+    for name, spec_name in zip(names, spec_names):
+        try:
+            limit = spec['limits']['aacccdpt'][spec_name]
+        except KeyError:
+            raise KeyError(f"unable to find ['limits']['aacccdpt']['{spec_name}'] "
+                           "in the ACA xija model in "
+                           f"chandra_models version {chandra_models_version}.")
+        else:
+            globals()[name] = limit
+
+
+# Make sure module-level `dir()` includes the lazy attributes.
+
+# Grab the module attributes before defining __dir__
+_attrs = dir()
+
+
+def __dir__():
+    return sorted(_attrs + ['aca_t_ccd_penalty_limit', 'aca_t_ccd_planning_limit'])
