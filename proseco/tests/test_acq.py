@@ -781,7 +781,9 @@ def test_acq_fid_catalog_probs_low_level():
     aca = get_aca_catalog(**kwargs)
     acqs = aca.acqs
 
-    assert np.all(acqs.dark[0:512, 0:512] == 40)
+    # Check that vast majority of pixels are 40. The rest are bad pixels set to
+    # 700_000.
+    assert np.percentile(acqs.dark, 99.95) == 40.0
 
     # Initial fid set is empty () and we check baseline p_safe
     assert acqs.fid_set == ()
