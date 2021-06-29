@@ -487,7 +487,12 @@ def test_bad_pixel_dark_current():
     stars = StarsTable.empty()
     stars.add_fake_constellation(mag=np.linspace(8.0, 8.1, 4), n_stars=4)
     stars.add_fake_star(row=-205, col=450, mag=6.0, id=1)
+    # For acq (105 arcsecs away)
     stars.add_fake_star(row=-205, col=454 - 20 / 5 - 105 / 5, mag=6.0, id=2)
+
+    # For guide: 5 pixels + dither away (reject), 6 pixels + dither away (accept)
+    stars.add_fake_star(row=-150, col=454 - 5 - 20 / 5, mag=6.2, id=3)  # reject
+    stars.add_fake_star(row=-100, col=454 - 6 - 20 / 5, mag=6.2, id=4)  # accept
 
     kwargs = mod_std_info(stars=stars, dark=dark, dither=20,
                           n_guide=8, n_fid=0, n_acq=8, man_angle=90)
@@ -497,7 +502,7 @@ def test_bad_pixel_dark_current():
     assert np.all(aca.acqs.dark[-245 + 512:512, 454 + 512] == ACA.bad_pixel_dark_current)
 
     exp_ids = [2, 100, 101, 102, 103]
-    assert sorted(aca.guides['id']) == exp_ids
+    assert sorted(aca.guides['id']) == sorted(exp_ids + [4])
     assert aca.acqs['id'].tolist() == exp_ids
     assert aca.acqs['halfw'].tolist() == [100, 160, 160, 160, 160]
 
