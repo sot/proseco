@@ -7,10 +7,11 @@ from astropy.io import ascii
 
 import agasc
 from ..core import (ACABox, get_kwargs_from_starcheck_text, calc_spoiler_impact,
-                    StarsTable)
+                    StarsTable, get_dim_res)
 from ..acq import AcqTable
 from ..guide import GuideTable
 from ..characteristics import bad_star_set
+from proseco import get_aca_catalog
 
 
 def test_agasc_1p7():
@@ -141,7 +142,7 @@ def test_get_kwargs_from_starcheck_text():
     [ 4]  3   995373760   BOT  6x6   0.985   8.227   9.734    571   1383  32   1  180
     [ 5]  4  1058803776   BOT  6x6   0.985   8.591  10.094  -1871    288  28   1  160    a2
     [ 6]  5  1058806384   BOT  6x6   0.945   9.144  10.641  -1541   -971  28   1  160    a2
-    [ 7]  6   995368032   GUI  6x6     ---   8.639  10.141   1711    912   1   1   25
+    [ 7]  6         ---   MON  8x8     ---     ---  13.938    500    500   6   0   20    mX
     [ 8]  7         ---   MON  8x8     ---     ---  13.938     66     31   3   0   20    mX
     [ 9]  6   995373040   ACQ  6x6   0.944   9.470  10.969    642   1162  23   1  135    a2
     [10]  7   995371984   ACQ  6x6   0.934   9.684  11.188    427    974  23   1  135    a2
@@ -164,12 +165,92 @@ def test_get_kwargs_from_starcheck_text():
            'dither': (8.0, 8.0),
            't_ccd': -10.6,
            'date': '2018:273:05:06:58.506',
-           'n_guide': 4,
+           'n_acq': 8,
+           'n_guide': 5,
            'n_fid': 3,
            'detector': 'ACIS-S',
            'sim_offset': 0,
-           'focus_offset': 0}
+           'focus_offset': 0,
+           'monitors': [[66, 31, 2, 13.938, 2], [500, 500, 2, 13.938, 3]]}
     assert kwargs == exp
+
+    cat = get_aca_catalog(**kwargs)
+    mon = cat.get_id(1000, mon=True)
+    assert mon['type'] == 'MON'
+    assert mon['slot'] == 7
+    assert mon['yang'] == 66.0
+    assert mon['zang'] == 31.0
+    mon = cat.get_id(1001, mon=True)
+    assert mon['type'] == 'MON'
+    assert mon['slot'] == 6
+    assert mon['yang'] == 500.0
+    assert mon['zang'] == 500.0
+
+
+def test_get_kwargs_from_starcheck_text2():
+    text2 = """
+    OBSID: 23156  WR 140                 ACIS-S SIM Z offset:0     (0.00mm) Grating: HETG
+    RA, Dec, Roll (deg):   305.083054    43.865507   310.023234
+    Dither: ON Y_amp= 8.0  Z_amp= 8.0  Y_period=1000.0  Z_period= 707.1
+    BACKSTOP GUIDE_SUMM OR MANVR DOT MAKE_STARS TLR
+
+    MP_TARGQUAT at 2020:337:13:05:57.809 (VCDU count = 14020378)
+      Q1,Q2,Q3,Q4: -0.50382435  -0.11972583  -0.52770508  0.67331575
+      MANVR: Angle=  93.34 deg  Duration= 1904 sec  Slew err= 54.5 arcsec  End= 2020:337:13:37:37
+
+    MP_STARCAT at 2020:337:13:05:59.452 (VCDU count = 14020385)
+    ---------------------------------------------------------------------------------------------
+     IDX SLOT        ID  TYPE   SZ   P_ACQ    MAG   MAXMAG   YANG   ZANG DIM RES HALFW PASS NOTES
+    ---------------------------------------------------------------------------------------------
+    [ 1]  0           2   FID  8x8     ---   7.000   8.000   -773  -1741   1   1   25
+    [ 2]  1           4   FID  8x8     ---   7.000   8.000   2140    166   1   1   25
+    [ 3]  2           5   FID  8x8     ---   7.000   8.000  -1826    160   1   1   25
+    [ 4]  3   414583264   BOT  6x6   0.981   7.693   9.203    697  -1232  28   1  160
+    [ 5]  4   414583848   BOT  6x6   0.969   8.272   9.781   -443     34  28   1  160         C
+    [ 6]  5   414585176   BOT  6x6   0.979   8.228   9.734   -958  -2143  28   1  160
+    [ 7]  6   414718744   BOT  6x6   0.979   8.165   9.672  -1655   1816  28   1  160
+    [ 8]  7   414725232   BOT  8x8   0.982   7.037   8.547     86     41  28   1  160
+    [ 9]  0   414583128   ACQ  6x6   0.977   8.379   9.891  -2087   -459  28   1  160
+    [10]  1   414588808   ACQ  6x6   0.973   8.665  10.172  -1596  -1891  28   1  160
+    [11]  2   414724728   ACQ  6x6   0.967   8.961  10.469   1631   -790  28   1  160
+
+    >> CAUTION : [ 7] Search spoiler.  414712192: Y,Z,Radial,Mag seps: 136 210 250 -0.7
+    >> INFO    : [ 8] Appears to be MON used as GUI/BOT.  Has Magnitude been checked?
+    >> INFO    : [ 8] Readout Size. 8x8 Stealth MON?
+
+    Probability of acquiring 2 or fewer stars (10^-x):8.3110
+    Acquisition Stars Expected  : 7.80
+    Predicted Max CCD temperature: -11.2 C  N100 Warm Pix Frac 0.291
+    Dynamic Mag Limits: Yellow 10.30  Red 10.56
+    """
+
+    kwargs = get_kwargs_from_starcheck_text(text2, force_catalog=True, include_cat=True)
+    cat_exp = kwargs.pop('cat')
+    exp = {'dither': (8.0, 8.0),
+           't_ccd': -11.2,
+           'date': '2020:337:13:05:59.452',
+           'n_guide': 5,
+           'detector': 'ACIS-S',
+           'sim_offset': 0,
+           'focus_offset': 0,
+           'obsid': 23156,
+           'att': [305.083054, 43.865507, 310.023234],
+           'man_angle': 93.34,
+           'n_fid': 3,
+           'include_ids_acq': [414583264, 414583848, 414585176, 414718744,
+                               414725232, 414583128, 414588808, 414724728],
+           'n_acq': 8,
+           'include_halfws_acq': [160, 160, 160, 160, 160, 160, 160, 160],
+           'include_ids_guide': [414583264, 414583848, 414585176, 414718744, 414725232],
+           'include_ids_fid': [2, 4, 5],
+           'monitors': [[86, 41, 2, 7.037, 1]]}
+    assert kwargs == exp
+
+    cat = get_aca_catalog(**kwargs)
+    cat.sort('id')
+    cat_exp.sort('id')
+    for attr in ('id', 'type', 'sz'):
+        assert np.all(cat[attr] == cat_exp[attr])
 
 
 cases = [dict(row=4, col=0, mag0=8, mag1=10.5, exp=(0.16, -0.01, 1.00)),
@@ -281,3 +362,14 @@ def test_starstable_from_stars():
 
     stars3 = StarsTable.from_stars(att3, stars)
     assert stars3 is stars
+
+
+def test_get_dim_res():
+    """Test getting ACA DIM and RES for an array of halfws"""
+    halfws = np.array([20, 40, 337, 338, 420], dtype=np.int64)
+    exp_dim = np.array([0, 4, 63, 8, 10], dtype=np.int64)
+    exp_res = np.array([1, 1, 1, 0, 0], dtype=np.int64)
+
+    dim, res = get_dim_res(halfws)
+    assert np.all(dim == exp_dim)
+    assert np.all(res == exp_res)

@@ -33,7 +33,8 @@ HAS_MAG_SUPPLEMENT = len(agasc.get_supplement_table('mags')) > 0
 def test_allowed_kwargs():
     """Test #332 where allowed_kwargs class attribute is unique for each subclass"""
     new_kwargs = ACATable.allowed_kwargs - ACACatalogTable.allowed_kwargs
-    assert new_kwargs == {'call_args', 'version', 't_ccd_penalty_limit'}
+    assert new_kwargs == {'call_args', 'version', 't_ccd_eff_acq', 't_ccd_eff_guide',
+                          't_ccd_penalty_limit'}
 
     new_kwargs = FidTable.allowed_kwargs - ACACatalogTable.allowed_kwargs
     assert new_kwargs == {'acqs', 'include_ids', 'exclude_ids'}
@@ -82,16 +83,15 @@ def test_get_aca_catalog_20603():
            '---- --- --------- ---- --- -------- -------- --- --- -----',
            '   0   1         4  FID 8x8  2140.23   166.63   1   1    25',
            '   1   2         5  FID 8x8 -1826.28   160.17   1   1    25',
-           '   2   3  40112304  BOT 6x6 -1644.35  2032.47  20   1    80',
-           '   3   4  40114416  BOT 6x6   394.22  1204.43  20   1   140',
-           '   4   5 116791824  BOT 6x6   622.00  -953.60  20   1   160',
+           '   2   3 116791824  BOT 6x6   622.00  -953.60  28   1   160',
+           '   3   4  40114416  BOT 6x6   394.22  1204.43  24   1   140',
+           '   4   5  40112304  BOT 6x6 -1644.35  2032.47  12   1    80',
            '   5   6  40113544  GUI 6x6   102.74  1133.37   1   1    25',
-           '   5   7 116923496  ACQ 6x6 -1337.79  1049.27  20   1   120',
-           '   6   8 116923528  ACQ 6x6 -2418.65  1088.40  20   1   160',
-           '   7   9 116791744  ACQ 6x6   985.38 -1210.19  20   1   160',
-           '   0  10  40108048  ACQ 6x6     2.21  1619.17  20   1   140']
+           '   0   7 116923496  ACQ 6x6 -1337.79  1049.27  20   1   120',
+           '   1   8 116923528  ACQ 6x6 -2418.65  1088.40  28   1   160',
+           '   5   9 116791744  ACQ 6x6   985.38 -1210.19  28   1   160',
+           '   6  10  40108048  ACQ 6x6     2.21  1619.17  24   1   140']
 
-    repr(aca)  # Apply default formats
     assert aca[TEST_COLS].pformat(max_width=-1) == exp
 
     aca_pkl = pickle.dumps(aca)
@@ -122,16 +122,15 @@ def test_get_aca_catalog_20259():
            '   0   1         1  FID 8x8 -1175.03  -468.23   1   1    25',
            '   1   2         2  FID 8x8  1224.70  -460.93   1   1    25',
            '   2   3         3  FID 8x8 -1177.69   561.30   1   1    25',
-           '   3   4 896009152  BOT 6x6  1693.39   217.92  20   1   100',
-           '   4   5 896009240  BOT 6x6  -911.41   402.62  20   1    80',
-           '   5   6 896013056  BOT 6x6  1547.25 -2455.12  20   1    80',
-           '   6   7 897712576  BOT 6x6 -1099.95  2140.23  20   1    80',
-           '   7   8 897717296  BOT 6x6   932.58  1227.48  20   1    80',
-           '   0   9 896011576  ACQ 6x6   810.99   -69.21  20   1   100',
-           '   1  10 897718208  ACQ 6x6   765.61  1530.27  20   1    80',
-           '   2  11 897192352  ACQ 6x6 -2110.43  2005.21  20   1    80']
+           '   3   4 896009152  BOT 6x6  1693.39   217.92  16   1   100',
+           '   4   5 897712576  BOT 6x6 -1099.95  2140.23  12   1    80',
+           '   5   6 897717296  BOT 6x6   932.58  1227.48  12   1    80',
+           '   6   7 896013056  BOT 6x6  1547.25 -2455.12  12   1    80',
+           '   7   8 896009240  BOT 6x6  -911.41   402.62  12   1    80',
+           '   0   9 896011576  ACQ 6x6   810.99   -69.21  16   1   100',
+           '   1  10 897718208  ACQ 6x6   765.61  1530.27  12   1    80',
+           '   2  11 897192352  ACQ 6x6 -2110.43  2005.21  12   1    80']
 
-    repr(aca)  # Apply default formats
     assert aca[TEST_COLS].pformat(max_width=-1) == exp
 
     # Check that acqs, guides, and fids are sharing the same stars table
@@ -544,12 +543,20 @@ def test_monitors_and_target_offset_args():
     assert aca.monitors is None
     assert aca.target_offset == (0.0, 0.0)
 
-    monitors = np.arange(10).reshape(2, 5)
-    target_offset = (1, 2)
+    # Both of these are brighter than the brightest bona-fide star, stressing
+    # the processing somewhat.
+    monitors = [[-1700, 1900, ACA.MonCoord.YAGZAG, 7.5, ACA.MonFunc.MON_FIXED],
+                [500, -500, ACA.MonCoord.YAGZAG, 7.5, ACA.MonFunc.MON_TRACK]]
+    target_offset = (0.05, 0.1)
     aca = get_aca_catalog(**mod_std_info(monitors=monitors,
+                                         n_guide=6, n_fid=0,
                                          target_offset=target_offset,
                                          stars=stars, dark=DARK40))
-    assert aca.monitors is monitors
+    exp = [' coord0 coord1 coord_type mag function',
+           '------- ------ ---------- --- --------',
+           '-1700.0 1900.0          2 7.5        3',
+           '  500.0 -500.0          2 7.5        2']
+    assert aca.monitors.pformat_all() == exp
     assert aca.target_offset is target_offset
 
 
@@ -632,23 +639,21 @@ def test_dense_star_field_regress():
     """
     att = (167.0672, -59.1235, 0)
     aca = get_aca_catalog(**mod_std_info(att=att, n_fid=3, n_guide=5, n_acq=8))
-    exp = ['slot idx     id     type  sz   yang     zang   dim res halfw mag ',
-           '---- --- ---------- ---- --- -------- -------- --- --- ----- ----',
-           '   0   1          3  FID 8x8    40.01 -1871.10   1   1    25 7.00',
-           '   1   2          4  FID 8x8  2140.23   166.63   1   1    25 7.00',
-           '   2   3          5  FID 8x8 -1826.28   160.17   1   1    25 7.00',
-           '   3   4 1130889232  BOT 6x6  -251.98 -1971.97  20   1   160 6.99',
-           '   4   5 1130890288  BOT 6x6  2030.55 -2011.89  20   1   160 7.67',
-           '   5   6 1130893664  BOT 6x6  1530.07 -2149.38  20   1   160 7.62',
-           '   6   7 1130898232  GUI 6x6  1244.84  2399.68   1   1    25 7.38',
-           '   7   8 1130773616  GUI 6x6 -1713.06  1312.10   1   1    25 7.50',
-           '   6   9 1130899056  ACQ 6x6  2386.83 -1808.51  20   1   160 6.24',
-           '   7  10 1130770696  ACQ 6x6 -1900.42  2359.33  20   1   160 7.35',
-           '   0  11 1130890616  ACQ 6x6  1472.68  -376.72  20   1   160 7.77',
-           '   1  12 1130893640  ACQ 6x6    64.32 -1040.81  20   1   160 7.77',
-           '   2  13 1130894376  ACQ 6x6  -633.90  1186.80  20   1   160 7.78']
-
-    repr(aca)  # Apply default formats
+    exp = ['slot idx     id     type  sz   yang     zang   dim res halfw  mag ',
+           '---- --- ---------- ---- --- -------- -------- --- --- ----- -----',
+           '   0   1          3  FID 8x8    40.01 -1871.10   1   1    25  7.00',
+           '   1   2          4  FID 8x8  2140.23   166.63   1   1    25  7.00',
+           '   2   3          5  FID 8x8 -1826.28   160.17   1   1    25  7.00',
+           '   3   4 1130889232  BOT 6x6  -251.98 -1971.97  28   1   160  6.99',
+           '   4   5 1130893664  BOT 6x6  1530.07 -2149.38  28   1   160  7.62',
+           '   5   6 1130890288  BOT 6x6  2030.55 -2011.89  28   1   160  7.67',
+           '   6   7 1130898232  GUI 6x6  1244.84  2399.68   1   1    25  7.38',
+           '   7   8 1130773616  GUI 6x6 -1713.06  1312.10   1   1    25  7.50',
+           '   0   9 1130899056  ACQ 6x6  2386.83 -1808.51  28   1   160  6.24',
+           '   1  10 1130770696  ACQ 6x6 -1900.42  2359.33  28   1   160  7.35',
+           '   2  11 1130890616  ACQ 6x6  1472.68  -376.72  28   1   160  7.77',
+           '   6  12 1130893640  ACQ 6x6    64.32 -1040.81  28   1   160  7.77',
+           '   7  13 1130894376  ACQ 6x6  -633.90  1186.80  28   1   160  7.78']
     assert aca[TEST_COLS + ['mag']].pformat(max_width=-1) == exp
 
 
@@ -777,11 +782,11 @@ def test_force_catalog_from_starcheck():
 
     aca = get_aca_catalog(obs + '--force-catalog')
     assert aca['id'].tolist() == [1, 4, 5,
-                                  764677800,
+                                  765069712,
                                   765069008,
                                   765069552,
                                   765069664,
-                                  765069712,
+                                  764677800,
                                   765067472,
                                   765070392,
                                   765068968]
@@ -789,7 +794,7 @@ def test_force_catalog_from_starcheck():
                                     'BOT', 'BOT', 'BOT', 'BOT', 'BOT',
                                     'ACQ', 'ACQ', 'ACQ']
     assert aca['halfw'].tolist() == [25, 25, 25,
-                                     120, 160, 160, 120, 160,
+                                     160, 160, 160, 120, 120,
                                      120, 120, 120]
     assert np.allclose(aca.att.equatorial, [358.341787, -12.949882, 276.997597], rtol=0, atol=1e-6)
     assert np.allclose(aca.acqs.man_angle, 89.16)

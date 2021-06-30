@@ -1,17 +1,41 @@
+# coding: utf-8
+# Licensed under a 3-clause BSD style license - see LICENSE.rst
+
+import os
+from proseco.characteristics import MonFunc
 import traceback
 import numpy as np
-from itertools import count
 import copy
 
-from astropy.table import Column, Table
+from astropy.table import Table
 
-from .core import ACACatalogTable, get_kwargs_from_starcheck_text, MetaAttribute
+from .core import (ACACatalogTable, get_kwargs_from_starcheck_text, MetaAttribute,
+                   get_dim_res, get_img_size)
 from .guide import get_guide_catalog, GuideTable
 from .acq import get_acq_catalog, AcqTable
 from .fid import get_fid_catalog, FidTable
+from .monitor import BadMonitorError, get_mon_catalog
 from . import characteristics_acq as ACQ
 from . import characteristics as ACA
 from . import __version__ as VERSION
+
+
+# Colnames and types for final ACA catalog
+ACA_CATALOG_DTYPES = {
+    'slot': np.int64,
+    'idx': np.int64,
+    'id': np.int64,
+    'type': 'U3',
+    'sz': 'U3',
+    'p_acq': np.float64,
+    'mag': np.float64,
+    'maxmag': np.float64,
+    'yang': np.float64,
+    'zang': np.float64,
+    'dim': np.int64,
+    'res': np.int64,
+    'halfw': np.int64
+}
 
 
 def get_aca_catalog(obsid=0, **kwargs):
@@ -46,6 +70,8 @@ def get_aca_catalog(obsid=0, **kwargs):
     :param t_ccd_guide: ACA CCD temperature for guide (degC)
     :param t_ccd_penalty_limit: ACA CCD penalty limit for planning (degC). If not
         provided this defaults to value from the ACA xija thermal model.
+    :param t_ccd_eff_acq: ACA CCD effective temperature for acquisition (degC)
+    :param t_ccd_eff_guide: ACA CCD effective temperature for guide (degC)
     :param date: date of acquisition (any DateTime-compatible format)
     :param dither_acq: acq dither size (2-element sequence (y, z), arcsec)
     :param dither_guide: guide dither size (2-element sequence (y, z), arcsec)
@@ -87,7 +113,10 @@ def get_aca_catalog(obsid=0, **kwargs):
                 if key not in kwargs:
                     kwargs[key] = val
 
-        aca = _get_aca_catalog(obsid=obsid, raise_exc=raise_exc, **kwargs)
+        if 'monitors' in kwargs:
+            aca = _get_aca_catalog_monitors(obsid=obsid, raise_exc=raise_exc, **kwargs)
+        else:
+            aca = _get_aca_catalog(obsid=obsid, raise_exc=raise_exc, **kwargs)
 
     except Exception:
         if raise_exc:
@@ -109,8 +138,9 @@ def _get_aca_catalog(**kwargs):
     img_size_guide = kwargs.pop('img_size_guide', None)
 
     aca = ACATable()
-    aca.call_args = kwargs.copy()
     aca.set_attrs_from_kwargs(**kwargs)
+    aca.call_args = kwargs.copy()
+    aca.version = VERSION
 
     # Remove kwargs that are specific to AcaTable
     for kwarg in ('t_ccd', 't_ccd_penalty_limit'):
@@ -119,15 +149,29 @@ def _get_aca_catalog(**kwargs):
 
     # Override t_ccd related inputs with effective temperatures for downstream
     # action by AcqTable, GuideTable, FidTable.  See set_attrs_from_kwargs()
-    # method for more details.
+    # - t_ccd_eff_{acq,guide} are the effective T_ccd values which are adjusted
+    #   if the actual t_ccd{acq,guide} values are above ACA.aca_t_ccd_penalty_limit.
+    # - t_ccd_{acq,guide} are the actual (or predicted) values from the call
+    # The downstream AcqTable, GuideTable, and FidTable are initialized with the
+    # *effective* values as t_ccd.  Those classes do not have the concept of effective
+    # temperature.
+    if aca.t_ccd_eff_acq is None:
+        aca.t_ccd_eff_acq = get_effective_t_ccd(aca.t_ccd_acq)
+    if aca.t_ccd_eff_guide is None:
+        aca.t_ccd_eff_guide = get_effective_t_ccd(aca.t_ccd_guide)
+
     kwargs['t_ccd_acq'] = aca.t_ccd_eff_acq
     kwargs['t_ccd_guide'] = aca.t_ccd_eff_guide
+
+    # These are allowed inputs to get_aca_catalog but should not be passed to
+    # get_{acq,guide,fid}_catalog. Pop them from kwargs.
+    for kwarg in ('t_ccd', 't_ccd_eff_acq', 't_ccd_eff_guide', 'stars'):
+        kwargs.pop(kwarg, None)
 
     # Get stars (typically from AGASC) and do not filter for stars near
     # the ACA FOV.  This leaves the full radial selection available for
     # later roll optimization.  Use aca.stars or aca.acqs.stars from here.
     aca.set_stars(filter_near_fov=False)
-    kwargs.pop('stars', None)
 
     aca.log('Starting get_acq_catalog')
     aca.acqs = get_acq_catalog(stars=aca.stars, **kwargs)
@@ -148,15 +192,18 @@ def _get_aca_catalog(**kwargs):
 
     aca.acqs.fid_set = aca.fids['id']
 
+    aca.log('Starting get_mon_catalog')
+    aca.mons = get_mon_catalog(stars=aca.acqs.stars, **kwargs)
+
     aca.log('Starting get_guide_catalog')
-    aca.guides = get_guide_catalog(stars=aca.acqs.stars, fids=aca.fids,
+    aca.guides = get_guide_catalog(stars=aca.acqs.stars, fids=aca.fids, mons=aca.mons,
                                    img_size=img_size_guide, **kwargs)
 
     # Make a merged starcheck-like catalog.  Catch any errors at this point to avoid
     # impacting operational work (call from Matlab).
     try:
         aca.log('Starting merge_cats')
-        merge_cat = merge_cats(fids=aca.fids, guides=aca.guides, acqs=aca.acqs)
+        merge_cat = merge_cats(fids=aca.fids, guides=aca.guides, acqs=aca.acqs, mons=aca.mons)
         for name in merge_cat.colnames:
             aca[name] = merge_cat[name]
     except Exception:
@@ -171,6 +218,67 @@ def _get_aca_catalog(**kwargs):
 
     aca.log('Finished aca_get_catalog')
     return aca
+
+
+def _get_aca_catalog_monitors(**kwargs):
+    """Get the ACA catalog for a case with possible monitor windows / stars.
+
+    If there are only pure MON windows or Guide-From-Mon windows (no possible
+    auto-conversion to GUI) then just run the standard _get_aca_catalog, which
+    handles these cases.
+
+    Otherwise, first get the catalog forcing tracking MON window commanding.
+    This will be short a guide star for each MON window. Second get the catalog
+    forcing MON conversion to GUI. This requires that an acceptable guide star
+    is within 2 arcsec of the MON position. "Acceptable" means that ``guides``
+    has a candidate (``cand_guides``) guide star within 2 arcsec. If the catalog
+    with the converted GUI star has no new critical warnings then it is
+    accepted.
+    """
+    kwargs_orig = kwargs.copy()
+    kwargs.pop('raise_exc')
+
+    # Make a stub aca to get monitors attribute
+    aca = ACATable()
+    aca.set_attrs_from_kwargs(**kwargs)
+
+    # If no auto-convert mon stars then do the normal star selection.
+    monitors = aca.monitors
+    if np.all(monitors['function'] != MonFunc.AUTO):
+        return _get_aca_catalog(**kwargs_orig)
+
+    # Find the entries with auto-convert
+    is_auto = monitors['function'] == MonFunc.AUTO  # Auto-convert to guide
+
+    # First get the catalog with automon entries scheduled as tracking MON windows.
+    kwargs = kwargs_orig.copy()
+    monitors['function'][is_auto] = MonFunc.MON_TRACK  # Tracking MON window
+    kwargs['monitors'] = monitors
+
+    # Get the catalog and do a sparkles review
+    aca_mon = _get_aca_catalog(**kwargs)
+    acar_mon = aca_mon.get_review_table()
+    acar_mon.run_aca_review()
+    crits_mon = set(msg['text'] for msg in (acar_mon.messages >= 'critical'))
+
+    # Now get the catalog with automon entries scheduled as guide stars
+    monitors['function'][is_auto] = MonFunc.GUIDE
+    kwargs['raise_exc'] = True
+    try:
+        aca_gui = _get_aca_catalog(**kwargs)
+    except BadMonitorError as exc:
+        aca_mon.log(f'unable to convert monitor to guide: {exc}')
+        return aca_mon
+
+    # Get the catalog and do a sparkles review
+    acar_gui = aca_gui.get_review_table()
+    acar_gui.run_aca_review()
+    crits_gui = set(msg['text'] for msg in (acar_gui.messages >= 'critical'))
+
+    # If there are no new critical messages then schedule as guide star(s).
+    # This checks that every critical in crit_gui is also in crits_mon.
+    out = aca_gui if crits_gui <= crits_mon else aca_mon
+    return out
 
 
 def get_effective_t_ccd(t_ccd, t_ccd_penalty_limit=None):
@@ -214,8 +322,8 @@ class ACATable(ACACatalogTable):
 
     # Effective T_ccd used for dynamic ACA limits (see updates_for_t_ccd_effective()
     # method below).
-    t_ccd_eff_acq = MetaAttribute(is_kwarg=False)
-    t_ccd_eff_guide = MetaAttribute(is_kwarg=False)
+    t_ccd_eff_acq = MetaAttribute()
+    t_ccd_eff_guide = MetaAttribute()
     t_ccd_penalty_limit = MetaAttribute()
 
     def __copy__(self):
@@ -438,95 +546,287 @@ class ACATable(ACACatalogTable):
                      warning=True)
 
 
-def merge_cats(fids=None, guides=None, acqs=None):
+class ObcCat(list):
+    """Slot-based catalog corresponding to OBC 8-element acq and guide catalogs.
 
-    fids = [] if fids is None else fids
-    guides = [] if guides is None else guides
-    acqs = [] if acqs is None else acqs
+    Each row is a catalog object (acq, guide, fid, mon) with a dict-like
+    interface (dict or Table Row). This class is a list subclass with special
+    properties:
 
-    colnames = ['slot', 'id', 'type', 'sz', 'p_acq', 'mag', 'maxmag',
-                'yang', 'zang', 'dim', 'res', 'halfw']
+    - Initialized as a length 8 list of dict {'id': None, 'type': None}
+    - Each of the 8 items correspond to that ACA slot.
+    - The default value corresponds to a "empty" slot.
+    - Setting an entry in a slot that is occupied raises an exception.
+    - Allows adding an entry to the first/last available slot, doing nothing if
+      the ``id`` is already in the catalog.
+    """
+    def __init__(self, *args, **kwargs):
+        self.name = kwargs.pop('name', '')
+        self.debug = kwargs.pop('debug', None)
+        super().__init__()
+        for _ in range(8):
+            self.append({'id': None, 'type': None})
+
+    def __setitem__(self, item, value):
+        """Set list ``item`` to ``value``
+
+        Raises an exception if row ``item`` already has a non-default value.
+
+        :param item: int
+            List item to set
+        :param value: dict, Row
+            Value to set
+        """
+        if self[item]['type'] is not None:
+            raise IndexError(f'slot {item} is already set => program logic error')
+        value['slot'] = item
+        super().__setitem__(item, value)
+        if self.debug:
+            print(self)
+
+    def add(self, value, descending=False):
+        """Add ``value`` to catalog in first/last empty slot, returning the slot.
+
+        If ``value['id']`` is already in the catalog then return that slot.
+
+        If the catalog already has 8 entries then an IndexError is raised.
+
+        :param value: dict, Row
+            Catalog entry to add
+        :param descending: bool
+            Direction in which to find the first empty slot (starting from
+            beginning or end of catalog)
+        :returns: int
+            Slot in which ``value`` was placed
+        """
+        # First check if item is already there, if so then return that slot
+        for slot in range(8):
+            if self[slot]['id'] == value['id']:
+                return slot
+
+        # Else fill in the next available slot
+        slots = range(7, -1, -1) if descending else range(8)
+
+        for slot in slots:
+            if self[slot]['type'] is None:
+                self[slot] = value
+                return slot
+        else:
+            raise IndexError('catalog is full')
+
+    def as_table(self):
+        colnames = list(ACA_CATALOG_DTYPES)
+        colnames.remove('idx')
+        rows = []
+        for row in self:
+            out = {}
+            for name in ACA_CATALOG_DTYPES:
+                try:
+                    out[name] = row[name]
+                except KeyError:
+                    pass
+            rows.append(out)
+        return ACACatalogTable(rows)[colnames]
+
+    def __repr__(self):
+        out = '\n'.join([self.name, str(self.as_table()), ''])
+        return out
+
+
+def _merge_cats_debug(cat_debug, tbl, message):
+    if cat_debug and len(tbl) > 0:
+        print('*' * 80)
+        print(f'Adding {message}')
+        print('*' * 80)
+
+
+def merge_cats(fids=None, guides=None, acqs=None, mons=None):
+    """Merge ``fids``, ``guides``, and ``acqs`` catalogs into one catalog.
+
+    The output of this function is a catalog which corresponds to the final
+    "flight" catalog that can be translated directly to appropriate OBC
+    spacecraft commanding, e.g. a DOT ACQ command. The ordering of entries
+    is intended to match the legacy behavior of MATLAB tools.
+
+    :param fids: FidTable, None (optional)
+        Table of fids
+    :param guides: GuideTable, None (optional)
+        Table of guide stars
+    :param acqs: AcqTable, None (optional)
+        Table of acquisition stars
+    :returns: ACACatalogTable
+        Merged catalog
+    """
+    # Make an empty (zero-length) catalog with the right columns. This is used
+    # just below to replace any missing catalogs.
+    for cat in (acqs, guides, fids, mons):
+        if cat is not None:
+            empty = cat[0:0]
+            break
+    else:
+        raise ValueError('cannot call merge_cats with no catalog inputs')
+
+    fids = empty if fids is None else fids
+    guides = empty if guides is None else guides
+    acqs = empty if acqs is None else acqs
+    mons = empty if mons is None else mons
+    gfms = empty  # Guide converted from monitor (must be 8x8)
+
+    # Columns in the final merged catalog, except we leave out idx since that
+    # is included just at the end.
+    colnames = [key for key in ACA_CATALOG_DTYPES if key != 'idx']
+
+    # First add or modify columns for the fids, guides, and acqs tables so that
+    # they are all consistent and ready for merging into a single final catalog.
 
     if len(fids) > 0:
         fids['type'] = 'FID'
         fids['mag'] = 7.0
         fids['maxmag'] = 8.0
-        fids['dim'] = 1
-        fids['res'] = 1
         fids['halfw'] = 25
-        fids['p_acq'] = 0
+        fids['dim'], fids['res'] = get_dim_res(fids['halfw'])
+        fids['p_acq'] = 0.0
         fids['sz'] = '8x8'
-
-    # Set guide star image readout size, either from explicit user input or
-    # using the default rule defined in ``get_img_size()``.
-    img_size = guides.get_img_size(len(fids))
 
     if len(guides) > 0:
         guides['slot'] = 0  # Filled in later
-        guides['type'] = 'GUI'
-        guides['maxmag'] = (guides['mag'] + 1.5).clip(None, ACA.max_maxmag)
-        guides['p_acq'] = 0
-        guides['dim'] = 1
-        guides['res'] = 1
-        guides['halfw'] = 25
-        guides['sz'] = f'{img_size}x{img_size}'
+        guides['p_acq'] = 0.0
+
+        # Guides table can include three sub-types: GUI (plain guide star), MON
+        # (monitor window), and GFM (guide from monitor, required to be sz=8x8
+        # and fill from slot 7 down).
+        if not np.all(ok := (guides['type'] == 'GUI')):
+            # Monitor windows MFX = MON fixed, MTR = Mon tracked
+            gfms = guides[guides['type'] == 'GFM']  # Guide From Mon
+            guides = guides[ok]  # "Normal" guide stars
 
     if len(acqs) > 0:
+        # TODO: move these into acq.py where possible
+        img_size = get_img_size(len(fids))
         acqs['type'] = 'ACQ'
         acqs['maxmag'] = (acqs['mag'] + 1.5).clip(None, ACA.max_maxmag)
-        acqs['dim'] = 20
+        acqs['dim'], acqs['res'] = get_dim_res(acqs['halfw'])
         acqs['sz'] = f'{img_size}x{img_size}'
-        acqs['res'] = 1
 
-    # Accumulate a list of table Row objects to be assembled into the final table.
-    # This has the desired side effect of back-populating 'slot' and 'type' columns
-    # in the original acqs, guides, fids tables.
+    # Create two 8-slot tables where all slots are initially empty. These
+    # correspond to the OBC acquisition and guide tables. The guide table
+    # includes fids and guides. This includes a special debug flag to print
+    # the catalog each time an entry is added.
+    cat_debug = 'PROSECO_PRINT_OBC_CAT' in os.environ
+    cat_acqs = ObcCat(name='Acquisition catalog', debug=cat_debug)
+    cat_guides = ObcCat(name='Fid/guide/mon catalog', debug=cat_debug)
+
+    # Fill in the acq and guide tables in a specific order:
+    # - GUI from MON (GFM) in descending slot order (starting from 7)
+    # - MON in descending slot order
+    # - FID in ascending slot order (starting from 0)
+    # - BOT in ascending slot order
+    # - GUI-only in ascending slot order
+    # - ACQ-only in ascending slot order
+
+    # Guide from Monitors (descending from slot 7)
+    _merge_cats_debug(cat_debug, gfms, 'Guide from Monitors (GFM)')
+    for gfm in gfms:
+        gfm['type'] = 'GUI'
+        slot = cat_guides.add(gfm, descending=True)
+        # If the GFM is also an acq then add to same slot
+        # TODO: probably don't need the len(acqs) > 0 check.
+        if len(acqs) > 0 and gfm['id'] in acqs['id']:
+            acq = acqs.get_id(gfm['id'])
+            acq['sz'] = gfm['sz']  # Set acq size to 8x8
+            cat_acqs[slot] = acq
+
+    # Monitors (descending from slot 7)
+    _merge_cats_debug(cat_debug, mons, 'Monitors (MON)')
+    for mon in mons:
+        cat_guides.add(mon, descending=True)
+
+    # Now do fids (ascending from slot 0)
+    _merge_cats_debug(cat_debug, fids, 'Fids (FID)')
+    for fid in fids:
+        # TODO: why is this fid[colnames], unlike guides and acqs?
+        cat_guides.add(fid[colnames])
+
+    # BOT stars, ascending in slot
+    _merge_cats_debug(cat_debug, gfms, 'Both stars (BOT)')
+    for acq_id in acqs['id']:
+        if acq_id in guides['id']:
+            acq = acqs.get_id(acq_id)
+            guide = guides.get_id(acq_id)
+            acq['sz'] = guide['sz']
+            slot = cat_guides.add(guide)
+            cat_acqs[slot] = acq
+
+    # Fill in the rest of the guides (ascending from slot 0). Any pre-existing
+    # ones are ignored.
+    _merge_cats_debug(cat_debug, gfms, 'Guide-only stars (GUI)')
+    for guide in guides:
+        cat_guides.add(guide)
+
+    # Fill in the rest of the acqs (ascending from slot 0). Any pre-existing
+    # ones are ignored.
+    _merge_cats_debug(cat_debug, gfms, 'Acq-only stars (ACQ)')
+    for acq in acqs:
+        cat_acqs.add(acq)
+
+    # Accumulate a list of star/fid entries in the specific order FID, BOT, GUI,
+    # MON, ACQ, to be assembled into the final table.
     rows = []
 
-    # Generate a list of AGASC IDs for the BOT, GUI, and ACQ stars
-    # in the merged catalog.  Use filt() function below to maintain
-    # the original order (instead of undefined order of set).
-    def filt(tbl, id_set):
-        return [row['id'] for row in tbl if row['id'] in id_set]
+    # Fids
+    for guide in cat_guides:
+        if guide['type'] == 'FID':
+            rows.append(guide[colnames])
 
-    # Sort the BOTs in agasc id order to match what will happen within the MATLAB code
-    bot_ids = sorted(filt(guides, set(guides['id']) & set(acqs['id'])))
+    # Add BOT stars
+    for guide, acq in zip(cat_guides, cat_acqs):
+        if guide['type'] == 'GUI' and guide['id'] == acq['id']:
+            guide['type'] = 'BOT'
+            acq['type'] = 'BOT'
+            rows.append(acq[colnames])
 
-    # Do not sort the GUI and ACQ stars (leave in selected order)
-    gui_ids = filt(guides, set(guides['id']) - set(acqs['id']))
-    acq_ids = filt(acqs, set(acqs['id']) - set(guides['id']))
+    # Guide only
+    for guide, acq in zip(cat_guides, cat_acqs):
+        if guide['type'] == 'GUI' and guide['id'] != acq['id']:
+            rows.append(guide[colnames])
 
-    n_fid = len(fids)
-    n_bot = len(bot_ids)
+    # Monitor stars
+    for guide in cat_guides:
+        if guide['type'] in ('MTR', 'MFX'):
+            rows.append(guide[colnames])
 
-    # FIDs.  Slot starts at 0.
-    for slot, fid in zip(count(0), fids):
-        fid['slot'] = slot
-        rows.append(fid[colnames])
-
-    # BOT stars.  Slot starts after fid slots.
-    for slot, bot_id in zip(count(n_fid), bot_ids):
-        acq = acqs.get_id(bot_id)
-        guide = guides.get_id(bot_id)
-        guide['slot'] = acq['slot'] = slot
-        guide['type'] = acq['type'] = 'BOT'
-        rows.append(acq[colnames])
-
-    # GUI-only stars. Slot stars after fid and BOT slots.
-    for slot, gui_id in zip(count(n_fid + n_bot), gui_ids):
-        guide = guides.get_id(gui_id)
-        guide['slot'] = slot
-        rows.append(guide[colnames])
-
-    # ACQ-only stars. Slot stars after fid and BOT slots.
-    for slot, acq_id in zip(count(n_fid + n_bot), acq_ids):
-        acq = acqs.get_id(acq_id)
-        acq['slot'] = slot % 8
-        rows.append(acq[colnames])
+    # Acq only
+    for guide, acq in zip(cat_guides, cat_acqs):
+        if acq['type'] is not None and guide['id'] != acq['id']:
+            rows.append(acq[colnames])
 
     # Create final table and assign idx
-    aca = ACACatalogTable(rows=rows, names=colnames)
-    idx = Column(np.arange(1, len(aca) + 1), name='idx')
-    aca.add_column(idx, index=1)
+    aca = ACACatalogTable(rows=rows, names=colnames,
+                          dtype=[ACA_CATALOG_DTYPES[name] for name in colnames])
+    aca.add_column(np.arange(1, len(aca) + 1, dtype=ACA_CATALOG_DTYPES['idx']),
+                   name='idx', index=1)
+
+    # Finally, fix up the monitor window designated track slots (DIM/DTS)
+    for row in aca:
+        if row['type'] not in ('MTR', 'MFX'):
+            continue
+
+        if row['type'] == 'MTR':
+            # Find the slot of the brightest guide star
+            guides = aca[np.isin(aca['type'], ['GUI', 'BOT'])]
+            idx = np.argmin(guides['mag'])
+            aca_id = guides['id'][idx]
+            row['dim'] = aca.get_id(aca_id)['slot']  # Mon window tracks this slot
+        else:
+            row['dim'] = row['slot']  # Fixed (desig track slot is self slot)
+        # Change type to standard MON
+        row['type'] = 'MON'
+
+    if cat_debug:
+        print('*' * 80)
+        print('Final catalogs')
+        print('*' * 80)
+        print(cat_acqs)
+        print(cat_guides)
 
     return aca

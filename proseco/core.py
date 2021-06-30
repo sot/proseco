@@ -1,3 +1,6 @@
+# coding: utf-8
+# Licensed under a 3-clause BSD style license - see LICENSE.rst
+
 import re
 import os
 import functools
@@ -312,6 +315,33 @@ class MetaAttribute:
                 f'pickle={self.pickle}>')
 
 
+class MonitorsMetaAttribute(MetaAttribute):
+    def __set__(self, instance, value):
+        if isinstance(value, Table):
+            colnames = ['coord0', 'coord1', 'coord_type', 'mag', 'function']
+            if not set(colnames) <= set(value.colnames):
+                raise ValueError(f'monitors input table must have {", ".join(colnames)} columns')
+        else:
+            value = np.asarray(value)
+            if value.ndim != 2 or value.shape[1] != 5:
+                raise ValueError('monitors input must have shape (N, 5)')
+            out = Table()
+            out['coord0'] = value[:, 0].astype(np.float64)
+            out['coord1'] = value[:, 1].astype(np.float64)
+            out['coord_type'] = value[:, 2].astype(np.uint8)
+            out['mag'] = value[:, 3].astype(np.float64)
+            out['function'] = value[:, 4].astype(np.uint8)
+            value = out
+
+            if np.any(out['coord_type'] < 0) or np.any(out['coord_type'] > 2):
+                raise ValueError('monitors coord type must be 0, 1, or 2')
+
+            if np.any(out['function'] < 0) or np.any(out['function'] > 3):
+                raise ValueError('monitors function must be 0, 1, 2, or 3')
+
+        instance.meta[self.name] = value
+
+
 class QuatMetaAttribute(MetaAttribute):
     def __set__(self, instance, value):
         if not isinstance(value, Quat):
@@ -347,11 +377,19 @@ class BaseCatalogTable(Table):
         # Make printed table look nicer.  This is defined in advance
         # and will be applied the first time the table is represented.
         self._default_formats = {}
-        self._default_formats['p_acq'] = '.3f'
-        for name in ('yang', 'zang', 'row', 'col', 'mag', 'maxmag', 'mag_err', 'color', 'COLOR1'):
-            self._default_formats[name] = '.2f'
-        for name in ('ra', 'dec', 'RA_PMCORR', 'DEC_PMCORR'):
-            self._default_formats[name] = '.6f'
+        formats = {('p_acq',): '5.3f',  # 0.912
+                   ('yang', 'zang'): '8.2f',  # -2500.12
+                   ('mag', 'maxmag', 'mag_err', 'color', 'COLOR1'): '5.2f',  # -1.12
+                   ('row', 'col'): '7.2f',  # -500.12
+                   ('ra', 'dec', 'RA_PMCORR', 'DEC_PMCORR'): '11.6f',  # -160.123561
+                   ('dec', 'DEC_PMCORR'): '10.5f',  # -89.12345
+                   ('idx', 'dim'): '2d',
+                   ('halfw',): '3d'
+                   }
+
+        for names, format in formats.items():
+            for name in names:
+                self._default_formats[name] = format
 
     def __getstate__(self):
         """Set the pickle state from self.
@@ -394,36 +432,47 @@ class BaseCatalogTable(Table):
     def make_index(self):
         # Low-tech index to quickly get a row or the row index by `id` column.
         self._id_index = {}
+        self._id_index_mon = {}
 
+        has_type = 'type' in self.colnames
         for idx, row in enumerate(self):
-            self._id_index[row['id']] = idx
+            if has_type and row['type'] == 'MON':
+                self._id_index_mon[row['id']] = idx
+            else:
+                self._id_index[row['id']] = idx
 
-    def get_id(self, id):
+    def get_id(self, id, mon=False):
         """
         Return row corresponding to ``id`` in id column.
 
-        :param id: row ``id`` column value
+        :param id: int
+            row ``id`` column value
+        :param mon: bool
+            return ID for corresponding MON star (default=False)
         :returns: table Row
         """
-        return self[self.get_id_idx(id)]
+        return self[self.get_id_idx(id, mon)]
 
-    def get_id_idx(self, id):
+    def get_id_idx(self, id, mon=False):
         """
         Return row corresponding to ``id`` in id column.
 
-        :param id: row ``id`` column value
+        :param id: int
+            row ``id`` column value
+        :param mon: bool
+            return ID for corresponding MON star (default=False)
         :returns: table row index (int)
         """
-        if not hasattr(self, '_index'):
+        if not hasattr(self, '_id_index'):
             self.make_index()
 
         try:
-            idx = self._id_index[id]
+            idx = (self._id_index_mon if mon else self._id_index)[id]
             assert self['id'][idx] == id
         except (KeyError, IndexError, AssertionError):
             self.make_index()
             try:
-                idx = self._id_index[id]
+                idx = (self._id_index_mon if mon else self._id_index)[id]
                 assert self['id'][idx] == id
             except (KeyError, IndexError, AssertionError):
                 raise KeyError(f'{id} is not in table')
@@ -515,7 +564,7 @@ class ACACatalogTable(BaseCatalogTable):
     n_acq = MetaAttribute(default=8)
     n_guide = MetaAttribute()
     n_fid = MetaAttribute(default=3)
-    monitors = MetaAttribute()
+    monitors = MonitorsMetaAttribute()
     man_angle = MetaAttribute()
     t_ccd_acq = MetaAttribute()
     t_ccd_guide = MetaAttribute()
@@ -761,6 +810,14 @@ class ACACatalogTable(BaseCatalogTable):
     def guides(self, val):
         self.meta['guides'] = val
 
+    @property
+    def mons(self):
+        return self.meta.get('mons')
+
+    @mons.setter
+    def mons(self, val):
+        self.meta['mons'] = val
+
     def process_include_ids(self, cand_stars, stars):
         """Ensure that the candidate acqs/guides table has stars that were forced to be included.
 
@@ -840,15 +897,27 @@ class ACACatalogTable(BaseCatalogTable):
     def exception(self, val):
         self.meta['exception'] = val
 
-    def _base_repr_(self, *args, **kwargs):
-        names = [name for name in self.colnames
-                 if self[name].dtype.kind != 'O']
-
+    def _set_formats(self):
         # Apply default formats to applicable columns and delete
         # that default format so it doesn't get set again next time.
+        names = self.colnames
         for name in list(self._default_formats.keys()):
             if name in names:
                 self[name].format = self._default_formats.pop(name)
+
+    def pformat(self, *args, **kwargs):
+        self._set_formats()
+        return super().pformat(*args, **kwargs)
+
+    def pprint(self, *args, **kwargs):
+        self._set_formats()
+        return super().pprint(*args, **kwargs)
+
+    def _base_repr_(self, *args, **kwargs):
+        self._set_formats()
+
+        names = [name for name in self.colnames
+                 if self[name].dtype.kind != 'O']
 
         tmp = self.__class__([self[name] for name in names], names=names, copy=False)
         return super(BaseCatalogTable, tmp)._base_repr_(*args, **kwargs)
@@ -1263,6 +1332,15 @@ class StarsTable(BaseCatalogTable):
         out['DEC_PMCORR'] = out['dec']
         out['MAG_ACA'] = out['mag']
 
+        # The fake_code attribute is used for monitor window handling to
+        # indicate that this star has been added as a fake star so that guide
+        # selection can select it as a force-include star. Subsequently the
+        # code is used to infer the provenance of that star.
+        if 'fake_code' in star:
+            if 'fake_code' not in self.colnames:
+                self['fake_code'] = 0
+            out['fake_code'] = star['fake_code']
+
         self.add_row(out)
 
     def add_fake_stars_from_fid(self, fid_id=1, offset_y=0, offset_z=0, mag=7.0,
@@ -1431,21 +1509,34 @@ def get_kwargs_from_starcheck_text(obs_text, include_cat=False, force_catalog=Fa
     try:
         cat = Table(get_catalog(obs_text))
     except Exception:
-        pass
-    else:
-        fid_or_mon = np.in1d(cat['type'], ('FID', 'MON'))
-        kw['n_guide'] = 8 - np.count_nonzero(fid_or_mon)
+        cat = None
+
+    if cat is not None:
+        monitors = get_monitors(kw['obsid'], cat)
+        if monitors:
+            kw['monitors'] = monitors
+
         kw['n_fid'] = np.count_nonzero(cat['type'] == 'FID')
+
         if include_cat:
             kw['cat'] = cat
+
         if force_catalog:
             ok = np.in1d(cat['type'], ('ACQ', 'BOT'))
+            kw['n_acq'] = np.count_nonzero(ok)
             kw['include_ids_acq'] = cat['id'][ok].tolist()
             kw['include_halfws_acq'] = cat['halfw'][ok].tolist()
+
             ok = np.in1d(cat['type'], ('GUI', 'BOT'))
+            # n_guide kwarg needs to include guide stars + MON stars
+            kw['n_guide'] = np.count_nonzero(ok) + np.count_nonzero(cat['type'] == 'MON')
             kw['include_ids_guide'] = cat['id'][ok].tolist()
-            ok = np.in1d(cat['type'], ('FID'))
+
+            ok = np.in1d(cat['type'], 'FID')
             kw['include_ids_fid'] = cat['id'][ok].tolist()
+        else:
+            kw['n_acq'] = 8
+            kw['n_guide'] = 8 - kw['n_fid']
 
     try:
         targ = get_targ(obs_text)
@@ -1456,6 +1547,45 @@ def get_kwargs_from_starcheck_text(obs_text, include_cat=False, force_catalog=Fa
         pass
 
     return kw
+
+
+def get_monitors(obsid, cat):
+    """
+    Generate a list of monitor requests for an existing catalog
+
+    :param obsid: int, obsid
+    :param cat: starcheck catalog from get_catalog
+    :returns: list of monitor requests
+    """
+    monitors = []
+
+    # Sort catalog by slot and index, and then iterate over catalog in reverse
+    # order. This guarantees that any GFM or MON in slot 7 comes first so that
+    # `monitors` is in the correct order. In particular the first entry is
+    # always put into slot 7.
+    cat = cat.copy()
+    cat.sort(['slot', 'idx'])
+
+    for row in cat[::-1]:
+        # Will need to remove when we start scheduling OR's with 8x8 guides.
+        if (row['type'] in ('GUI', 'BOT')
+            and row['slot'] == 7
+            and row['sz'] == '8x8'
+                and obsid <= 38000):
+            # Guide from MON (GFM) so force scheduling as GUI
+            monitor = [row['yang'], row['zang'], ACA.MonCoord.YAGZAG,
+                       row['mag'], ACA.MonFunc.GUIDE]
+            monitors.append(monitor)
+
+        elif row['type'] == 'MON':
+            # Bona fide MON entry
+            mon_func = (ACA.MonFunc.MON_FIXED if row['slot'] == row['dim']
+                        else ACA.MonFunc.MON_TRACK)
+            monitor = [row['yang'], row['zang'], ACA.MonCoord.YAGZAG,
+                       row['maxmag'], mon_func]
+            monitors.append(monitor)
+
+    return monitors
 
 
 def includes_for_obsid(obsid):
@@ -1490,3 +1620,60 @@ def includes_for_obsid(obsid):
     out['include_ids_fid'] = cat['id'][ok].tolist()
 
     return out
+
+
+def get_dim_res(halfws):
+    """Get ACA search command ``dim`` and ``res`` corresponding to ``halfws``
+
+    From DM11, where ``dim`` is a 6-bit uint and ``res`` is a 1-bit uint with
+    0 => "L" and 1 => H".
+
+    Define the search region (``dim``) for any image data slot to be a square
+    centered at the commanded angular Z and Y coordinates. When the high
+    resolution flag (H) (``res``) in command word 3 is true (=1), the half width
+    of the square, in arc seconds, is (20 + 5D) where D is the dimension field
+    in command word 2. When the H flag is false (=0), the half width, is (20 +
+    40D) arc seconds.
+
+    :param halfws: array of int
+        Half-widths (arcsec)
+    :returns: tuple (int array, int array)
+        ACA search DIM and RES entries corresponding to halfws
+    """
+    # Max value of dim is 2**6 = 64, so high res is up to 20 + 5 * 63 = 335.
+    # But values up to 335 + 2.5 would have dim=63 because of rounding. Select
+    # the high-res and low-res values at that cutoff.
+    ok = halfws < 335 + 2.5
+
+    dim = np.zeros_like(halfws)
+    res = np.zeros_like(halfws)
+    # High-resolution halfws
+    res[ok] = 1
+    dim[ok] = np.round((halfws[ok] - 20) / 5)
+    # Low-resolution halfws
+    res[~ok] = 0
+    dim[~ok] = np.round((halfws[~ok] - 20) / 40)
+
+    if np.any((dim < 0) | (dim > 63)):
+        raise ValueError(f'halfws {halfws} leading to bad value(s) of dim {dim}')
+
+    return dim, res
+
+
+def get_img_size(n_fids):
+    """Get guide image readout size from ``n_fids``.
+
+    This is the core definition for the default rule that OR's (with fids) get
+    6x6 and ER's (no fids) get 8x8. This might change in the future.
+
+    Parameters
+    ----------
+    n_fids : int
+        Number of fids in the catalog
+
+    Returns
+    -------
+    int
+        Guide star image readout size to be used in a catalog (6 or 8)
+    """
+    return 6 if n_fids > 0 else 8

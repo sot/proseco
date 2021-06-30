@@ -1,4 +1,3 @@
-# coding: utf-8
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 import numpy as np
@@ -9,10 +8,12 @@ from chandra_aca.transform import (mag_to_count_rate, count_rate_to_mag,
                                    snr_mag_for_t_ccd)
 from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
 
+from proseco.characteristics import MonFunc
 from . import characteristics as ACA
 from . import characteristics_guide as GUIDE
 
-from .core import bin2x2, ACACatalogTable, MetaAttribute, AliasAttribute
+from .core import (bin2x2, ACACatalogTable, MetaAttribute, AliasAttribute,
+                   get_dim_res, get_img_size)
 
 CCD = ACA.CCD
 APL = AcaPsfLibrary()
@@ -49,8 +50,16 @@ def get_guide_catalog(obsid=0, **kwargs):
     guides.set_attrs_from_kwargs(obsid=obsid, **kwargs)
     guides.set_stars()
 
+    # Process monitor window requests, converting them into fake stars that
+    # are added to the include_ids list.
+    guides.process_monitors_pre()
+
     # Do a first cut of the stars to get a set of reasonable candidates
     guides.cand_guides = guides.get_initial_guide_candidates()
+
+    # Process guide-from-monitor requests by finding corresponding star in
+    # cand_guides and adding to the include_ids list.
+    # guides.process_monitors_pre2()
 
     # Run through search stages to select stars
     selected = guides.run_search_stages()
@@ -58,11 +67,21 @@ def get_guide_catalog(obsid=0, **kwargs):
     # Transfer to table (which at this point is an empty table)
     guides.add_columns(list(selected.columns.values()))
 
-    guides['idx'] = np.arange(len(guides))
-
     if len(guides) < guides.n_guide:
         guides.log(f'Selected only {len(guides)} guide stars versus requested {guides.n_guide}',
                    warning=True)
+
+    img_size = guides.get_img_size()
+    if len(guides) > 0:
+        guides['sz'] = f'{img_size}x{img_size}'
+        guides['type'] = 'GUI'
+        guides['maxmag'] = (guides['mag'] + 1.5).clip(None, ACA.max_maxmag)
+        guides['halfw'] = 25
+        guides['dim'], guides['res'] = get_dim_res(guides['halfw'])
+
+        guides.process_monitors_post()
+
+    guides['idx'] = np.arange(len(guides))
 
     return guides
 
@@ -109,7 +128,66 @@ class GuideTable(ACACatalogTable):
     include_ids = AliasAttribute()
     exclude_ids = AliasAttribute()
 
-    def get_img_size(self, n_fids):
+    def process_monitors_pre(self):
+        # No action required if there are no monitor stars requested
+        if self.mons is None or self.mons.monitors is None:
+            return
+
+        monitors = self.mons.monitors
+        is_mon = np.isin(monitors['function'], [MonFunc.MON_FIXED,
+                                                MonFunc.MON_TRACK])
+        if np.any(is_mon):
+            # For MON fixed and tracked, the dark cal map gets hacked to make a
+            # local blob of hot pixels. Make a copy to avoid modifying the global
+            # dark map which is shared by reference between acqs, guides and fids.
+            self.dark = self.dark.copy()
+
+        for monitor in monitors[is_mon]:
+            # Make a square blob of saturated pixels that will keep away any
+            # star selection.
+            is_track = (monitor['function'] == MonFunc.MON_TRACK)
+            dr = int(4 + np.ceil(self.dither.row if is_track else 0))
+            dc = int(4 + np.ceil(self.dither.col if is_track else 0))
+            row, col = int(monitor['row']) + 512, int(monitor['col']) + 512
+            self.dark[row-dr: row+dr, col-dc: col+dc] = ACA.bad_pixel_dark_current  # noqa
+
+            # Temporarily reduce n_guide for each MON. Globally n_guide is the
+            # number of GUI + MON, but for guide selection we need to make the
+            # MON slots unavailable. This reduction gets undone in post.
+            self.n_guide -= 1
+            if self.n_guide < 2:
+                raise ValueError('too many MON requests leaving < 2 guide stars')
+
+        is_guide = monitors['function'] == MonFunc.GUIDE
+        for monitor in monitors[is_guide]:
+            self.include_ids.append(monitor['id'])
+
+    def process_monitors_post(self):
+        """Post-processing of monitor windows.
+
+        - Clean up fake stars from stars and cand_guides
+        - Restore the dark current map
+        - Set type, sz, res, dim columns for relevant entries to reflect
+          status as monitor or guide-from-monitor in the guides catalog.
+        """
+        # No action required if there are no monitor stars requested
+        if self.mons is None or self.mons.monitors is None:
+            return
+
+        # Mon window processing munges the dark cal to impose a keep-out zone.
+        # Put the dark current back to the standard one if possible
+        if self.acqs is not None:
+            self.dark = self.acqs.dark
+
+        # Find the guide stars that are actually from a MON request (converted
+        # to guide) and set the size and type.
+        for monitor in self.mons.monitors:
+            if monitor['function'] == MonFunc.GUIDE:
+                row = self.get_id(monitor['id'])
+                row['sz'] = '8x8'
+                row['type'] = 'GFM'  # Guide From Monitor, changed in merge_catalog
+
+    def get_img_size(self, n_fids=None):
         """Get guide image readout size from ``img_size`` and ``n_fids``.
 
         If img_size is None (typical case) then this uses the default rule
@@ -120,7 +198,7 @@ class GuideTable(ACACatalogTable):
 
         Parameters
         ----------
-        n_fids : int
+        n_fids : int or None
             Number of fids in the catalog
 
         Returns
@@ -128,10 +206,14 @@ class GuideTable(ACACatalogTable):
         int
             Guide star image readout size to be used in a catalog
         """
+        if n_fids is None:
+            n_fids = 0 if self.fids is None else len(self.fids)
+
         img_size = self.img_size
 
         if img_size is None:
-            img_size = 8 if n_fids == 0 else 6
+            # Call the function from core as the single source for the rule.
+            img_size = get_img_size(n_fids)
 
         return img_size
 
@@ -229,6 +311,7 @@ class GuideTable(ACACatalogTable):
         # code runs fine even if we have fewer-than-expected stage_cands to start
         choose_m = min(len(stage_cands), self.n_guide)
 
+        n_tries = 0
         for n_tries, comb in enumerate(index_combinations(len(stage_cands), choose_m), start=1):
             cands = stage_cands[list(comb)]  # (note that [(1,2)] is not the same as list((1,2))
             n_pass, n_tests = run_select_checks(cands)  # This function knows how many tests get run

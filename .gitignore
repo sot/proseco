@@ -1,4 +1,5 @@
 # Various working files
+/go.py
 *.ipynb
 *.pkl
 *.npz
