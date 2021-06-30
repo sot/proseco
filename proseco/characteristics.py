@@ -34,8 +34,13 @@ bad_pixel_dark_current = 700_000
 
 # Bad pixels.
 # Fid trap: http://cxc.cfa.harvard.edu/mta/ASPECT/aca_weird_pixels/
+# Diminished response: https://chandramission.slack.com/archives/G01LN40AXPG/p1624543385000700
+#   and subsequent discussion in nearby aspect-team threads.
+#             [row0 row1 col0 col1] (where values are inclusive on both ends)
 bad_pixels = [[-245, 0, 454, 454],  # Bad column
-              [-374, -374, 347, 347]]  # Fid trap
+              [-374, -374, 347, 347],  # Fid trap
+              [-319, -317, -299, -296]  # Diminished response
+              ]
 
 
 def _load_bad_star_set():
