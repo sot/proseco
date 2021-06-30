@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Proseco &#8212; proseco 4.12.1 documentation</title>
+    <title>Proseco &#8212; proseco 5.0.0 documentation</title>
     <link rel="stylesheet" href="_static/bootstrap-astropy.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
@@ -53,7 +53,7 @@
 	</a>
       </li>
       <li>
-	<a href="#">proseco 4.12.1 documentation</a>
+	<a href="#">proseco 5.0.0 documentation</a>
 	 &#187;
       </li>
       
@@ -136,12 +136,6 @@ takes a long list of arguments which are required to fully specify:</p>
 <tr class="row-odd"><td><p>detector</p></td>
 <td><p>‘ACIS-S’ | ‘ACIS-I’ | ‘HRC-S’ | ‘HRC-I’</p></td>
 </tr>
-<tr class="row-even"><td><p>sim_offset</p></td>
-<td><p>SIM translation offset from nominal [steps] (default=0)</p></td>
-</tr>
-<tr class="row-odd"><td><p>focus_offset</p></td>
-<td><p>SIM focus offset [steps] (default=0)</p></td>
-</tr>
 </tbody>
 </table>
 <p><strong>Optional</strong></p>
@@ -156,23 +150,53 @@ takes a long list of arguments which are required to fully specify:</p>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p>include_ids_acq</p></td>
+<tr class="row-even"><td><p>sim_offset</p></td>
+<td><p>SIM translation offset from nominal [steps] (default=0)</p></td>
+</tr>
+<tr class="row-odd"><td><p>focus_offset</p></td>
+<td><p>SIM focus offset [steps] (default=0)</p></td>
+</tr>
+<tr class="row-even"><td><p>target_offset</p></td>
+<td><p>target offset including dynamical offset (y, z, deg)</p></td>
+</tr>
+<tr class="row-odd"><td><p>include_ids_acq</p></td>
 <td><p>int or list of AGASC IDs of stars to include in acq catalog</p></td>
 </tr>
-<tr class="row-odd"><td><p>include_halfws_acq</p></td>
+<tr class="row-even"><td><p>include_halfws_acq</p></td>
 <td><p>int or list of acq halfwidths corresponding to <code class="docutils literal notranslate"><span class="pre">include_ids</span></code></p></td>
 </tr>
-<tr class="row-even"><td><p>exclude_ids_acq</p></td>
+<tr class="row-odd"><td><p>exclude_ids_acq</p></td>
 <td><p>int or list of AGASC IDs of stars to exclude from acq catalog</p></td>
 </tr>
-<tr class="row-odd"><td><p>include_ids_guide</p></td>
+<tr class="row-even"><td><p>include_ids_guide</p></td>
 <td><p>int or list of AGASC IDs of stars to include in guide catalog</p></td>
 </tr>
-<tr class="row-even"><td><p>exclude_ids_guide</p></td>
+<tr class="row-odd"><td><p>exclude_ids_guide</p></td>
 <td><p>int or list of AGASC IDs of stars to exclude from guide catalog</p></td>
+</tr>
+<tr class="row-even"><td><p>include_ids_fid</p></td>
+<td><p>int or list of fid IDs to include from fid catalog</p></td>
+</tr>
+<tr class="row-odd"><td><p>exclude_ids_fid</p></td>
+<td><p>int or list of fid IDs to exclude from fid catalog</p></td>
+</tr>
+<tr class="row-even"><td><p>img_size_guide</p></td>
+<td><p>readout window size for guide stars (6, 8, or <code class="docutils literal notranslate"><span class="pre">None</span></code>)</p></td>
 </tr>
 <tr class="row-odd"><td><p>stars</p></td>
 <td><p>table of AGASC stars (will be fetched from agasc if None)</p></td>
+</tr>
+<tr class="row-even"><td><p>monitors</p></td>
+<td><p>N x 5 array of monitor star specifications (see <a class="reference internal" href="#monitor-stars">Monitor stars</a>)</p></td>
+</tr>
+<tr class="row-odd"><td><p>t_ccd_eff_acq</p></td>
+<td><p>ACA CCD effective temperature for acquisition (degC)</p></td>
+</tr>
+<tr class="row-even"><td><p>t_ccd_eff_guide</p></td>
+<td><p>ACA CCD effective temperature for guide (degC)</p></td>
+</tr>
+<tr class="row-odd"><td><p>dark_date</p></td>
+<td><p>date of dark cal</p></td>
 </tr>
 </tbody>
 </table>
@@ -181,6 +205,11 @@ star instead of a typical legal value such as <code class="docutils literal notr
 proseco will run the normal optimization and choose the best halfwidth for that
 included star.  If the <code class="docutils literal notranslate"><span class="pre">include_halfws_acq</span></code> argument is not supplied or set
 to <code class="docutils literal notranslate"><span class="pre">[]</span></code> then all halfwidths will be chosen by proseco.</p>
+<p>The two optional effective temperatures are normally not supplied and will be
+computed based on the current ACA penalty limit. Likewise, the <code class="docutils literal notranslate"><span class="pre">dark_date</span></code> is
+normally derived as the date of the most recent dark cal before <code class="docutils literal notranslate"><span class="pre">date</span></code>.
+However, for reproducing catalog selection it may be required to provide all of
+those arguments.</p>
 <p><strong>Debug</strong></p>
 <table class="docutils align-default">
 <colgroup>
@@ -200,7 +229,10 @@ to <code class="docutils literal notranslate"><span class="pre">[]</span></code>
 <td><p>provide extra logging info (mostly calc_p_safe) (default=False)</p></td>
 </tr>
 <tr class="row-even"><td><p>print_log</p></td>
-<td><p>print the run log to stdout (default=False)</p></td>
+<td><p>print the run log to stdout (default=False)’</p></td>
+</tr>
+<tr class="row-odd"><td><p>raise_exc</p></td>
+<td><p>raise exception if it occurs in processing (default=True)</p></td>
 </tr>
 </tbody>
 </table>
@@ -301,6 +333,93 @@ with a single <code class="docutils literal notranslate"><span class="pre">id</s
 </div>
 </div>
 </div>
+<div class="section" id="monitor-stars">
+<h2>Monitor stars<a class="headerlink" href="#monitor-stars" title="Permalink to this headline">¶</a></h2>
+<p>Monitor stars in a catalog are specified withe the <code class="docutils literal notranslate"><span class="pre">monitors</span></code> keyword.
+This can accept a list of lists (or 2-d array of floats) in the form:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>
+  <span class="p">[</span><span class="n">coord0</span><span class="p">,</span> <span class="n">coord1</span><span class="p">,</span> <span class="n">coord_type</span><span class="p">,</span> <span class="n">mag</span><span class="p">,</span> <span class="n">function</span><span class="p">],</span>  <span class="c1"># Monitor window 1 (req&#39;d)</span>
+  <span class="p">[</span><span class="n">coord0</span><span class="p">,</span> <span class="n">coord1</span><span class="p">,</span> <span class="n">coord_type</span><span class="p">,</span> <span class="n">mag</span><span class="p">,</span> <span class="n">function</span><span class="p">],</span>  <span class="c1"># Monitor windows 2, 3, ... N (optional)</span>
+  <span class="o">..</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+<p>If passed as a list of lists, the input will be converted to a numpy 2-d array
+(<code class="docutils literal notranslate"><span class="pre">np.array(monitors)</span></code>) which will have shape <code class="docutils literal notranslate"><span class="pre">(N,</span> <span class="pre">5)</span></code> where <code class="docutils literal notranslate"><span class="pre">N</span></code> is the number of
+monitor windows. Enumeration codes related to the <code class="docutils literal notranslate"><span class="pre">monitors</span></code> keyword are
+defined in the module <code class="docutils literal notranslate"><span class="pre">proseco.characteristics</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MonFunc</span><span class="p">:</span>
+    <span class="n">AUTO</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">GUIDE</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">MON_TRACK</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">MON_FIXED</span> <span class="o">=</span> <span class="mi">3</span>
+
+<span class="k">class</span> <span class="nc">MonCoord</span><span class="p">:</span>
+    <span class="n">RADEC</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">ROWCOL</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">YAGZAG</span> <span class="o">=</span> <span class="mi">2</span>
+</pre></div>
+</div>
+<p>The 5 values <code class="docutils literal notranslate"><span class="pre">[coord0,</span> <span class="pre">coord1,</span> <span class="pre">coord_type,</span> <span class="pre">mag,</span> <span class="pre">function]</span></code> in a monitor window
+specification are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">coord0</span></code>: first coordinate: RA (deg), row (pixel), or Y angle (arcsec))</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">coord1</span></code>: second coordinate: Dec (deg), column (pixel), or Z angle (arcsec)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">coord_type</span></code>:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">MonCoord.RADEC</span></code>: RA/Dec (deg)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">MonCoord.ROWCOL</span></code>: row/column (pixel)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">MonCoord.YAGZAG</span></code>: Y/Z angle (arcsec)</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mag</span></code>: star magnitude (used for commanded MAXMAG for monitor window requests)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">function</span></code>:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">MonFunc.AUTO</span></code>: Schedule as a guide star if it meets requirements and does not introduce
+critical warnings, otherwise schedule as a monitor window that tracks the brightest star.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">MonFunc.GUIDE</span></code>: Schedule as a guide star if a corresponding star is found
+in the AGASC within 2 arcsec, otherwise raise an exception.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">MonFunc.MON_TRACK</span></code>: Schedule as monitor window that tracks the brightest star.</p></li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">MonFunc.MON_FIXED</span></code>: Schedule as monitor window that is fixed on the CCD</dt><dd><p>with no tracking.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</li>
+</ul>
+<p>The typical use cases are as follows:</p>
+<ul class="simple">
+<li><p>OR-specified monitor target with <code class="docutils literal notranslate"><span class="pre">function=MonFunc.AUTO</span></code></p>
+<ul>
+<li><p>This is the most common configuration and lets proseco decide how to schedule the OR.</p></li>
+<li><p>Coordinates provided as RA, Dec.</p></li>
+</ul>
+</li>
+<li><p>OR-specified monitor target <code class="docutils literal notranslate"><span class="pre">function=MonFunc.GUIDE</span></code></p>
+<ul>
+<li><p>Force scheduling as a guide star in a case where proseco would normally
+schedule as a monitor window.</p></li>
+<li><p>For instance a star where the observer provides information on mag or
+variability that is different from the AGASC (e.g. brighter).</p></li>
+</ul>
+</li>
+<li><p>OR-specified monitor target <code class="docutils literal notranslate"><span class="pre">function=MonFunc.MON_TRACK</span></code></p>
+<ul>
+<li><p>Force scheduling as a monitor window in a case where proseco
+would normally schedule as a guide star.</p></li>
+<li><p>For instance a star where the observer provides information on mag or
+variability that is different from the AGASC (e.g. fainter or more variable).</p></li>
+</ul>
+</li>
+<li><p>Fixed-location ER monitor window <code class="docutils literal notranslate"><span class="pre">function=MonFunc.MON_FIXED</span></code></p>
+<ul>
+<li><p>Used for engineering investigation, e.g. looking at a specific flickering pixel.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">coord0,1</span></code> as Y/Z angle or (most commonly) row/column.</p></li>
+</ul>
+</li>
+</ul>
+</div>
 <div class="section" id="data-requirements">
 <h2>Data requirements<a class="headerlink" href="#data-requirements" title="Permalink to this headline">¶</a></h2>
 <p>Required data files are:</p>
@@ -368,6 +487,7 @@ environment.  For Matlab tools on Windows a separate mechanism will be provided.
 </li>
 </ul>
 </li>
+<li><a class="reference internal" href="#monitor-stars">Monitor stars</a></li>
 <li><a class="reference internal" href="#data-requirements">Data requirements</a></li>
 <li><a class="reference internal" href="#api-docs">API docs</a></li>
 <li><a class="reference internal" href="#unit-testing">Unit Testing</a></li>

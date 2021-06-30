@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>proseco.tests.test_acq &#8212; proseco 4.12.1 documentation</title>
+    <title>proseco.tests.test_acq &#8212; proseco 5.0.0 documentation</title>
     <link rel="stylesheet" href="../../../_static/bootstrap-astropy.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
     
@@ -47,7 +47,7 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../../index.html">proseco 4.12.1 documentation</a>
+	<a href="../../../index.html">proseco 5.0.0 documentation</a>
 	 &#187;
       </li>
       <li><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
@@ -496,7 +496,6 @@
            <span class="s1">&#39;   11   -99 37880584 -2005.80  2449.74    60&#39;</span><span class="p">,</span>
            <span class="s1">&#39;   12   -99 38273720  -672.32 -2474.85    60&#39;</span><span class="p">]</span>
 
-    <span class="nb">repr</span><span class="p">(</span><span class="n">acqs</span><span class="o">.</span><span class="n">cand_acqs</span><span class="p">)</span>
     <span class="k">assert</span> <span class="nb">repr</span><span class="p">(</span><span class="n">acqs</span><span class="o">.</span><span class="n">cand_acqs</span><span class="p">[</span><span class="n">TEST_COLS</span><span class="p">])</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span> <span class="o">==</span> <span class="n">exp</span></div>
 
 
@@ -846,7 +845,9 @@
     <span class="n">aca</span> <span class="o">=</span> <span class="n">get_aca_catalog</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="n">acqs</span> <span class="o">=</span> <span class="n">aca</span><span class="o">.</span><span class="n">acqs</span>
 
-    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">acqs</span><span class="o">.</span><span class="n">dark</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">512</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">512</span><span class="p">]</span> <span class="o">==</span> <span class="mi">40</span><span class="p">)</span>
+    <span class="c1"># Check that vast majority of pixels are 40. The rest are bad pixels set to</span>
+    <span class="c1"># 700_000.</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">acqs</span><span class="o">.</span><span class="n">dark</span><span class="p">,</span> <span class="mf">99.95</span><span class="p">)</span> <span class="o">==</span> <span class="mf">40.0</span>
 
     <span class="c1"># Initial fid set is empty () and we check baseline p_safe</span>
     <span class="k">assert</span> <span class="n">acqs</span><span class="o">.</span><span class="n">fid_set</span> <span class="o">==</span> <span class="p">()</span>

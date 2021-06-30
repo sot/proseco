@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>API documentation &#8212; proseco 4.12.1 documentation</title>
+    <title>API documentation &#8212; proseco 5.0.0 documentation</title>
     <link rel="stylesheet" href="_static/bootstrap-astropy.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
@@ -60,7 +60,7 @@
 	 |
       </li>
       <li>
-	<a href="index.html">proseco 4.12.1 documentation</a>
+	<a href="index.html">proseco 5.0.0 documentation</a>
 	 &#187;
       </li>
       
@@ -113,7 +113,7 @@ Output file</p>
 
 <dl class="py function">
 <dt id="proseco.diff.catalog_diff">
-<code class="sig-prename descclassname">proseco.diff.</code><code class="sig-name descname">catalog_diff</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cats1</span></em>, <em class="sig-param"><span class="n">cats2</span></em>, <em class="sig-param"><span class="n">style</span><span class="o">=</span><span class="default_value">'html'</span></em>, <em class="sig-param"><span class="n">names</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">labels</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">sort_name</span><span class="o">=</span><span class="default_value">'id'</span></em>, <em class="sig-param"><span class="n">section_lines</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">n_context</span><span class="o">=</span><span class="default_value">3</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/diff.html#catalog_diff"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proseco.diff.catalog_diff" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">proseco.diff.</code><code class="sig-name descname">catalog_diff</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cats1</span></em>, <em class="sig-param"><span class="n">cats2</span></em>, <em class="sig-param"><span class="n">style</span><span class="o">=</span><span class="default_value">'html'</span></em>, <em class="sig-param"><span class="n">names</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">labels</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">formats</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">sort_name</span><span class="o">=</span><span class="default_value">'id'</span></em>, <em class="sig-param"><span class="n">section_lines</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">n_context</span><span class="o">=</span><span class="default_value">3</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/diff.html#catalog_diff"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proseco.diff.catalog_diff" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the diff of ACA catalogs <code class="docutils literal notranslate"><span class="pre">cats1</span></code> and <code class="docutils literal notranslate"><span class="pre">cats2</span></code>.</p>
 <p>The output is returned in a <code class="docutils literal notranslate"><span class="pre">CatalogDiff</span></code> object that will display the
 formatted diff in Jupyter notebook, or return the diff text via the <code class="docutils literal notranslate"><span class="pre">text</span></code>
@@ -133,6 +133,8 @@ Column names in output as list or space-delimited str.
 Default = ‘idx id slot type sz dim res halfw’</p></li>
 <li><p><strong>labels</strong> – list, None
 Label for catalog used in banner at top of lines</p></li>
+<li><p><strong>formats</strong> – dict, None
+Dict of column names and format specifiers e.g. {‘mag’: ‘6.3f’}</p></li>
 <li><p><strong>sort_name</strong> – str
 Column name for sorting catalog within sections (default=’id’)</p></li>
 <li><p><strong>section_lines</strong> – bool
@@ -149,17 +151,13 @@ Number of context lines for unified, context diffs (default=3)</p></li>
 
 <dl class="py function">
 <dt id="proseco.diff.get_catalog_lines">
-<code class="sig-prename descclassname">proseco.diff.</code><code class="sig-name descname">get_catalog_lines</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cat</span></em>, <em class="sig-param"><span class="n">names</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">section_lines</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">sort_name</span><span class="o">=</span><span class="default_value">'id'</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/diff.html#get_catalog_lines"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proseco.diff.get_catalog_lines" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">proseco.diff.</code><code class="sig-name descname">get_catalog_lines</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cat</span></em>, <em class="sig-param"><span class="n">names</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">section_lines</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">sort_name</span><span class="o">=</span><span class="default_value">'id'</span></em>, <em class="sig-param"><span class="n">formats</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/diff.html#get_catalog_lines"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#proseco.diff.get_catalog_lines" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get list of lines representing catalog suitable for diffing.</p>
 <p>This function sorts the catalog into fids, guides, monitors,and acquisition
 stars and outputs the table into a separate list of lines. In addition:</p>
 <ul class="simple">
 <li><p>Translate HRC fid ids 7-10 and 11-14 to 1-4. Values in the range 7-14
 come from starcheck, but proseco uses 1-4.</p></li>
-<li><p>Change the MON halfwidth to 25. Starcheck uses 20 to match what effective
-happens on the ACA, but in reality this parameter is fictional.</p></li>
-<li><p>For guides, set dim=1, res=1, and halfw=25. The guide search parameters
-are hardwired in the OBC so the catalog values do not matter.</p></li>
 <li><p>Optionally add a banner at the top with a label identifying the catalog,
 e.g. with the obsid. This banner is useful for diffing all the catalogs
 from a load, and helps to ensure that the diff algorithm stays on track.</p></li>
@@ -176,6 +174,8 @@ Star catalog</p></li>
 Column names in the output lines for diffing</p></li>
 <li><p><strong>section_lines</strong> – bool
 Add separator lines between types (default=True)</p></li>
+<li><p><strong>formats</strong> – dict, None
+Dict of column names and format specifiers</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>

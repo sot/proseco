@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>proseco.tests.test_core &#8212; proseco 4.12.1 documentation</title>
+    <title>proseco.tests.test_core &#8212; proseco 5.0.0 documentation</title>
     <link rel="stylesheet" href="../../../_static/bootstrap-astropy.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
     
@@ -47,7 +47,7 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../../index.html">proseco 4.12.1 documentation</a>
+	<a href="../../../index.html">proseco 5.0.0 documentation</a>
 	 &#187;
       </li>
       <li><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
@@ -72,10 +72,11 @@
 
 <span class="kn">import</span> <span class="nn">agasc</span>
 <span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="p">(</span><span class="n">ACABox</span><span class="p">,</span> <span class="n">get_kwargs_from_starcheck_text</span><span class="p">,</span> <span class="n">calc_spoiler_impact</span><span class="p">,</span>
-                    <span class="n">StarsTable</span><span class="p">)</span>
+                    <span class="n">StarsTable</span><span class="p">,</span> <span class="n">get_dim_res</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">..acq</span> <span class="kn">import</span> <span class="n">AcqTable</span>
 <span class="kn">from</span> <span class="nn">..guide</span> <span class="kn">import</span> <span class="n">GuideTable</span>
 <span class="kn">from</span> <span class="nn">..characteristics</span> <span class="kn">import</span> <span class="n">bad_star_set</span>
+<span class="kn">from</span> <span class="nn">proseco</span> <span class="kn">import</span> <span class="n">get_aca_catalog</span>
 
 
 <div class="viewcode-block" id="test_agasc_1p7"><a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_core.test_agasc_1p7">[docs]</a><span class="k">def</span> <span class="nf">test_agasc_1p7</span><span class="p">():</span>
@@ -206,7 +207,7 @@
 <span class="s2">    [ 4]  3   995373760   BOT  6x6   0.985   8.227   9.734    571   1383  32   1  180</span>
 <span class="s2">    [ 5]  4  1058803776   BOT  6x6   0.985   8.591  10.094  -1871    288  28   1  160    a2</span>
 <span class="s2">    [ 6]  5  1058806384   BOT  6x6   0.945   9.144  10.641  -1541   -971  28   1  160    a2</span>
-<span class="s2">    [ 7]  6   995368032   GUI  6x6     ---   8.639  10.141   1711    912   1   1   25</span>
+<span class="s2">    [ 7]  6         ---   MON  8x8     ---     ---  13.938    500    500   6   0   20    mX</span>
 <span class="s2">    [ 8]  7         ---   MON  8x8     ---     ---  13.938     66     31   3   0   20    mX</span>
 <span class="s2">    [ 9]  6   995373040   ACQ  6x6   0.944   9.470  10.969    642   1162  23   1  135    a2</span>
 <span class="s2">    [10]  7   995371984   ACQ  6x6   0.934   9.684  11.188    427    974  23   1  135    a2</span>
@@ -229,12 +230,92 @@
            <span class="s1">&#39;dither&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">8.0</span><span class="p">,</span> <span class="mf">8.0</span><span class="p">),</span>
            <span class="s1">&#39;t_ccd&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">10.6</span><span class="p">,</span>
            <span class="s1">&#39;date&#39;</span><span class="p">:</span> <span class="s1">&#39;2018:273:05:06:58.506&#39;</span><span class="p">,</span>
-           <span class="s1">&#39;n_guide&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+           <span class="s1">&#39;n_acq&#39;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span>
+           <span class="s1">&#39;n_guide&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
            <span class="s1">&#39;n_fid&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
            <span class="s1">&#39;detector&#39;</span><span class="p">:</span> <span class="s1">&#39;ACIS-S&#39;</span><span class="p">,</span>
            <span class="s1">&#39;sim_offset&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
-           <span class="s1">&#39;focus_offset&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+           <span class="s1">&#39;focus_offset&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+           <span class="s1">&#39;monitors&#39;</span><span class="p">:</span> <span class="p">[[</span><span class="mi">66</span><span class="p">,</span> <span class="mi">31</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mf">13.938</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">500</span><span class="p">,</span> <span class="mi">500</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mf">13.938</span><span class="p">,</span> <span class="mi">3</span><span class="p">]]}</span>
     <span class="k">assert</span> <span class="n">kwargs</span> <span class="o">==</span> <span class="n">exp</span>
+
+    <span class="n">cat</span> <span class="o">=</span> <span class="n">get_aca_catalog</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">mon</span> <span class="o">=</span> <span class="n">cat</span><span class="o">.</span><span class="n">get_id</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="n">mon</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">mon</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;MON&#39;</span>
+    <span class="k">assert</span> <span class="n">mon</span><span class="p">[</span><span class="s1">&#39;slot&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">7</span>
+    <span class="k">assert</span> <span class="n">mon</span><span class="p">[</span><span class="s1">&#39;yang&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mf">66.0</span>
+    <span class="k">assert</span> <span class="n">mon</span><span class="p">[</span><span class="s1">&#39;zang&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mf">31.0</span>
+    <span class="n">mon</span> <span class="o">=</span> <span class="n">cat</span><span class="o">.</span><span class="n">get_id</span><span class="p">(</span><span class="mi">1001</span><span class="p">,</span> <span class="n">mon</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">mon</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;MON&#39;</span>
+    <span class="k">assert</span> <span class="n">mon</span><span class="p">[</span><span class="s1">&#39;slot&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">6</span>
+    <span class="k">assert</span> <span class="n">mon</span><span class="p">[</span><span class="s1">&#39;yang&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mf">500.0</span>
+    <span class="k">assert</span> <span class="n">mon</span><span class="p">[</span><span class="s1">&#39;zang&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mf">500.0</span>
+
+
+<span class="k">def</span> <span class="nf">test_get_kwargs_from_starcheck_text2</span><span class="p">():</span>
+    <span class="n">text2</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    OBSID: 23156  WR 140                 ACIS-S SIM Z offset:0     (0.00mm) Grating: HETG</span>
+<span class="s2">    RA, Dec, Roll (deg):   305.083054    43.865507   310.023234</span>
+<span class="s2">    Dither: ON Y_amp= 8.0  Z_amp= 8.0  Y_period=1000.0  Z_period= 707.1</span>
+<span class="s2">    BACKSTOP GUIDE_SUMM OR MANVR DOT MAKE_STARS TLR</span>
+
+<span class="s2">    MP_TARGQUAT at 2020:337:13:05:57.809 (VCDU count = 14020378)</span>
+<span class="s2">      Q1,Q2,Q3,Q4: -0.50382435  -0.11972583  -0.52770508  0.67331575</span>
+<span class="s2">      MANVR: Angle=  93.34 deg  Duration= 1904 sec  Slew err= 54.5 arcsec  End= 2020:337:13:37:37</span>
+
+<span class="s2">    MP_STARCAT at 2020:337:13:05:59.452 (VCDU count = 14020385)</span>
+<span class="s2">    ---------------------------------------------------------------------------------------------</span>
+<span class="s2">     IDX SLOT        ID  TYPE   SZ   P_ACQ    MAG   MAXMAG   YANG   ZANG DIM RES HALFW PASS NOTES</span>
+<span class="s2">    ---------------------------------------------------------------------------------------------</span>
+<span class="s2">    [ 1]  0           2   FID  8x8     ---   7.000   8.000   -773  -1741   1   1   25</span>
+<span class="s2">    [ 2]  1           4   FID  8x8     ---   7.000   8.000   2140    166   1   1   25</span>
+<span class="s2">    [ 3]  2           5   FID  8x8     ---   7.000   8.000  -1826    160   1   1   25</span>
+<span class="s2">    [ 4]  3   414583264   BOT  6x6   0.981   7.693   9.203    697  -1232  28   1  160</span>
+<span class="s2">    [ 5]  4   414583848   BOT  6x6   0.969   8.272   9.781   -443     34  28   1  160         C</span>
+<span class="s2">    [ 6]  5   414585176   BOT  6x6   0.979   8.228   9.734   -958  -2143  28   1  160</span>
+<span class="s2">    [ 7]  6   414718744   BOT  6x6   0.979   8.165   9.672  -1655   1816  28   1  160</span>
+<span class="s2">    [ 8]  7   414725232   BOT  8x8   0.982   7.037   8.547     86     41  28   1  160</span>
+<span class="s2">    [ 9]  0   414583128   ACQ  6x6   0.977   8.379   9.891  -2087   -459  28   1  160</span>
+<span class="s2">    [10]  1   414588808   ACQ  6x6   0.973   8.665  10.172  -1596  -1891  28   1  160</span>
+<span class="s2">    [11]  2   414724728   ACQ  6x6   0.967   8.961  10.469   1631   -790  28   1  160</span>
+
+<span class="s2">    &gt;&gt; CAUTION : [ 7] Search spoiler.  414712192: Y,Z,Radial,Mag seps: 136 210 250 -0.7</span>
+<span class="s2">    &gt;&gt; INFO    : [ 8] Appears to be MON used as GUI/BOT.  Has Magnitude been checked?</span>
+<span class="s2">    &gt;&gt; INFO    : [ 8] Readout Size. 8x8 Stealth MON?</span>
+
+<span class="s2">    Probability of acquiring 2 or fewer stars (10^-x):8.3110</span>
+<span class="s2">    Acquisition Stars Expected  : 7.80</span>
+<span class="s2">    Predicted Max CCD temperature: -11.2 C  N100 Warm Pix Frac 0.291</span>
+<span class="s2">    Dynamic Mag Limits: Yellow 10.30  Red 10.56</span>
+<span class="s2">    &quot;&quot;&quot;</span>
+
+    <span class="n">kwargs</span> <span class="o">=</span> <span class="n">get_kwargs_from_starcheck_text</span><span class="p">(</span><span class="n">text2</span><span class="p">,</span> <span class="n">force_catalog</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">include_cat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">cat_exp</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;cat&#39;</span><span class="p">)</span>
+    <span class="n">exp</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;dither&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">8.0</span><span class="p">,</span> <span class="mf">8.0</span><span class="p">),</span>
+           <span class="s1">&#39;t_ccd&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">11.2</span><span class="p">,</span>
+           <span class="s1">&#39;date&#39;</span><span class="p">:</span> <span class="s1">&#39;2020:337:13:05:59.452&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;n_guide&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+           <span class="s1">&#39;detector&#39;</span><span class="p">:</span> <span class="s1">&#39;ACIS-S&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;sim_offset&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+           <span class="s1">&#39;focus_offset&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+           <span class="s1">&#39;obsid&#39;</span><span class="p">:</span> <span class="mi">23156</span><span class="p">,</span>
+           <span class="s1">&#39;att&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">305.083054</span><span class="p">,</span> <span class="mf">43.865507</span><span class="p">,</span> <span class="mf">310.023234</span><span class="p">],</span>
+           <span class="s1">&#39;man_angle&#39;</span><span class="p">:</span> <span class="mf">93.34</span><span class="p">,</span>
+           <span class="s1">&#39;n_fid&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+           <span class="s1">&#39;include_ids_acq&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">414583264</span><span class="p">,</span> <span class="mi">414583848</span><span class="p">,</span> <span class="mi">414585176</span><span class="p">,</span> <span class="mi">414718744</span><span class="p">,</span>
+                               <span class="mi">414725232</span><span class="p">,</span> <span class="mi">414583128</span><span class="p">,</span> <span class="mi">414588808</span><span class="p">,</span> <span class="mi">414724728</span><span class="p">],</span>
+           <span class="s1">&#39;n_acq&#39;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span>
+           <span class="s1">&#39;include_halfws_acq&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">160</span><span class="p">,</span> <span class="mi">160</span><span class="p">,</span> <span class="mi">160</span><span class="p">,</span> <span class="mi">160</span><span class="p">,</span> <span class="mi">160</span><span class="p">,</span> <span class="mi">160</span><span class="p">,</span> <span class="mi">160</span><span class="p">,</span> <span class="mi">160</span><span class="p">],</span>
+           <span class="s1">&#39;include_ids_guide&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">414583264</span><span class="p">,</span> <span class="mi">414583848</span><span class="p">,</span> <span class="mi">414585176</span><span class="p">,</span> <span class="mi">414718744</span><span class="p">,</span> <span class="mi">414725232</span><span class="p">],</span>
+           <span class="s1">&#39;include_ids_fid&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span>
+           <span class="s1">&#39;monitors&#39;</span><span class="p">:</span> <span class="p">[[</span><span class="mi">86</span><span class="p">,</span> <span class="mi">41</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mf">7.037</span><span class="p">,</span> <span class="mi">1</span><span class="p">]]}</span>
+    <span class="k">assert</span> <span class="n">kwargs</span> <span class="o">==</span> <span class="n">exp</span>
+
+    <span class="n">cat</span> <span class="o">=</span> <span class="n">get_aca_catalog</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">cat</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">)</span>
+    <span class="n">cat_exp</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;sz&#39;</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">cat</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span> <span class="o">==</span> <span class="n">cat_exp</span><span class="p">[</span><span class="n">attr</span><span class="p">])</span>
 
 
 <span class="n">cases</span> <span class="o">=</span> <span class="p">[</span><span class="nb">dict</span><span class="p">(</span><span class="n">row</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">mag0</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">mag1</span><span class="o">=</span><span class="mf">10.5</span><span class="p">,</span> <span class="n">exp</span><span class="o">=</span><span class="p">(</span><span class="mf">0.16</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.01</span><span class="p">,</span> <span class="mf">1.00</span><span class="p">)),</span>
@@ -346,6 +427,17 @@
 
     <span class="n">stars3</span> <span class="o">=</span> <span class="n">StarsTable</span><span class="o">.</span><span class="n">from_stars</span><span class="p">(</span><span class="n">att3</span><span class="p">,</span> <span class="n">stars</span><span class="p">)</span>
     <span class="k">assert</span> <span class="n">stars3</span> <span class="ow">is</span> <span class="n">stars</span></div>
+
+
+<div class="viewcode-block" id="test_get_dim_res"><a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_core.test_get_dim_res">[docs]</a><span class="k">def</span> <span class="nf">test_get_dim_res</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Test getting ACA DIM and RES for an array of halfws&quot;&quot;&quot;</span>
+    <span class="n">halfws</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">20</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">337</span><span class="p">,</span> <span class="mi">338</span><span class="p">,</span> <span class="mi">420</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+    <span class="n">exp_dim</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">63</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+    <span class="n">exp_res</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+
+    <span class="n">dim</span><span class="p">,</span> <span class="n">res</span> <span class="o">=</span> <span class="n">get_dim_res</span><span class="p">(</span><span class="n">halfws</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">dim</span> <span class="o">==</span> <span class="n">exp_dim</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">res</span> <span class="o">==</span> <span class="n">exp_res</span><span class="p">)</span></div>
 </pre></div>
 
             <div class="clearer"></div>
