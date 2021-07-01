@@ -9,6 +9,7 @@ STD_INFO = dict(att=(0, 0, 0),
                 focus_offset=0,
                 date='2018:001',
                 n_guide=5,
+                n_fid=3,
                 t_ccd=-11,
                 man_angle=90,
                 dither=8.0)
