@@ -156,7 +156,7 @@ def test_fid_mult_spoilers():
     Test of fix for bug #54.  19605 and 20144 were previous crashing.
     """
     acqs = get_acq_catalog(**OBS_INFO[19605])
-    fids = get_fid_catalog(acqs=acqs, n_fid=3, **OBS_INFO[19605])
+    fids = get_fid_catalog(acqs=acqs, **OBS_INFO[19605])
     cand_fids = fids.cand_fids
     assert np.all(cand_fids['spoiler_score'] == [0, 0, 1, 4, 0, 0])
     assert len(cand_fids['spoilers'][2]) == 1
