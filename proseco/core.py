@@ -678,11 +678,13 @@ class ACACatalogTable(BaseCatalogTable):
             if self.n_fid is None:
                 self.n_fid = np.count_nonzero(obs['cat']['type'] == 'FID')
 
-            if self.n_guide is None:
-                self.n_guide = 8 - self.n_fid
+            n_mon = np.count_nonzero(obs['cat']['type'] == 'MON')
+            if n_mon > 0:
+                warnings.warn(f'found {n_mon} MON stars in catalog, ignoring them')
 
-            if self.n_fid + self.n_guide > 8:
-                raise ValueError(f'n_fid + n_guide > 8: {self.n_fid + self.n_guide}')
+            if self.n_guide is None:
+                # Replicate the number of guide stars in the original catalog.
+                self.n_guide = 8 - self.n_fid - n_mon
 
             if self.detector is None:
                 self.n_fid = 0
