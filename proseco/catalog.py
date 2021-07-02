@@ -708,6 +708,15 @@ def merge_cats(fids=None, guides=None, acqs=None, mons=None):
         acqs['dim'], acqs['res'] = get_dim_res(acqs['halfw'])
         acqs['sz'] = f'{img_size}x{img_size}'
 
+    if len(acqs) > 8:
+        raise ValueError('catalog has too many acq entries: '
+                         f'n_acq={len(acqs)}')
+
+    if len(guides) + len(mons) + len(gfms) + len(fids) > 8:
+        raise ValueError('catalog has too many guide entries: '
+                         f'n_guide={len(guides)} n_fid={len(fids)} '
+                         f'n_mon={len(mons)} n_gfm={len(gfms)}')
+
     # Create two 8-slot tables where all slots are initially empty. These
     # correspond to the OBC acquisition and guide tables. The guide table
     # includes fids and guides. This includes a special debug flag to print
