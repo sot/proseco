@@ -563,7 +563,7 @@ class ACACatalogTable(BaseCatalogTable):
     att = QuatMetaAttribute()
     n_acq = MetaAttribute(default=8)
     n_guide = MetaAttribute()
-    n_fid = MetaAttribute(default=3)
+    n_fid = MetaAttribute()
     monitors = MonitorsMetaAttribute()
     man_angle = MetaAttribute()
     t_ccd_acq = MetaAttribute()
@@ -675,9 +675,16 @@ class ACACatalogTable(BaseCatalogTable):
             if self.focus_offset is None:
                 self.focus_offset = 0
 
+            if self.n_fid is None:
+                self.n_fid = np.count_nonzero(obs['cat']['type'] == 'FID')
+
+            n_mon = np.count_nonzero(obs['cat']['type'] == 'MON')
+            if n_mon > 0:
+                warnings.warn(f'found {n_mon} MON stars in catalog, ignoring them')
+
             if self.n_guide is None:
-                fid_or_mon = (obs['cat']['type'] == 'FID') | (obs['cat']['type'] == 'MON')
-                self.n_guide = 8 - np.count_nonzero(fid_or_mon)
+                # Replicate the number of guide stars in the original catalog.
+                self.n_guide = 8 - self.n_fid - n_mon
 
             if self.detector is None:
                 self.n_fid = 0
@@ -1350,6 +1357,7 @@ class StarsTable(BaseCatalogTable):
         except KeyError:
             from .fid import get_fid_catalog
             fids = get_fid_catalog(att=(0, 0, 0),
+                                   n_fid=3,
                                    detector=detector,
                                    sim_offset=sim_offset,
                                    focus_offset=0,

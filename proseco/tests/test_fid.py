@@ -100,7 +100,7 @@ def test_n_fid():
     """Test specifying number of fids.
     """
     # Get only 2 fids
-    fids = get_fid_catalog(n_fid=2, **STD_INFO)
+    fids = get_fid_catalog(**mod_std_info(n_fid=2))
     assert len(fids) == 2
 
 
