@@ -84,6 +84,7 @@ def test_monitor_mon_fixed_auto():
            '   6  13    134680  ACQ 6x6  1314.00  1085.73  28   1   160']
 
     assert aca[TEST_COLS].pformat_all() == exp
+    assert aca.n_guide == 4  # Two of 6 guide slots become MON slots
 
     mon = aca.get_id(1000, mon=True)
     assert mon['dim'] == mon['slot']  # Fixed MON
@@ -141,6 +142,7 @@ def test_full_catalog():
            '   5  11 100008  ACQ 6x6   400.00   400.00   8   1    60 10.50']
 
     assert aca[TEST_COLS + ['mag']].pformat_all() == exp
+    assert aca.n_guide == 6  # One of 7 available guide slots becomes a MON
 
 
 def test_mon_takes_guide():
@@ -173,3 +175,4 @@ def test_mon_takes_guide():
            '   4   6 100000  ACQ 8x8  1500.00     0.00  28   1   160  6.50']
 
     assert aca[TEST_COLS + ['mag']].pformat_all() == exp
+    assert aca.n_guide == 4  # One of 5 available guide slots becomes a MON

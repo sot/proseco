@@ -199,6 +199,12 @@ def _get_aca_catalog(**kwargs):
     aca.guides = get_guide_catalog(stars=aca.acqs.stars, fids=aca.fids, mons=aca.mons,
                                    img_size=img_size_guide, **kwargs)
 
+    # Set output catalog aca.n_guide to reflect what the number of requested
+    # guide stars as determined in guide star selection processing. The input
+    # arg value of n_guide (which initially defines aca.n_guide) reflects the
+    # requested number of available slots for guide + monitor stars / windows.
+    aca.n_guide = aca.guides.n_guide
+
     # Make a merged starcheck-like catalog.  Catch any errors at this point to avoid
     # impacting operational work (call from Matlab).
     try:
@@ -278,6 +284,7 @@ def _get_aca_catalog_monitors(**kwargs):
     # If there are no new critical messages then schedule as guide star(s).
     # This checks that every critical in crit_gui is also in crits_mon.
     out = aca_gui if crits_gui <= crits_mon else aca_mon
+
     return out
 
 

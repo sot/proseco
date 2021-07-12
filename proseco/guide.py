@@ -151,9 +151,9 @@ class GuideTable(ACACatalogTable):
             row, col = int(monitor['row']) + 512, int(monitor['col']) + 512
             self.dark[row-dr: row+dr, col-dc: col+dc] = ACA.bad_pixel_dark_current  # noqa
 
-            # Temporarily reduce n_guide for each MON. Globally n_guide is the
+            # Reduce n_guide for each MON. On input the n_guide arg is the
             # number of GUI + MON, but for guide selection we need to make the
-            # MON slots unavailable. This reduction gets undone in post.
+            # MON slots unavailable.
             self.n_guide -= 1
             if self.n_guide < 2:
                 raise ValueError('too many MON requests leaving < 2 guide stars')
