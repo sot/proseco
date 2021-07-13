@@ -51,6 +51,16 @@ def get_aca_catalog(obsid=0, **kwargs):
     appending this string, e.g. with ``obs_text + '--force-catalog'`` in the
     call to ``get_aca_catalog``.
 
+    The input ``n_guide`` parameter represents the number of slots available for
+    the combination of guide stars and monitor windows (including both fixed and
+    tracking monitor windows). In most normal situations, ``n_guide`` is equal
+    to ``8 - n_fid``. The ``n_guide`` parameter is confusingly named but this is
+    because the actual number of guide stars is not known in advance in the case
+    of auto-conversion from a monitor request to a guide star. In actual
+    practice, what is normally known is how many slots are available for the
+    combination of guide stars and monitor windows, so this makes the call to
+    catalog creation simpler.
+
     NOTE on API:
 
     Keywords that have ``_acq`` and/or ``_guide`` suffixes are handled with
@@ -63,7 +73,7 @@ def get_aca_catalog(obsid=0, **kwargs):
     :param att: attitude (any object that can initialize Quat)
     :param n_acq: desired number of acquisition stars (default=8)
     :param n_fid: desired number of fid lights (req'd unless obsid spec'd)
-    :param n_guide: desired number of guide stars (req'd unless obsid spec'd)
+    :param n_guide: desired number of guide stars + monitor windows (req'd unless obsid spec'd)
     :param monitors: N x 5 float array specifying monitor windows
     :param man_angle: maneuver angle (deg)
     :param t_ccd_acq: ACA CCD temperature for acquisition (degC)
@@ -199,6 +209,13 @@ def _get_aca_catalog(**kwargs):
     aca.guides = get_guide_catalog(stars=aca.acqs.stars, fids=aca.fids, mons=aca.mons,
                                    img_size=img_size_guide, **kwargs)
 
+    # Set output catalog aca.n_guide to the number of requested guide stars as
+    # determined in guide star selection processing. This differs from the input
+    # arg value of n_guide which is (confusingly) the number of available slots
+    # for guide + monitor stars / windows. Thus if the input n_guide is set to
+    # 5 and there is a monitor window then aca.n_guide will be 4.
+    aca.n_guide = aca.guides.n_guide
+
     # Make a merged starcheck-like catalog.  Catch any errors at this point to avoid
     # impacting operational work (call from Matlab).
     try:
@@ -278,6 +295,7 @@ def _get_aca_catalog_monitors(**kwargs):
     # If there are no new critical messages then schedule as guide star(s).
     # This checks that every critical in crit_gui is also in crits_mon.
     out = aca_gui if crits_gui <= crits_mon else aca_mon
+
     return out
 
 
