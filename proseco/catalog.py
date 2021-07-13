@@ -209,10 +209,11 @@ def _get_aca_catalog(**kwargs):
     aca.guides = get_guide_catalog(stars=aca.acqs.stars, fids=aca.fids, mons=aca.mons,
                                    img_size=img_size_guide, **kwargs)
 
-    # Set output catalog aca.n_guide to reflect what the number of requested
-    # guide stars as determined in guide star selection processing. The input
-    # arg value of n_guide (which initially defines aca.n_guide) reflects the
-    # requested number of available slots for guide + monitor stars / windows.
+    # Set output catalog aca.n_guide to the number of requested guide stars as
+    # determined in guide star selection processing. This differs from the input
+    # arg value of n_guide which is (confusingly) the number of available slots
+    # for guide + monitor stars / windows. Thus if the input n_guide is set to
+    # 5 and there is a monitor window then aca.n_guide will be 4.
     aca.n_guide = aca.guides.n_guide
 
     # Make a merged starcheck-like catalog.  Catch any errors at this point to avoid
