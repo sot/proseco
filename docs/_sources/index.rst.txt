@@ -37,7 +37,7 @@ obsid         obsid (default=0)
 att           attitude (any object that can initialize Quat)
 n_acq         desired number of acquisition stars (default=8)
 n_fid         desired number of fid lights (req'd unless obsid spec'd)
-n_guide       desired number of guide stars (req'd unless obsid spec'd)
+n_guide       desired number of guide stars + monitor windows (see note below)
 man_angle     maneuver angle (deg)
 t_ccd_acq     ACA CCD temperature for acquisition (degC)
 t_ccd_guide   ACA CCD temperature for guide (degC)
@@ -69,6 +69,16 @@ t_ccd_eff_acq       ACA CCD effective temperature for acquisition (degC)
 t_ccd_eff_guide     ACA CCD effective temperature for guide (degC)
 dark_date           date of dark cal
 =================== =================================================================
+
+The input ``n_guide`` parameter represents the number of slots available for the
+combination of guide stars and monitor windows (including both fixed and
+tracking monitor windows). In most normal situations, ``n_guide`` is equal to
+``8 - n_fid``. The ``n_guide`` parameter is confusingly named but this is
+because the actual number of guide stars is not known in advance in the case of
+auto-conversion from a monitor request to a guide star. In actual practice,
+what is normally known is how many slots are available for the combination of
+guide stars and monitor windows, so this makes the call to catalog creation
+simpler.
 
 Within the ``include_halfws_acq`` list, one can supply the value ``0`` for a
 star instead of a typical legal value such as ``60`` or ``120``.  In that case

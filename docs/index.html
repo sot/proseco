@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Proseco &#8212; proseco 5.1.0 documentation</title>
+    <title>Proseco &#8212; proseco 5.2.0 documentation</title>
     <link rel="stylesheet" href="_static/bootstrap-astropy.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
@@ -53,7 +53,7 @@
 	</a>
       </li>
       <li>
-	<a href="#">proseco 5.1.0 documentation</a>
+	<a href="#">proseco 5.2.0 documentation</a>
 	 &#187;
       </li>
       
@@ -87,8 +87,8 @@ takes a long list of arguments which are required to fully specify:</p>
 <p><strong>Required</strong></p>
 <table class="docutils align-default">
 <colgroup>
-<col style="width: 19%" />
-<col style="width: 81%" />
+<col style="width: 17%" />
+<col style="width: 83%" />
 </colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>Argument</p></th>
@@ -113,7 +113,7 @@ takes a long list of arguments which are required to fully specify:</p>
 <td><p>desired number of fid lights (req’d unless obsid spec’d)</p></td>
 </tr>
 <tr class="row-even"><td><p>n_guide</p></td>
-<td><p>desired number of guide stars (req’d unless obsid spec’d)</p></td>
+<td><p>desired number of guide stars + monitor windows (see note below)</p></td>
 </tr>
 <tr class="row-odd"><td><p>man_angle</p></td>
 <td><p>maneuver angle (deg)</p></td>
@@ -200,6 +200,15 @@ takes a long list of arguments which are required to fully specify:</p>
 </tr>
 </tbody>
 </table>
+<p>The input <code class="docutils literal notranslate"><span class="pre">n_guide</span></code> parameter represents the number of slots available for the
+combination of guide stars and monitor windows (including both fixed and
+tracking monitor windows). In most normal situations, <code class="docutils literal notranslate"><span class="pre">n_guide</span></code> is equal to
+<code class="docutils literal notranslate"><span class="pre">8</span> <span class="pre">-</span> <span class="pre">n_fid</span></code>. The <code class="docutils literal notranslate"><span class="pre">n_guide</span></code> parameter is confusingly named but this is
+because the actual number of guide stars is not known in advance in the case of
+auto-conversion from a monitor request to a guide star. In actual practice,
+what is normally known is how many slots are available for the combination of
+guide stars and monitor windows, so this makes the call to catalog creation
+simpler.</p>
 <p>Within the <code class="docutils literal notranslate"><span class="pre">include_halfws_acq</span></code> list, one can supply the value <code class="docutils literal notranslate"><span class="pre">0</span></code> for a
 star instead of a typical legal value such as <code class="docutils literal notranslate"><span class="pre">60</span></code> or <code class="docutils literal notranslate"><span class="pre">120</span></code>.  In that case
 proseco will run the normal optimization and choose the best halfwidth for that
