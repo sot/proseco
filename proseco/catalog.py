@@ -285,12 +285,14 @@ def _get_aca_catalog_monitors(**kwargs):
         aca_gui = _get_aca_catalog(**kwargs)
     except BadMonitorError as exc:
         aca_mon.log(f'unable to convert monitor to guide: {exc}')
+        aca_mon.call_args = kwargs_orig.copy()
         return aca_mon
 
     # Get the catalog and do a sparkles review
     acar_gui = aca_gui.get_review_table()
     acar_gui.run_aca_review()
     crits_gui = set(msg['text'] for msg in (acar_gui.messages >= 'critical'))
+    aca_gui.call_args = kwargs_orig.copy()
 
     # If there are no new critical messages then schedule as guide star(s).
     # This checks that every critical in crit_gui is also in crits_mon.
