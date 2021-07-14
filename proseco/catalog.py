@@ -274,6 +274,7 @@ def _get_aca_catalog_monitors(**kwargs):
 
     # Get the catalog and do a sparkles review
     aca_mon = _get_aca_catalog(**kwargs)
+    aca_mon.call_args = kwargs_orig.copy()  # Needed for roll optimization, see #364
     acar_mon = aca_mon.get_review_table()
     acar_mon.run_aca_review()
     crits_mon = set(msg['text'] for msg in (acar_mon.messages >= 'critical'))
@@ -283,6 +284,7 @@ def _get_aca_catalog_monitors(**kwargs):
     kwargs['raise_exc'] = True
     try:
         aca_gui = _get_aca_catalog(**kwargs)
+        aca_gui.call_args = kwargs_orig.copy()  # Needed for roll optimization, see #364
     except BadMonitorError as exc:
         aca_mon.log(f'unable to convert monitor to guide: {exc}')
         return aca_mon
