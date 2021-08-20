@@ -648,17 +648,23 @@ class ACACatalogTable(BaseCatalogTable):
 
         # If an explicit obsid is not provided to all getting parameters via mica
         # then all other params must be supplied.
-        all_pars = all(getattr(self, x) is not None for x in self.required_attrs)
-        if self.obsid == 0 and not all_pars:
-            missing = [attr for attr in self.required_attrs if getattr(self, attr) is None]
+        missing = [attr for attr in self.required_attrs if getattr(self, attr) is None]
+        if self.obsid == 0 and missing:
             raise ValueError(f'missing required parameters {missing}')
 
         # If not all params supplied then get via mica for the obsid.
-        if not all_pars:
+        if missing:
             self.log(f'getting starcheck catalog for obsid {self.obsid}')
 
-            obs = get_starcheck_catalog(self.obsid)
-            obso = obs['obs']
+            try:
+                obs = get_starcheck_catalog(self.obsid)
+                obso = obs['obs']
+            except Exception:
+                # Probably AttributeError for a non-existent obsid, where
+                # get_starcheck_catalog returns None. But catch anything in case
+                # something else happened. Exception chaining will help here.
+                raise ValueError(f'missing required parameters {missing} and '
+                                 f'could not fill them in from obsid {self.obsid}')
 
             if self.att is None:
                 self.att = [obso['point_ra'], obso['point_dec'], obso['point_roll']]
