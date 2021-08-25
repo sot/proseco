@@ -760,6 +760,8 @@ class ACACatalogTable(BaseCatalogTable):
             self.set_stars()
         kwargs.setdefault('stars', self.stars)
         kwargs.setdefault('bad_stars', self.bad_stars_mask)
+        if self.date is not None:
+            kwargs.setdefault('starcat_time', self.date)
         return super().plot(ax, **kwargs)
 
     @property
