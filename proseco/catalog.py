@@ -332,6 +332,11 @@ class ACATable(ACACatalogTable):
     # or AliasAttribute properties will add to this.
     allowed_kwargs = ACACatalogTable.allowed_kwargs.copy()
 
+    required_attrs = ('att', 'n_fid', 'n_guide', 'man_angle',
+                      't_ccd_acq', 't_ccd_guide',
+                      'dither_acq', 'dither_guide', 'date',
+                      'detector')
+
     optimize = MetaAttribute(default=True)
     call_args = MetaAttribute(default={})
     version = MetaAttribute()
