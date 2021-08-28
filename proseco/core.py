@@ -762,6 +762,8 @@ class ACACatalogTable(BaseCatalogTable):
         kwargs.setdefault('bad_stars', self.bad_stars_mask)
         if self.date is not None:
             kwargs.setdefault('starcat_time', self.date)
+        if getattr(self, 'duration', None) is not None:
+            kwargs.setdefault('duration', self.duration)
         return super().plot(ax, **kwargs)
 
     @property

@@ -82,6 +82,8 @@ def get_aca_catalog(obsid=0, **kwargs):
         provided this defaults to value from the ACA xija thermal model.
     :param t_ccd_eff_acq: ACA CCD effective temperature for acquisition (degC)
     :param t_ccd_eff_guide: ACA CCD effective temperature for guide (degC)
+    :param duration: duration of observation (sec)
+    :param target_name: name of target (str)
     :param date: date of acquisition (any DateTime-compatible format)
     :param dither_acq: acq dither size (2-element sequence (y, z), arcsec)
     :param dither_guide: guide dither size (2-element sequence (y, z), arcsec)
@@ -153,7 +155,7 @@ def _get_aca_catalog(**kwargs):
     aca.version = VERSION
 
     # Remove kwargs that are specific to AcaTable
-    for kwarg in ('t_ccd', 't_ccd_penalty_limit'):
+    for kwarg in ('t_ccd', 't_ccd_penalty_limit', 'duration', 'target_name'):
         if kwarg in kwargs:
             del kwargs[kwarg]
 
@@ -339,6 +341,10 @@ class ACATable(ACACatalogTable):
     # For validation with get_aca_catalog(obsid), store the starcheck
     # catalog in the ACATable meta.
     starcheck_catalog = MetaAttribute(is_kwarg=False)
+
+    # Observation information
+    duration = MetaAttribute()
+    target_name = MetaAttribute()
 
     # Effective T_ccd used for dynamic ACA limits (see updates_for_t_ccd_effective()
     # method below).

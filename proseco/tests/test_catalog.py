@@ -34,7 +34,7 @@ def test_allowed_kwargs():
     """Test #332 where allowed_kwargs class attribute is unique for each subclass"""
     new_kwargs = ACATable.allowed_kwargs - ACACatalogTable.allowed_kwargs
     assert new_kwargs == {'call_args', 'version', 't_ccd_eff_acq', 't_ccd_eff_guide',
-                          't_ccd_penalty_limit'}
+                          't_ccd_penalty_limit', 'duration', 'target_name'}
 
     new_kwargs = FidTable.allowed_kwargs - ACACatalogTable.allowed_kwargs
     assert new_kwargs == {'acqs', 'include_ids', 'exclude_ids'}
@@ -324,13 +324,18 @@ def test_big_sim_offset():
     """
     Check getting a catalog for a large SIM offset that means there are
     no candidates.
+
+    Bonus: check that duration and target_name can be set.
     """
-    aca = get_aca_catalog(**mod_std_info(sim_offset=200000, raise_exc=True))
+    aca = get_aca_catalog(**mod_std_info(sim_offset=200000, duration=10000,
+                                         target_name='Target Name', raise_exc=True))
     assert len(aca.acqs) == 8
     assert len(aca.guides) == 5
     assert len(aca.fids) == 0
     names = ['id', 'yang', 'zang', 'row', 'col', 'mag', 'spoiler_score', 'idx']
     assert all(name in aca.fids.colnames for name in names)
+    assert aca.duration == 10000
+    assert aca.target_name == 'Target Name'
 
 
 @pytest.mark.parametrize('call_t_ccd', [True, False])
