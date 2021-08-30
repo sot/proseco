@@ -52,6 +52,8 @@ detector      'ACIS-S' | 'ACIS-I' | 'HRC-S' | 'HRC-I'
 =================== =================================================================
 Argument            Description
 =================== =================================================================
+target_name         Target name, e.g. from the OR list (str)
+duration            Observation duration (secs)
 sim_offset          SIM translation offset from nominal [steps] (default=0)
 focus_offset        SIM focus offset [steps] (default=0)
 target_offset       target offset including dynamical offset (y, z, deg)
