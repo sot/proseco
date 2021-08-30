@@ -162,8 +162,18 @@ def test_exception_handling():
 
 
 def test_unhandled_exception():
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError, match=r'missing required parameters'):
+        # TypeError in get_starcheck_catalog due to NoneType obsid
         get_aca_catalog(obsid=None, raise_exc=True)
+
+    with pytest.raises(ValueError, match=r'missing required parameters'):
+        # Obsid 0 implies all all pars must be provided
+        get_aca_catalog(obsid=0, raise_exc=True)
+
+    with pytest.raises(ValueError, match=r'missing required parameters'):
+        # Obsid > 0 implies missing pars are to be found in starcheck archive,
+        # but this one will certainly not be found.
+        get_aca_catalog(obsid=99999, raise_exc=True)
 
 
 def test_no_candidates():
