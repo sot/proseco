@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>proseco.tests.test_catalog &#8212; proseco 5.2.1 documentation</title>
+    <title>proseco.tests.test_catalog &#8212; proseco 5.3.0 documentation</title>
     <link rel="stylesheet" href="../../../_static/bootstrap-astropy.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
     
@@ -47,7 +47,7 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../../index.html">proseco 5.2.1 documentation</a>
+	<a href="../../../index.html">proseco 5.3.0 documentation</a>
 	 &#187;
       </li>
       <li><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
@@ -99,7 +99,7 @@
     <span class="sd">&quot;&quot;&quot;Test #332 where allowed_kwargs class attribute is unique for each subclass&quot;&quot;&quot;</span>
     <span class="n">new_kwargs</span> <span class="o">=</span> <span class="n">ACATable</span><span class="o">.</span><span class="n">allowed_kwargs</span> <span class="o">-</span> <span class="n">ACACatalogTable</span><span class="o">.</span><span class="n">allowed_kwargs</span>
     <span class="k">assert</span> <span class="n">new_kwargs</span> <span class="o">==</span> <span class="p">{</span><span class="s1">&#39;call_args&#39;</span><span class="p">,</span> <span class="s1">&#39;version&#39;</span><span class="p">,</span> <span class="s1">&#39;t_ccd_eff_acq&#39;</span><span class="p">,</span> <span class="s1">&#39;t_ccd_eff_guide&#39;</span><span class="p">,</span>
-                          <span class="s1">&#39;t_ccd_penalty_limit&#39;</span><span class="p">}</span>
+                          <span class="s1">&#39;t_ccd_penalty_limit&#39;</span><span class="p">,</span> <span class="s1">&#39;duration&#39;</span><span class="p">,</span> <span class="s1">&#39;target_name&#39;</span><span class="p">}</span>
 
     <span class="n">new_kwargs</span> <span class="o">=</span> <span class="n">FidTable</span><span class="o">.</span><span class="n">allowed_kwargs</span> <span class="o">-</span> <span class="n">ACACatalogTable</span><span class="o">.</span><span class="n">allowed_kwargs</span>
     <span class="k">assert</span> <span class="n">new_kwargs</span> <span class="o">==</span> <span class="p">{</span><span class="s1">&#39;acqs&#39;</span><span class="p">,</span> <span class="s1">&#39;include_ids&#39;</span><span class="p">,</span> <span class="s1">&#39;exclude_ids&#39;</span><span class="p">}</span></div>
@@ -227,8 +227,18 @@
 
 
 <span class="k">def</span> <span class="nf">test_unhandled_exception</span><span class="p">():</span>
-    <span class="k">with</span> <span class="n">pytest</span><span class="o">.</span><span class="n">raises</span><span class="p">(</span><span class="ne">TypeError</span><span class="p">):</span>
+    <span class="k">with</span> <span class="n">pytest</span><span class="o">.</span><span class="n">raises</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="n">match</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;missing required parameters&#39;</span><span class="p">):</span>
+        <span class="c1"># TypeError in get_starcheck_catalog due to NoneType obsid</span>
         <span class="n">get_aca_catalog</span><span class="p">(</span><span class="n">obsid</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">raise_exc</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">pytest</span><span class="o">.</span><span class="n">raises</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="n">match</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;missing required parameters&#39;</span><span class="p">):</span>
+        <span class="c1"># Obsid 0 implies all all pars must be provided</span>
+        <span class="n">get_aca_catalog</span><span class="p">(</span><span class="n">obsid</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">raise_exc</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">pytest</span><span class="o">.</span><span class="n">raises</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="n">match</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;missing required parameters&#39;</span><span class="p">):</span>
+        <span class="c1"># Obsid &gt; 0 implies missing pars are to be found in starcheck archive,</span>
+        <span class="c1"># but this one will certainly not be found.</span>
+        <span class="n">get_aca_catalog</span><span class="p">(</span><span class="n">obsid</span><span class="o">=</span><span class="mi">99999</span><span class="p">,</span> <span class="n">raise_exc</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="test_no_candidates"><a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_catalog.test_no_candidates">[docs]</a><span class="k">def</span> <span class="nf">test_no_candidates</span><span class="p">():</span>
@@ -389,13 +399,18 @@
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Check getting a catalog for a large SIM offset that means there are</span>
 <span class="sd">    no candidates.</span>
+
+<span class="sd">    Bonus: check that duration and target_name can be set.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">aca</span> <span class="o">=</span> <span class="n">get_aca_catalog</span><span class="p">(</span><span class="o">**</span><span class="n">mod_std_info</span><span class="p">(</span><span class="n">sim_offset</span><span class="o">=</span><span class="mi">200000</span><span class="p">,</span> <span class="n">raise_exc</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+    <span class="n">aca</span> <span class="o">=</span> <span class="n">get_aca_catalog</span><span class="p">(</span><span class="o">**</span><span class="n">mod_std_info</span><span class="p">(</span><span class="n">sim_offset</span><span class="o">=</span><span class="mi">200000</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span>
+                                         <span class="n">target_name</span><span class="o">=</span><span class="s1">&#39;Target Name&#39;</span><span class="p">,</span> <span class="n">raise_exc</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
     <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">aca</span><span class="o">.</span><span class="n">acqs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">8</span>
     <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">aca</span><span class="o">.</span><span class="n">guides</span><span class="p">)</span> <span class="o">==</span> <span class="mi">5</span>
     <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">aca</span><span class="o">.</span><span class="n">fids</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
     <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="s1">&#39;yang&#39;</span><span class="p">,</span> <span class="s1">&#39;zang&#39;</span><span class="p">,</span> <span class="s1">&#39;row&#39;</span><span class="p">,</span> <span class="s1">&#39;col&#39;</span><span class="p">,</span> <span class="s1">&#39;mag&#39;</span><span class="p">,</span> <span class="s1">&#39;spoiler_score&#39;</span><span class="p">,</span> <span class="s1">&#39;idx&#39;</span><span class="p">]</span>
-    <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="n">name</span> <span class="ow">in</span> <span class="n">aca</span><span class="o">.</span><span class="n">fids</span><span class="o">.</span><span class="n">colnames</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">)</span></div>
+    <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="n">name</span> <span class="ow">in</span> <span class="n">aca</span><span class="o">.</span><span class="n">fids</span><span class="o">.</span><span class="n">colnames</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">aca</span><span class="o">.</span><span class="n">duration</span> <span class="o">==</span> <span class="mi">10000</span>
+    <span class="k">assert</span> <span class="n">aca</span><span class="o">.</span><span class="n">target_name</span> <span class="o">==</span> <span class="s1">&#39;Target Name&#39;</span></div>
 
 
 <div class="viewcode-block" id="test_calling_with_t_ccd_acq_guide"><a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_catalog.test_calling_with_t_ccd_acq_guide">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span><span class="s1">&#39;call_t_ccd&#39;</span><span class="p">,</span> <span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">])</span>
