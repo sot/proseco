@@ -355,7 +355,7 @@ class GuideTable(ACACatalogTable):
           {"Stage": 1,
             "SigErrMultiplier": 3,
             "ASPQ1Lim": 0,
-            "MagLimit": [5.9, 10.2],
+            "MagLimit": [5.6, 10.2],
             "DoBminusVcheck": 1,
             "Spoiler": {
              "BgPixThresh": 25,
@@ -369,7 +369,7 @@ class GuideTable(ACACatalogTable):
 
         1. Candidate star magnitude is checked to see if it is within the range plus error.
         For stage 1 for example , each candidate star is checked to see if it is within the
-        5.9 to 10.2 mag range, minus padding for error (SigErrMultiplier * cand['mag_err']).
+        5.6 to 10.2 mag range, minus padding for error (SigErrMultiplier * cand['mag_err']).
 
         2. Candidates with ASPQ1 > stage ASPQ1Lim are marked for exclusion.
 
@@ -444,12 +444,12 @@ class GuideTable(ACACatalogTable):
         # For the bright end of the check, set a lower bound to always use at least 1
         # mag_err, but do not bother with this bound at the faint end of the check.
         # Also explicitly confirm that the star is not within 2 * mag_err of the hard
-        # bright limit (which is basically 5.8, but if bright lim set to less than 5.8
+        # bright limit (which is basically 5.2, but if bright lim set to less than 5.2
         # in the stage, take that).
         bad_mag = (
             ((cand_guides['mag'] - max(n_sigma, 1) * mag_err) < bright_lim) |
             ((cand_guides['mag'] + n_sigma * mag_err) > faint_lim) |
-            ((cand_guides['mag'] - 2 * mag_err) < min(bright_lim, 5.8)))
+            ((cand_guides['mag'] - 2 * mag_err) < min(bright_lim, 5.2)))
         for idx in np.flatnonzero(bad_mag):
             self.reject({'id': cand_guides['id'][idx],
                          'type': 'mag outside range',
@@ -568,7 +568,7 @@ class GuideTable(ACACatalogTable):
                               GUIDE.ref_faint_mag)
 
         ok = ((stars['CLASS'] == 0) &
-              (stars['mag'] > 5.8) &
+              (stars['mag'] > 5.2) &
               (stars['mag'] < faint_mag_limit) &
               (stars['mag_err'] < 1.0) &  # Mag err < 1.0 mag
               (stars['ASPQ1'] < 20) &  # Less than 1 arcsec offset from nearby spoiler
