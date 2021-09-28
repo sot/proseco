@@ -109,7 +109,7 @@ stages = [{"Stage": 1,
           {"Stage": 6,
            "SigErrMultiplier": 0,
            "ASPQ1Lim": 20,
-           "MagLimit": [5.2, 10.3],
+           "MagLimit": [5.0, 10.3],
            "DoBminusVcheck": 0,
            "Spoiler": {
                "BgPixThresh": 25,
