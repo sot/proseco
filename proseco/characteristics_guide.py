@@ -1,4 +1,5 @@
 import numpy as np
+from astropy.io import ascii
 
 # Fid trap effect
 # http://cxc.cfa.harvard.edu/mta/ASPECT/aca_weird_pixels/
@@ -36,14 +37,37 @@ err_map = {v: k for k, v in errs.items()}
 box_spoiler = {'halfbox': 5,
                'magdiff': -4}
 
-# Mag spoiler line rules
-mag_spoiler = {
-    "MinSep": 7,
-    "MaxSep": 11,
-    "Intercept": 9,
-    "Slope": 0.5,
-    "MagDiffLimit": -1 * np.inf,
-}
+# Spoiler max FM centroid offsets using the results of the right plot in Fig 2
+# of https://cxc.harvard.edu/mta/ASPECT/Papers/radial_spoilers.ps. The curves
+# below represent the 0.05 arcsec and 0.5 arcsec offset contours respectively.
+# Data were read off the plots using the app https://apps.automeris.io/wpd/. The
+# 0.0 arcsec offset is the same as the legacy SAUSAGE "direct catalog check" of
+# 9.0 mag - 0.5 * dist (pix).
+spoiler_fm_offset = {}
+
+spoiler_fm_offset[0.0] = ascii.read(
+    """dmag, sep
+       9.0, 0.0
+       4.0, 50.0""")
+
+spoiler_fm_offset[0.05] = ascii.read(
+    """dmag, sep
+       3.0, 0.0
+       4.08, 1.75
+       5.05, 5.19
+       5.45, 8.29""")
+
+spoiler_fm_offset[0.5] = ascii.read(
+    """dmag, sep
+       1.0, 0.0
+       2.97, 7.61
+       4.13, 13.27
+       4.04, 19.20
+       3.41, 25.34
+       1.85, 29.31
+       -0.01, 33.09
+       -1.13, 39.22
+       -4.24, 50.0""")
 
 # Search Stages
 stages = [{"Stage": 1,
@@ -54,6 +78,7 @@ stages = [{"Stage": 1,
            "Spoiler": {
                "BgPixThresh": 25,
                "RegionFrac": .05,
+               "FirstMomentOffset": 0.0,  # arcsec
            },
            "Imposter": {
                "CentroidOffsetLim": .2,
@@ -66,6 +91,7 @@ stages = [{"Stage": 1,
            "Spoiler": {
                "BgPixThresh": 25,
                "RegionFrac": .05,
+               "FirstMomentOffset": 0.0,
            },
            "Imposter": {
                "CentroidOffsetLim": .5,
@@ -78,6 +104,7 @@ stages = [{"Stage": 1,
            "Spoiler": {
                "BgPixThresh": 25,
                "RegionFrac": .05,
+               "FirstMomentOffset": 0.0,
            },
            "Imposter": {
                "CentroidOffsetLim": 1.0,
@@ -90,6 +117,7 @@ stages = [{"Stage": 1,
            "Spoiler": {
                "BgPixThresh": 25,
                "RegionFrac": .05,
+               "FirstMomentOffset": 0.05,
            },
            "Imposter": {
                "CentroidOffsetLim": 2.0,
@@ -102,6 +130,7 @@ stages = [{"Stage": 1,
            "Spoiler": {
                "BgPixThresh": 25,
                "RegionFrac": .05,
+               "FirstMomentOffset": 0.5,
            },
            "Imposter": {
                "CentroidOffsetLim": 3.5,
@@ -114,6 +143,7 @@ stages = [{"Stage": 1,
            "Spoiler": {
                "BgPixThresh": 25,
                "RegionFrac": .05,
+               "FirstMomentOffset": 0.5,
            },
            "Imposter": {
                "CentroidOffsetLim": 4.0,

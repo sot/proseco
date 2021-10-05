@@ -499,7 +499,8 @@ class GuideTable(ACACatalogTable):
         ok = ok & ~imp_spoil
 
         # Check for 'direct catalog search' spoilers
-        mag_spoil, mag_rej = check_mag_spoilers(cand_guides, ok, stars, n_sigma)
+        mag_spoil, mag_rej = check_mag_spoilers(cand_guides, ok, stars, n_sigma,
+                                                stage['Spoiler']['FirstMomentOffset'])
         for rej in mag_rej:
             rej['stage'] = stage['Stage']
             self.reject(rej)
@@ -842,7 +843,7 @@ def check_spoil_contrib(cand_stars, ok, stars, regfrac, bgthresh):
     return bg_spoiled, reg_spoiled, rej
 
 
-def check_mag_spoilers(cand_stars, ok, stars, n_sigma):
+def check_mag_spoilers(cand_stars, ok, stars, n_sigma, fm_offset):
     """
     Use the slope-intercept mag-spoiler relationship to exclude all
     stars that have a "mag spoiler".  This is basically equivalent to the
@@ -855,11 +856,10 @@ def check_mag_spoilers(cand_stars, ok, stars, n_sigma):
     :param ok: mask on cand_stars describing those that are still "ok"
     :param stars: Table of AGASC stars in this field
     :param n_sigma: multiplier use for MAG_ACA_ERR when reviewing spoilers
+    :param fm_offset: allowed FM centroid offset due to spoiler
     :returns: bool mask of length cand_stars marking mag_spoiled stars, list of reject debug dicts
     """
-    intercept = GUIDE.mag_spoiler['Intercept']
-    spoilslope = GUIDE.mag_spoiler['Slope']
-    magdifflim = GUIDE.mag_spoiler['MagDiffLimit']
+    spoiler_fm_offset = GUIDE.spoiler_fm_offset[fm_offset]
 
     # If there are already no candidates, there isn't anything to do
     if not np.any(ok):
@@ -883,24 +883,37 @@ def check_mag_spoilers(cand_stars, ok, stars, n_sigma):
             spoil = stars[spoil_idx]
             if spoil['id'] == cand['id']:
                 continue
-            if (cand['mag'] - spoil['mag']) < magdifflim:
-                continue
+
             mag_err_sum = np.sqrt((cand['MAG_ACA_ERR'] * 0.01) ** 2 +
                                   (spoil['MAG_ACA_ERR'] * 0.01) ** 2)
-            delmag = cand['mag'] - spoil['mag'] + n_sigma * mag_err_sum
-            thsep = intercept + delmag * spoilslope
+
+            # Delta mag is spoiler - candidate so more positive means spoiler is fainter,
+            # e.g. delmag = +4.5 means spoiler is 4.5 mag fainter than candidate.
+            delmag = spoil['mag'] - (cand['mag'] + n_sigma * mag_err_sum)
+
+            # Separation in arcsec
             dist = np.sqrt(((cand['row'] - spoil['row']) ** 2) +
                            ((cand['col'] - spoil['col']) ** 2))
-            if dist < thsep:
+
+            # Interpolate spoiler mag from FM offset curve, using dist in arcsec not pixels.
+            # Curves defined between 0 and 50 arcsec, np.interp clips outside that range.
+            dmag_thresh = np.interp(x=dist * 5,
+                                    xp=spoiler_fm_offset['sep'],
+
+                                    fp=spoiler_fm_offset['dmag'])
+            # If delmag is not big enough then spoiler is too bright
+            if delmag < dmag_thresh:
+                text = (f'Cand {cand["id"]} spoiled by {spoil["id"]}, '
+                        f'mag diff too small ({delmag:.1f} < {dmag_thresh:.1f} allowed) '
+                        f'for stage FM offset {fm_offset}')
                 rej.append({'id': cand['id'],
                             'spoiler': spoil['id'],
                             'spoiler_mag': spoil['mag'],
                             'dmag_with_err': delmag,
-                            'min_dist_for_dmag': thsep,
+                            'dmag_thresh_for_sep': dmag_thresh,
                             'actual_dist': dist,
                             'type': 'spoiler by distance-mag line',
-                            'text': (f'Cand {cand["id"]} spoiled by {spoil["id"]}, '
-                                     f'too close ({dist:.1f}) pix for magdiff ({delmag:.1f})')})
+                            'text': text})
                 mag_spoiled[cand['id'] == cand_stars['id']] = True
                 continue
 

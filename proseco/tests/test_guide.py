@@ -17,7 +17,6 @@ from chandra_aca.transform import mag_to_count_rate, count_rate_to_mag
 from ..guide import (get_guide_catalog, check_spoil_contrib, get_pixmag_for_offset,
                      check_mag_spoilers, get_ax_range, check_column_spoilers, GUIDE)
 from ..report_guide import make_report
-from ..characteristics_guide import mag_spoiler
 from ..characteristics import CCD
 from ..core import StarsTable
 from .test_common import STD_INFO, mod_std_info, OBS_INFO, DARK40
@@ -302,7 +301,7 @@ def test_check_spoiler_cases():
             spoiled.append(1 if (1 not in selected['id']) else 0)
     spoiled = np.array(spoiled).reshape(-1, len(drcs)).tolist()
     #                    0  2  4  6  8 10 12 pixels
-    expected_spoiled = [[1, 1, 1, 1, 1, 0, 0],  # dmag = 0
+    expected_spoiled = [[1, 1, 1, 1, 0, 0, 0],  # dmag = 0
                         [1, 1, 1, 1, 0, 0, 0],  # dmag = 3
                         [1, 1, 1, 1, 0, 0, 0]]  # dmag = 7
     assert spoiled == expected_spoiled
@@ -358,34 +357,54 @@ def test_pix_spoiler(case):
     assert (1 not in selected['id']) == case['spoils']
 
 
-def test_check_mag_spoilers():
+def test_check_mag_spoilers_spot():
     """
     Check that spoiling stars that should spoil a candidated due to the
-    mag/line test actually spoil the candidate star.
-
-    The check_mag_spoilers function sets a star to spoil another star if it
-    is closer than a required separation for the magnitude difference
-    (a faint star can be closer to a candidate star without spoiling it).
-    The line test is defined in the mag_spoiler parameters Intercept and Slope.
+    centroid offset test actually spoil the candidate star.
     """
-    intercept = mag_spoiler['Intercept']
-    spoilslope = mag_spoiler['Slope']
+    star1 = {'row': 0, 'col': 0, 'mag': 9.0, 'MAG_ACA_ERR': 0, 'id': 1}
+    star2 = {'row': 3, 'col': 0, 'mag': star1['mag'] + 3.5, 'MAG_ACA_ERR': 0, 'id': 2}
+    cand_stars = Table([star1])
+    stars = Table([star1, star2])
+    spoiled, rej = check_mag_spoilers(cand_stars, np.array([True]), stars,
+                                      n_sigma=0, fm_offset=0.5)
+    assert spoiled[0]
+    assert len(rej) == 1
+
+    star2 = {'row': 3, 'col': 0, 'mag': star1['mag'] + 4.5, 'MAG_ACA_ERR': 0, 'id': 2}
+    stars = Table([star1, star2])
+    spoiled, rej = check_mag_spoilers(cand_stars, np.array([True]), stars,
+                                      n_sigma=0, fm_offset=0.5)
+    assert not spoiled[0]
+    assert len(rej) == 0
+
+
+def test_check_mag_spoilers_grid():
+    """
+    Check that spoiling stars that should spoil a candidated due to the
+    centroid offset test actually spoil the candidate star.
+    """
     star1 = {'row': 0, 'col': 0, 'mag': 9.0, 'MAG_ACA_ERR': 0, 'id': 1}
 
     # The mag spoiler check only works on stars that are within 10 pixels in row
     # or column, so don't bother simulating stars outside that distance
     r_dists = np.arange(-9.25, 10, 2)
     c_dists = np.arange(-9.5, 10, 2)
-    magdiffs = np.arange(2, -5, -.5)
+    magdiffs = np.array([-1, -0.01, 0.01, 1])
+    spoiler_fm_offset = GUIDE.spoiler_fm_offset[0.5]
 
     for r_dist, c_dist, magdiff in itertools.product(r_dists, c_dists, magdiffs):
-        star2 = {'row': r_dist, 'col': c_dist, 'mag': star1['mag'] - magdiff,
-                 'MAG_ACA_ERR': 0, 'id': 2}
         dist = np.sqrt(r_dist ** 2 + c_dist ** 2)
+        dmag_thresh = np.interp(x=dist * 5,
+                                xp=spoiler_fm_offset['sep'],
+                                fp=spoiler_fm_offset['dmag'])
+        mag2 = star1['mag'] + magdiff + dmag_thresh
+        star2 = {'row': r_dist, 'col': c_dist, 'mag': mag2,
+                 'MAG_ACA_ERR': 0, 'id': 2}
         stars = Table([star1, star2])
-        spoiled, rej = check_mag_spoilers(stars, np.array([True, True]), stars, 0)
-        req_sep = intercept + magdiff * spoilslope
-        assert (dist < req_sep) == spoiled[0]
+        spoiled, rej = check_mag_spoilers(stars, np.array([True, True]), stars,
+                                          n_sigma=0, fm_offset=0.5)
+        assert (magdiff < 0) == spoiled[0]
 
 
 def test_warnings():
