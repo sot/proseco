@@ -845,10 +845,16 @@ def check_spoil_contrib(cand_stars, ok, stars, regfrac, bgthresh):
 
 def check_mag_spoilers(cand_stars, ok, stars, n_sigma, fm_offset):
     """
-    Use the slope-intercept mag-spoiler relationship to exclude all
-    stars that have a "mag spoiler".  This is basically equivalent to the
-    "direct catalog search" for spoilers in SAUSAGE, but does not forbid
-    all stars within 7 pixels (spoilers must be faint to be close).
+    Check for star spoilers using max FM centroid offsets.
+
+    This function derives a delta mag threshold between a spoiler and the
+    candidate star which corresponds to a particular stage FM centroid offset
+    (e.g. 0.05 or 0.5 arcsec) imposed by that spoiler. The FM centroid offset
+    thresholds are based on the results of the right plot in Fig 2 of
+    https://cxc.harvard.edu/mta/ASPECT/Papers/radial_spoilers.ps.
+
+    The 0.0 arcsec offset used in early stages is the same as the legacy SAUSAGE
+    "direct catalog check" of 9.0 mag - 0.5 * dist (pix).
 
     The n-sigma changes by stage for the mags/magerrs used in the check.
 
@@ -856,7 +862,8 @@ def check_mag_spoilers(cand_stars, ok, stars, n_sigma, fm_offset):
     :param ok: mask on cand_stars describing those that are still "ok"
     :param stars: Table of AGASC stars in this field
     :param n_sigma: multiplier use for MAG_ACA_ERR when reviewing spoilers
-    :param fm_offset: allowed FM centroid offset due to spoiler
+    :param fm_offset: allowed FM centroid offset due to spoiler (0.0, 0.05, or 0.5 arcsec)
+
     :returns: bool mask of length cand_stars marking mag_spoiled stars, list of reject debug dicts
     """
     spoiler_fm_offset = GUIDE.spoiler_fm_offset[fm_offset]
