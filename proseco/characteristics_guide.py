@@ -48,7 +48,7 @@ spoiler_fm_offset = {}
 spoiler_fm_offset[0.0] = ascii.read(
     """dmag, sep
        9.0, 0.0
-       4.0, 50.0""")
+       -1.0, 100.0""")
 
 spoiler_fm_offset[0.05] = ascii.read(
     """dmag, sep
