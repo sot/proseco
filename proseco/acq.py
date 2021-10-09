@@ -278,7 +278,7 @@ class AcqTable(ACACatalogTable):
 
         """
         ok = ((stars['CLASS'] == 0) &
-              (stars['mag'] > 5.9) &
+              (stars['mag'] > 5.3) &
               (stars['mag'] < 11.0) &
               (~np.isclose(stars['COLOR1'], 0.7)) &
               (stars['mag_err'] < 1.0) &  # Mag err < 1.0 mag
