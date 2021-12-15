@@ -281,10 +281,34 @@ class GuideTable(ACACatalogTable):
         self.log('Done with search stages')
         stage_cands = cand_guides[cand_guides['stage'] != -1]
         stage_cands.sort(['stage', 'mag'])
+        stage_cands = self.exclude_overlaps(stage_cands)
         guides = self.select_catalog(stage_cands[0:n_guide + GUIDE.surplus_stars])
         if len(guides) < self.n_guide:
             self.log(f'Could not find {self.n_guide} candidates after all search stages')
         return guides
+
+    def exclude_overlaps(self, stage_cands):
+        """
+        Review the stars selected at any stage and exclude stars that overlap in
+        tracking space with another. Overlap is defined as 60 arcsecs in Y and Z.
+        """
+        self.log(f'Checking for guide star overlap in stage-selected stars')
+        nok = np.zeros(len(stage_cands)).astype(bool)
+        for idx, star in enumerate(stage_cands):
+            for jdx, other_star in enumerate(stage_cands):
+                if idx <= jdx:
+                    continue
+                dy = other_star['yang'] - star['yang']
+                dz = other_star['zang'] - star['zang']
+                if np.abs(dy) < 60 and np.abs(dz) < 60:
+                    self.log(
+                        f"Rejected star {star['id']} as has track overlap with {other_star['id']}")
+                    self.reject(
+                        {'id': star['id'],
+                         'type': 'overlap',
+                         'text': f'Cand {star["id"]} has track overlap with {other_star["id"]}'})
+                    nok[idx] = True
+        return stage_cands[~nok]
 
     def select_catalog(self, stage_cands):
         """
