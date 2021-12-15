@@ -296,7 +296,7 @@ def test_check_spoiler_cases():
             stars.add_fake_star(row=r, col=c, mag=mag0, id=1, ASPQ1=1)
             # Add a "spoiling" star and move it from center past edge through
             # the drcs
-            stars.add_fake_star(row=r + drc, col=c, mag=mag0 + dmag, id=2, ASPQ1=0)
+            stars.add_fake_star(row=r + drc, col=c, mag=mag0 + dmag, id=2, ASPQ1=30)
             selected = get_guide_catalog(**STD_INFO, stars=stars, dark=dark)
             # Is the id=1 star spoiled / not selected?
             spoiled.append(1 if (1 not in selected['id']) else 0)
@@ -316,7 +316,7 @@ def test_check_spoiler_cases():
             stars = StarsTable.empty()
             stars.add_fake_star(row=r, col=c, mag=mag0, id=1, ASPQ1=1)
             # Add a "spoiling" star 5 mags fainter and move it from center out through a corner
-            stars.add_fake_star(row=r + drc, col=c + drc, mag=mag0 + dmag, id=2, ASPQ1=0)
+            stars.add_fake_star(row=r + drc, col=c + drc, mag=mag0 + dmag, id=2, ASPQ1=30)
             selected = get_guide_catalog(**STD_INFO, stars=stars, dark=dark)
             spoiled.append(1 if (1 not in selected['id']) else 0)
     spoiled = np.array(spoiled).reshape(-1, len(drcs)).tolist()
@@ -324,7 +324,23 @@ def test_check_spoiler_cases():
     expected_spoiled = [[1, 1, 1, 1, 0, 0, 0],  # dmag = 3
                         [1, 1, 1, 1, 0, 0, 0],  # dmag = 5
                         [1, 1, 1, 1, 0, 0, 0]]  # dmag = 7
+    assert spoiled == expected_spoiled
 
+    # Add a brighter "spoiler" that is a good guide star and confirm the test for
+    # overlapping selected stars works until just past 60 arcsec (12 pixels).
+    spoiled = []
+    for drc in drcs:
+        r = 10
+        c = 10
+        stars = StarsTable.empty()
+        stars.add_fake_star(row=r, col=c, mag=mag0, id=1, ASPQ1=0)
+        # Add a brighter spoiling star
+        stars.add_fake_star(row=r + drc, col=c + drc, mag=mag0 - 0.5, id=2, ASPQ1=0)
+        selected = get_guide_catalog(**STD_INFO, stars=stars, dark=dark)
+        spoiled.append(1 if (1 not in selected['id']) else 0)
+    spoiled = np.array(spoiled).reshape(-1, len(drcs)).tolist()
+    #                    0  2  4  6  8 10 12 pixels
+    expected_spoiled = [[1, 1, 1, 1, 1, 1, 0]]
     assert spoiled == expected_spoiled
 
 
