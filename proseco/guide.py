@@ -295,6 +295,11 @@ class GuideTable(ACACatalogTable):
         self.log(f'Checking for guide star overlap in stage-selected stars')
         nok = np.zeros(len(stage_cands)).astype(bool)
         for idx, star in enumerate(stage_cands):
+
+            # If the star was manually-selected, don't bother checking to possibly exclude it.
+            if star['id'] in self.include_ids:
+                continue
+
             for jdx, other_star in enumerate(stage_cands):
 
                 # The stage_cands are supplied in the order of preference (currently by mag)
@@ -309,6 +314,7 @@ class GuideTable(ACACatalogTable):
                     self.reject(
                         {'id': star['id'],
                          'type': 'overlap',
+                         'stage': 0,
                          'text': f'Cand {star["id"]} has track overlap with {other_star["id"]}'})
                     nok[idx] = True
         return stage_cands[~nok]
