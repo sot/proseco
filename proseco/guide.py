@@ -296,6 +296,9 @@ class GuideTable(ACACatalogTable):
         nok = np.zeros(len(stage_cands)).astype(bool)
         for idx, star in enumerate(stage_cands):
             for jdx, other_star in enumerate(stage_cands):
+
+                # The stage_cands are supplied in the order of preference (currently by mag)
+                # Check and exclude a guide star only if it would spoil a lower index (better) star.
                 if idx <= jdx:
                     continue
                 dy = other_star['yang'] - star['yang']
