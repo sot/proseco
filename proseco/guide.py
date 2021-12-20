@@ -290,7 +290,7 @@ class GuideTable(ACACatalogTable):
     def exclude_overlaps(self, stage_cands):
         """
         Review the stars selected at any stage and exclude stars that overlap in
-        tracking space with another. Overlap is defined as 60 arcsecs in Y and Z.
+        tracking space with another. Overlap is defined as being within 12 pixels.
         """
         self.log(f'Checking for guide star overlap in stage-selected stars')
         nok = np.zeros(len(stage_cands)).astype(bool)
@@ -306,16 +306,19 @@ class GuideTable(ACACatalogTable):
                 # Check and exclude a guide star only if it would spoil a lower index (better) star.
                 if idx <= jdx:
                     continue
-                dy = other_star['yang'] - star['yang']
-                dz = other_star['zang'] - star['zang']
-                if np.abs(dy) < 60 and np.abs(dz) < 60:
+                drow = other_star['row'] - star['row']
+                dcol = other_star['col'] - star['col']
+                if np.abs(drow) <= 12 and np.abs(dcol) <= 12:
                     self.log(
-                        f"Rejected star {star['id']} as has track overlap with {other_star['id']}")
+                        f"Rejecting star {star['id']} with track overlap (12 pixels) "
+                        f"with star {other_star['id']}")
                     self.reject(
                         {'id': star['id'],
                          'type': 'overlap',
                          'stage': 0,
-                         'text': f'Cand {star["id"]} has track overlap with {other_star["id"]}'})
+                         'text':
+                         f'Cand {star["id"]} has track overlap (12 pixels) '
+                         f'with star {other_star["id"]}'})
                     nok[idx] = True
         return stage_cands[~nok]
 
