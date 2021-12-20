@@ -292,7 +292,7 @@ class GuideTable(ACACatalogTable):
         Review the stars selected at any stage and exclude stars that overlap in
         tracking space with another. Overlap is defined as being within 12 pixels.
         """
-        self.log(f'Checking for guide star overlap in stage-selected stars')
+        self.log('Checking for guide star overlap in stage-selected stars')
         nok = np.zeros(len(stage_cands)).astype(bool)
         for idx, star in enumerate(stage_cands):
 
