@@ -296,7 +296,7 @@ def test_check_spoiler_cases():
             stars.add_fake_star(row=r, col=c, mag=mag0, id=1, ASPQ1=1)
             # Add a "spoiling" star and move it from center past edge through
             # the drcs
-            stars.add_fake_star(row=r + drc, col=c, mag=mag0 + dmag, id=2, ASPQ1=30)
+            stars.add_fake_star(row=r + drc, col=c, mag=mag0 + dmag, id=2, ASPQ1=0, CLASS=1)
             selected = get_guide_catalog(**STD_INFO, stars=stars, dark=dark)
             # Is the id=1 star spoiled / not selected?
             spoiled.append(1 if (1 not in selected['id']) else 0)
@@ -316,7 +316,7 @@ def test_check_spoiler_cases():
             stars = StarsTable.empty()
             stars.add_fake_star(row=r, col=c, mag=mag0, id=1, ASPQ1=1)
             # Add a "spoiling" star 5 mags fainter and move it from center out through a corner
-            stars.add_fake_star(row=r + drc, col=c + drc, mag=mag0 + dmag, id=2, ASPQ1=30)
+            stars.add_fake_star(row=r + drc, col=c + drc, mag=mag0 + dmag, id=2, ASPQ1=0, CLASS=1)
             selected = get_guide_catalog(**STD_INFO, stars=stars, dark=dark)
             spoiled.append(1 if (1 not in selected['id']) else 0)
     spoiled = np.array(spoiled).reshape(-1, len(drcs)).tolist()
