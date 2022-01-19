@@ -295,8 +295,9 @@ def test_check_spoiler_cases():
             stars = StarsTable.empty()
             stars.add_fake_star(row=r, col=c, mag=mag0, id=1, ASPQ1=1)
             # Add a "spoiling" star and move it from center past edge through
-            # the drcs
-            stars.add_fake_star(row=r + drc, col=c, mag=mag0 + dmag, id=2, ASPQ1=0)
+            # the drcs.  The spoiling star is set with CLASS=1 so it is also not a
+            # selectable guide star.
+            stars.add_fake_star(row=r + drc, col=c, mag=mag0 + dmag, id=2, ASPQ1=0, CLASS=1)
             selected = get_guide_catalog(**STD_INFO, stars=stars, dark=dark)
             # Is the id=1 star spoiled / not selected?
             spoiled.append(1 if (1 not in selected['id']) else 0)
@@ -316,7 +317,8 @@ def test_check_spoiler_cases():
             stars = StarsTable.empty()
             stars.add_fake_star(row=r, col=c, mag=mag0, id=1, ASPQ1=1)
             # Add a "spoiling" star 5 mags fainter and move it from center out through a corner
-            stars.add_fake_star(row=r + drc, col=c + drc, mag=mag0 + dmag, id=2, ASPQ1=0)
+            # The spoiling star is set with CLASS=1 so it is also not a selectable guide star.
+            stars.add_fake_star(row=r + drc, col=c + drc, mag=mag0 + dmag, id=2, ASPQ1=0, CLASS=1)
             selected = get_guide_catalog(**STD_INFO, stars=stars, dark=dark)
             spoiled.append(1 if (1 not in selected['id']) else 0)
     spoiled = np.array(spoiled).reshape(-1, len(drcs)).tolist()
@@ -324,8 +326,73 @@ def test_check_spoiler_cases():
     expected_spoiled = [[1, 1, 1, 1, 0, 0, 0],  # dmag = 3
                         [1, 1, 1, 1, 0, 0, 0],  # dmag = 5
                         [1, 1, 1, 1, 0, 0, 0]]  # dmag = 7
-
     assert spoiled == expected_spoiled
+
+
+def test_overlap_spoiler():
+    """
+    Add a brighter "spoiler" that is a good guide star and confirm the test for
+    overlapping selected stars works until just past (12 pixels).
+    """
+
+    # Use a blank dark map to skip imposter checks
+    dark = ACAImage(np.zeros((1024, 1024)), row0=-512, col0=-512)
+
+    spoiled = []
+    drcs = np.arange(6, 17, 2)
+    for drc in drcs:
+        r = 10
+        c = 10
+        stars = StarsTable.empty()
+        stars.add_fake_star(row=r, col=c, mag=9, id=1, ASPQ1=0)
+        # Add a brighter spoiling star
+        stars.add_fake_star(row=r, col=c + drc, mag=7, id=2, ASPQ1=0)
+        selected = get_guide_catalog(**STD_INFO, stars=stars, dark=dark)
+        spoiled.append(1 if (1 not in selected['id']) else 0)
+    #                   6  8 10 12 14 16  pixels
+    expected_spoiled = [1, 1, 1, 1, 0, 0]
+    assert spoiled == expected_spoiled
+
+
+def test_overlap_spoiler_include():
+    """
+    Add test for overlap-star handling in cases where one or both
+    stars is in includes_ids_guide.
+    """
+    stars = StarsTable.empty()
+
+    # First, set this up with a constellation and 1 manual bright star
+    stars.add_fake_constellation(n_stars=7, mag=9)
+    stars.add_fake_star(id=1, mag=8, row=50, col=-50)
+    aca1 = get_guide_catalog(**mod_std_info(n_fid=0, n_guide=8), obsid=40000,
+                             stars=stars, dark=DARK40)
+
+    # The bright star should be included
+    assert 1 in aca1['id']
+
+    # Add another bright star within 10 pixels of id 1
+    stars.add_fake_star(id=2, mag=8.5, row=60, col=-50)
+    aca2 = get_guide_catalog(**mod_std_info(n_fid=0, n_guide=8), obsid=40000,
+                             stars=stars, dark=DARK40)
+
+    # The id 2 star is a (within 12 pixels) overlap spoiler and fainter
+    # so should not be selected
+    assert 2 not in aca2['id']
+    assert 1 in aca2['id']
+
+    # Force include the fainter star (id 2) and 1 should not be selected
+    aca3 = get_guide_catalog(**mod_std_info(n_fid=0, n_guide=8), obsid=40000,
+                             stars=stars, dark=DARK40,
+                             include_ids_guide=[2])
+    assert 2 in aca3['id']
+    assert 1 not in aca3['id']
+
+    # Force include them both and they should still be selected.
+    aca4 = get_guide_catalog(**mod_std_info(n_fid=0, n_guide=8), obsid=40000,
+                             stars=stars, dark=DARK40,
+                             include_ids_guide=[1, 2])
+    assert 2 in aca4['id']
+    assert 1 in aca4['id']
 
 
 pix_cases = [{'dither': (8, 8), 'offset_row': 4, 'offset_col': 4, 'spoils': True},

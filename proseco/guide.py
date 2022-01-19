@@ -281,10 +281,46 @@ class GuideTable(ACACatalogTable):
         self.log('Done with search stages')
         stage_cands = cand_guides[cand_guides['stage'] != -1]
         stage_cands.sort(['stage', 'mag'])
+        stage_cands = self.exclude_overlaps(stage_cands)
         guides = self.select_catalog(stage_cands[0:n_guide + GUIDE.surplus_stars])
         if len(guides) < self.n_guide:
             self.log(f'Could not find {self.n_guide} candidates after all search stages')
         return guides
+
+    def exclude_overlaps(self, stage_cands):
+        """
+        Review the stars selected at any stage and exclude stars that overlap in
+        tracking space with another. Overlap is defined as being within 12 pixels.
+        """
+        self.log('Checking for guide star overlap in stage-selected stars')
+        nok = np.zeros(len(stage_cands)).astype(bool)
+        for idx, star in enumerate(stage_cands):
+
+            # If the star was manually-selected, don't bother checking to possibly exclude it.
+            if star['id'] in self.include_ids:
+                continue
+
+            for jdx, other_star in enumerate(stage_cands):
+
+                # The stage_cands are supplied in the order of preference (currently by mag)
+                # Check and exclude a guide star only if it would spoil a lower index (better) star.
+                if idx <= jdx:
+                    continue
+                drow = other_star['row'] - star['row']
+                dcol = other_star['col'] - star['col']
+                if np.abs(drow) <= 12 and np.abs(dcol) <= 12:
+                    self.log(
+                        f"Rejecting star {star['id']} with track overlap (12 pixels) "
+                        f"with star {other_star['id']}")
+                    self.reject(
+                        {'id': star['id'],
+                         'type': 'overlap',
+                         'stage': 0,
+                         'text':
+                         f'Cand {star["id"]} has track overlap (12 pixels) '
+                         f'with star {other_star["id"]}'})
+                    nok[idx] = True
+        return stage_cands[~nok]
 
     def select_catalog(self, stage_cands):
         """
