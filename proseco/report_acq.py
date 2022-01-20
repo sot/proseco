@@ -481,7 +481,7 @@ def plot_imposters(acq, dark, dither, vmin=100, vmax=2000,
     ax.set_xlabel('Row')
     yticks_loc = ax.get_yticks().tolist()
     yticks = [str(int(label) + img.col0) for label in yticks_loc]
-    x.yaxis.set_major_locator(FixedLocator(yticks_loc))
+    ax.yaxis.set_major_locator(FixedLocator(yticks_loc))
     ax.set_yticklabels(yticks)
     ax.set_ylabel('Column')
     ax.set_title('Red boxes show search box size + dither')
