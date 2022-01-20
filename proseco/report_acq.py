@@ -7,6 +7,7 @@ from pathlib import Path
 import matplotlib
 matplotlib.use('agg')  # noqa
 from matplotlib import patches
+from matplotlib.ticker import FixedLocator
 import matplotlib.pyplot as plt
 import numpy as np
 from jinja2 import Template
@@ -473,10 +474,14 @@ def plot_imposters(acq, dark, dither, vmin=100, vmax=2000,
 
     # Hack to fix up ticks to have proper row/col coords.  There must be a
     # correct way to do this.
-    xticks = [str(int(label) + img.row0) for label in ax.get_xticks().tolist()]
+    xticks_loc = ax.get_xticks().tolist()
+    xticks = [str(int(label) + img.row0) for label in xticks_loc]
+    ax.xaxis.set_major_locator(FixedLocator(xticks_loc))
     ax.set_xticklabels(xticks)
     ax.set_xlabel('Row')
-    yticks = [str(int(label) + img.col0) for label in ax.get_yticks().tolist()]
+    yticks_loc = ax.get_yticks().tolist()
+    yticks = [str(int(label) + img.col0) for label in yticks_loc]
+    x.yaxis.set_major_locator(FixedLocator(yticks_loc))
     ax.set_yticklabels(yticks)
     ax.set_ylabel('Column')
     ax.set_title('Red boxes show search box size + dither')
