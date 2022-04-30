@@ -109,7 +109,8 @@ stages = [{"Stage": 1,
           {"Stage": 6,
            "SigErrMultiplier": 0,
            "ASPQ1Lim": 20,
-           "MagLimit": [5.0, 10.3],
+           # Final stage mag faint limit set by acceptance into candidate list
+           "MagLimit": [5.0, 20.0],
            "DoBminusVcheck": 0,
            "Spoiler": {
                "BgPixThresh": 25,
