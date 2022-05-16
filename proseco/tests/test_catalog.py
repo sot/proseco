@@ -885,3 +885,31 @@ def test_img_size_guide():
 
     with pytest.raises(ValueError, match='img_size must be 4, 6, 8, or None'):
         get_aca_catalog(**mod_std_info(stars=stars, dark=dark, img_size_guide=3))
+
+
+def test_dyn_bgd_star_bonus():
+    """Test the star bonus for dynamic background functionality.
+    """
+    kwargs = {
+        'obsid': 23700.0,
+        'att': [-0.13602497, -0.86019897, -0.44064759, 0.21768013],
+        'date': '2022:054:19:46:41.730',
+        'detector': 'ACIS-S',
+        'dither_acq': [8, 8],
+        'dither_guide': [8, 8],
+        'man_angle': 59.59,
+        'n_acq': 8,
+        'n_fid': 3,
+        'n_guide': 5,
+        'sim_offset': 0.0,
+        'focus_offset': 0.0,
+        't_ccd_acq': -12.18,
+        't_ccd_guide': -12.18,
+        't_ccd_penalty_limit': -6.8}
+
+    aca_leg = get_aca_catalog(**kwargs, dyn_bgd_n_faint=0)
+    aca_dyn = get_aca_catalog(**kwargs, dyn_bgd_n_faint=2, dyn_bgd_dt_ccd=-4.0)
+    acar_leg = aca_leg.get_review_table()
+    acar_dyn = aca_dyn.get_review_table()
+    print(np.isclose(acar_leg.guide_count, 4.46, rtol=0, atol=0.1))
+    print(np.isclose(acar_dyn.guide_count, 4.92, rtol=0, atol=0.1))
