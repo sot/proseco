@@ -4,16 +4,15 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>proseco.tests.test_guide &#8212; proseco 5.5.0 documentation</title>
-    <link rel="stylesheet" href="../../../_static/bootstrap-astropy.css" type="text/css" />
-    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>proseco.tests.test_guide &#8212; proseco 5.6.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/bootstrap-astropy.css" />
     
-    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
     <script src="../../../_static/jquery.js"></script>
     <script src="../../../_static/underscore.js"></script>
     <script src="../../../_static/doctools.js"></script>
-    <script src="../../../_static/language_data.js"></script>
     <script type="text/javascript" src="../../../_static/sidebar.js"></script>
     <script type="text/javascript" src="../../../_static/copybutton.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
@@ -47,7 +46,7 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../../index.html">proseco 5.5.0 documentation</a>
+	<a href="../../../index.html">proseco 5.6.0 documentation</a>
 	 &#187;
       </li>
       <li><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
@@ -283,13 +282,13 @@
     <span class="n">APL</span> <span class="o">=</span> <span class="n">AcaPsfLibrary</span><span class="p">()</span>
 
     <span class="c1"># Then use one star and test with various pixels</span>
-    <span class="n">star</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;row&#39;</span><span class="p">:</span> <span class="o">-.</span><span class="mi">5</span><span class="p">,</span> <span class="s1">&#39;col&#39;</span><span class="p">:</span> <span class="o">.</span><span class="mi">5</span><span class="p">,</span> <span class="s1">&#39;mag&#39;</span><span class="p">:</span> <span class="mf">9.0</span><span class="p">,</span> <span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+    <span class="n">star</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;row&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">.5</span><span class="p">,</span> <span class="s1">&#39;col&#39;</span><span class="p">:</span> <span class="mf">.5</span><span class="p">,</span> <span class="s1">&#39;mag&#39;</span><span class="p">:</span> <span class="mf">9.0</span><span class="p">,</span> <span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
 
     <span class="c1"># Confirm that when the bad pixel is bright enough to shift the centroid</span>
     <span class="c1"># by N arcsecs that the mag/offset code agrees</span>
     <span class="n">rs</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
     <span class="n">cs</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
-    <span class="n">lims</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="o">.</span><span class="mi">5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">]</span>
+    <span class="n">lims</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">]</span>
     <span class="n">pixvals</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">250</span><span class="p">,</span> <span class="mi">5000</span><span class="p">,</span> <span class="mi">250</span><span class="p">)</span>
 
     <span class="k">for</span> <span class="n">r_dist</span><span class="p">,</span> <span class="n">c_dist</span><span class="p">,</span> <span class="n">lim</span><span class="p">,</span> <span class="n">pixval</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="n">rs</span><span class="p">,</span> <span class="n">cs</span><span class="p">,</span> <span class="n">lims</span><span class="p">,</span> <span class="n">pixvals</span><span class="p">):</span>
@@ -326,7 +325,7 @@
     <span class="n">stars</span> <span class="o">=</span> <span class="n">StarsTable</span><span class="o">.</span><span class="n">empty</span><span class="p">()</span>
     <span class="n">stars</span><span class="o">.</span><span class="n">add_fake_star</span><span class="p">(</span><span class="n">row</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">mag</span><span class="o">=</span><span class="mf">8.0</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ASPQ1</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">stars</span><span class="o">.</span><span class="n">add_fake_star</span><span class="p">(</span><span class="n">row</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">col</span><span class="o">=-</span><span class="mi">5</span><span class="p">,</span> <span class="n">mag</span><span class="o">=</span><span class="mf">6.0</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">ASPQ1</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-    <span class="n">bg_spoil</span><span class="p">,</span> <span class="n">reg_spoil</span><span class="p">,</span> <span class="n">rej</span> <span class="o">=</span> <span class="n">check_spoil_contrib</span><span class="p">(</span><span class="n">stars</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">]),</span> <span class="n">stars</span><span class="p">,</span> <span class="o">.</span><span class="mi">05</span><span class="p">,</span> <span class="mi">25</span><span class="p">)</span>
+    <span class="n">bg_spoil</span><span class="p">,</span> <span class="n">reg_spoil</span><span class="p">,</span> <span class="n">rej</span> <span class="o">=</span> <span class="n">check_spoil_contrib</span><span class="p">(</span><span class="n">stars</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">]),</span> <span class="n">stars</span><span class="p">,</span> <span class="mf">.05</span><span class="p">,</span> <span class="mi">25</span><span class="p">)</span>
     <span class="k">assert</span> <span class="n">reg_spoil</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
     <span class="c1"># Construct a case where a star spoils just a background pixel</span>
@@ -334,7 +333,7 @@
     <span class="n">stars</span><span class="o">.</span><span class="n">add_fake_star</span><span class="p">(</span><span class="n">row</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">mag</span><span class="o">=</span><span class="mf">8.0</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ASPQ1</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">stars</span><span class="o">.</span><span class="n">add_fake_star</span><span class="p">(</span><span class="n">row</span><span class="o">=-</span><span class="mf">5.5</span><span class="p">,</span> <span class="n">col</span><span class="o">=-</span><span class="mf">5.5</span><span class="p">,</span> <span class="n">mag</span><span class="o">=</span><span class="mf">9.5</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">ASPQ1</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
-    <span class="n">bg_spoil</span><span class="p">,</span> <span class="n">reg_spoil</span><span class="p">,</span> <span class="n">rej</span> <span class="o">=</span> <span class="n">check_spoil_contrib</span><span class="p">(</span><span class="n">stars</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">]),</span> <span class="n">stars</span><span class="p">,</span> <span class="o">.</span><span class="mi">05</span><span class="p">,</span> <span class="mi">25</span><span class="p">)</span>
+    <span class="n">bg_spoil</span><span class="p">,</span> <span class="n">reg_spoil</span><span class="p">,</span> <span class="n">rej</span> <span class="o">=</span> <span class="n">check_spoil_contrib</span><span class="p">(</span><span class="n">stars</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">]),</span> <span class="n">stars</span><span class="p">,</span> <span class="mf">.05</span><span class="p">,</span> <span class="mi">25</span><span class="p">)</span>
     <span class="k">assert</span> <span class="n">bg_spoil</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
 
 
@@ -508,7 +507,7 @@
     <span class="c1"># or column, so don&#39;t bother simulating stars outside that distance</span>
     <span class="n">r_dists</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mf">9.25</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
     <span class="n">c_dists</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mf">9.5</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-    <span class="n">magdiffs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="o">-.</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">magdiffs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="o">-</span><span class="mf">.5</span><span class="p">)</span>
 
     <span class="k">for</span> <span class="n">r_dist</span><span class="p">,</span> <span class="n">c_dist</span><span class="p">,</span> <span class="n">magdiff</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="n">r_dists</span><span class="p">,</span> <span class="n">c_dists</span><span class="p">,</span> <span class="n">magdiffs</span><span class="p">):</span>
         <span class="n">star2</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;row&#39;</span><span class="p">:</span> <span class="n">r_dist</span><span class="p">,</span> <span class="s1">&#39;col&#39;</span><span class="p">:</span> <span class="n">c_dist</span><span class="p">,</span> <span class="s1">&#39;mag&#39;</span><span class="p">:</span> <span class="n">star1</span><span class="p">[</span><span class="s1">&#39;mag&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">magdiff</span><span class="p">,</span>
@@ -762,7 +761,7 @@
     <a href="#">Back to Top</a></p>
   <p>
     &copy; Copyright 2018, Tom Aldcroft, Jean Connelly.<br/>
-    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.1.2. &nbsp;
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 4.2.0. &nbsp;
   </p>
 </footer>
   </body>

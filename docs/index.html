@@ -4,16 +4,16 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Proseco &#8212; proseco 5.5.0 documentation</title>
-    <link rel="stylesheet" href="_static/bootstrap-astropy.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Proseco &#8212; proseco 5.6.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/bootstrap-astropy.css" />
     
-    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
-    <script src="_static/language_data.js"></script>
     <script type="text/javascript" src="_static/sidebar.js"></script>
     <script type="text/javascript" src="_static/copybutton.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -53,7 +53,7 @@
 	</a>
       </li>
       <li>
-	<a href="#">proseco 5.5.0 documentation</a>
+	<a href="#">proseco 5.6.0 documentation</a>
 	 &#187;
       </li>
       
@@ -67,7 +67,7 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="proseco">
+  <section id="proseco">
 <h1>Proseco<a class="headerlink" href="#proseco" title="Permalink to this headline">¶</a></h1>
 <p>Proseco is a Python package to allow for selection of acquisition stars,
 guide stars, and fiducial lights for the Chandra ACA star tracker during
@@ -76,13 +76,13 @@ operations.</p>
 evalation of the catalog to minimize the chance of a safing event and
 loss of science.  For guide stars, proseco uses a staged approach to
 select optimal stars.</p>
-<div class="section" id="getting-started">
+<section id="getting-started">
 <h2>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
 <p>From a top-level perspective the main interface into proseco is a single
-function <code class="xref py py-func docutils literal notranslate"><span class="pre">get_aca_catalog()</span></code>.</p>
-<div class="section" id="arguments">
+function <a class="reference internal" href="api.html#proseco.catalog.get_aca_catalog" title="proseco.catalog.get_aca_catalog"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_aca_catalog()</span></code></a>.</p>
+<section id="arguments">
 <h3>Arguments<a class="headerlink" href="#arguments" title="Permalink to this headline">¶</a></h3>
-<p>As can be seen from the docstring, <code class="xref py py-func docutils literal notranslate"><span class="pre">get_aca_catalog()</span></code>
+<p>As can be seen from the docstring, <a class="reference internal" href="api.html#proseco.catalog.get_aca_catalog" title="proseco.catalog.get_aca_catalog"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_aca_catalog()</span></code></a>
 takes a long list of arguments which are required to fully specify:</p>
 <p><strong>Required</strong></p>
 <table class="docutils align-default">
@@ -251,7 +251,7 @@ those arguments.</p>
 </tr>
 </tbody>
 </table>
-<div class="section" id="examples">
+<section id="examples">
 <h4>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h4>
 <p>For generating a catalog corresponding to an actual scheduled observation, the
 easiest strategy is to simply provide the <code class="docutils literal notranslate"><span class="pre">obsid</span></code> as a parameter.  Proseco
@@ -345,10 +345,10 @@ with a single <code class="docutils literal notranslate"><span class="pre">id</s
 <span class="gr">KeyError</span>: <span class="n">&#39;FAIL&#39;</span>
 </pre></div>
 </div>
-</div>
-</div>
-</div>
-<div class="section" id="monitor-stars">
+</section>
+</section>
+</section>
+<section id="monitor-stars">
 <h2>Monitor stars<a class="headerlink" href="#monitor-stars" title="Permalink to this headline">¶</a></h2>
 <p>Monitor stars in a catalog are specified withe the <code class="docutils literal notranslate"><span class="pre">monitors</span></code> keyword.
 This can accept a list of lists (or 2-d array of floats) in the form:</p>
@@ -434,8 +434,8 @@ variability that is different from the AGASC (e.g. fainter or more variable).</p
 </ul>
 </li>
 </ul>
-</div>
-<div class="section" id="data-requirements">
+</section>
+<section id="data-requirements">
 <h2>Data requirements<a class="headerlink" href="#data-requirements" title="Permalink to this headline">¶</a></h2>
 <p>Required data files are:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$SKA/data/agasc/proseco_agasc_1p7.h5
@@ -444,7 +444,7 @@ $SKA/data/mica/archive/aca_dark/&lt;YYYYddd&gt;/properties.json
 </pre></div>
 </div>
 <p>The following optional data files are needed for specifying only an
-<code class="docutils literal notranslate"><span class="pre">obsid</span></code> in the call to <code class="xref py py-func docutils literal notranslate"><span class="pre">get_aca_catalog()</span></code>:</p>
+<code class="docutils literal notranslate"><span class="pre">obsid</span></code> in the call to <a class="reference internal" href="api.html#proseco.catalog.get_aca_catalog" title="proseco.catalog.get_aca_catalog"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_aca_catalog()</span></code></a>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$SKA/data/cmd_states/cmd_states.db3
 $SKA/data/mica/archive/starcheck/starcheck.db3
 </pre></div>
@@ -452,24 +452,24 @@ $SKA/data/mica/archive/starcheck/starcheck.db3
 <p>See <a class="reference external" href="https://github.com/sot/skare3/wiki/Ska3-runtime-environment-for-users#ska-data">Syncing Ska data</a>
 for details on automatically syncing these files for a standalone linux or Mac
 environment.  For Matlab tools on Windows a separate mechanism will be provided.</p>
-</div>
-<div class="section" id="api-docs">
+</section>
+<section id="api-docs">
 <h2>API docs<a class="headerlink" href="#api-docs" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API documentation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api.html#full-catalog">Full catalog</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#acquisition">Acquisition</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#guide">Guide</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#fid">Fid</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#core">Core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-proseco.catalog">Full catalog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-proseco.acq">Acquisition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-proseco.guide">Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-proseco.fid">Fid</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-proseco.core">Core</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#module-proseco.diff">Diff</a></li>
 </ul>
 </li>
 </ul>
 </div>
-</div>
-<div class="section" id="unit-testing">
+</section>
+<section id="unit-testing">
 <h2>Unit Testing<a class="headerlink" href="#unit-testing" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
@@ -483,8 +483,8 @@ environment.  For Matlab tools on Windows a separate mechanism will be provided.
 </li>
 </ul>
 </div>
-</div>
-</div>
+</section>
+</section>
 
 
             <div class="clearer"></div>
@@ -537,7 +537,7 @@ environment.  For Matlab tools on Windows a separate mechanism will be provided.
     <a href="#">Back to Top</a></p>
   <p>
     &copy; Copyright 2018, Tom Aldcroft, Jean Connelly.<br/>
-    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.1.2. &nbsp;
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 4.2.0. &nbsp;
   </p>
 </footer>
   </body>
