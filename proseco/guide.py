@@ -283,9 +283,43 @@ class GuideTable(ACACatalogTable):
         stage_cands.sort(['stage', 'mag'])
         stage_cands = self.exclude_overlaps(stage_cands)
         guides = self.select_catalog(stage_cands[0:n_guide + GUIDE.surplus_stars])
+
+        if self.dyn_bgd_n_faint > 0:
+            self.drop_excess_bonus_stars(guides)
+
         if len(guides) < self.n_guide:
             self.log(f'Could not find {self.n_guide} candidates after all search stages')
         return guides
+
+    def drop_excess_bonus_stars(self, guides):
+        """Drop excess dynamic background faint "bonus" stars if necessary.
+
+        For dyn bgd with dyn_bgd_n_faint > 0, candidates fainter then the
+        nominal faint limit can be selected. However, only at most
+        dyn_bgd_n_faint of these bonus faint stars are allowed in the final
+        catalog.
+
+        This method removes faint bonus stars (in-place within ``guides``) in
+        excess of the allowed dyn_bgd_n_faint number. It is assumed that the
+        catalog order is by star preference ('stage', 'mag'), so bonus stars
+        that come first are kept.
+
+        :param guides: Table of guide stars
+        """
+        n_bonus = 0
+        idx = 0
+        # Compute the non-bonus faint_mag_limit
+        faint_mag_limit = snr_mag_for_t_ccd(self.t_ccd,
+                                            ref_mag=GUIDE.ref_faint_mag,
+                                            ref_t_ccd=GUIDE.ref_faint_mag_t_ccd)
+        idxs_drop = []
+        for idx in range(len(guides)):
+            if guides['mag'][idx] > faint_mag_limit:
+                n_bonus += 1
+                if n_bonus > self.dyn_bgd_n_faint:
+                    idxs_drop.append(idx)
+        if idxs_drop:
+            guides.remove_rows(idxs_drop)
 
     def exclude_overlaps(self, stage_cands):
         """
@@ -598,10 +632,21 @@ class GuideTable(ACACatalogTable):
         :returns: bool mask of acceptable stars
 
         """
-        # Compute faint magnitude limit, ensuring it is no larger (fainter) than ref_faint_mag
-        faint_mag_limit = min(snr_mag_for_t_ccd(self.t_ccd, ref_mag=GUIDE.ref_faint_mag,
-                                                ref_t_ccd=GUIDE.ref_faint_mag_t_ccd),
-                              GUIDE.ref_faint_mag)
+        # If dyn_bgd is active then apply the T_ccd bonus to the effective
+        # CCD temperature. This will bring in fainter stars to the candidates.
+        t_ccd = self.t_ccd
+        if self.dyn_bgd_n_faint > 0:
+            t_ccd += self.dyn_bgd_dt_ccd
+
+        # Scale the reference ACA faint mag limit to the CCD temperature keeping
+        # expected signal-to-noise constant.
+        faint_mag_limit = snr_mag_for_t_ccd(t_ccd, ref_mag=GUIDE.ref_faint_mag,
+                                            ref_t_ccd=GUIDE.ref_faint_mag_t_ccd)
+
+        # Without dynamic background, ensure faint limit is no larger (fainter)
+        # than ref_faint_mag (10.3 mag).
+        if self.dyn_bgd_n_faint == 0:
+            faint_mag_limit = min(faint_mag_limit, GUIDE.ref_faint_mag)
 
         ok = ((stars['CLASS'] == 0) &
               (stars['mag'] > 5.2) &

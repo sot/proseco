@@ -885,3 +885,20 @@ def test_img_size_guide():
 
     with pytest.raises(ValueError, match='img_size must be 4, 6, 8, or None'):
         get_aca_catalog(**mod_std_info(stars=stars, dark=dark, img_size_guide=3))
+
+
+def test_dyn_bgd_star_bonus():
+    stars = StarsTable.empty()
+
+    stars.add_fake_constellation(mag=[9.5] * 3,
+                                 size=2000, n_stars=3)
+    stars.add_fake_constellation(mag=[10.3, 10.4, 10.5, 10.6, 10.7, 12.0],
+                                 size=1500, n_stars=6)
+
+    aca_leg = get_aca_catalog(**STD_INFO, dark=DARK40, stars=stars, dyn_bgd_n_faint=0)
+    aca_dyn = get_aca_catalog(**STD_INFO, dark=DARK40, stars=stars, dyn_bgd_n_faint=2,
+                              dyn_bgd_dt_ccd=-4.0)
+    assert len(aca_leg.guides) == 3
+    assert len(aca_dyn.guides) == 5
+    assert np.allclose(aca_leg.guides['mag'], [9.5, 9.5, 9.5])
+    assert np.allclose(aca_dyn.guides['mag'], [9.5, 9.5, 9.5, 10.3, 10.4])
