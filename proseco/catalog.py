@@ -574,7 +574,7 @@ class ACATable(ACACatalogTable):
                  f"acq_idxs={best_acq_idxs} halfws={best_acq_halfws} fid_ids={acqs.fid_set}")
 
         if best_P2 < stage_min_P2:
-            self.log(f'No acq-fid combination was found that met stage requirements',
+            self.log('No acq-fid combination was found that met stage requirements',
                      warning=True)
 
 
