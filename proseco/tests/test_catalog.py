@@ -902,3 +902,15 @@ def test_dyn_bgd_star_bonus():
     assert len(aca_dyn.guides) == 5
     assert np.allclose(aca_leg.guides['mag'], [9.5, 9.5, 9.5])
     assert np.allclose(aca_dyn.guides['mag'], [9.5, 9.5, 9.5, 10.3, 10.4])
+
+
+def test_man_angle_away():
+    aca1 = get_aca_catalog(**STD_INFO)
+    aca2 = get_aca_catalog(**STD_INFO, man_angle_next=5)
+    assert np.all(aca1['id'] == aca2['id'])
+    assert np.all(aca1.acqs['halfw'] == aca2.acqs['halfw'])
+
+    # Confirm that the man_angle_next attribute has the default value
+    # for aca1 (180) and the specified kw value for aca2
+    assert aca1.man_angle_next == 180
+    assert aca2.man_angle_next == 5

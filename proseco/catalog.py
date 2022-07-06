@@ -76,6 +76,8 @@ def get_aca_catalog(obsid=0, **kwargs):
     :param n_guide: desired number of guide stars + monitor windows (req'd unless obsid spec'd)
     :param monitors: N x 5 float array specifying monitor windows
     :param man_angle: maneuver angle (deg)
+    :param man_angle_next: maneuver angle to next attitude after this observation
+                           (deg, default=180)
     :param t_ccd_acq: ACA CCD temperature for acquisition (degC)
     :param t_ccd_guide: ACA CCD temperature for guide (degC)
     :param t_ccd_penalty_limit: ACA CCD penalty limit for planning (degC). If not
