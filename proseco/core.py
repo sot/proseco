@@ -566,6 +566,7 @@ class ACACatalogTable(BaseCatalogTable):
     n_fid = MetaAttribute()
     monitors = MonitorsMetaAttribute()
     man_angle = MetaAttribute()
+    man_angle_next = MetaAttribute(default=180.0)
     t_ccd_acq = MetaAttribute()
     t_ccd_guide = MetaAttribute()
     date = MetaAttribute()
