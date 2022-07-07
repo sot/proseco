@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>proseco.catalog &#8212; proseco 5.6.0 documentation</title>
+    <title>proseco.catalog &#8212; proseco 5.7.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/bootstrap-astropy.css" />
     
@@ -46,7 +46,7 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../index.html">proseco 5.6.0 documentation</a>
+	<a href="../../index.html">proseco 5.7.0 documentation</a>
 	 &#187;
       </li>
       <li><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
@@ -140,6 +140,8 @@
 <span class="sd">    :param n_guide: desired number of guide stars + monitor windows (req&#39;d unless obsid spec&#39;d)</span>
 <span class="sd">    :param monitors: N x 5 float array specifying monitor windows</span>
 <span class="sd">    :param man_angle: maneuver angle (deg)</span>
+<span class="sd">    :param man_angle_next: maneuver angle to next attitude after this observation</span>
+<span class="sd">                           (deg, default=180)</span>
 <span class="sd">    :param t_ccd_acq: ACA CCD temperature for acquisition (degC)</span>
 <span class="sd">    :param t_ccd_guide: ACA CCD temperature for guide (degC)</span>
 <span class="sd">    :param t_ccd_penalty_limit: ACA CCD penalty limit for planning (degC). If not</span>
@@ -636,7 +638,7 @@
                  <span class="sa">f</span><span class="s2">&quot;acq_idxs=</span><span class="si">{</span><span class="n">best_acq_idxs</span><span class="si">}</span><span class="s2"> halfws=</span><span class="si">{</span><span class="n">best_acq_halfws</span><span class="si">}</span><span class="s2"> fid_ids=</span><span class="si">{</span><span class="n">acqs</span><span class="o">.</span><span class="n">fid_set</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">best_P2</span> <span class="o">&lt;</span> <span class="n">stage_min_P2</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;No acq-fid combination was found that met stage requirements&#39;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="s1">&#39;No acq-fid combination was found that met stage requirements&#39;</span><span class="p">,</span>
                      <span class="n">warning</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div></div>
 
 

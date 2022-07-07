@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>API documentation &#8212; proseco 5.6.0 documentation</title>
+    <title>API documentation &#8212; proseco 5.7.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/bootstrap-astropy.css" />
     
@@ -60,7 +60,7 @@
 	 |
       </li>
       <li>
-	<a href="index.html">proseco 5.6.0 documentation</a>
+	<a href="index.html">proseco 5.7.0 documentation</a>
 	 &#187;
       </li>
       
@@ -245,6 +245,8 @@ feature of the implementation that works for now.</p>
 <li><p><strong>n_guide</strong> – desired number of guide stars + monitor windows (req’d unless obsid spec’d)</p></li>
 <li><p><strong>monitors</strong> – N x 5 float array specifying monitor windows</p></li>
 <li><p><strong>man_angle</strong> – maneuver angle (deg)</p></li>
+<li><p><strong>man_angle_next</strong> – maneuver angle to next attitude after this observation
+(deg, default=180)</p></li>
 <li><p><strong>t_ccd_acq</strong> – ACA CCD temperature for acquisition (degC)</p></li>
 <li><p><strong>t_ccd_guide</strong> – ACA CCD temperature for guide (degC)</p></li>
 <li><p><strong>t_ccd_penalty_limit</strong> – ACA CCD penalty limit for planning (degC). If not

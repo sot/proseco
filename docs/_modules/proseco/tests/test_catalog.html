@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>proseco.tests.test_catalog &#8212; proseco 5.6.0 documentation</title>
+    <title>proseco.tests.test_catalog &#8212; proseco 5.7.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/bootstrap-astropy.css" />
     
@@ -46,7 +46,7 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../../index.html">proseco 5.6.0 documentation</a>
+	<a href="../../../index.html">proseco 5.7.0 documentation</a>
 	 &#187;
       </li>
       <li><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
@@ -966,6 +966,18 @@
     <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">aca_dyn</span><span class="o">.</span><span class="n">guides</span><span class="p">)</span> <span class="o">==</span> <span class="mi">5</span>
     <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">aca_leg</span><span class="o">.</span><span class="n">guides</span><span class="p">[</span><span class="s1">&#39;mag&#39;</span><span class="p">],</span> <span class="p">[</span><span class="mf">9.5</span><span class="p">,</span> <span class="mf">9.5</span><span class="p">,</span> <span class="mf">9.5</span><span class="p">])</span>
     <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">aca_dyn</span><span class="o">.</span><span class="n">guides</span><span class="p">[</span><span class="s1">&#39;mag&#39;</span><span class="p">],</span> <span class="p">[</span><span class="mf">9.5</span><span class="p">,</span> <span class="mf">9.5</span><span class="p">,</span> <span class="mf">9.5</span><span class="p">,</span> <span class="mf">10.3</span><span class="p">,</span> <span class="mf">10.4</span><span class="p">])</span>
+
+
+<span class="k">def</span> <span class="nf">test_man_angle_away</span><span class="p">():</span>
+    <span class="n">aca1</span> <span class="o">=</span> <span class="n">get_aca_catalog</span><span class="p">(</span><span class="o">**</span><span class="n">STD_INFO</span><span class="p">)</span>
+    <span class="n">aca2</span> <span class="o">=</span> <span class="n">get_aca_catalog</span><span class="p">(</span><span class="o">**</span><span class="n">STD_INFO</span><span class="p">,</span> <span class="n">man_angle_next</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">aca1</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">aca2</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">])</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">aca1</span><span class="o">.</span><span class="n">acqs</span><span class="p">[</span><span class="s1">&#39;halfw&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">aca2</span><span class="o">.</span><span class="n">acqs</span><span class="p">[</span><span class="s1">&#39;halfw&#39;</span><span class="p">])</span>
+
+    <span class="c1"># Confirm that the man_angle_next attribute has the default value</span>
+    <span class="c1"># for aca1 (180) and the specified kw value for aca2</span>
+    <span class="k">assert</span> <span class="n">aca1</span><span class="o">.</span><span class="n">man_angle_next</span> <span class="o">==</span> <span class="mi">180</span>
+    <span class="k">assert</span> <span class="n">aca2</span><span class="o">.</span><span class="n">man_angle_next</span> <span class="o">==</span> <span class="mi">5</span>
 </pre></div>
 
             <div class="clearer"></div>
