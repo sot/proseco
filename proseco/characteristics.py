@@ -1,17 +1,18 @@
-from ska_helpers.utils import LazyDict
 import agasc
+from ska_helpers.utils import LazyDict
 
-
-CCD = {'row_min': -512.0,
-       'row_max': 512.0,
-       'col_min': -512.0,
-       'col_max': 512.0,
-       'fov_pad': 40.0,  # Padding *outside* CCD (filtering AGASC stars in/near FOV in set_stars)
-       'window_pad': 7,
-       'row_pad': 8,
-       'col_pad': 1,
-       'guide_extra_pad': 3,
-       'bgpix': ['A1', 'B1', 'G1', 'H1', 'I4', 'J4', 'O4', 'P4']}
+CCD = {
+    "row_min": -512.0,
+    "row_max": 512.0,
+    "col_min": -512.0,
+    "col_max": 512.0,
+    "fov_pad": 40.0,  # Padding *outside* CCD (filtering AGASC stars in/near FOV in set_stars)
+    "window_pad": 7,
+    "row_pad": 8,
+    "col_pad": 1,
+    "guide_extra_pad": 3,
+    "bgpix": ["A1", "B1", "G1", "H1", "I4", "J4", "O4", "P4"],
+}
 
 PIX_2_ARC = 4.96289
 ARC_2_PIX = 1.0 / PIX_2_ARC
@@ -40,8 +41,8 @@ max_maxmag = 11.2
 monitor_maxmag = 13.9375
 
 # Convenience characteristics
-max_ccd_row = CCD['row_max'] - CCD['row_pad']  # Max allowed row for stars (SOURCE?)
-max_ccd_col = CCD['col_max'] - CCD['col_pad']  # Max allow col for stars (SOURCE?)
+max_ccd_row = CCD["row_max"] - CCD["row_pad"]  # Max allowed row for stars (SOURCE?)
+max_ccd_col = CCD["col_max"] - CCD["col_pad"]  # Max allow col for stars (SOURCE?)
 
 # Column spoiler rules
 col_spoiler_mag_diff = 4.5
@@ -56,15 +57,16 @@ bad_pixel_dark_current = 700_000
 # Diminished response: https://chandramission.slack.com/archives/G01LN40AXPG/p1624543385000700
 #   and subsequent discussion in nearby aspect-team threads.
 #             [row0 row1 col0 col1] (where values are inclusive on both ends)
-bad_pixels = [[-245, 0, 454, 454],  # Bad column
-              [-374, -374, 347, 347],  # Fid trap
-              [-319, -317, -299, -296]  # Diminished response
-              ]
+bad_pixels = [
+    [-245, 0, 454, 454],  # Bad column
+    [-374, -374, 347, 347],  # Fid trap
+    [-319, -317, -299, -296],  # Diminished response
+]
 
 
 def _load_bad_star_set():
     # Add in entries from the AGASC supplement file, if possible, warn otherwise
-    out = agasc.get_supplement_table('bad', as_dict=True)
+    out = agasc.get_supplement_table("bad", as_dict=True)
     return out
 
 
@@ -89,7 +91,7 @@ chandra_models_version = None
 
 def __getattr__(name):
     """Lazily define module attributes for the ACA planning and penalty limits"""
-    if name in ('aca_t_ccd_penalty_limit', 'aca_t_ccd_planning_limit'):
+    if name in ("aca_t_ccd_penalty_limit", "aca_t_ccd_planning_limit"):
         _set_aca_limits()
         return globals()[name]
     else:
@@ -100,17 +102,22 @@ def _set_aca_limits():
     """Set global variables for ACA thermal planning and penalty limits"""
     global chandra_models_version
     from xija.get_model_spec import get_xija_model_spec
-    spec, chandra_models_version = get_xija_model_spec('aca', version=chandra_models_version)
 
-    names = ('aca_t_ccd_penalty_limit', 'aca_t_ccd_planning_limit')
-    spec_names = ('planning.penalty.high', 'planning.warning.high')
+    spec, chandra_models_version = get_xija_model_spec(
+        "aca", version=chandra_models_version
+    )
+
+    names = ("aca_t_ccd_penalty_limit", "aca_t_ccd_planning_limit")
+    spec_names = ("planning.penalty.high", "planning.warning.high")
     for name, spec_name in zip(names, spec_names):
         try:
-            limit = spec['limits']['aacccdpt'][spec_name]
+            limit = spec["limits"]["aacccdpt"][spec_name]
         except KeyError:
-            raise KeyError(f"unable to find ['limits']['aacccdpt']['{spec_name}'] "
-                           "in the ACA xija model in "
-                           f"chandra_models version {chandra_models_version}.")
+            raise KeyError(
+                f"unable to find ['limits']['aacccdpt']['{spec_name}'] "
+                "in the ACA xija model in "
+                f"chandra_models version {chandra_models_version}."
+            )
         else:
             globals()[name] = limit
 
@@ -122,4 +129,4 @@ _attrs = dir()
 
 
 def __dir__():
-    return sorted(_attrs + ['aca_t_ccd_penalty_limit', 'aca_t_ccd_planning_limit'])
+    return sorted(_attrs + ["aca_t_ccd_penalty_limit", "aca_t_ccd_planning_limit"])

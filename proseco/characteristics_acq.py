@@ -1,8 +1,8 @@
-from __future__ import print_function, division, absolute_import
+from __future__ import absolute_import, division, print_function
 
 import numpy as np
-from scipy.interpolate import interp1d
 from astropy.table import Table
+from scipy.interpolate import interp1d
 
 box_sizes = np.array([160, 140, 120, 100, 80, 60])  # MUST be descending order
 
@@ -29,11 +29,11 @@ man_err_lo man_err_hi 0-5 5-20 20-40 40-60 60-80 80-100 100-120 120-180
        120        140 0.0  0.0  0.05  0.05   0.2    0.4     0.4     0.4
        140        160 0.0  0.0  0.05  0.05   0.2    0.2     0.2     0.4
 """
-p_man_errs = Table.read(_p_man_errs_text, format='ascii.fixed_width_two_line')
+p_man_errs = Table.read(_p_man_errs_text, format="ascii.fixed_width_two_line")
 # Generate the initial row
-zero_row = [0, p_man_errs['man_err_lo'][0]]
+zero_row = [0, p_man_errs["man_err_lo"][0]]
 for ang0, ang1 in zip(p_man_errs_angles[:-1], p_man_errs_angles[1:]):
-    name = '{}-{}'.format(ang0, ang1)
+    name = "{}-{}".format(ang0, ang1)
     col = p_man_errs[name]
     col /= 100
     zero_row.append(1 - np.sum(col))
@@ -42,15 +42,16 @@ p_man_errs.insert_row(0, zero_row)
 #
 # Possible maneuver errors in the table for use in acq.py
 #
-man_errs = p_man_errs['man_err_hi']
+man_errs = p_man_errs["man_err_hi"]
 
 
 # Minimal set of columns to store for spoiler stars
-spoiler_star_cols = ['id', 'yang', 'zang', 'row', 'col', 'mag', 'mag_err']
+spoiler_star_cols = ["id", "yang", "zang", "row", "col", "mag", "mag_err"]
 
 
 def _get_fid_acq_stages():
-    fid_acqs = Table.read("""
+    fid_acqs = Table.read(
+        """
 
    warns score P2=0.0 P2=2.0 P2=2.5 P2=3.0 P2=4.0 P2=5.0 P2=6.0 P2=8.0 P2=99.0
    ----- ----- ------ ------ ------ ------ ------ ------ ------ ------ -------
@@ -65,19 +66,18 @@ def _get_fid_acq_stages():
      RRY     9      0    1.5    2.0    2.0    2.0    2.0    2.0    2.0     2.0
      RRR    12     -1   -1.0   -1.0   -1.0   -1.0   -1.0   -1.0   -1.0    -1.0
 
-    """, format='ascii.fixed_width_two_line')
+    """,
+        format="ascii.fixed_width_two_line",
+    )
 
-    P2s = [float(name[3:]) for name in fid_acqs.colnames
-           if name.startswith('P2=')]
+    P2s = [float(name[3:]) for name in fid_acqs.colnames if name.startswith("P2=")]
     funcs = []
     for fid_acq in fid_acqs:
-        vals = [fid_acq[name] for name in fid_acqs.colnames
-                if name.startswith('P2=')]
+        vals = [fid_acq[name] for name in fid_acqs.colnames if name.startswith("P2=")]
         funcs.append(interp1d(P2s, vals))
 
-    out = Table([fid_acqs['score'], funcs],
-                names=['spoiler_score', 'min_P2'])
-    out.add_index('spoiler_score')
+    out = Table([fid_acqs["score"], funcs], names=["spoiler_score", "min_P2"])
+    out.add_index("spoiler_score")
     return out
 
 
@@ -99,4 +99,4 @@ imposter_mag_lim_ref_mag = 10.0
 imposter_mag_lim_ref_t_ccd = -10.0
 
 # Index template file name
-index_template_file = 'index_template_acq.html'
+index_template_file = "index_template_acq.html"

@@ -1,27 +1,31 @@
 # coding: utf-8
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import re
-import os
 import functools
-import pickle
 import inspect
+import os
+import pickle
+import re
 import time
 import warnings
 from copy import copy
 from pathlib import Path
 
-import numpy as np
-from scipy.interpolate import interp1d
-from astropy.table import Table, Column
-
-from chandra_aca.transform import (yagzag_to_pixels, pixels_to_yagzag,
-                                   count_rate_to_mag, mag_to_count_rate,
-                                   radec_to_yagzag, yagzag_to_radec)
-from chandra_aca.aca_image import AcaPsfLibrary
 import agasc
+import numpy as np
+from astropy.table import Column, Table
+from chandra_aca.aca_image import AcaPsfLibrary
+from chandra_aca.transform import (
+    count_rate_to_mag,
+    mag_to_count_rate,
+    pixels_to_yagzag,
+    radec_to_yagzag,
+    yagzag_to_pixels,
+    yagzag_to_radec,
+)
+from mica.archive.aca_dark import get_dark_cal_id, get_dark_cal_image
 from Quaternion import Quat
-from mica.archive.aca_dark import get_dark_cal_image, get_dark_cal_id
+from scipy.interpolate import interp1d
 
 from . import characteristics as ACA
 
@@ -54,13 +58,18 @@ def table_to_html(tbl):
     :param tbl: astropy Table
     :returns: str
     """
-    out = tbl._base_repr_(html=True, max_width=-1,
-                          show_dtype=False, descr_vals=[],
-                          max_lines=-1, tableclass='table-striped')
+    out = tbl._base_repr_(
+        html=True,
+        max_width=-1,
+        show_dtype=False,
+        descr_vals=[],
+        max_lines=-1,
+        tableclass="table-striped",
+    )
     # Undo HTML sanitizing to allow raw HTML in table elements
-    out = re.sub(r'&quot;', '"', out)
-    out = re.sub(r'&lt;', '<', out)
-    out = re.sub(r'&gt;', '>', out)
+    out = re.sub(r"&quot;", '"', out)
+    out = re.sub(r"&lt;", "<", out)
+    out = re.sub(r"&gt;", ">", out)
 
     return out
 
@@ -91,24 +100,26 @@ def calc_spoiler_impact(star, stars, dark_bgd=40, debug=False):
     :param stars: StarsTable
     :returns: d_yang, d_zang, norm_frac
     """
-    row = star['row']
-    col = star['col']
-    mag = star['mag']
+    row = star["row"]
+    col = star["col"]
+    mag = star["mag"]
 
-    s_rows = stars['row']
-    s_cols = stars['col']
-    s_mags = stars['mag']
+    s_rows = stars["row"]
+    s_cols = stars["col"]
+    s_mags = stars["mag"]
 
     # Find potential spoilers with centroid within a 9-pixel halfw box
-    ok = ((np.abs(s_rows - row) < 9) &
-          (np.abs(s_cols - col) < 9) &
-          (star['id'] != stars['id']))
+    ok = (
+        (np.abs(s_rows - row) < 9)
+        & (np.abs(s_cols - col) < 9)
+        & (star["id"] != stars["id"])
+    )
     if not np.any(ok):
         return 0.0, 0.0, 1.0
 
     # Make an image of the candidate star
     norm = mag_to_count_rate(mag)
-    img = APL.get_psf_image(row=row, col=col, norm=norm, pix_zero_loc='edge')
+    img = APL.get_psf_image(row=row, col=col, norm=norm, pix_zero_loc="edge")
     img += dark_bgd
 
     # Centroid the candidate star image, using an upper-limit to the
@@ -129,8 +140,9 @@ def calc_spoiler_impact(star, stars, dark_bgd=40, debug=False):
     # Shine spoiler stars onto image
     for s_row, s_col, s_mag in zip(s_rows, s_cols, s_mags):
         s_norm = mag_to_count_rate(s_mag)
-        s_img = APL.get_psf_image(row=s_row, col=s_col, norm=s_norm,
-                                  pix_zero_loc='edge')
+        s_img = APL.get_psf_image(
+            row=s_row, col=s_col, norm=s_norm, pix_zero_loc="edge"
+        )
         img += s_img.aca
 
     # Centroid the candidate + spoilers image.  This might raise an exception
@@ -138,7 +150,7 @@ def calc_spoiler_impact(star, stars, dark_bgd=40, debug=False):
     # case return values that will certainly exceed any spoiler thresholds.
     bgd = _get_bgd(img)
     if debug:
-        print('bgd', bgd, count_rate_to_mag(bgd * 32))
+        print("bgd", bgd, count_rate_to_mag(bgd * 32))
         print(repr(img))
     try:
         row1, col1, norm1 = img.centroid_fm(bgd=bgd)
@@ -160,6 +172,7 @@ def calc_spoiler_impact(star, stars, dark_bgd=40, debug=False):
 @functools.lru_cache(maxsize=8)
 def get_starcheck_catalog(obsid):
     from mica.starcheck import get_starcheck_catalog
+
     return get_starcheck_catalog(obsid)
 
 
@@ -188,7 +201,9 @@ class ACABox:
             self.z = size
         except AssertionError:
             # Has a length but it is not 2
-            raise ValueError('size arg must be either a scalar or a two-element sequence')
+            raise ValueError(
+                "size arg must be either a scalar or a two-element sequence"
+            )
         else:
             self.y = size[0]
             self.z = size[1]
@@ -230,7 +245,7 @@ class ACABox:
         return self.__add__(other)
 
     def __repr__(self):
-        return f'<ACABox y={self.y} z={self.z}>'
+        return f"<ACABox y={self.y} z={self.z}>"
 
 
 class AliasAttribute:
@@ -262,14 +277,14 @@ class AliasAttribute:
         setattr(instance, self.alias, value)
 
     def __set_name__(self, owner, name):
-        if owner.__name__.endswith('Table'):
-            self.alias = name + '_' + owner.__name__[:-5].lower()
+        if owner.__name__.endswith("Table"):
+            self.alias = name + "_" + owner.__name__[:-5].lower()
             owner.allowed_kwargs.add(name)
         else:
-            raise ValueError('can only be used in classes named *Table')
+            raise ValueError("can only be used in classes named *Table")
 
     def __repr__(self):
-        return (f'<{self.__class__.__name__} alias={self.alias}')
+        return f"<{self.__class__.__name__} alias={self.alias}"
 
 
 class MetaAttribute:
@@ -311,33 +326,37 @@ class MetaAttribute:
             owner.allowed_kwargs.add(name)
 
     def __repr__(self):
-        return (f'<{self.__class__.__name__} name={self.name} default={self.default} '
-                f'pickle={self.pickle}>')
+        return (
+            f"<{self.__class__.__name__} name={self.name} default={self.default} "
+            f"pickle={self.pickle}>"
+        )
 
 
 class MonitorsMetaAttribute(MetaAttribute):
     def __set__(self, instance, value):
         if isinstance(value, Table):
-            colnames = ['coord0', 'coord1', 'coord_type', 'mag', 'function']
+            colnames = ["coord0", "coord1", "coord_type", "mag", "function"]
             if not set(colnames) <= set(value.colnames):
-                raise ValueError(f'monitors input table must have {", ".join(colnames)} columns')
+                raise ValueError(
+                    f'monitors input table must have {", ".join(colnames)} columns'
+                )
         else:
             value = np.asarray(value)
             if value.ndim != 2 or value.shape[1] != 5:
-                raise ValueError('monitors input must have shape (N, 5)')
+                raise ValueError("monitors input must have shape (N, 5)")
             out = Table()
-            out['coord0'] = value[:, 0].astype(np.float64)
-            out['coord1'] = value[:, 1].astype(np.float64)
-            out['coord_type'] = value[:, 2].astype(np.uint8)
-            out['mag'] = value[:, 3].astype(np.float64)
-            out['function'] = value[:, 4].astype(np.uint8)
+            out["coord0"] = value[:, 0].astype(np.float64)
+            out["coord1"] = value[:, 1].astype(np.float64)
+            out["coord_type"] = value[:, 2].astype(np.uint8)
+            out["mag"] = value[:, 3].astype(np.float64)
+            out["function"] = value[:, 4].astype(np.uint8)
             value = out
 
-            if np.any(out['coord_type'] < 0) or np.any(out['coord_type'] > 2):
-                raise ValueError('monitors coord type must be 0, 1, or 2')
+            if np.any(out["coord_type"] < 0) or np.any(out["coord_type"] > 2):
+                raise ValueError("monitors coord type must be 0, 1, or 2")
 
-            if np.any(out['function'] < 0) or np.any(out['function'] > 3):
-                raise ValueError('monitors function must be 0, 1, 2, or 3')
+            if np.any(out["function"] < 0) or np.any(out["function"] > 3):
+                raise ValueError("monitors function must be 0, 1, 2, or 3")
 
         instance.meta[self.name] = value
 
@@ -368,6 +387,7 @@ class BaseCatalogTable(Table):
     - Indexing on 'id' column
 
     """
+
     # Catalog type when plotting (None | 'FID' | 'ACQ' | 'GUI')
     catalog_type = None
 
@@ -377,15 +397,16 @@ class BaseCatalogTable(Table):
         # Make printed table look nicer.  This is defined in advance
         # and will be applied the first time the table is represented.
         self._default_formats = {}
-        formats = {('p_acq',): '5.3f',  # 0.912
-                   ('yang', 'zang'): '8.2f',  # -2500.12
-                   ('mag', 'maxmag', 'mag_err', 'color', 'COLOR1'): '5.2f',  # -1.12
-                   ('row', 'col'): '7.2f',  # -500.12
-                   ('ra', 'dec', 'RA_PMCORR', 'DEC_PMCORR'): '11.6f',  # -160.123561
-                   ('dec', 'DEC_PMCORR'): '10.5f',  # -89.12345
-                   ('idx', 'dim'): '2d',
-                   ('halfw',): '3d'
-                   }
+        formats = {
+            ("p_acq",): "5.3f",  # 0.912
+            ("yang", "zang"): "8.2f",  # -2500.12
+            ("mag", "maxmag", "mag_err", "color", "COLOR1"): "5.2f",  # -1.12
+            ("row", "col"): "7.2f",  # -500.12
+            ("ra", "dec", "RA_PMCORR", "DEC_PMCORR"): "11.6f",  # -160.123561
+            ("dec", "DEC_PMCORR"): "10.5f",  # -89.12345
+            ("idx", "dim"): "2d",
+            ("halfw",): "3d",
+        }
 
         for names, format in formats.items():
             for name in names:
@@ -434,12 +455,12 @@ class BaseCatalogTable(Table):
         self._id_index = {}
         self._id_index_mon = {}
 
-        has_type = 'type' in self.colnames
+        has_type = "type" in self.colnames
         for idx, row in enumerate(self):
-            if has_type and row['type'] == 'MON':
-                self._id_index_mon[row['id']] = idx
+            if has_type and row["type"] == "MON":
+                self._id_index_mon[row["id"]] = idx
             else:
-                self._id_index[row['id']] = idx
+                self._id_index[row["id"]] = idx
 
     def get_id(self, id, mon=False):
         """
@@ -463,19 +484,19 @@ class BaseCatalogTable(Table):
             return ID for corresponding MON star (default=False)
         :returns: table row index (int)
         """
-        if not hasattr(self, '_id_index'):
+        if not hasattr(self, "_id_index"):
             self.make_index()
 
         try:
             idx = (self._id_index_mon if mon else self._id_index)[id]
-            assert self['id'][idx] == id
+            assert self["id"][idx] == id
         except (KeyError, IndexError, AssertionError):
             self.make_index()
             try:
                 idx = (self._id_index_mon if mon else self._id_index)[id]
-                assert self['id'][idx] == id
+                assert self["id"][idx] == id
             except (KeyError, IndexError, AssertionError):
-                raise KeyError(f'{id} is not in table')
+                raise KeyError(f"{id} is not in table")
 
         return idx
 
@@ -503,7 +524,7 @@ class BaseCatalogTable(Table):
         arg of plot_stars where bad stars are plotting in a distinctive color.
 
         """
-        if not hasattr(self, '_bad_stars_mask'):
+        if not hasattr(self, "_bad_stars_mask"):
             self._bad_stars_mask = ~self.get_candidates_mask(self.stars)
         return self._bad_stars_mask
 
@@ -523,17 +544,17 @@ class BaseCatalogTable(Table):
         :param ax: matplotlib axes object for plotting to (optional)
         :param kwargs: other keyword args for plot_stars
         """
-        from chandra_aca.plot import plot_stars
         import matplotlib.pyplot as plt
+        from chandra_aca.plot import plot_stars
 
-        kwargs.setdefault('stars', np.array([]))
+        kwargs.setdefault("stars", np.array([]))
 
         # Explicitly set bad_stars so that plot_stars does not apply its
         # internal version (which is no lot always the right answer).
-        kwargs.setdefault('bad_stars', np.zeros(len(kwargs['stars']), dtype=bool))
+        kwargs.setdefault("bad_stars", np.zeros(len(kwargs["stars"]), dtype=bool))
 
         fig = plot_stars(attitude=self.att, ax=ax, **kwargs)
-        if 'agg' not in plt.get_backend().lower():
+        if "agg" not in plt.get_backend().lower():
             plt.show()
 
         return fig
@@ -550,14 +571,15 @@ class ACACatalogTable(BaseCatalogTable):
     - Serialization to/from pickle
     - Predefined formatting for nicer representations
     """
+
     # Name of table.  Use to define default file names where applicable.
     # Should be set by subclass, e.g. ``name = 'acqs'`` for AcqTable.
-    name = 'aca_cat'
+    name = "aca_cat"
 
     # Catalog attributes, gets set in MetaAttribute or AliasAttribute
-    allowed_kwargs = set(['dark'])
+    allowed_kwargs = set(["dark"])
 
-    required_attrs = ('dither_acq', 'dither_guide', 'date')
+    required_attrs = ("dither_acq", "dither_guide", "date")
 
     obsid = MetaAttribute(default=0)
     att = QuatMetaAttribute()
@@ -594,38 +616,44 @@ class ACACatalogTable(BaseCatalogTable):
 
     @property
     def dark(self):
-        if hasattr(self, '_dark'):
+        if hasattr(self, "_dark"):
             return self._dark
 
         # If self.dark_date is already set (most likely after unpickling an existing
         # catalog), then use that instead of the observation date for getting the dark map.
         if self.dark_date:
-            dark_id = get_dark_cal_id(date=self.dark_date, select='nearest')
-            self.log(f'Found dark cal image {dark_id} nearest self.dark_date={self.dark_date}')
+            dark_id = get_dark_cal_id(date=self.dark_date, select="nearest")
+            self.log(
+                f"Found dark cal image {dark_id} nearest self.dark_date={self.dark_date}"
+            )
 
             # Warn if the pickled dark_date is not the same as we would have gotten based
             # on the observation date.
-            dark_id_for_date = get_dark_cal_id(date=self.date, select='before')
+            dark_id_for_date = get_dark_cal_id(date=self.date, select="before")
             if dark_id != dark_id_for_date:
-                warnings.warn(f'Unexpected dark_date: '
-                              f'dark_id nearest dark_date={self.dark_date} is {dark_id} '
-                              f'but dark_id before obs date={self.date} is {dark_id_for_date}')
+                warnings.warn(
+                    f"Unexpected dark_date: "
+                    f"dark_id nearest dark_date={self.dark_date} is {dark_id} "
+                    f"but dark_id before obs date={self.date} is {dark_id_for_date}"
+                )
         else:
-            dark_id = get_dark_cal_id(date=self.date, select='before')
-            self.log(f'Found dark cal image {dark_id} before self.date={self.date}')
+            dark_id = get_dark_cal_id(date=self.date, select="before")
+            self.log(f"Found dark cal image {dark_id} before self.date={self.date}")
 
         # In all cases set self.dark_date to be the actual date of the dark cal
         # we are using, not what might have been set on input.
-        self.dark_date = dark_id[:4] + ':' + dark_id[4:]
+        self.dark_date = dark_id[:4] + ":" + dark_id[4:]
 
         # Dark current map handling.  If asking for `dark` attribute without having set
         # it then auto-fetch from mica.  Note that get_dark_cal_image caches returned values
         # using LRU cache on all params, so this is efficient for the different
         # catalog tables.
-        self.log(f'Getting dark cal image at date={self.dark_date} t_ccd={self.t_ccd:.1f} ')
-        self.dark = get_dark_cal_image(date=self.dark_date, select='nearest',
-                                       t_ccd_ref=self.t_ccd,
-                                       aca_image=False)
+        self.log(
+            f"Getting dark cal image at date={self.dark_date} t_ccd={self.t_ccd:.1f} "
+        )
+        self.dark = get_dark_cal_image(
+            date=self.dark_date, select="nearest", t_ccd_ref=self.t_ccd, aca_image=False
+        )
 
         return self._dark
 
@@ -637,14 +665,17 @@ class ACACatalogTable(BaseCatalogTable):
         # Set pixel regions from ACA.bad_pixels to have acqs.dark=700000 (5.0 mag
         # star) per pixel.
         for r0, r1, c0, c1 in ACA.bad_pixels:
-            self._dark[r0 + 512:r1 + 513, c0 + 512:c1 + 513] = ACA.bad_pixel_dark_current
+            self._dark[
+                r0 + 512 : r1 + 513, c0 + 512 : c1 + 513
+            ] = ACA.bad_pixel_dark_current
 
     def set_attrs_from_kwargs(self, **kwargs):
         for name, val in kwargs.items():
             # If name is an allowed keyword arg or a settable property on the class
             # then set now.
-            if (name in self.allowed_kwargs
-                    or inspect.isdatadescriptor(getattr(self.__class__, name, None))):
+            if name in self.allowed_kwargs or inspect.isdatadescriptor(
+                getattr(self.__class__, name, None)
+            ):
                 setattr(self, name, val)
             else:
                 raise ValueError(f'unexpected keyword argument "{name}"')
@@ -653,43 +684,45 @@ class ACACatalogTable(BaseCatalogTable):
         # then all other params must be supplied.
         missing = [attr for attr in self.required_attrs if getattr(self, attr) is None]
         if self.obsid == 0 and missing:
-            raise ValueError(f'missing required parameters {missing}')
+            raise ValueError(f"missing required parameters {missing}")
 
         # If not all params supplied then get via mica for the obsid.
         if missing:
-            self.log(f'getting starcheck catalog for obsid {self.obsid}')
+            self.log(f"getting starcheck catalog for obsid {self.obsid}")
 
             try:
                 obs = get_starcheck_catalog(self.obsid)
-                obso = obs['obs']
+                obso = obs["obs"]
             except Exception:
                 # Probably AttributeError for a non-existent obsid, where
                 # get_starcheck_catalog returns None. But catch anything in case
                 # something else happened. Exception chaining will help here.
-                raise ValueError(f'missing required parameters {missing} and '
-                                 f'could not fill them in from obsid {self.obsid}')
+                raise ValueError(
+                    f"missing required parameters {missing} and "
+                    f"could not fill them in from obsid {self.obsid}"
+                )
 
             if self.att is None:
-                self.att = [obso['point_ra'], obso['point_dec'], obso['point_roll']]
+                self.att = [obso["point_ra"], obso["point_dec"], obso["point_roll"]]
             if self.date is None:
-                self.date = obso['mp_starcat_time']
+                self.date = obso["mp_starcat_time"]
             if self.t_ccd is None:
-                self.t_ccd = obs.get('pred_temp', -15.0)
+                self.t_ccd = obs.get("pred_temp", -15.0)
             if self.man_angle is None:
-                self.man_angle = obs['manvr']['angle_deg'][0]
+                self.man_angle = obs["manvr"]["angle_deg"][0]
             if self.detector is None:
-                self.detector = obso['sci_instr']
+                self.detector = obso["sci_instr"]
             if self.sim_offset is None:
-                self.sim_offset = obso['sim_z_offset_steps']
+                self.sim_offset = obso["sim_z_offset_steps"]
             if self.focus_offset is None:
                 self.focus_offset = 0
 
             if self.n_fid is None:
-                self.n_fid = np.count_nonzero(obs['cat']['type'] == 'FID')
+                self.n_fid = np.count_nonzero(obs["cat"]["type"] == "FID")
 
-            n_mon = np.count_nonzero(obs['cat']['type'] == 'MON')
+            n_mon = np.count_nonzero(obs["cat"]["type"] == "MON")
             if n_mon > 0:
-                warnings.warn(f'found {n_mon} MON stars in catalog, ignoring them')
+                warnings.warn(f"found {n_mon} MON stars in catalog, ignoring them")
 
             if self.n_guide is None:
                 # Replicate the number of guide stars in the original catalog.
@@ -697,25 +730,25 @@ class ACACatalogTable(BaseCatalogTable):
 
             if self.detector is None:
                 self.n_fid = 0
-                self.detector = 'HRC-S'
+                self.detector = "HRC-S"
 
-            for dither_attr in ('dither_acq', 'dither_guide'):
+            for dither_attr in ("dither_acq", "dither_guide"):
                 if getattr(self, dither_attr) is None:
-                    dither_y_amp = obso.get('dither_y_amp')
-                    dither_z_amp = obso.get('dither_z_amp')
+                    dither_y_amp = obso.get("dither_y_amp")
+                    dither_z_amp = obso.get("dither_z_amp")
                     if dither_y_amp is not None and dither_z_amp is not None:
                         setattr(self, dither_attr, ACABox((dither_y_amp, dither_z_amp)))
 
                         # Special rule for handling big dither from mica.starcheck,
                         # which does not yet know about dither_acq vs. dither_guide.
                         # Use the most common dither size for ACIS / HRC.
-                        if dither_attr == 'dither_acq' and self.dither_acq.max() > 30:
-                            dither = 8 if self.detector.startswith('ACIS') else 20
+                        if dither_attr == "dither_acq" and self.dither_acq.max() > 30:
+                            dither = 8 if self.detector.startswith("ACIS") else 20
                             self.dither_acq = ACABox(dither)
 
             self.starcheck_catalog = obs
 
-        for dither_attr in ('dither_acq', 'dither_guide'):
+        for dither_attr in ("dither_acq", "dither_guide"):
             dither = getattr(self, dither_attr)
             if not isinstance(dither, ACABox):
                 setattr(self, dither_attr, ACABox(dither))
@@ -738,8 +771,9 @@ class ACACatalogTable(BaseCatalogTable):
             stars = acqs.stars
 
         if filter_near_fov:
-            ok = ((np.abs(stars['row']) < ACA.CCD['row_max'] + ACA.CCD['fov_pad']) &
-                  (np.abs(stars['col']) < ACA.CCD['col_max'] + ACA.CCD['fov_pad']))
+            ok = (np.abs(stars["row"]) < ACA.CCD["row_max"] + ACA.CCD["fov_pad"]) & (
+                np.abs(stars["col"]) < ACA.CCD["col_max"] + ACA.CCD["fov_pad"]
+            )
             if not np.all(ok):
                 stars = stars[ok]
 
@@ -753,7 +787,7 @@ class ACACatalogTable(BaseCatalogTable):
 
         """
         if self.catalog_type:
-            self['type'] = self.catalog_type
+            self["type"] = self.catalog_type
         catalog = self.as_array()
         return catalog
 
@@ -764,15 +798,15 @@ class ACACatalogTable(BaseCatalogTable):
         :param ax: matplotlib axes object for plotting to (optional)
         :param kwargs: other keyword args for plot_stars
         """
-        kwargs.setdefault('catalog', self.get_catalog_for_plot())
+        kwargs.setdefault("catalog", self.get_catalog_for_plot())
         if self.stars is None:
             self.set_stars()
-        kwargs.setdefault('stars', self.stars)
-        kwargs.setdefault('bad_stars', self.bad_stars_mask)
+        kwargs.setdefault("stars", self.stars)
+        kwargs.setdefault("bad_stars", self.bad_stars_mask)
         if self.date is not None:
-            kwargs.setdefault('starcat_time', self.date)
-        if getattr(self, 'duration', None) is not None:
-            kwargs.setdefault('duration', self.duration)
+            kwargs.setdefault("starcat_time", self.date)
+        if getattr(self, "duration", None) is not None:
+            kwargs.setdefault("duration", self.duration)
         return super().plot(ax, **kwargs)
 
     @property
@@ -802,41 +836,41 @@ class ACACatalogTable(BaseCatalogTable):
         :returns: StarsTable of stars (empty)
         """
         out = cls()
-        out['id'] = np.full(fill_value=0, shape=(0,), dtype=np.int64)
-        out['idx'] = np.full(fill_value=0, shape=(0,), dtype=np.int64)
+        out["id"] = np.full(fill_value=0, shape=(0,), dtype=np.int64)
+        out["idx"] = np.full(fill_value=0, shape=(0,), dtype=np.int64)
         return out
 
     @property
     def acqs(self):
-        return self.meta.get('acqs')
+        return self.meta.get("acqs")
 
     @acqs.setter
     def acqs(self, val):
-        self.meta['acqs'] = val
+        self.meta["acqs"] = val
 
     @property
     def fids(self):
-        return self.meta.get('fids')
+        return self.meta.get("fids")
 
     @fids.setter
     def fids(self, val):
-        self.meta['fids'] = val
+        self.meta["fids"] = val
 
     @property
     def guides(self):
-        return self.meta.get('guides')
+        return self.meta.get("guides")
 
     @guides.setter
     def guides(self, val):
-        self.meta['guides'] = val
+        self.meta["guides"] = val
 
     @property
     def mons(self):
-        return self.meta.get('mons')
+        return self.meta.get("mons")
 
     @mons.setter
     def mons(self, val):
-        self.meta['mons'] = val
+        self.meta["mons"] = val
 
     def process_include_ids(self, cand_stars, stars):
         """Ensure that the candidate acqs/guides table has stars that were forced to be included.
@@ -848,15 +882,17 @@ class ACACatalogTable(BaseCatalogTable):
 
         """
         for include_id in self.include_ids:
-            if include_id not in cand_stars['id']:
+            if include_id not in cand_stars["id"]:
                 try:
                     star = stars.get_id(include_id)
                 except KeyError:
-                    raise ValueError(f'cannot include star id={include_id} that is not '
-                                     f'a valid star in the ACA field of view')
+                    raise ValueError(
+                        f"cannot include star id={include_id} that is not "
+                        f"a valid star in the ACA field of view"
+                    )
                 else:
                     cand_stars.add_row(star)
-                    self.log(f'Included star id={include_id} in candidates table')
+                    self.log(f"Included star id={include_id} in candidates table")
 
     def log(self, data, **kwargs):
         """
@@ -876,23 +912,20 @@ class ACACatalogTable(BaseCatalogTable):
         log_info = self.log_info
 
         tm = time.time()
-        dt = tm - log_info.setdefault('unix_run_time', tm)
+        dt = tm - log_info.setdefault("unix_run_time", tm)
 
         kwargs = {key: to_python(val) for key, val in kwargs.items()}
-        event = dict(dt=round(dt, 4),
-                     func=func,
-                     data=data,
-                     **kwargs)
-        if event.get('warning') and isinstance(data, str):
-            event['data'] = 'WARNING: ' + event['data']
+        event = dict(dt=round(dt, 4), func=func, data=data, **kwargs)
+        if event.get("warning") and isinstance(data, str):
+            event["data"] = "WARNING: " + event["data"]
 
-        if 'events' not in log_info:
-            log_info['events'] = []
-        log_info['events'].append(event)
+        if "events" not in log_info:
+            log_info["events"] = []
+        log_info["events"].append(event)
 
         if self.print_log:
-            data_str = ' ' * event.get('level', 0) * 4 + str(event['data'])
-            print(f'{dt:7.3f} {func:20s}: {data_str}')
+            data_str = " " * event.get("level", 0) * 4 + str(event["data"])
+            print(f"{dt:7.3f} {func:20s}: {data_str}")
 
     @property
     def warnings(self):
@@ -900,8 +933,9 @@ class ACACatalogTable(BaseCatalogTable):
         Return list of warnings in the event log.  This returns just the
         string message without context.
         """
-        warns = [event['data'] for event in self.log_info['events']
-                 if event.get('warning')]
+        warns = [
+            event["data"] for event in self.log_info["events"] if event.get("warning")
+        ]
         return warns
 
     @property
@@ -911,11 +945,11 @@ class ACACatalogTable(BaseCatalogTable):
         string) if no exception has been caught.  Mostly for use in Matlab
         interface.
         """
-        return self.meta.get('exception', '')
+        return self.meta.get("exception", "")
 
     @exception.setter
     def exception(self, val):
-        self.meta['exception'] = val
+        self.meta["exception"] = val
 
     def _set_formats(self):
         # Apply default formats to applicable columns and delete
@@ -936,13 +970,12 @@ class ACACatalogTable(BaseCatalogTable):
     def _base_repr_(self, *args, **kwargs):
         self._set_formats()
 
-        names = [name for name in self.colnames
-                 if self[name].dtype.kind != 'O']
+        names = [name for name in self.colnames if self[name].dtype.kind != "O"]
 
         tmp = self.__class__([self[name] for name in names], names=names, copy=False)
         return super(BaseCatalogTable, tmp)._base_repr_(*args, **kwargs)
 
-    def to_pickle(self, rootdir='.'):
+    def to_pickle(self, rootdir="."):
         """
         Write the catalog table as pickle to:
           ``<rootdir>/obs<obsid>/<name>.pkl``
@@ -953,12 +986,12 @@ class ACACatalogTable(BaseCatalogTable):
         outdir = rootdir / f'obs{self.meta["obsid"]:05}'
         if not outdir.exists():
             outdir.mkdir()
-        outfile = outdir / f'{self.name}.pkl'
-        with open(outfile, 'wb') as fh:
+        outfile = outdir / f"{self.name}.pkl"
+        with open(outfile, "wb") as fh:
             pickle.dump(self, fh)
 
     @classmethod
-    def from_pickle(cls, obsid, rootdir='.'):
+    def from_pickle(cls, obsid, rootdir="."):
         """
         Construct table from pickle file in
           ``<rootdir>/obs<obsid>/<name>.pkl``
@@ -968,8 +1001,8 @@ class ACACatalogTable(BaseCatalogTable):
         :returns: catalog table
         """
         rootdir = Path(rootdir)
-        infile = rootdir / f'obs{obsid:05}' / f'{cls.name}.pkl'
-        with open(infile, 'rb') as fh:
+        infile = rootdir / f"obs{obsid:05}" / f"{cls.name}.pkl"
+        with open(infile, "rb") as fh:
             return pickle.load(fh)
 
     def has_column_spoiler(self, cand, stars, mask=None):
@@ -993,14 +1026,19 @@ class ACACatalogTable(BaseCatalogTable):
         # AND on same side of CCD
         # AND within column separation limit
         # AND within mag limit
-        bads = ((np.abs(cand['row']) < abs(stars['row'][mask])) &
-                (np.sign(cand['row']) == np.sign(stars['row'][mask])) &
-                (np.abs(cand['col'] - stars['col'][mask]) < ACA.col_spoiler_pix_sep) &
-                (cand['mag'] - stars['mag'][mask] > ACA.col_spoiler_mag_diff))
+        bads = (
+            (np.abs(cand["row"]) < abs(stars["row"][mask]))
+            & (np.sign(cand["row"]) == np.sign(stars["row"][mask]))
+            & (np.abs(cand["col"] - stars["col"][mask]) < ACA.col_spoiler_pix_sep)
+            & (cand["mag"] - stars["mag"][mask] > ACA.col_spoiler_mag_diff)
+        )
 
         if np.any(bads):
-            self.log(f'Candidate object id={cand["id"]} rejected due to column spoiler(s) '
-                     f'{stars["id"][mask][bads].tolist()}', id=cand['id'])
+            self.log(
+                f'Candidate object id={cand["id"]} rejected due to column spoiler(s) '
+                f'{stars["id"][mask][bads].tolist()}',
+                id=cand["id"],
+            )
             return True
         else:
             return False
@@ -1009,40 +1047,40 @@ class ACACatalogTable(BaseCatalogTable):
 # AGASC columns not needed (at this moment) for acq star selection.
 # Change as needed.
 AGASC_COLS_DROP = [
-    'RA',
-    'DEC',
-    'POS_CATID',
-    'EPOCH',
-    'PM_CATID',
-    'PLX',
-    'PLX_ERR',
-    'PLX_CATID',
-    'MAG',
-    'MAG_ERR',
-    'MAG_BAND',
-    'MAG_CATID',
-    'C1_CATID',
-    'COLOR2',
-    'COLOR2_ERR',
-    'C2_CATID',
-    'RSV1',
-    'RSV2',
-    'RSV3',
-    'VAR_CATID',
-    'ACQQ1',
-    'ACQQ2',
-    'ACQQ3',
-    'ACQQ4',
-    'ACQQ5',
-    'ACQQ6',
-    'XREF_ID1',
-    'XREF_ID2',
-    'XREF_ID3',
-    'XREF_ID4',
-    'XREF_ID5',
-    'RSV4',
-    'RSV5',
-    'RSV6',
+    "RA",
+    "DEC",
+    "POS_CATID",
+    "EPOCH",
+    "PM_CATID",
+    "PLX",
+    "PLX_ERR",
+    "PLX_CATID",
+    "MAG",
+    "MAG_ERR",
+    "MAG_BAND",
+    "MAG_CATID",
+    "C1_CATID",
+    "COLOR2",
+    "COLOR2_ERR",
+    "C2_CATID",
+    "RSV1",
+    "RSV2",
+    "RSV3",
+    "VAR_CATID",
+    "ACQQ1",
+    "ACQQ2",
+    "ACQQ3",
+    "ACQQ4",
+    "ACQQ5",
+    "ACQQ6",
+    "XREF_ID1",
+    "XREF_ID2",
+    "XREF_ID3",
+    "XREF_ID4",
+    "XREF_ID5",
+    "RSV4",
+    "RSV5",
+    "RSV6",
 ]
 
 # Define a function that returns the observed standard deviation in ACA mag
@@ -1053,10 +1091,23 @@ AGASC_COLS_DROP = [
 # See ASPECT/ipynb/star_selection/star-mag-std-dev.ipynb for the source of numbers.
 #
 # Note that get_mag_std is a function that is called with get_mag_std(mag_aca).
-get_mag_std = interp1d(x=[-10, 6.7, 7.3, 7.8, 8.3, 8.8, 9.2, 9.7, 10.1, 11, 20],  # mag
-                       y=[0.015, 0.015, 0.022, 0.029, 0.038, 0.055, 0.077,
-                          0.109, 0.141, 0.23, 1.0],  # std-dev
-                       kind='linear')
+get_mag_std = interp1d(
+    x=[-10, 6.7, 7.3, 7.8, 8.3, 8.8, 9.2, 9.7, 10.1, 11, 20],  # mag
+    y=[
+        0.015,
+        0.015,
+        0.022,
+        0.029,
+        0.038,
+        0.055,
+        0.077,
+        0.109,
+        0.141,
+        0.23,
+        1.0,
+    ],  # std-dev
+    kind="linear",
+)
 
 
 class StarsTable(BaseCatalogTable):
@@ -1070,6 +1121,7 @@ class StarsTable(BaseCatalogTable):
     - empty() : empty catalog, then use add_* methods to add stars
 
     """
+
     att = QuatMetaAttribute()
 
     # StarsTable attributes, gets set in MetaAttribute or AliasAttribute
@@ -1080,6 +1132,7 @@ class StarsTable(BaseCatalogTable):
         if logger is not None:
             return logger
         else:
+
             def null_logger(*args, **kwargs):
                 pass
 
@@ -1099,7 +1152,7 @@ class StarsTable(BaseCatalogTable):
         :param ax: matplotlib axes object for plotting to (optional)
         :param kwargs: other keywords for plot_stars
         """
-        kwargs.setdefault('stars', self)
+        kwargs.setdefault("stars", self)
         return super().plot(ax, **kwargs)
 
     @classmethod
@@ -1116,15 +1169,18 @@ class StarsTable(BaseCatalogTable):
         :returns: StarsTable of stars
         """
         q_att = Quat(att)
-        agasc_file = Path(os.environ['SKA'], 'data', 'agasc', 'proseco_agasc_1p7.h5')
-        agasc_stars = agasc.get_agasc_cone(q_att.ra, q_att.dec, radius=radius, date=date,
-                                           agasc_file=agasc_file)
+        agasc_file = Path(os.environ["SKA"], "data", "agasc", "proseco_agasc_1p7.h5")
+        agasc_stars = agasc.get_agasc_cone(
+            q_att.ra, q_att.dec, radius=radius, date=date, agasc_file=agasc_file
+        )
         stars = StarsTable.from_stars(att, agasc_stars, copy=False)
 
         logger = StarsTable.get_logger(logger)
-        logger(f'Got {len(stars)} stars from AGASC at '
-               f'ra={q_att.ra:.5f} dec={q_att.dec:.4f}',
-               level=1)
+        logger(
+            f"Got {len(stars)} stars from AGASC at "
+            f"ra={q_att.ra:.5f} dec={q_att.dec:.4f}",
+            level=1,
+        )
 
         return stars
 
@@ -1145,7 +1201,7 @@ class StarsTable(BaseCatalogTable):
             try:
                 star = agasc.get_star(agasc_id, date=date)
             except Exception:
-                raise ValueError(f'failed to get AGASC ID={agasc_id}')
+                raise ValueError(f"failed to get AGASC ID={agasc_id}")
             else:
                 agasc_stars.append(star)
         agasc_stars = Table(rows=agasc_stars, names=agasc_stars[0].colnames)
@@ -1179,50 +1235,57 @@ class StarsTable(BaseCatalogTable):
                 q_att_stars = Quat(stars.att)
                 dq = q_att.dq(q_att_stars)
                 lim = 0.001 / 3600  # 0.001 arcsec
-                if any(abs(getattr(dq, attr)) > lim for attr in ('pitch', 'yaw', 'roll0')):
-                    raise ValueError(f'supplied att {att} does not match stars att {stars.att}')
+                if any(
+                    abs(getattr(dq, attr)) > lim for attr in ("pitch", "yaw", "roll0")
+                ):
+                    raise ValueError(
+                        f"supplied att {att} does not match stars att {stars.att}"
+                    )
             return stars
 
         stars = cls(stars, copy=copy)
         stars.att = att
 
-        logger(f'Updating star columns for attitude and convenience')
+        logger(f"Updating star columns for attitude and convenience")
 
-        stars.meta['q_att'] = q_att
-        yag, zag = radec_to_yagzag(stars['RA_PMCORR'], stars['DEC_PMCORR'], q_att)
-        row, col = yagzag_to_pixels(yag, zag, allow_bad=True, pix_zero_loc='edge')
+        stars.meta["q_att"] = q_att
+        yag, zag = radec_to_yagzag(stars["RA_PMCORR"], stars["DEC_PMCORR"], q_att)
+        row, col = yagzag_to_pixels(yag, zag, allow_bad=True, pix_zero_loc="edge")
 
-        stars.remove_columns([name for name in AGASC_COLS_DROP
-                              if name in stars.colnames])
+        stars.remove_columns(
+            [name for name in AGASC_COLS_DROP if name in stars.colnames]
+        )
 
-        stars.rename_column('AGASC_ID', 'id')
-        stars.add_column(Column(stars['RA_PMCORR'], name='ra'), index=1)
-        stars.add_column(Column(stars['DEC_PMCORR'], name='dec'), index=2)
-        stars.add_column(Column(yag, name='yang'), index=3)
-        stars.add_column(Column(zag, name='zang'), index=4)
-        stars.add_column(Column(row, name='row'), index=5)
-        stars.add_column(Column(col, name='col'), index=6)
+        stars.rename_column("AGASC_ID", "id")
+        stars.add_column(Column(stars["RA_PMCORR"], name="ra"), index=1)
+        stars.add_column(Column(stars["DEC_PMCORR"], name="dec"), index=2)
+        stars.add_column(Column(yag, name="yang"), index=3)
+        stars.add_column(Column(zag, name="zang"), index=4)
+        stars.add_column(Column(row, name="row"), index=5)
+        stars.add_column(Column(col, name="col"), index=6)
 
-        stars.add_column(Column(stars['MAG_ACA'], name='mag'), index=7)  # For convenience
+        stars.add_column(
+            Column(stars["MAG_ACA"], name="mag"), index=7
+        )  # For convenience
 
         # Mag_err column is the RSS of the catalog mag err (i.e. systematic error in
         # the true star mag) and the sample uncertainty in the ACA readout mag
         # for a star with mag=MAG_ACA.  The latter typically dominates above 9th mag.
-        mag_aca_err = stars['MAG_ACA_ERR'] * 0.01
+        mag_aca_err = stars["MAG_ACA_ERR"] * 0.01
 
         # For color=1.5 stars set a lower limit of 0.3 on the catalog mag error.
         # This is based on analysis in ipynb/star_selection/star-mag-std-dev.ipynb
         # which shows that for color=1.5 stars the observed mag error is
         # does not correlate well with mag_err below around 0.3 and so setting a
         # floor of 0.3 is a reasonable way to capture the uncertainty.
-        ok = stars['COLOR1'] == 1.5
+        ok = stars["COLOR1"] == 1.5
         mag_aca_err[ok] = mag_aca_err[ok].clip(0.3)
 
-        mag_std_dev = get_mag_std(stars['MAG_ACA'])
-        mag_err = np.sqrt(mag_aca_err ** 2 + mag_std_dev ** 2)
-        stars.add_column(Column(mag_err, name='mag_err'), index=8)
+        mag_std_dev = get_mag_std(stars["MAG_ACA"])
+        mag_err = np.sqrt(mag_aca_err**2 + mag_std_dev**2)
+        stars.add_column(Column(mag_err, name="mag_err"), index=8)
 
-        logger('Finished star processing', level=1)
+        logger("Finished star processing", level=1)
 
         return stars
 
@@ -1245,7 +1308,7 @@ class StarsTable(BaseCatalogTable):
 
         :param agasc_id: AGASC ID of the star to add
         """
-        stars = StarsTable.from_agasc_ids(self.meta['q_att'], [agasc_id])
+        stars = StarsTable.from_agasc_ids(self.meta["q_att"], [agasc_id])
         self.add_row(stars[0])
 
     def add_fake_constellation(self, n_stars=8, size=1500, mag=7.0, **attrs):
@@ -1284,14 +1347,20 @@ class StarsTable(BaseCatalogTable):
         :param \**attrs: other star table attributes
         """
         if n_stars > 8:
-            raise ValueError('max value of n_stars is 8')
+            raise ValueError("max value of n_stars is 8")
 
         ids = len(self) + 100 + np.arange(n_stars)
-        yangs = np.array([1, 0, -1, 0, 0.5, 0.5, -0.5, -0.5][:n_stars], dtype=np.float64) * size
-        zangs = np.array([0, 1, 0, -1, 0.5, -0.5, 0.5, -0.5][:n_stars], dtype=np.float64) * size
+        yangs = (
+            np.array([1, 0, -1, 0, 0.5, 0.5, -0.5, -0.5][:n_stars], dtype=np.float64)
+            * size
+        )
+        zangs = (
+            np.array([0, 1, 0, -1, 0.5, -0.5, 0.5, -0.5][:n_stars], dtype=np.float64)
+            * size
+        )
 
         arrays = [ids, yangs, zangs, mag]
-        names = ['id', 'yang', 'zang', 'mag']
+        names = ["id", "yang", "zang", "mag"]
         for name, array in attrs.items():
             names.append(name)
             arrays.append(array)
@@ -1316,78 +1385,114 @@ class StarsTable(BaseCatalogTable):
 
         :param \**star: keyword arg attributes corresponding to StarTable columns
         """
-        names = ['id', 'ra', 'dec', 'yang', 'zang', 'row', 'col', 'mag', 'mag_err',
-                 'POS_ERR', 'PM_RA', 'PM_DEC', 'MAG_ACA',
-                 'MAG_ACA_ERR', 'CLASS', 'COLOR1', 'COLOR1_ERR', 'VAR', 'ASPQ1',
-                 'ASPQ2', 'ASPQ3', 'RA_PMCORR', 'DEC_PMCORR']
+        names = [
+            "id",
+            "ra",
+            "dec",
+            "yang",
+            "zang",
+            "row",
+            "col",
+            "mag",
+            "mag_err",
+            "POS_ERR",
+            "PM_RA",
+            "PM_DEC",
+            "MAG_ACA",
+            "MAG_ACA_ERR",
+            "CLASS",
+            "COLOR1",
+            "COLOR1_ERR",
+            "VAR",
+            "ASPQ1",
+            "ASPQ2",
+            "ASPQ3",
+            "RA_PMCORR",
+            "DEC_PMCORR",
+        ]
 
-        defaults = {'id': len(self) + 100,
-                    'mag_err': 0.1,
-                    'VAR': -9999}
-        out = {name: star.get(name, defaults.get(name, 0)) for name in names
-               if name in self.colnames}
+        defaults = {"id": len(self) + 100, "mag_err": 0.1, "VAR": -9999}
+        out = {
+            name: star.get(name, defaults.get(name, 0))
+            for name in names
+            if name in self.colnames
+        }
 
-        q_att = self.meta['q_att']
-        if 'ra' in star and 'dec' in star:
-            out['yang'], out['zang'] = radec_to_yagzag(out['ra'], out['dec'], q_att)
-            out['row'], out['col'] = yagzag_to_pixels(out['yang'], out['zang'],
-                                                      allow_bad=True)
+        q_att = self.meta["q_att"]
+        if "ra" in star and "dec" in star:
+            out["yang"], out["zang"] = radec_to_yagzag(out["ra"], out["dec"], q_att)
+            out["row"], out["col"] = yagzag_to_pixels(
+                out["yang"], out["zang"], allow_bad=True
+            )
 
-        elif 'yang' in star and 'zang' in star:
-            out['ra'], out['dec'] = yagzag_to_radec(out['yang'], out['zang'], q_att)
-            out['row'], out['col'] = yagzag_to_pixels(out['yang'], out['zang'],
-                                                      allow_bad=True)
+        elif "yang" in star and "zang" in star:
+            out["ra"], out["dec"] = yagzag_to_radec(out["yang"], out["zang"], q_att)
+            out["row"], out["col"] = yagzag_to_pixels(
+                out["yang"], out["zang"], allow_bad=True
+            )
 
-        elif 'row' in star and 'col' in star:
-            out['yang'], out['zang'] = pixels_to_yagzag(out['row'], out['col'],
-                                                        allow_bad=True)
-            out['ra'], out['dec'] = yagzag_to_radec(out['yang'], out['zang'], q_att)
+        elif "row" in star and "col" in star:
+            out["yang"], out["zang"] = pixels_to_yagzag(
+                out["row"], out["col"], allow_bad=True
+            )
+            out["ra"], out["dec"] = yagzag_to_radec(out["yang"], out["zang"], q_att)
 
-        reqd_names = ('ra', 'dec', 'row', 'col', 'yang', 'zang', 'mag', 'mag_err')
+        reqd_names = ("ra", "dec", "row", "col", "yang", "zang", "mag", "mag_err")
         for name in reqd_names:
             if name not in out:
-                raise ValueError(f'incomplete star data did not get {name} data')
+                raise ValueError(f"incomplete star data did not get {name} data")
 
-        out['RA_PMCORR'] = out['ra']
-        out['DEC_PMCORR'] = out['dec']
-        out['MAG_ACA'] = out['mag']
+        out["RA_PMCORR"] = out["ra"]
+        out["DEC_PMCORR"] = out["dec"]
+        out["MAG_ACA"] = out["mag"]
 
         # The fake_code attribute is used for monitor window handling to
         # indicate that this star has been added as a fake star so that guide
         # selection can select it as a force-include star. Subsequently the
         # code is used to infer the provenance of that star.
-        if 'fake_code' in star:
-            if 'fake_code' not in self.colnames:
-                self['fake_code'] = 0
-            out['fake_code'] = star['fake_code']
+        if "fake_code" in star:
+            if "fake_code" not in self.colnames:
+                self["fake_code"] = 0
+            out["fake_code"] = star["fake_code"]
 
         self.add_row(out)
 
-    def add_fake_stars_from_fid(self, fid_id=1, offset_y=0, offset_z=0, mag=7.0,
-                                id=None, detector='ACIS-S', sim_offset=0):
+    def add_fake_stars_from_fid(
+        self,
+        fid_id=1,
+        offset_y=0,
+        offset_z=0,
+        mag=7.0,
+        id=None,
+        detector="ACIS-S",
+        sim_offset=0,
+    ):
         try:
             fids = FIDS_CACHE[detector, sim_offset]
         except KeyError:
             from .fid import get_fid_catalog
-            fids = get_fid_catalog(att=(0, 0, 0),
-                                   n_fid=3,
-                                   detector=detector,
-                                   sim_offset=sim_offset,
-                                   focus_offset=0,
-                                   t_ccd=-10.0,
-                                   date='2018:001',
-                                   dither=8.0)
+
+            fids = get_fid_catalog(
+                att=(0, 0, 0),
+                n_fid=3,
+                detector=detector,
+                sim_offset=sim_offset,
+                focus_offset=0,
+                t_ccd=-10.0,
+                date="2018:001",
+                dither=8.0,
+            )
             FIDS_CACHE[detector, sim_offset] = fids
 
         arrays = np.broadcast_arrays(fid_id, offset_y, offset_z, mag, id)
 
         for fid_id, offset_y, offset_z, mag, id in zip(*arrays):
             fid = fids.cand_fids.get_id(fid_id)
-            kwargs = dict(yang=fid['yang'] + offset_y,
-                          zang=fid['zang'] + offset_z,
-                          mag=mag)
+            kwargs = dict(
+                yang=fid["yang"] + offset_y, zang=fid["zang"] + offset_z, mag=mag
+            )
             if id is not None:
-                kwargs['id'] = id
+                kwargs["id"] = id
             self.add_fake_star(**kwargs)
 
 
@@ -1397,29 +1502,125 @@ def bin2x2(arr):
     return arr.reshape(shape).sum(-1).sum(1)
 
 
-RC_6x6 = np.array([10, 11, 12, 13,
-                   17, 18, 19, 20, 21, 22,
-                   25, 26, 27, 28, 29, 30,
-                   33, 34, 35, 36, 37, 38,
-                   41, 42, 43, 44, 45, 46,
-                   50, 51, 52, 53],
-                  dtype=np.int64)
+RC_6x6 = np.array(
+    [
+        10,
+        11,
+        12,
+        13,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        50,
+        51,
+        52,
+        53,
+    ],
+    dtype=np.int64,
+)
 
-ROW_6x6 = np.array([1, 1, 1, 1,
-                    2, 2, 2, 2, 2, 2,
-                    3, 3, 3, 3, 3, 3,
-                    4, 4, 4, 4, 4, 4,
-                    5, 5, 5, 5, 5, 5,
-                    6, 6, 6, 6],
-                   dtype=np.float64) + 0.5
+ROW_6x6 = (
+    np.array(
+        [
+            1,
+            1,
+            1,
+            1,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            6,
+            6,
+            6,
+            6,
+        ],
+        dtype=np.float64,
+    )
+    + 0.5
+)
 
-COL_6x6 = np.array([2, 3, 4, 5,
-                    1, 2, 3, 4, 5, 6,
-                    1, 2, 3, 4, 5, 6,
-                    1, 2, 3, 4, 5, 6,
-                    1, 2, 3, 4, 5, 6,
-                    2, 3, 4, 5],
-                   dtype=np.float64) + 0.5
+COL_6x6 = (
+    np.array(
+        [
+            2,
+            3,
+            4,
+            5,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            2,
+            3,
+            4,
+            5,
+        ],
+        dtype=np.float64,
+    )
+    + 0.5
+)
 
 
 def get_image_props(ccd_img, c_row, c_col, bgd=None):
@@ -1434,10 +1635,10 @@ def get_image_props(ccd_img, c_row, c_col, bgd=None):
 
     :returns: 8x8 image (ndarray), image mag
     """
-    img = ccd_img[c_row - 4:c_row + 4, c_col - 4:c_col + 4]
+    img = ccd_img[c_row - 4 : c_row + 4, c_col - 4 : c_col + 4]
 
     if bgd is None:
-        raise NotImplementedError('no calc_flight_background here')
+        raise NotImplementedError("no calc_flight_background here")
         # bgd = calc_flight_background(img)  # currently not defined
 
     img = img - bgd
@@ -1473,57 +1674,74 @@ def get_kwargs_from_starcheck_text(obs_text, include_cat=False, force_catalog=Fa
     """
     import re
     import textwrap
-    from mica.starcheck.starcheck_parser import (get_coords, get_dither, get_starcat_header,
-                                                 get_pred_temp, get_manvrs, get_catalog,
-                                                 get_targ)
+
+    from mica.starcheck.starcheck_parser import (
+        get_catalog,
+        get_coords,
+        get_dither,
+        get_manvrs,
+        get_pred_temp,
+        get_starcat_header,
+        get_targ,
+    )
+
     # Remove common leading whitespace
     obs_text = textwrap.dedent(obs_text)
 
     # Set up defaults
-    kw = {'dither': (8.0, 8.0),
-          't_ccd': -10.0,
-          'date': '2018:001',
-          'n_guide': 8,
-          'detector': 'ACIS-S',
-          'sim_offset': 0,
-          'focus_offset': 0}
+    kw = {
+        "dither": (8.0, 8.0),
+        "t_ccd": -10.0,
+        "date": "2018:001",
+        "n_guide": 8,
+        "detector": "ACIS-S",
+        "sim_offset": 0,
+        "focus_offset": 0,
+    }
     try:
-        kw['obsid'] = int(re.search(r"OBSID:\s(\d+).*", obs_text).group(1))
+        kw["obsid"] = int(re.search(r"OBSID:\s(\d+).*", obs_text).group(1))
     except Exception:
         # Nothing else will work so raise an exception
-        raise ValueError('text does not have OBSID: <obsid>, does not look like appropriate text')
+        raise ValueError(
+            "text does not have OBSID: <obsid>, does not look like appropriate text"
+        )
 
     try:
         out = get_coords(obs_text)
-        kw['att'] = [out['point_ra'], out['point_dec'], out['point_roll']]
+        kw["att"] = [out["point_ra"], out["point_dec"], out["point_roll"]]
     except Exception:
         try:
             out = get_manvrs(obs_text)[-1]
-            kw['att'] = [out['target_Q1'], out['target_Q2'], out['target_Q3'], out['target_Q4']]
+            kw["att"] = [
+                out["target_Q1"],
+                out["target_Q2"],
+                out["target_Q3"],
+                out["target_Q4"],
+            ]
         except Exception:
             pass
 
     try:
         out = get_manvrs(obs_text)[-1]
-        kw['man_angle'] = out['angle_deg']
+        kw["man_angle"] = out["angle_deg"]
     except Exception:
         pass
 
     try:
         out = get_dither(obs_text)
-        kw['dither'] = (out['dither_y_amp'], out['dither_z_amp'])
+        kw["dither"] = (out["dither_y_amp"], out["dither_z_amp"])
     except Exception:
         pass
 
     try:
         ccd_temp = get_pred_temp(obs_text)
-        kw['t_ccd'] = ccd_temp
+        kw["t_ccd"] = ccd_temp
     except Exception:
         pass
 
     try:
         starcat_hdr = get_starcat_header(obs_text)
-        kw['date'] = starcat_hdr['mp_starcat_time']
+        kw["date"] = starcat_hdr["mp_starcat_time"]
     except Exception:
         pass
 
@@ -1533,37 +1751,39 @@ def get_kwargs_from_starcheck_text(obs_text, include_cat=False, force_catalog=Fa
         cat = None
 
     if cat is not None:
-        monitors = get_monitors(kw['obsid'], cat)
+        monitors = get_monitors(kw["obsid"], cat)
         if monitors:
-            kw['monitors'] = monitors
+            kw["monitors"] = monitors
 
-        kw['n_fid'] = np.count_nonzero(cat['type'] == 'FID')
+        kw["n_fid"] = np.count_nonzero(cat["type"] == "FID")
 
         if include_cat:
-            kw['cat'] = cat
+            kw["cat"] = cat
 
         if force_catalog:
-            ok = np.in1d(cat['type'], ('ACQ', 'BOT'))
-            kw['n_acq'] = np.count_nonzero(ok)
-            kw['include_ids_acq'] = cat['id'][ok].tolist()
-            kw['include_halfws_acq'] = cat['halfw'][ok].tolist()
+            ok = np.in1d(cat["type"], ("ACQ", "BOT"))
+            kw["n_acq"] = np.count_nonzero(ok)
+            kw["include_ids_acq"] = cat["id"][ok].tolist()
+            kw["include_halfws_acq"] = cat["halfw"][ok].tolist()
 
-            ok = np.in1d(cat['type'], ('GUI', 'BOT'))
+            ok = np.in1d(cat["type"], ("GUI", "BOT"))
             # n_guide kwarg needs to include guide stars + MON stars
-            kw['n_guide'] = np.count_nonzero(ok) + np.count_nonzero(cat['type'] == 'MON')
-            kw['include_ids_guide'] = cat['id'][ok].tolist()
+            kw["n_guide"] = np.count_nonzero(ok) + np.count_nonzero(
+                cat["type"] == "MON"
+            )
+            kw["include_ids_guide"] = cat["id"][ok].tolist()
 
-            ok = np.in1d(cat['type'], 'FID')
-            kw['include_ids_fid'] = cat['id'][ok].tolist()
+            ok = np.in1d(cat["type"], "FID")
+            kw["include_ids_fid"] = cat["id"][ok].tolist()
         else:
-            kw['n_acq'] = 8
-            kw['n_guide'] = 8 - kw['n_fid']
+            kw["n_acq"] = 8
+            kw["n_guide"] = 8 - kw["n_fid"]
 
     try:
         targ = get_targ(obs_text)
-        kw['detector'] = targ['sci_instr']
-        kw['sim_offset'] = targ['sim_z_offset_steps']
-        kw['focus_offset'] = 0
+        kw["detector"] = targ["sci_instr"]
+        kw["sim_offset"] = targ["sim_z_offset_steps"]
+        kw["focus_offset"] = 0
     except Exception:
         pass
 
@@ -1585,25 +1805,40 @@ def get_monitors(obsid, cat):
     # `monitors` is in the correct order. In particular the first entry is
     # always put into slot 7.
     cat = cat.copy()
-    cat.sort(['slot', 'idx'])
+    cat.sort(["slot", "idx"])
 
     for row in cat[::-1]:
         # Will need to remove when we start scheduling OR's with 8x8 guides.
-        if (row['type'] in ('GUI', 'BOT')
-            and row['slot'] == 7
-            and row['sz'] == '8x8'
-                and obsid <= 38000):
+        if (
+            row["type"] in ("GUI", "BOT")
+            and row["slot"] == 7
+            and row["sz"] == "8x8"
+            and obsid <= 38000
+        ):
             # Guide from MON (GFM) so force scheduling as GUI
-            monitor = [row['yang'], row['zang'], ACA.MonCoord.YAGZAG,
-                       row['mag'], ACA.MonFunc.GUIDE]
+            monitor = [
+                row["yang"],
+                row["zang"],
+                ACA.MonCoord.YAGZAG,
+                row["mag"],
+                ACA.MonFunc.GUIDE,
+            ]
             monitors.append(monitor)
 
-        elif row['type'] == 'MON':
+        elif row["type"] == "MON":
             # Bona fide MON entry
-            mon_func = (ACA.MonFunc.MON_FIXED if row['slot'] == row['dim']
-                        else ACA.MonFunc.MON_TRACK)
-            monitor = [row['yang'], row['zang'], ACA.MonCoord.YAGZAG,
-                       row['maxmag'], mon_func]
+            mon_func = (
+                ACA.MonFunc.MON_FIXED
+                if row["slot"] == row["dim"]
+                else ACA.MonFunc.MON_TRACK
+            )
+            monitor = [
+                row["yang"],
+                row["zang"],
+                ACA.MonCoord.YAGZAG,
+                row["maxmag"],
+                mon_func,
+            ]
             monitors.append(monitor)
 
     return monitors
@@ -1627,18 +1862,18 @@ def includes_for_obsid(obsid):
 
     obs = get_starcheck_catalog(obsid)
 
-    cat = obs['cat']
+    cat = obs["cat"]
     out = {}
 
-    ok = np.in1d(cat['type'], ('ACQ', 'BOT'))
-    out['include_ids_acq'] = cat['id'][ok].tolist()
-    out['include_halfws_acq'] = cat['halfw'][ok].tolist()
+    ok = np.in1d(cat["type"], ("ACQ", "BOT"))
+    out["include_ids_acq"] = cat["id"][ok].tolist()
+    out["include_halfws_acq"] = cat["halfw"][ok].tolist()
 
-    ok = np.in1d(cat['type'], ('GUI', 'BOT'))
-    out['include_ids_guide'] = cat['id'][ok].tolist()
+    ok = np.in1d(cat["type"], ("GUI", "BOT"))
+    out["include_ids_guide"] = cat["id"][ok].tolist()
 
-    ok = np.in1d(cat['type'], ('FID'))
-    out['include_ids_fid'] = cat['id'][ok].tolist()
+    ok = np.in1d(cat["type"], ("FID"))
+    out["include_ids_fid"] = cat["id"][ok].tolist()
 
     return out
 
@@ -1676,7 +1911,7 @@ def get_dim_res(halfws):
     dim[~ok] = np.round((halfws[~ok] - 20) / 40)
 
     if np.any((dim < 0) | (dim > 63)):
-        raise ValueError(f'halfws {halfws} leading to bad value(s) of dim {dim}')
+        raise ValueError(f"halfws {halfws} leading to bad value(s) of dim {dim}")
 
     return dim, res
 

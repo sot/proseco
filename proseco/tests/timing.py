@@ -4,8 +4,8 @@
 Provide a function to check for timing regressions for any changes.
 """
 
-import time
 import sys
+import time
 
 import numpy as np
 
@@ -29,11 +29,11 @@ def time_get_aca_catalog(n_samples=100):
 
     t0 = time.time()
     for ra, dec, roll in zip(ras, decs, rolls):
-        print('.', end='')
+        print(".", end="")
         sys.stdout.flush()
         get_aca_catalog(**mod_std_info(att=(ra, dec, roll)))
 
     t1 = time.time()
     print()
 
-    print(f'Got {n_samples} catalogs in {(t1 - t0) / n_samples:.3f} secs (mean)')
+    print(f"Got {n_samples} catalogs in {(t1 - t0) / n_samples:.3f} secs (mean)")

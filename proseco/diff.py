@@ -1,8 +1,8 @@
 # coding: utf-8
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import os
 import difflib
+import os
 
 import numpy as np
 from astropy.table import vstack
@@ -58,11 +58,12 @@ HTML_FOOTER = """
 </html>
 """
 
-__all__ = ['get_catalog_lines', 'catalog_diff', 'CatalogDiff']
+__all__ = ["get_catalog_lines", "catalog_diff", "CatalogDiff"]
 
 
-def get_catalog_lines(cat, names=None, section_lines=True, sort_name='id',
-                      formats=None):
+def get_catalog_lines(
+    cat, names=None, section_lines=True, sort_name="id", formats=None
+):
     """Get list of lines representing catalog suitable for diffing.
 
     This function sorts the catalog into fids, guides, monitors,and acquisition
@@ -88,50 +89,51 @@ def get_catalog_lines(cat, names=None, section_lines=True, sort_name='id',
     :returns: list
     """
     if names is None:
-        names = 'idx id slot type mag sz dim res halfw'
+        names = "idx id slot type mag sz dim res halfw"
     if isinstance(names, str):
         names = names.split()
 
-    ok = np.in1d(cat['type'], ['FID'])
+    ok = np.in1d(cat["type"], ["FID"])
     fids = cat[ok]
     fids.sort(sort_name)
-    fids['dim'] = 1
-    fids['res'] = 1
-    fids['halfw'] = 25
+    fids["dim"] = 1
+    fids["res"] = 1
+    fids["halfw"] = 25
     # Translate fid IDs in the range 11-14 => 1-4, 7-10 => 1-4. The fully
     # independent fid ID comes from starcheck typically.
-    ok = fids['id'] > 10
-    fids['id'][ok] -= 10
-    ok = fids['id'] > 6
-    fids['id'][ok] -= 6
+    ok = fids["id"] > 10
+    fids["id"][ok] -= 10
+    ok = fids["id"] > 6
+    fids["id"][ok] -= 6
 
-    ok = np.in1d(cat['type'], ['GUI', 'BOT'])
+    ok = np.in1d(cat["type"], ["GUI", "BOT"])
     guides = cat[ok]
     guides.sort(sort_name)
-    bot = guides['type'] == 'BOT'
-    guides['dim'][bot] = 1
-    guides['res'][bot] = 1
-    guides['halfw'][bot] = 25
-    guides['type'][bot] = 'GU*'
+    bot = guides["type"] == "BOT"
+    guides["dim"][bot] = 1
+    guides["res"][bot] = 1
+    guides["halfw"][bot] = 25
+    guides["type"][bot] = "GU*"
 
     # Make MON catalog and convert slot in dim (designated track star).
-    ok = np.in1d(cat['type'], ['MON'])
+    ok = np.in1d(cat["type"], ["MON"])
     mons = cat[ok]
     mons.sort(sort_name)
 
-    ok = np.in1d(cat['type'], ['ACQ', 'BOT'])
+    ok = np.in1d(cat["type"], ["ACQ", "BOT"])
     acqs = cat[ok]
     acqs.sort(sort_name)
-    acqs['type'][acqs['type'] == 'BOT'] = 'AC*'
+    acqs["type"][acqs["type"] == "BOT"] = "AC*"
 
-    out = vstack([fids, guides, mons, acqs], metadata_conflicts='silent')
+    out = vstack([fids, guides, mons, acqs], metadata_conflicts="silent")
     from .core import ACACatalogTable
+
     out = ACACatalogTable(out[names])
 
     # Handle odd case of catalog from starcheck with None in field
     for name in out.colnames:
         col = out[name]
-        if col.dtype.kind == 'O':
+        if col.dtype.kind == "O":
             col[col == None] = 0  # noqa
             out[name] = col.tolist()
 
@@ -151,7 +153,7 @@ def get_catalog_lines(cat, names=None, section_lines=True, sort_name='id',
     # Optionally divide the fid, guide, mon, and acq sections
     if section_lines:
         # Look for diffs in the first two characters of FID, GUI, GU*, MON, ACQ, AC*
-        types = np.array(out['type'], dtype='U2')
+        types = np.array(out["type"], dtype="U2")
         idxs = np.flatnonzero(types[:-1] != types[1:])
         for idx in reversed(idxs):
             lines.insert(idx + 3, lines[1])
@@ -160,8 +162,8 @@ def get_catalog_lines(cat, names=None, section_lines=True, sort_name='id',
 
 
 class CatalogDiff:
-    """Represent an ACA catalog diff as either HTML or plain text
-    """
+    """Represent an ACA catalog diff as either HTML or plain text"""
+
     def __init__(self, text, is_html=False):
         self.text = text
         self.is_html = is_html
@@ -170,7 +172,7 @@ class CatalogDiff:
         if self.is_html:
             return self.text
         else:
-            return f'<pre>{self.text}</pre>'
+            return f"<pre>{self.text}</pre>"
 
     def __repr__(self):
         return self.text
@@ -181,12 +183,21 @@ class CatalogDiff:
         :param out_file: str, Path
             Output file
         """
-        with open(out_file, 'w') as fh:
+        with open(out_file, "w") as fh:
             fh.write(self.text)
 
 
-def catalog_diff(cats1, cats2, style='html', names=None, labels=None, formats=None,
-                 sort_name='id', section_lines=True, n_context=3):
+def catalog_diff(
+    cats1,
+    cats2,
+    style="html",
+    names=None,
+    labels=None,
+    formats=None,
+    sort_name="id",
+    section_lines=True,
+    n_context=3,
+):
     """
     Return the diff of ACA catalogs ``cats1`` and ``cats2``.
 
@@ -223,42 +234,53 @@ def catalog_diff(cats1, cats2, style='html', names=None, labels=None, formats=No
         cats2 = [cats2]
 
     if len(cats1) != len(cats2):
-        raise ValueError('different number of catalogs in cat1 and cat2')
+        raise ValueError("different number of catalogs in cat1 and cat2")
 
-    header = HTML_HEADER if style == 'html' else ''
-    footer = HTML_FOOTER if style == 'html' else ''
+    header = HTML_HEADER if style == "html" else ""
+    footer = HTML_FOOTER if style == "html" else ""
 
     if labels is None:
         ok = len(cats1) > 1
-        labels = [(f'Catalog {ii + 1}' if ok else None) for ii in range(len(cats1))]
+        labels = [(f"Catalog {ii + 1}" if ok else None) for ii in range(len(cats1))]
 
-    text_all = ''
+    text_all = ""
     for cat1, cat2, label in zip(cats1, cats2, labels):
         lines1 = []
         lines2 = []
 
-        for cat, lines in ((cat1, lines1),
-                           (cat2, lines2)):
+        for cat, lines in ((cat1, lines1), (cat2, lines2)):
             cat_lines = get_catalog_lines(
-                cat, names, section_lines=section_lines, sort_name=sort_name, formats=formats)
+                cat,
+                names,
+                section_lines=section_lines,
+                sort_name=sort_name,
+                formats=formats,
+            )
             lines.extend(cat_lines)
 
-        if style == 'html':
+        if style == "html":
             differ = difflib.HtmlDiff()
             text = differ.make_table(lines1, lines2)
             if label:
-                text = f'<h3>{label}</h3>' + os.linesep + text
-        elif style in ('context', 'unified'):
-            func = getattr(difflib, f'{style}_diff')
+                text = f"<h3>{label}</h3>" + os.linesep + text
+        elif style in ("context", "unified"):
+            func = getattr(difflib, f"{style}_diff")
             ls = os.linesep
             text = ls.join(
-                func(lines1, lines2, fromfile='catalog 1', tofile='catalog 2', n=n_context))
+                func(
+                    lines1,
+                    lines2,
+                    fromfile="catalog 1",
+                    tofile="catalog 2",
+                    n=n_context,
+                )
+            )
             if label:
-                sep = '=' * max(30, len(label))
+                sep = "=" * max(30, len(label))
                 text = sep + ls + label + ls + sep + ls + text + ls + ls
         else:
             raise ValueError("style arg must be one of 'html', 'unified', 'context'")
 
         text_all += text
 
-    return CatalogDiff(header + text_all + footer, is_html=(style == 'html'))
+    return CatalogDiff(header + text_all + footer, is_html=(style == "html"))
