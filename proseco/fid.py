@@ -8,14 +8,12 @@ Get a catalog of fid lights.
 import weakref
 
 import numpy as np
-
 from chandra_aca.transform import yagzag_to_pixels
 
 from . import characteristics as ACA
-from . import characteristics_fid as FID
 from . import characteristics_acq as ACQ
-
-from .core import ACACatalogTable, MetaAttribute, AliasAttribute
+from . import characteristics_fid as FID
+from .core import ACACatalogTable, AliasAttribute, MetaAttribute
 
 
 def get_fid_catalog(obsid=0, **kwargs):

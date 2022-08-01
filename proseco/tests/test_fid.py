@@ -1,14 +1,14 @@
 import os
 
-import pytest
-import numpy as np
 import agasc
+import numpy as np
+import pytest
 
-from ..fid import get_fid_positions, get_fid_catalog
+from .. import characteristics_fid as FID
 from ..acq import get_acq_catalog
 from ..core import StarsTable
-from .test_common import OBS_INFO, STD_INFO, mod_std_info, DARK40
-from .. import characteristics_fid as FID
+from ..fid import get_fid_catalog, get_fid_positions
+from .test_common import DARK40, OBS_INFO, STD_INFO, mod_std_info
 
 # Reference fid positions for spoiling tests
 FIDS = get_fid_catalog(stars=StarsTable.empty(), **STD_INFO)

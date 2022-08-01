@@ -1,22 +1,24 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 import pickle
-import pytest
-import numpy as np
-from astropy.io import ascii
 
 import agasc
+import numpy as np
+import pytest
+from astropy.io import ascii
+
+from proseco import get_aca_catalog
+
+from ..acq import AcqTable
+from ..characteristics import bad_star_set
 from ..core import (
     ACABox,
-    get_kwargs_from_starcheck_text,
-    calc_spoiler_impact,
     StarsTable,
+    calc_spoiler_impact,
     get_dim_res,
+    get_kwargs_from_starcheck_text,
 )
-from ..acq import AcqTable
 from ..guide import GuideTable
-from ..characteristics import bad_star_set
-from proseco import get_aca_catalog
 
 
 def test_agasc_1p7():

@@ -1,33 +1,31 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 import os
-import numpy as np
-import pytest
 from pathlib import Path
 
-from Quaternion import Quat
+import agasc
+import numpy as np
+import pytest
 from chandra_aca.aca_image import AcaPsfLibrary
 from chandra_aca.transform import mag_to_count_rate, yagzag_to_pixels
-import agasc
+from Quaternion import Quat
 
-from ..report_acq import make_report
+from .. import characteristics as ACA
+from .. import characteristics_acq as ACQ
+from .. import characteristics_fid as FID
 from ..acq import (
-    get_p_man_err,
-    bin2x2,
-    get_imposter_stars,
-    get_image_props,
     AcqTable,
+    bin2x2,
     calc_p_on_ccd,
     get_acq_catalog,
+    get_image_props,
+    get_imposter_stars,
+    get_p_man_err,
 )
 from ..catalog import get_aca_catalog
 from ..core import ACABox, StarsTable
-from .test_common import OBS_INFO, STD_INFO, mod_std_info, DARK40
-
-from .. import characteristics as ACA
-from .. import characteristics_fid as FID
-from .. import characteristics_acq as ACQ
-
+from ..report_acq import make_report
+from .test_common import DARK40, OBS_INFO, STD_INFO, mod_std_info
 
 TEST_DATE = '2018:144'  # Fixed date for doing tests
 ATT = [10, 20, 3]  # Arbitrary test attitude

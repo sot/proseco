@@ -8,16 +8,15 @@ import matplotlib
 
 matplotlib.use('agg')  # noqa
 
-from jinja2 import Template
-import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import patches
-
+import numpy as np
 from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
 from chandra_aca.transform import mag_to_count_rate
+from jinja2 import Template
+from matplotlib import patches
 
 from .core import table_to_html
-from .guide import GuideTable, get_ax_range, GUIDE
+from .guide import GUIDE, GuideTable, get_ax_range
 
 # Do reporting for at-most MAX_CAND candidates
 MAX_CAND = 50

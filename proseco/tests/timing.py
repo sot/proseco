@@ -4,8 +4,8 @@
 Provide a function to check for timing regressions for any changes.
 """
 
-import time
 import sys
+import time
 
 import numpy as np
 

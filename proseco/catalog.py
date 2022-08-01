@@ -1,29 +1,29 @@
 # coding: utf-8
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import os
-from proseco.characteristics import MonFunc
-import traceback
-import numpy as np
 import copy
+import os
+import traceback
 
+import numpy as np
 from astropy.table import Table
 
+from proseco.characteristics import MonFunc
+
+from . import __version__ as VERSION
+from . import characteristics as ACA
+from . import characteristics_acq as ACQ
+from .acq import AcqTable, get_acq_catalog
 from .core import (
     ACACatalogTable,
-    get_kwargs_from_starcheck_text,
     MetaAttribute,
     get_dim_res,
     get_img_size,
+    get_kwargs_from_starcheck_text,
 )
-from .guide import get_guide_catalog, GuideTable
-from .acq import get_acq_catalog, AcqTable
-from .fid import get_fid_catalog, FidTable
+from .fid import FidTable, get_fid_catalog
+from .guide import GuideTable, get_guide_catalog
 from .monitor import BadMonitorError, get_mon_catalog
-from . import characteristics_acq as ACQ
-from . import characteristics as ACA
-from . import __version__ as VERSION
-
 
 # Colnames and types for final ACA catalog
 ACA_CATALOG_DTYPES = {

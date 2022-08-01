@@ -1,6 +1,5 @@
-from ska_helpers.utils import LazyDict
 import agasc
-
+from ska_helpers.utils import LazyDict
 
 CCD = {
     'row_min': -512.0,

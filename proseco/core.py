@@ -1,32 +1,31 @@
 # coding: utf-8
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import re
-import os
 import functools
-import pickle
 import inspect
+import os
+import pickle
+import re
 import time
 import warnings
 from copy import copy
 from pathlib import Path
 
+import agasc
 import numpy as np
-from scipy.interpolate import interp1d
-from astropy.table import Table, Column
-
+from astropy.table import Column, Table
+from chandra_aca.aca_image import AcaPsfLibrary
 from chandra_aca.transform import (
-    yagzag_to_pixels,
-    pixels_to_yagzag,
     count_rate_to_mag,
     mag_to_count_rate,
+    pixels_to_yagzag,
     radec_to_yagzag,
+    yagzag_to_pixels,
     yagzag_to_radec,
 )
-from chandra_aca.aca_image import AcaPsfLibrary
-import agasc
+from mica.archive.aca_dark import get_dark_cal_id, get_dark_cal_image
 from Quaternion import Quat
-from mica.archive.aca_dark import get_dark_cal_image, get_dark_cal_id
+from scipy.interpolate import interp1d
 
 from . import characteristics as ACA
 
@@ -545,8 +544,8 @@ class BaseCatalogTable(Table):
         :param ax: matplotlib axes object for plotting to (optional)
         :param kwargs: other keyword args for plot_stars
         """
-        from chandra_aca.plot import plot_stars
         import matplotlib.pyplot as plt
+        from chandra_aca.plot import plot_stars
 
         kwargs.setdefault('stars', np.array([]))
 
@@ -1675,13 +1674,14 @@ def get_kwargs_from_starcheck_text(obs_text, include_cat=False, force_catalog=Fa
     """
     import re
     import textwrap
+
     from mica.starcheck.starcheck_parser import (
+        get_catalog,
         get_coords,
         get_dither,
-        get_starcat_header,
-        get_pred_temp,
         get_manvrs,
-        get_catalog,
+        get_pred_temp,
+        get_starcat_header,
         get_targ,
     )
 

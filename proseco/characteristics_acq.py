@@ -1,8 +1,8 @@
-from __future__ import print_function, division, absolute_import
+from __future__ import absolute_import, division, print_function
 
 import numpy as np
-from scipy.interpolate import interp1d
 from astropy.table import Table
+from scipy.interpolate import interp1d
 
 box_sizes = np.array([160, 140, 120, 100, 80, 60])  # MUST be descending order
 

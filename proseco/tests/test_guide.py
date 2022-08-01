@@ -1,34 +1,32 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
+import itertools
 import os
 from pathlib import Path
-import numpy as np
-import itertools
-
-from Quaternion import Quat
-from astropy.table import Table
-import pytest
 
 import agasc
 import mica.starcheck
+import numpy as np
+import pytest
+from astropy.table import Table
 from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
-from chandra_aca.transform import mag_to_count_rate, count_rate_to_mag
+from chandra_aca.transform import count_rate_to_mag, mag_to_count_rate
+from Quaternion import Quat
 
+from ..characteristics import CCD
+from ..characteristics_guide import mag_spoiler
+from ..core import StarsTable
 from ..guide import (
-    get_guide_catalog,
-    check_spoil_contrib,
-    get_pixmag_for_offset,
-    check_mag_spoilers,
-    get_ax_range,
-    check_column_spoilers,
     GUIDE,
+    check_column_spoilers,
+    check_mag_spoilers,
+    check_spoil_contrib,
+    get_ax_range,
+    get_guide_catalog,
+    get_pixmag_for_offset,
 )
 from ..report_guide import make_report
-from ..characteristics_guide import mag_spoiler
-from ..characteristics import CCD
-from ..core import StarsTable
-from .test_common import STD_INFO, mod_std_info, OBS_INFO, DARK40
-
+from .test_common import DARK40, OBS_INFO, STD_INFO, mod_std_info
 
 HAS_SC_ARCHIVE = Path(mica.starcheck.starcheck.FILES['data_root']).exists()
 

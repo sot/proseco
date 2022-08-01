@@ -1,25 +1,25 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import numpy as np
 from itertools import combinations
 
 import chandra_aca.aca_image
+import numpy as np
+from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
 from chandra_aca.transform import (
-    mag_to_count_rate,
     count_rate_to_mag,
+    mag_to_count_rate,
     snr_mag_for_t_ccd,
 )
-from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
 
 from proseco.characteristics import MonFunc
+
 from . import characteristics as ACA
 from . import characteristics_guide as GUIDE
-
 from .core import (
-    bin2x2,
     ACACatalogTable,
-    MetaAttribute,
     AliasAttribute,
+    MetaAttribute,
+    bin2x2,
     get_dim_res,
     get_img_size,
 )

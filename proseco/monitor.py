@@ -1,16 +1,16 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 import numpy as np
-
-from proseco.characteristics import MonCoord, MonFunc
-import proseco.characteristics as ACA
-from proseco.core import ACACatalogTable
 from chandra_aca.transform import (
     pixels_to_yagzag,
     radec_to_yagzag,
     yagzag_to_pixels,
     yagzag_to_radec,
 )
+
+import proseco.characteristics as ACA
+from proseco.characteristics import MonCoord, MonFunc
+from proseco.core import ACACatalogTable
 
 
 class BadMonitorError(ValueError):

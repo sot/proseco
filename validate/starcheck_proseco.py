@@ -45,14 +45,15 @@ Clean some known non-errors:
 """
 
 import pickle
-from pathlib import Path
-import subprocess
 import shutil
+import subprocess
+from pathlib import Path
 
 import parse_cm
+import Ska.File
+
 from proseco import get_aca_catalog
 from proseco.tests.test_common import get_starcheck_obs_kwargs
-import Ska.File
 
 
 def run_starcheck_proseco(

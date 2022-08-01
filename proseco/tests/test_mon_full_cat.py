@@ -1,20 +1,19 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 import os
-
 from pathlib import Path
-from chandra_aca.transform import radec_to_yagzag, yagzag_to_pixels
 
+import agasc
+import mica.starcheck
 import numpy as np
 import pytest
-import mica.starcheck
-import agasc
 from astropy.table import Table
+from chandra_aca.transform import radec_to_yagzag, yagzag_to_pixels
 
-from .test_common import mod_std_info
-from ..core import StarsTable
+from .. import characteristics as ACA
 from ..catalog import get_aca_catalog
 from ..characteristics import MonCoord, MonFunc
-from .. import characteristics as ACA
+from ..core import StarsTable
+from .test_common import mod_std_info
 
 HAS_SC_ARCHIVE = Path(mica.starcheck.starcheck.FILES['data_root']).exists()
 TEST_COLS = 'slot idx id type sz yang zang dim res halfw'.split()

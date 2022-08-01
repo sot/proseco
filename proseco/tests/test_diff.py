@@ -1,7 +1,7 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 from astropy.io import ascii
-from ..diff import catalog_diff, get_catalog_lines
 
+from ..diff import catalog_diff, get_catalog_lines
 
 # Note the mag input as 7, which ends up as 7.00
 CAT1 = ascii.read(

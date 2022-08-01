@@ -7,20 +7,18 @@ from pathlib import Path
 import matplotlib
 
 matplotlib.use('agg')  # noqa
-from matplotlib import patches
-from matplotlib.ticker import FixedLocator
 import matplotlib.pyplot as plt
 import numpy as np
-from jinja2 import Template
-from astropy.table import Table, Column
-
+from astropy.table import Column, Table
+from chandra_aca import plot as plot_aca
 from chandra_aca.aca_image import ACAImage
+from jinja2 import Template
+from matplotlib import patches
+from matplotlib.ticker import FixedLocator
 
 from . import characteristics_acq as ACQ
 from .acq import AcqTable
 from .core import table_to_html
-from chandra_aca import plot as plot_aca
-
 
 FILEDIR = Path(__file__).parent
 ACQ_COLS = [

@@ -7,24 +7,23 @@ https://docs.google.com/presentation/d/1VtFKAW9he2vWIQAnb6unpK4u1bVAVziIdX9TnqRS
 """
 
 import numpy as np
+from chandra_aca.star_probs import acq_success_prob, prob_n_acq
+from chandra_aca.transform import mag_to_count_rate, pixels_to_yagzag, snr_mag_for_t_ccd
 from scipy import ndimage, stats
 from scipy.interpolate import interp1d
-
-from chandra_aca.star_probs import acq_success_prob, prob_n_acq
-from chandra_aca.transform import pixels_to_yagzag, mag_to_count_rate, snr_mag_for_t_ccd
 
 from . import characteristics as ACA
 from . import characteristics_acq as ACQ
 from .core import (
-    get_mag_std,
-    ACACatalogTable,
-    bin2x2,
-    get_image_props,
-    pea_reject_image,
     ACABox,
-    MetaAttribute,
+    ACACatalogTable,
     AliasAttribute,
+    MetaAttribute,
+    bin2x2,
     calc_spoiler_impact,
+    get_image_props,
+    get_mag_std,
+    pea_reject_image,
 )
 
 

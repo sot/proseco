@@ -1,8 +1,8 @@
 # coding: utf-8
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import os
 import difflib
+import os
 
 import numpy as np
 from astropy.table import vstack

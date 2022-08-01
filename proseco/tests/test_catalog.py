@@ -8,18 +8,18 @@ from Quaternion import Quat
 matplotlib.use('agg')  # noqa
 
 import pickle
-import pytest
 from pathlib import Path
 
-import numpy as np
-import mica.starcheck
 import agasc
+import mica.starcheck
+import numpy as np
+import pytest
 
-from .test_common import STD_INFO, mod_std_info, DARK40, OBS_INFO
-from ..core import StarsTable, includes_for_obsid, ACACatalogTable
-from ..catalog import get_aca_catalog, ACATable
-from ..fid import get_fid_catalog, FidTable
 from .. import characteristics as ACA
+from ..catalog import ACATable, get_aca_catalog
+from ..core import ACACatalogTable, StarsTable, includes_for_obsid
+from ..fid import FidTable, get_fid_catalog
+from .test_common import DARK40, OBS_INFO, STD_INFO, mod_std_info
 
 HAS_SC_ARCHIVE = Path(mica.starcheck.starcheck.FILES['data_root']).exists()
 TEST_COLS = 'slot idx id type sz yang zang dim res halfw'.split()
