@@ -33,8 +33,15 @@ HAS_MAG_SUPPLEMENT = len(agasc.get_supplement_table('mags')) > 0
 def test_allowed_kwargs():
     """Test #332 where allowed_kwargs class attribute is unique for each subclass"""
     new_kwargs = ACATable.allowed_kwargs - ACACatalogTable.allowed_kwargs
-    assert new_kwargs == {'call_args', 'version', 't_ccd_eff_acq', 't_ccd_eff_guide',
-                          't_ccd_penalty_limit', 'duration', 'target_name'}
+    assert new_kwargs == {
+        'call_args',
+        'version',
+        't_ccd_eff_acq',
+        't_ccd_eff_guide',
+        't_ccd_penalty_limit',
+        'duration',
+        'target_name',
+    }
 
     new_kwargs = FidTable.allowed_kwargs - ACACatalogTable.allowed_kwargs
     assert new_kwargs == {'acqs', 'include_ids', 'exclude_ids'}
@@ -55,42 +62,53 @@ def test_get_aca_catalog_49531():
 
 
 @pytest.mark.skipif(not HAS_SC_ARCHIVE, reason='Test requires starcheck archive')
-@pytest.mark.skipif(not HAS_MAG_SUPPLEMENT, reason='No estimated mags in AGASC supplement')
+@pytest.mark.skipif(
+    not HAS_MAG_SUPPLEMENT, reason='No estimated mags in AGASC supplement'
+)
 def test_get_aca_catalog_20603_with_supplement():
-    """Test that results for 20603 are different if the AGASC supplement is used.
-    """
-    kwargs = dict(obsid=20603, exclude_ids_acq=[40113544],
-                  n_fid=2, n_guide=6, n_acq=7, raise_exc=True)
+    """Test that results for 20603 are different if the AGASC supplement is used."""
+    kwargs = dict(
+        obsid=20603,
+        exclude_ids_acq=[40113544],
+        n_fid=2,
+        n_guide=6,
+        n_acq=7,
+        raise_exc=True,
+    )
     aca_no = get_aca_catalog(**kwargs)
     with agasc.set_supplement_enabled(True):
         aca = get_aca_catalog(**kwargs)
 
-    assert (len(aca_no.guides) != len(aca.guides)
-            or np.any(aca_no.guides['mag'] != aca.guides['mag']))
-    assert (len(aca_no.acqs) != len(aca.acqs)
-            or np.any(aca_no.acqs['mag'] != aca.acqs['mag']))
+    assert len(aca_no.guides) != len(aca.guides) or np.any(
+        aca_no.guides['mag'] != aca.guides['mag']
+    )
+    assert len(aca_no.acqs) != len(aca.acqs) or np.any(
+        aca_no.acqs['mag'] != aca.acqs['mag']
+    )
 
 
 @pytest.mark.skipif(not HAS_SC_ARCHIVE, reason='Test requires starcheck archive')
 def test_get_aca_catalog_20603():
-    """Put it all together.  Regression test for selected stars.
-    """
+    """Put it all together.  Regression test for selected stars."""
     # Force not using a bright star so there is a GUI-only (not BOT) star
-    aca = get_aca_catalog(20603, exclude_ids_acq=[40113544], n_fid=2, n_guide=6, n_acq=7,
-                          raise_exc=True)
+    aca = get_aca_catalog(
+        20603, exclude_ids_acq=[40113544], n_fid=2, n_guide=6, n_acq=7, raise_exc=True
+    )
     # Expected 2 fids, 4 guide, 7 acq
-    exp = ['slot idx     id    type  sz   yang     zang   dim res halfw',
-           '---- --- --------- ---- --- -------- -------- --- --- -----',
-           '   0   1         4  FID 8x8  2140.23   166.63   1   1    25',
-           '   1   2         5  FID 8x8 -1826.28   160.17   1   1    25',
-           '   2   3 116791824  BOT 6x6   622.00  -953.60  28   1   160',
-           '   3   4  40114416  BOT 6x6   394.22  1204.43  24   1   140',
-           '   4   5  40112304  BOT 6x6 -1644.35  2032.47  12   1    80',
-           '   5   6  40113544  GUI 6x6   102.74  1133.37   1   1    25',
-           '   0   7 116923496  ACQ 6x6 -1337.79  1049.27  20   1   120',
-           '   1   8 116923528  ACQ 6x6 -2418.65  1088.40  28   1   160',
-           '   5   9 116791744  ACQ 6x6   985.38 -1210.19  28   1   160',
-           '   6  10  40108048  ACQ 6x6     2.21  1619.17  24   1   140']
+    exp = [
+        'slot idx     id    type  sz   yang     zang   dim res halfw',
+        '---- --- --------- ---- --- -------- -------- --- --- -----',
+        '   0   1         4  FID 8x8  2140.23   166.63   1   1    25',
+        '   1   2         5  FID 8x8 -1826.28   160.17   1   1    25',
+        '   2   3 116791824  BOT 6x6   622.00  -953.60  28   1   160',
+        '   3   4  40114416  BOT 6x6   394.22  1204.43  24   1   140',
+        '   4   5  40112304  BOT 6x6 -1644.35  2032.47  12   1    80',
+        '   5   6  40113544  GUI 6x6   102.74  1133.37   1   1    25',
+        '   0   7 116923496  ACQ 6x6 -1337.79  1049.27  20   1   120',
+        '   1   8 116923528  ACQ 6x6 -2418.65  1088.40  28   1   160',
+        '   5   9 116791744  ACQ 6x6   985.38 -1210.19  28   1   160',
+        '   6  10  40108048  ACQ 6x6     2.21  1619.17  24   1   140',
+    ]
 
     assert aca[TEST_COLS].pformat(max_width=-1) == exp
 
@@ -117,19 +135,21 @@ def test_get_aca_catalog_20259():
 
     """
     aca = get_aca_catalog(20259, raise_exc=True)
-    exp = ['slot idx     id    type  sz   yang     zang   dim res halfw',
-           '---- --- --------- ---- --- -------- -------- --- --- -----',
-           '   0   1         1  FID 8x8 -1175.03  -468.23   1   1    25',
-           '   1   2         2  FID 8x8  1224.70  -460.93   1   1    25',
-           '   2   3         3  FID 8x8 -1177.69   561.30   1   1    25',
-           '   3   4 896009152  BOT 6x6  1693.39   217.92  16   1   100',
-           '   4   5 897712576  BOT 6x6 -1099.95  2140.23  12   1    80',
-           '   5   6 897717296  BOT 6x6   932.58  1227.48  12   1    80',
-           '   6   7 896013056  BOT 6x6  1547.25 -2455.12  12   1    80',
-           '   7   8 896009240  BOT 6x6  -911.41   402.62  12   1    80',
-           '   0   9 896011576  ACQ 6x6   810.99   -69.21  16   1   100',
-           '   1  10 897718208  ACQ 6x6   765.61  1530.27  12   1    80',
-           '   2  11 897192352  ACQ 6x6 -2110.43  2005.21  12   1    80']
+    exp = [
+        'slot idx     id    type  sz   yang     zang   dim res halfw',
+        '---- --- --------- ---- --- -------- -------- --- --- -----',
+        '   0   1         1  FID 8x8 -1175.03  -468.23   1   1    25',
+        '   1   2         2  FID 8x8  1224.70  -460.93   1   1    25',
+        '   2   3         3  FID 8x8 -1177.69   561.30   1   1    25',
+        '   3   4 896009152  BOT 6x6  1693.39   217.92  16   1   100',
+        '   4   5 897712576  BOT 6x6 -1099.95  2140.23  12   1    80',
+        '   5   6 897717296  BOT 6x6   932.58  1227.48  12   1    80',
+        '   6   7 896013056  BOT 6x6  1547.25 -2455.12  12   1    80',
+        '   7   8 896009240  BOT 6x6  -911.41   402.62  12   1    80',
+        '   0   9 896011576  ACQ 6x6   810.99   -69.21  16   1   100',
+        '   1  10 897718208  ACQ 6x6   765.61  1530.27  12   1    80',
+        '   2  11 897192352  ACQ 6x6 -2110.43  2005.21  12   1    80',
+    ]
 
     assert aca[TEST_COLS].pformat(max_width=-1) == exp
 
@@ -144,13 +164,24 @@ def test_exception_handling():
     """
     Test top-level exception catching.
     """
-    aca = get_aca_catalog(att=(0, 0, 0), man_angle=10, date='2018:001',
-                          dither_acq=(8, 8), dither_guide=(8, 8),
-                          t_ccd_acq=-10, t_ccd_guide=-10,
-                          detector='ACIS-S', sim_offset=0, focus_offset=0,
-                          n_guide=8, n_fid=3, n_acq=8,
-                          include_ids_acq=[1], include_halfws_acq=[100, 120],
-                          raise_exc=False)  # Fail
+    aca = get_aca_catalog(
+        att=(0, 0, 0),
+        man_angle=10,
+        date='2018:001',
+        dither_acq=(8, 8),
+        dither_guide=(8, 8),
+        t_ccd_acq=-10,
+        t_ccd_guide=-10,
+        detector='ACIS-S',
+        sim_offset=0,
+        focus_offset=0,
+        n_guide=8,
+        n_fid=3,
+        n_acq=8,
+        include_ids_acq=[1],
+        include_halfws_acq=[100, 120],
+        raise_exc=False,
+    )  # Fail
     assert 'include_ids and include_halfws must have same length' in aca.exception
 
     for obj in (aca, aca.acqs, aca.guides, aca.fids):
@@ -181,17 +212,22 @@ def test_no_candidates():
     Test that get_aca_catalog returns a well-formed but zero-length tables for
     a star field with no acceptable candidates.
     """
-    test_info = dict(obsid=1,
-                     n_guide=5, n_fid=3, n_acq=8,
-                     att=(0, 0, 0),
-                     detector='ACIS-S',
-                     sim_offset=0,
-                     focus_offset=0,
-                     date='2018:001',
-                     t_ccd_acq=-11, t_ccd_guide=-11,
-                     man_angle=90,
-                     dither_acq=(8.0, 8.0),
-                     dither_guide=(8.0, 8.0))
+    test_info = dict(
+        obsid=1,
+        n_guide=5,
+        n_fid=3,
+        n_acq=8,
+        att=(0, 0, 0),
+        detector='ACIS-S',
+        sim_offset=0,
+        focus_offset=0,
+        date='2018:001',
+        t_ccd_acq=-11,
+        t_ccd_guide=-11,
+        man_angle=90,
+        dither_acq=(8.0, 8.0),
+        dither_guide=(8.0, 8.0),
+    )
     stars = StarsTable.empty()
     stars.add_fake_constellation(mag=13.0, n_stars=2)
     acas = get_aca_catalog(**test_info, stars=stars, raise_exc=False)
@@ -241,8 +277,7 @@ def test_pickle():
         if cat:
             obj = getattr(aca, cat)
             obj2 = getattr(aca2, cat)
-            for event, event2 in zip(obj.log_info['events'],
-                                     obj2.log_info['events']):
+            for event, event2 in zip(obj.log_info['events'], obj2.log_info['events']):
                 assert event == event2
         else:
             obj = aca
@@ -262,8 +297,9 @@ def test_pickle():
     # that the AcqTable.__setstate__ unpickling code has the right (weak)
     # reference to acqs within each AcqProbs object.  This also tests
     # that acqs.p_man_err and acqs.fid_set are the same.
-    assert np.isclose(aca.acqs.calc_p_safe(), aca2.acqs.calc_p_safe(),
-                      atol=0, rtol=1e-6)
+    assert np.isclose(
+        aca.acqs.calc_p_safe(), aca2.acqs.calc_p_safe(), atol=0, rtol=1e-6
+    )
     assert aca.acqs.fid_set == aca2.acqs.fid_set
 
 
@@ -305,18 +341,23 @@ def test_copy_deepcopy_pickle():
 
 
 def test_clip_maxmag():
-    """Test that clipping maxmag for guide and acq stars works
-    """
+    """Test that clipping maxmag for guide and acq stars works"""
     stars = StarsTable.empty()
-    mag0 = ACA.max_maxmag - 1.5  # nominal star mag when clipping occurs (11.2 - 1.5 = 9.7)
+    mag0 = (
+        ACA.max_maxmag - 1.5
+    )  # nominal star mag when clipping occurs (11.2 - 1.5 = 9.7)
     mags_acq = np.array([-1.5, -1, -0.5, -0.01, 0.01, 0.2, 0.3, 0.4]) + mag0
     mags_guide = np.array([-0.5, -0.01, 0.01, 0.2, 0.3]) + mag0
     stars.add_fake_constellation(mag=mags_acq, n_stars=8, size=2000)
     stars.add_fake_constellation(mag=mags_guide, n_stars=5, size=1000)
-    aca = get_aca_catalog(stars=stars, dark=DARK40, raise_exc=True,
-                          exclude_ids_guide=np.arange(100, 108),
-                          exclude_ids_acq=np.arange(108, 113),
-                          **STD_INFO)
+    aca = get_aca_catalog(
+        stars=stars,
+        dark=DARK40,
+        raise_exc=True,
+        exclude_ids_guide=np.arange(100, 108),
+        exclude_ids_acq=np.arange(108, 113),
+        **STD_INFO,
+    )
 
     assert np.all(aca['maxmag'] <= ACA.max_maxmag)
 
@@ -337,8 +378,11 @@ def test_big_sim_offset():
 
     Bonus: check that duration and target_name can be set.
     """
-    aca = get_aca_catalog(**mod_std_info(sim_offset=200000, duration=10000,
-                                         target_name='Target Name', raise_exc=True))
+    aca = get_aca_catalog(
+        **mod_std_info(
+            sim_offset=200000, duration=10000, target_name='Target Name', raise_exc=True
+        )
+    )
     assert len(aca.acqs) == 8
     assert len(aca.guides) == 5
     assert len(aca.fids) == 0
@@ -395,9 +439,7 @@ def test_calling_with_t_ccd_acq_guide(call_t_ccd):
     assert aca.fids.t_ccd_acq == t_ccd_acq
 
 
-t_ccd_cases = [(-0.5, 0, 0),
-               (0, 0, 0),
-               (0.5, 1.5, 1.4)]
+t_ccd_cases = [(-0.5, 0, 0), (0, 0, 0), (0.5, 1.5, 1.4)]
 
 
 @pytest.mark.parametrize('t_ccd_case', t_ccd_cases)
@@ -464,21 +506,24 @@ def test_t_ccd_effective_acq_guide_via_kwarg(t_ccd_case):
 
 
 def test_call_args_attr():
-    aca = get_aca_catalog(**mod_std_info(optimize=False, n_guide=0, n_acq=0, n_fid=0),
-                          raise_exc=False)
-    assert aca.call_args == {'att': (0, 0, 0),
-                             'date': '2018:001',
-                             'detector': 'ACIS-S',
-                             'dither': 8.0,
-                             'focus_offset': 0,
-                             'man_angle': 90,
-                             'n_acq': 0,
-                             'n_fid': 0,
-                             'n_guide': 0,
-                             'obsid': 0,
-                             'optimize': False,
-                             'sim_offset': 0,
-                             't_ccd': -11}
+    aca = get_aca_catalog(
+        **mod_std_info(optimize=False, n_guide=0, n_acq=0, n_fid=0), raise_exc=False
+    )
+    assert aca.call_args == {
+        'att': (0, 0, 0),
+        'date': '2018:001',
+        'detector': 'ACIS-S',
+        'dither': 8.0,
+        'focus_offset': 0,
+        'man_angle': 90,
+        'n_acq': 0,
+        'n_fid': 0,
+        'n_guide': 0,
+        'obsid': 0,
+        'optimize': False,
+        'sim_offset': 0,
+        't_ccd': -11,
+    }
 
 
 def test_bad_obsid():
@@ -508,12 +553,15 @@ def test_bad_pixel_dark_current():
     stars.add_fake_star(row=-150, col=454 - 5 - 20 / 5, mag=6.2, id=3)  # reject
     stars.add_fake_star(row=-100, col=454 - 6 - 20 / 5, mag=6.2, id=4)  # accept
 
-    kwargs = mod_std_info(stars=stars, dark=dark, dither=20,
-                          n_guide=8, n_fid=0, n_acq=8, man_angle=90)
+    kwargs = mod_std_info(
+        stars=stars, dark=dark, dither=20, n_guide=8, n_fid=0, n_acq=8, man_angle=90
+    )
     aca = get_aca_catalog(**kwargs)
 
     # Make sure bad pixels have expected value
-    assert np.all(aca.acqs.dark[-245 + 512:512, 454 + 512] == ACA.bad_pixel_dark_current)
+    assert np.all(
+        aca.acqs.dark[-245 + 512 : 512, 454 + 512] == ACA.bad_pixel_dark_current
+    )
 
     exp_ids = [2, 100, 101, 102, 103]
     assert sorted(aca.guides['id']) == sorted(exp_ids + [4])
@@ -560,17 +608,27 @@ def test_monitors_and_target_offset_args():
 
     # Both of these are brighter than the brightest bona-fide star, stressing
     # the processing somewhat.
-    monitors = [[-1700, 1900, ACA.MonCoord.YAGZAG, 7.5, ACA.MonFunc.MON_FIXED],
-                [500, -500, ACA.MonCoord.YAGZAG, 7.5, ACA.MonFunc.MON_TRACK]]
+    monitors = [
+        [-1700, 1900, ACA.MonCoord.YAGZAG, 7.5, ACA.MonFunc.MON_FIXED],
+        [500, -500, ACA.MonCoord.YAGZAG, 7.5, ACA.MonFunc.MON_TRACK],
+    ]
     target_offset = (0.05, 0.1)
-    aca = get_aca_catalog(**mod_std_info(monitors=monitors,
-                                         n_guide=6, n_fid=0,
-                                         target_offset=target_offset,
-                                         stars=stars, dark=DARK40))
-    exp = [' coord0 coord1 coord_type mag function',
-           '------- ------ ---------- --- --------',
-           '-1700.0 1900.0          2 7.5        3',
-           '  500.0 -500.0          2 7.5        2']
+    aca = get_aca_catalog(
+        **mod_std_info(
+            monitors=monitors,
+            n_guide=6,
+            n_fid=0,
+            target_offset=target_offset,
+            stars=stars,
+            dark=DARK40,
+        )
+    )
+    exp = [
+        ' coord0 coord1 coord_type mag function',
+        '------- ------ ---------- --- --------',
+        '-1700.0 1900.0          2 7.5        3',
+        '  500.0 -500.0          2 7.5        2',
+    ]
     assert aca.monitors.pformat_all() == exp
     assert aca.target_offset is target_offset
 
@@ -590,9 +648,11 @@ def test_reject_column_spoilers():
         else:
             star = stars.get_id(id)
 
-        return dict(row=(star['row'] + drow * np.sign(star['row'])) * rmult,
-                    col=star['col'] + dcol,
-                    mag=star['mag'] - dmag)
+        return dict(
+            row=(star['row'] + drow * np.sign(star['row'])) * rmult,
+            col=star['col'] + dcol,
+            mag=star['mag'] - dmag,
+        )
 
     # Spoil first star with downstream spoiler that is just in limits
     stars.add_fake_star(**offset(100, drow=70, dcol=9, dmag=4.6))
@@ -600,7 +660,9 @@ def test_reject_column_spoilers():
     # Just miss four others by mag, col, and row
     stars.add_fake_star(**offset(101, drow=70, dcol=11, dmag=4.6))  # Outside column
     stars.add_fake_star(**offset(102, drow=70, dcol=9, dmag=4.4))  # Not bright enough
-    stars.add_fake_star(**offset(103, drow=70, dcol=9, dmag=4.6, rmult=-1))  # Wrong side
+    stars.add_fake_star(
+        **offset(103, drow=70, dcol=9, dmag=4.6, rmult=-1)
+    )  # Wrong side
     stars.add_fake_star(**offset(104, drow=-70, dcol=9, dmag=4.6))  # Upstream
 
     # Fid spoilers: spoil fid_id=1, 4
@@ -613,8 +675,9 @@ def test_reject_column_spoilers():
     stars.add_fake_star(**offset(3, drow=30, dcol=9, dmag=4.6, rmult=-1))  # Wrong side
     stars.add_fake_star(**offset(3, drow=-30, dcol=9, dmag=4.6))  # Upstream
 
-    kwargs = mod_std_info(stars=stars, n_guide=8, n_fid=3, n_acq=8,
-                          dark=DARK40.copy(), detector='HRC-I')
+    kwargs = mod_std_info(
+        stars=stars, n_guide=8, n_fid=3, n_acq=8, dark=DARK40.copy(), detector='HRC-I'
+    )
     aca = get_aca_catalog(**kwargs)
 
     assert aca.fids['id'].tolist() == [2, 3]
@@ -654,21 +717,23 @@ def test_dense_star_field_regress():
     """
     att = (167.0672, -59.1235, 0)
     aca = get_aca_catalog(**mod_std_info(att=att, n_fid=3, n_guide=5, n_acq=8))
-    exp = ['slot idx     id     type  sz   yang     zang   dim res halfw  mag ',
-           '---- --- ---------- ---- --- -------- -------- --- --- ----- -----',
-           '   0   1          3  FID 8x8    40.01 -1871.10   1   1    25  7.00',
-           '   1   2          4  FID 8x8  2140.23   166.63   1   1    25  7.00',
-           '   2   3          5  FID 8x8 -1826.28   160.17   1   1    25  7.00',
-           '   3   4 1130899056  BOT 6x6  2386.83 -1808.51  28   1   160  6.24',
-           '   4   5 1130889232  BOT 6x6  -251.98 -1971.97  28   1   160  6.99',
-           '   5   6 1130893664  BOT 6x6  1530.07 -2149.38  28   1   160  7.62',
-           '   6   7 1130898232  GUI 6x6  1244.84  2399.68   1   1    25  7.38',
-           '   7   8 1130773616  GUI 6x6 -1713.06  1312.10   1   1    25  7.50',
-           '   0   9 1130770696  ACQ 6x6 -1900.42  2359.33  28   1   160  7.35',
-           '   1  10 1130890288  ACQ 6x6  2030.55 -2011.89  28   1   160  7.67',
-           '   2  11 1130890616  ACQ 6x6  1472.68  -376.72  28   1   160  7.77',
-           '   6  12 1130893640  ACQ 6x6    64.32 -1040.81  28   1   160  7.77',
-           '   7  13 1130894376  ACQ 6x6  -633.90  1186.80  28   1   160  7.78']
+    exp = [
+        'slot idx     id     type  sz   yang     zang   dim res halfw  mag ',
+        '---- --- ---------- ---- --- -------- -------- --- --- ----- -----',
+        '   0   1          3  FID 8x8    40.01 -1871.10   1   1    25  7.00',
+        '   1   2          4  FID 8x8  2140.23   166.63   1   1    25  7.00',
+        '   2   3          5  FID 8x8 -1826.28   160.17   1   1    25  7.00',
+        '   3   4 1130899056  BOT 6x6  2386.83 -1808.51  28   1   160  6.24',
+        '   4   5 1130889232  BOT 6x6  -251.98 -1971.97  28   1   160  6.99',
+        '   5   6 1130893664  BOT 6x6  1530.07 -2149.38  28   1   160  7.62',
+        '   6   7 1130898232  GUI 6x6  1244.84  2399.68   1   1    25  7.38',
+        '   7   8 1130773616  GUI 6x6 -1713.06  1312.10   1   1    25  7.50',
+        '   0   9 1130770696  ACQ 6x6 -1900.42  2359.33  28   1   160  7.35',
+        '   1  10 1130890288  ACQ 6x6  2030.55 -2011.89  28   1   160  7.67',
+        '   2  11 1130890616  ACQ 6x6  1472.68  -376.72  28   1   160  7.77',
+        '   6  12 1130893640  ACQ 6x6    64.32 -1040.81  28   1   160  7.77',
+        '   7  13 1130894376  ACQ 6x6  -633.90  1186.80  28   1   160  7.78',
+    ]
     assert aca[TEST_COLS + ['mag']].pformat(max_width=-1) == exp
 
 
@@ -688,18 +753,22 @@ def test_aca_acqs_include_exclude():
     """
     stars = StarsTable.empty()
 
-    stars.add_fake_constellation(mag=[7.0, 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7],
-                                 id=[1, 2, 3, 4, 5, 6, 7, 8],
-                                 size=2000, n_stars=8)
-    stars.add_fake_constellation(mag=[10.0, 10.1, 12.0],
-                                 id=[9, 10, 11],
-                                 size=1500, n_stars=3)
+    stars.add_fake_constellation(
+        mag=[7.0, 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7],
+        id=[1, 2, 3, 4, 5, 6, 7, 8],
+        size=2000,
+        n_stars=8,
+    )
+    stars.add_fake_constellation(
+        mag=[10.0, 10.1, 12.0], id=[9, 10, 11], size=1500, n_stars=3
+    )
 
     # Put in a neighboring star that will keep star 9 out of the cand_acqs table
     star9 = stars.get_id(9)
     star9['ASPQ1'] = 20
-    stars.add_fake_star(yang=star9['yang'] + 20, zang=star9['zang'] + 20,
-                        mag=star9['mag'] + 2.5, id=90)
+    stars.add_fake_star(
+        yang=star9['yang'] + 20, zang=star9['zang'] + 20, mag=star9['mag'] + 2.5, id=90
+    )
 
     # Define includes and excludes. id=9 is in nominal cand_acqs but not in acqs.
     include_ids = [9, 11]
@@ -707,12 +776,15 @@ def test_aca_acqs_include_exclude():
     exp_include_halfws = [60, 80]
     exclude_ids = [1]
 
-    aca = get_aca_catalog(**STD_INFO, stars=stars,
-                          include_ids_acq=include_ids,
-                          include_halfws_acq=include_halfws,
-                          exclude_ids_acq=exclude_ids,
-                          include_ids_guide=include_ids,
-                          exclude_ids_guide=exclude_ids)
+    aca = get_aca_catalog(
+        **STD_INFO,
+        stars=stars,
+        include_ids_acq=include_ids,
+        include_halfws_acq=include_halfws,
+        exclude_ids_acq=exclude_ids,
+        include_ids_guide=include_ids,
+        exclude_ids_guide=exclude_ids,
+    )
     acqs = aca.acqs
     assert acqs.include_ids == include_ids
     assert acqs.include_halfws == exp_include_halfws
@@ -796,22 +868,36 @@ def test_force_catalog_from_starcheck():
     Dynamic Mag Limits: Yellow 9.99          Red 10.17"""
 
     aca = get_aca_catalog(obs + '--force-catalog')
-    assert aca['id'].tolist() == [1, 4, 5,
-                                  765069712,
-                                  765069008,
-                                  765069552,
-                                  765069664,
-                                  764677800,
-                                  765067472,
-                                  765070392,
-                                  765068968]
-    assert aca['type'].tolist() == ['FID', 'FID', 'FID',
-                                    'BOT', 'BOT', 'BOT', 'BOT', 'BOT',
-                                    'ACQ', 'ACQ', 'ACQ']
-    assert aca['halfw'].tolist() == [25, 25, 25,
-                                     160, 160, 160, 120, 120,
-                                     120, 120, 120]
-    assert np.allclose(aca.att.equatorial, [358.341787, -12.949882, 276.997597], rtol=0, atol=1e-6)
+    assert aca['id'].tolist() == [
+        1,
+        4,
+        5,
+        765069712,
+        765069008,
+        765069552,
+        765069664,
+        764677800,
+        765067472,
+        765070392,
+        765068968,
+    ]
+    assert aca['type'].tolist() == [
+        'FID',
+        'FID',
+        'FID',
+        'BOT',
+        'BOT',
+        'BOT',
+        'BOT',
+        'BOT',
+        'ACQ',
+        'ACQ',
+        'ACQ',
+    ]
+    assert aca['halfw'].tolist() == [25, 25, 25, 160, 160, 160, 120, 120, 120, 120, 120]
+    assert np.allclose(
+        aca.att.equatorial, [358.341787, -12.949882, 276.997597], rtol=0, atol=1e-6
+    )
     assert np.allclose(aca.acqs.man_angle, 89.16)
 
 
@@ -820,17 +906,21 @@ def test_includes_for_obsid():
     """
     Test helper function to get the include_* kwargs for forcing a catalog.
     """
-    exp = {'include_halfws_acq': [120, 120, 120, 120, 85, 120, 120, 120],
-           'include_ids_acq': [31075128,
-                               31076560,
-                               31463496,
-                               31983336,
-                               32374896,
-                               31075368,
-                               31982136,
-                               32375384],
-           'include_ids_guide': [31075128, 31076560, 31463496, 31983336, 32374896],
-           'include_ids_fid': [1, 5, 6]}
+    exp = {
+        'include_halfws_acq': [120, 120, 120, 120, 85, 120, 120, 120],
+        'include_ids_acq': [
+            31075128,
+            31076560,
+            31463496,
+            31983336,
+            32374896,
+            31075368,
+            31982136,
+            32375384,
+        ],
+        'include_ids_guide': [31075128, 31076560, 31463496, 31983336, 32374896],
+        'include_ids_fid': [1, 5, 6],
+    }
 
     out = includes_for_obsid(8008)
     assert out == exp
@@ -869,17 +959,23 @@ def test_img_size_guide():
     assert aca.guides.img_size is None
 
     # Confirm that for explicit img_size_guide of 8 boxes are '8x8'
-    aca = get_aca_catalog(**mod_std_info(stars=stars, dark=dark, n_fid=3, img_size_guide=8))
+    aca = get_aca_catalog(
+        **mod_std_info(stars=stars, dark=dark, n_fid=3, img_size_guide=8)
+    )
     assert np.all(aca.guides['sz'] == '8x8')
     assert aca.guides.img_size == 8
 
     # Confirm that for explicit img_size_guide of 6 boxes are '6x6'
-    aca = get_aca_catalog(**mod_std_info(stars=stars, dark=dark, n_fid=0, img_size_guide=6))
+    aca = get_aca_catalog(
+        **mod_std_info(stars=stars, dark=dark, n_fid=0, img_size_guide=6)
+    )
     assert np.all(aca.guides['sz'] == '6x6')
     assert aca.guides.img_size == 6
 
     # Confirm that for explicit img_size_guide of 6 boxes are '6x6'
-    aca = get_aca_catalog(**mod_std_info(stars=stars, dark=dark, n_fid=0, img_size_guide=4))
+    aca = get_aca_catalog(
+        **mod_std_info(stars=stars, dark=dark, n_fid=0, img_size_guide=4)
+    )
     assert np.all(aca.guides['sz'] == '4x4')
     assert aca.guides.img_size == 4
 
@@ -890,14 +986,15 @@ def test_img_size_guide():
 def test_dyn_bgd_star_bonus():
     stars = StarsTable.empty()
 
-    stars.add_fake_constellation(mag=[9.5] * 3,
-                                 size=2000, n_stars=3)
-    stars.add_fake_constellation(mag=[10.3, 10.4, 10.5, 10.6, 10.7, 12.0],
-                                 size=1500, n_stars=6)
+    stars.add_fake_constellation(mag=[9.5] * 3, size=2000, n_stars=3)
+    stars.add_fake_constellation(
+        mag=[10.3, 10.4, 10.5, 10.6, 10.7, 12.0], size=1500, n_stars=6
+    )
 
     aca_leg = get_aca_catalog(**STD_INFO, dark=DARK40, stars=stars, dyn_bgd_n_faint=0)
-    aca_dyn = get_aca_catalog(**STD_INFO, dark=DARK40, stars=stars, dyn_bgd_n_faint=2,
-                              dyn_bgd_dt_ccd=-4.0)
+    aca_dyn = get_aca_catalog(
+        **STD_INFO, dark=DARK40, stars=stars, dyn_bgd_n_faint=2, dyn_bgd_dt_ccd=-4.0
+    )
     assert len(aca_leg.guides) == 3
     assert len(aca_dyn.guides) == 5
     assert np.allclose(aca_leg.guides['mag'], [9.5, 9.5, 9.5])

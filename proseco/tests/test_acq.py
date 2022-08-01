@@ -11,12 +11,15 @@ from chandra_aca.transform import mag_to_count_rate, yagzag_to_pixels
 import agasc
 
 from ..report_acq import make_report
-from ..acq import (get_p_man_err, bin2x2,
-                   get_imposter_stars,
-                   get_image_props,
-                   AcqTable, calc_p_on_ccd,
-                   get_acq_catalog,
-                   )
+from ..acq import (
+    get_p_man_err,
+    bin2x2,
+    get_imposter_stars,
+    get_image_props,
+    AcqTable,
+    calc_p_on_ccd,
+    get_acq_catalog,
+)
 from ..catalog import get_aca_catalog
 from ..core import ACABox, StarsTable
 from .test_common import OBS_INFO, STD_INFO, mod_std_info, DARK40
@@ -135,7 +138,7 @@ def test_get_image_props():
     APL = AcaPsfLibrary()
     psf_img = APL.get_psf_image(c_row, c_col, norm=norm, pix_zero_loc='edge')
     ccd_img = np.full((100, 100), fill_value=bgd, dtype=float)
-    ccd_img[c_row - 4:c_row + 4, c_col - 4:c_col + 4] += psf_img
+    ccd_img[c_row - 4 : c_row + 4, c_col - 4 : c_col + 4] += psf_img
     img, img_sum, mag, row, col = get_image_props(ccd_img, c_row, c_col, bgd=bgd)
     assert np.isclose(mag, 9.0, atol=0.05, rtol=0)
     assert np.isclose(row, c_row, atol=0.001, rtol=0)
@@ -151,7 +154,9 @@ def setup_get_imposter_stars(val):
     dark[32, 29] = val + bgd
     dark[30, 30] = val + bgd
     dark[26, 24] = val + bgd + 1000
-    imposters = get_imposter_stars(dark, 30, 28, thresh=4000, box_size=box_size, test=True)
+    imposters = get_imposter_stars(
+        dark, 30, 28, thresh=4000, box_size=box_size, test=True
+    )
     return imposters
 
 
@@ -228,8 +233,10 @@ def test_calc_p_brightest_same_bright():
     dark_imp = add_imposter(dark, acq, dyang=-105, dzang=-105, dmag=0.0)
     stars_sp = add_spoiler(stars, acq, dyang=65, dzang=65, dmag=0.0, mag_err=mag_err)
     stars_sp = add_spoiler(stars_sp, acq, dyang=85, dzang=0, dmag=0.0, mag_err=mag_err)
-    probs = [calc_p_brightest(acq, box_size, stars_sp, dark_imp, dither=ACABox(0), bgd=bgd)
-             for box_size in ACQ.box_sizes]
+    probs = [
+        calc_p_brightest(acq, box_size, stars_sp, dark_imp, dither=ACABox(0), bgd=bgd)
+        for box_size in ACQ.box_sizes
+    ]
 
     #  Box size:                160   140   120    100   80   60  arcsec
     assert np.allclose(probs, [0.25, 0.25, 0.25, 0.3334, 0.5, 1.0], rtol=0, atol=0.01)
@@ -258,9 +265,12 @@ def test_calc_p_brightest_same_bright_asymm_dither():
     # Add a spoiler star to stars and leave dark map the same.
     # Spoiler stars don't care about dither.
     stars_sp = add_spoiler(stars, acq, dyang=-105, dzang=105, dmag=0.0, mag_err=mag_err)
-    probs = [calc_p_brightest(acq, box_size, stars=stars_sp, dark=dark, dither=dither,
-                              bgd=bgd, man_err=0)
-             for box_size in ACQ.box_sizes]
+    probs = [
+        calc_p_brightest(
+            acq, box_size, stars=stars_sp, dark=dark, dither=dither, bgd=bgd, man_err=0
+        )
+        for box_size in ACQ.box_sizes
+    ]
 
     #  Box size:               160  140  120  100   80   60  arcsec
     assert np.allclose(probs, [0.5, 0.5, 0.5, 1.0, 1.0, 1.0], rtol=0, atol=0.01)
@@ -271,9 +281,12 @@ def test_calc_p_brightest_same_bright_asymm_dither():
     acq['imposters'] = None
     acq['spoilers'] = None
     dark_imp = add_imposter(dark, acq, dyang=105, dzang=145, dmag=0.0)
-    probs = [calc_p_brightest(acq, box_size, stars=stars, dark=dark_imp, dither=dither,
-                              bgd=bgd, man_err=0)
-             for box_size in ACQ.box_sizes]
+    probs = [
+        calc_p_brightest(
+            acq, box_size, stars=stars, dark=dark_imp, dither=dither, bgd=bgd, man_err=0
+        )
+        for box_size in ACQ.box_sizes
+    ]
 
     #  Box size:               160  140  120  100  80   60  arcsec
     assert np.allclose(probs, [0.5, 0.5, 0.5, 0.5, 1.0, 1.0], rtol=0, atol=0.01)
@@ -281,9 +294,18 @@ def test_calc_p_brightest_same_bright_asymm_dither():
     # Both together
     acq['imposters'] = None
     acq['spoilers'] = None
-    probs = [calc_p_brightest(acq, box_size, stars=stars_sp, dark=dark_imp, dither=dither,
-                              bgd=bgd, man_err=0)
-             for box_size in ACQ.box_sizes]
+    probs = [
+        calc_p_brightest(
+            acq,
+            box_size,
+            stars=stars_sp,
+            dark=dark_imp,
+            dither=dither,
+            bgd=bgd,
+            man_err=0,
+        )
+        for box_size in ACQ.box_sizes
+    ]
 
     #  Box size:                160    140    120  100   80   60  arcsec
     assert np.allclose(probs, [0.333, 0.333, 0.333, 0.5, 1.0, 1.0], rtol=0, atol=0.01)
@@ -301,22 +323,28 @@ def test_calc_p_brightest_1mag_brighter():
     # Bright spoiler at 65 arcsec
     acq = get_test_cand_acqs()[0]
     stars_sp = add_spoiler(stars, acq, dyang=65, dzang=65, dmag=-1.0)
-    probs = [calc_p_brightest(acq, box_size, stars_sp, dark, dither=ACABox(0), bgd=bgd)
-             for box_size in box_sizes]
+    probs = [
+        calc_p_brightest(acq, box_size, stars_sp, dark, dither=ACABox(0), bgd=bgd)
+        for box_size in box_sizes
+    ]
     assert np.allclose(probs, [0.0, 1.0], rtol=0, atol=0.001)
 
     # Comparable spoiler at 65 arcsec (within mag_err)
     acq = get_test_cand_acqs()[0]
     stars_sp = add_spoiler(stars, acq, dyang=65, dzang=65, dmag=-1.0, mag_err=1.0)
-    probs = [calc_p_brightest(acq, box_size, stars_sp, dark, dither=ACABox(0), bgd=bgd)
-             for box_size in box_sizes]
+    probs = [
+        calc_p_brightest(acq, box_size, stars_sp, dark, dither=ACABox(0), bgd=bgd)
+        for box_size in box_sizes
+    ]
     assert np.allclose(probs, [0.158974, 1.0], rtol=0, atol=0.01)
 
     # Bright imposter at 85 arcsec
     acq = get_test_cand_acqs()[0]
     dark_imp = add_imposter(dark, acq, dyang=-85, dzang=-85, dmag=-1.0)
-    probs = [calc_p_brightest(acq, box_size, stars, dark_imp, dither=ACABox(0), bgd=bgd)
-             for box_size in box_sizes]
+    probs = [
+        calc_p_brightest(acq, box_size, stars, dark_imp, dither=ACABox(0), bgd=bgd)
+        for box_size in box_sizes
+    ]
     assert np.allclose(probs, [0.0, 1.0], rtol=0, atol=0.001)
 
 
@@ -393,10 +421,12 @@ def test_calc_p_on_ccd_asymmetric_dither():
         assert p_in_box == 0
 
     # Now some asymmetric cases.  p_in_ccd increases with larger dither.
-    for dither, exp in [((30, 40), 0.02083333),
-                        ((40, 30), 0.03125),
-                        ((40, 200), 0.084375),
-                        ((200, 40), 0.109375)]:
+    for dither, exp in [
+        ((30, 40), 0.02083333),
+        ((40, 30), 0.03125),
+        ((40, 200), 0.084375),
+        ((200, 40), 0.109375),
+    ]:
         p_in_box = calc_p_on_ccd(ACA.max_ccd_row, ACA.max_ccd_col, ACABox(dither))
         assert np.isclose(p_in_box, exp)
 
@@ -413,23 +443,25 @@ def test_get_acq_catalog_19387():
     """
     acqs = get_acq_catalog(**OBS_INFO[19387])
     # Expected
-    exp = ['<AcqTable length=13>',
-           ' idx   slot    id      yang     zang   halfw',
-           'int64 int64  int32   float64  float64  int64',
-           '----- ----- -------- -------- -------- -----',
-           '    0     0 38280776 -2254.09 -2172.43    80',
-           '    1     1 37879960  -567.34  -632.27    80',
-           '    2     2 37882072  2197.62  1608.89    60',
-           '    3     3 37879992   318.47 -1565.92    60',
-           '    4   -99 37882416   481.80  2204.44    60',
-           '    5     4 37880176   121.33 -1068.25    60',
-           '    6     5 37881728  2046.89  1910.79    60',
-           '    7     6 37880376 -1356.71  1071.32    60',
-           '    8     7 38276824 -1822.26 -1813.66    60',
-           '    9   -99 37882776  1485.00   127.97    60',
-           '   10   -99 37880152 -1542.43   970.39    60',
-           '   11   -99 37880584 -2005.80  2449.74    60',
-           '   12   -99 38273720  -672.32 -2474.85    60']
+    exp = [
+        '<AcqTable length=13>',
+        ' idx   slot    id      yang     zang   halfw',
+        'int64 int64  int32   float64  float64  int64',
+        '----- ----- -------- -------- -------- -----',
+        '    0     0 38280776 -2254.09 -2172.43    80',
+        '    1     1 37879960  -567.34  -632.27    80',
+        '    2     2 37882072  2197.62  1608.89    60',
+        '    3     3 37879992   318.47 -1565.92    60',
+        '    4   -99 37882416   481.80  2204.44    60',
+        '    5     4 37880176   121.33 -1068.25    60',
+        '    6     5 37881728  2046.89  1910.79    60',
+        '    7     6 37880376 -1356.71  1071.32    60',
+        '    8     7 38276824 -1822.26 -1813.66    60',
+        '    9   -99 37882776  1485.00   127.97    60',
+        '   10   -99 37880152 -1542.43   970.39    60',
+        '   11   -99 37880584 -2005.80  2449.74    60',
+        '   12   -99 38273720  -672.32 -2474.85    60',
+    ]
 
     assert repr(acqs.cand_acqs[TEST_COLS]).splitlines() == exp
 
@@ -447,39 +479,43 @@ def test_get_acq_catalog_21007():
     """
     acqs = get_acq_catalog(**OBS_INFO[21007])
 
-    exp = ['<AcqTable length=14>',
-           ' idx   slot     id      yang     zang   halfw',
-           'int64 int64   int32   float64  float64  int64',
-           '----- ----- --------- -------- -------- -----',
-           '    0     0 189417400 -2271.86 -1634.77   160',
-           '    1     1 189410928   -62.52  1763.04   160',
-           '    2     2 189409160 -2223.75  1998.69   160',
-           '    3     3 189417920  1482.94   243.72   160',
-           '    4     4 189015480  2222.47  -580.99    80',
-           '    5     5 189417752  1994.07   699.55    80',
-           '    6     6 189406216 -2311.90  -240.18    80',
-           '    7     7 189416328  1677.88   137.11   100',
-           '    8   -99 189416496   333.11   -63.30   120',
-           '    9   -99 189410280  -495.21  1712.02   120',
-           '   10   -99 189416808  2283.31  2007.54   120',
-           '   11   -99 189017968  1612.35 -1117.76   120',
-           '   12   -99 189417000    52.31  -769.11   120',
-           '   13   -99 189011576   553.50 -2473.81   120']
+    exp = [
+        '<AcqTable length=14>',
+        ' idx   slot     id      yang     zang   halfw',
+        'int64 int64   int32   float64  float64  int64',
+        '----- ----- --------- -------- -------- -----',
+        '    0     0 189417400 -2271.86 -1634.77   160',
+        '    1     1 189410928   -62.52  1763.04   160',
+        '    2     2 189409160 -2223.75  1998.69   160',
+        '    3     3 189417920  1482.94   243.72   160',
+        '    4     4 189015480  2222.47  -580.99    80',
+        '    5     5 189417752  1994.07   699.55    80',
+        '    6     6 189406216 -2311.90  -240.18    80',
+        '    7     7 189416328  1677.88   137.11   100',
+        '    8   -99 189416496   333.11   -63.30   120',
+        '    9   -99 189410280  -495.21  1712.02   120',
+        '   10   -99 189416808  2283.31  2007.54   120',
+        '   11   -99 189017968  1612.35 -1117.76   120',
+        '   12   -99 189417000    52.31  -769.11   120',
+        '   13   -99 189011576   553.50 -2473.81   120',
+    ]
 
     assert repr(acqs.cand_acqs[TEST_COLS]).splitlines() == exp
 
-    exp = ['<AcqTable length=8>',
-           ' idx   slot     id      yang     zang   halfw',
-           'int64 int64   int32   float64  float64  int64',
-           '----- ----- --------- -------- -------- -----',
-           '    0     0 189417400 -2271.86 -1634.77   160',
-           '    1     1 189410928   -62.52  1763.04   160',
-           '    2     2 189409160 -2223.75  1998.69   160',
-           '    3     3 189417920  1482.94   243.72   160',
-           '    4     4 189015480  2222.47  -580.99   160',
-           '    5     5 189417752  1994.07   699.55    80',
-           '    6     6 189406216 -2311.90  -240.18    60',
-           '    7     7 189416328  1677.88   137.11    60']
+    exp = [
+        '<AcqTable length=8>',
+        ' idx   slot     id      yang     zang   halfw',
+        'int64 int64   int32   float64  float64  int64',
+        '----- ----- --------- -------- -------- -----',
+        '    0     0 189417400 -2271.86 -1634.77   160',
+        '    1     1 189410928   -62.52  1763.04   160',
+        '    2     2 189409160 -2223.75  1998.69   160',
+        '    3     3 189417920  1482.94   243.72   160',
+        '    4     4 189015480  2222.47  -580.99   160',
+        '    5     5 189417752  1994.07   699.55    80',
+        '    6     6 189406216 -2311.90  -240.18    60',
+        '    7     7 189416328  1677.88   137.11    60',
+    ]
 
     assert repr(acqs[TEST_COLS]).splitlines() == exp
 
@@ -492,38 +528,42 @@ def test_box_strategy_20603():
     """
     acqs = get_acq_catalog(**OBS_INFO[20603])
 
-    exp = ['<AcqTable length=13>',
-           ' idx   slot     id      yang     zang   halfw',
-           'int64 int64   int32   float64  float64  int64',
-           '----- ----- --------- -------- -------- -----',
-           '    0     0  40113544   102.74  1133.37   160',
-           '    1     1 116923496 -1337.79  1049.27   120',
-           '    2     2 116791824   622.00  -953.60   160',
-           '    3     3  40114416   394.22  1204.43   160',
-           '    4     4  40112304 -1644.35  2032.47    80',
-           '    5     5 116923528 -2418.65  1088.40   160',
-           '    6     6 116791744   985.38 -1210.19   140',
-           '    7     7  40108048     2.21  1619.17   100',
-           '    8   -99 116785920  -673.94 -1575.87   120',
-           '    9   -99 116923744  -853.18   937.73   120',
-           '   10   -99 116792320   941.59 -1784.10   120',
-           '   11   -99 116918232 -2074.91 -1769.96   120',
-           '   12   -99 116923672 -2307.80  1442.43   120']
+    exp = [
+        '<AcqTable length=13>',
+        ' idx   slot     id      yang     zang   halfw',
+        'int64 int64   int32   float64  float64  int64',
+        '----- ----- --------- -------- -------- -----',
+        '    0     0  40113544   102.74  1133.37   160',
+        '    1     1 116923496 -1337.79  1049.27   120',
+        '    2     2 116791824   622.00  -953.60   160',
+        '    3     3  40114416   394.22  1204.43   160',
+        '    4     4  40112304 -1644.35  2032.47    80',
+        '    5     5 116923528 -2418.65  1088.40   160',
+        '    6     6 116791744   985.38 -1210.19   140',
+        '    7     7  40108048     2.21  1619.17   100',
+        '    8   -99 116785920  -673.94 -1575.87   120',
+        '    9   -99 116923744  -853.18   937.73   120',
+        '   10   -99 116792320   941.59 -1784.10   120',
+        '   11   -99 116918232 -2074.91 -1769.96   120',
+        '   12   -99 116923672 -2307.80  1442.43   120',
+    ]
 
     assert repr(acqs.cand_acqs[TEST_COLS]).splitlines() == exp
 
-    exp = ['<AcqTable length=8>',
-           ' idx   slot     id      yang     zang   halfw',
-           'int64 int64   int32   float64  float64  int64',
-           '----- ----- --------- -------- -------- -----',
-           '    0     0  40113544   102.74  1133.37   160',
-           '    1     1 116923496 -1337.79  1049.27   120',
-           '    2     2 116791824   622.00  -953.60   160',
-           '    3     3  40114416   394.22  1204.43   140',
-           '    4     4  40112304 -1644.35  2032.47   160',
-           '    5     5 116923528 -2418.65  1088.40   160',
-           '    6     6 116791744   985.38 -1210.19   160',
-           '    7     7  40108048     2.21  1619.17    60']
+    exp = [
+        '<AcqTable length=8>',
+        ' idx   slot     id      yang     zang   halfw',
+        'int64 int64   int32   float64  float64  int64',
+        '----- ----- --------- -------- -------- -----',
+        '    0     0  40113544   102.74  1133.37   160',
+        '    1     1 116923496 -1337.79  1049.27   120',
+        '    2     2 116791824   622.00  -953.60   160',
+        '    3     3  40114416   394.22  1204.43   140',
+        '    4     4  40112304 -1644.35  2032.47   160',
+        '    5     5 116923528 -2418.65  1088.40   160',
+        '    6     6 116791744   985.38 -1210.19   160',
+        '    7     7  40108048     2.21  1619.17    60',
+    ]
 
     assert repr(acqs[TEST_COLS]).splitlines() == exp
 
@@ -589,18 +629,22 @@ def test_cand_acqs_include_exclude():
     """
     stars = StarsTable.empty()
 
-    stars.add_fake_constellation(mag=[7.0, 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7],
-                                 id=[1, 2, 3, 4, 5, 6, 7, 8],
-                                 size=2000, n_stars=8)
-    stars.add_fake_constellation(mag=[10.0, 10.1, 12.0],
-                                 id=[9, 10, 11],
-                                 size=1500, n_stars=3)
+    stars.add_fake_constellation(
+        mag=[7.0, 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7],
+        id=[1, 2, 3, 4, 5, 6, 7, 8],
+        size=2000,
+        n_stars=8,
+    )
+    stars.add_fake_constellation(
+        mag=[10.0, 10.1, 12.0], id=[9, 10, 11], size=1500, n_stars=3
+    )
 
     # Put in a neighboring star that will keep star 9 out of the cand_acqs table
     star9 = stars.get_id(9)
     star9['ASPQ1'] = 20
-    stars.add_fake_star(yang=star9['yang'] + 20, zang=star9['zang'] + 20,
-                        mag=star9['mag'] + 2.5, id=90)
+    stars.add_fake_star(
+        yang=star9['yang'] + 20, zang=star9['zang'] + 20, mag=star9['mag'] + 2.5, id=90
+    )
 
     # Make sure baseline catalog is working like expected
     acqs = get_acq_catalog(**STD_INFO, optimize=False, stars=stars)
@@ -615,9 +659,14 @@ def test_cand_acqs_include_exclude():
     exclude_ids = [1]
 
     for optimize in False, True:
-        acqs = get_acq_catalog(**STD_INFO, optimize=optimize, stars=stars,
-                               include_ids=include_ids, include_halfws=include_halfws,
-                               exclude_ids=exclude_ids)
+        acqs = get_acq_catalog(
+            **STD_INFO,
+            optimize=optimize,
+            stars=stars,
+            include_ids=include_ids,
+            include_halfws=include_halfws,
+            exclude_ids=exclude_ids,
+        )
 
         assert acqs.include_ids == include_ids
         assert acqs.include_halfws == exp_include_halfws
@@ -651,8 +700,13 @@ def test_cand_acqs_include_exclude():
     include_halfws = [45, 85, 101, 120, 140, 60, 80, 100]
     exp_include_halfws = [60, 80, 100, 120, 140, 60, 80, 100]
 
-    acqs = get_acq_catalog(**STD_INFO, optimize=True, stars=stars,
-                           include_ids=include_ids, include_halfws=include_halfws)
+    acqs = get_acq_catalog(
+        **STD_INFO,
+        optimize=True,
+        stars=stars,
+        include_ids=include_ids,
+        include_halfws=include_halfws,
+    )
 
     assert acqs['id'].tolist() == include_ids
     assert acqs['halfw'].tolist() == exp_include_halfws
@@ -683,24 +737,28 @@ def test_n_acq():
     """
     stars = StarsTable.empty()
     stars.add_fake_constellation(mag=np.linspace(10.0, 10.07, 8), size=2000)
-    stars.add_fake_constellation(mag=np.linspace(10.005, 10.035, 4), size=1500, n_stars=4)
+    stars.add_fake_constellation(
+        mag=np.linspace(10.005, 10.035, 4), size=1500, n_stars=4
+    )
     acqs = get_acq_catalog(**STD_INFO, stars=stars, n_acq=6)
-    exp = ['<AcqTable length=12>',
-           ' idx   slot   id    yang     zang   halfw',
-           'int64 int64 int32 float64  float64  int64',
-           '----- ----- ----- -------- -------- -----',
-           '    0     0   100  2000.00     0.00   160',
-           '    1     1   108  1500.00     0.00   160',
-           '    2     2   101     0.00  2000.00   160',
-           '    3     3   109     0.00  1500.00   160',
-           '    4     4   102 -2000.00     0.00   160',
-           '    5     5   110 -1500.00     0.00   160',
-           '    6   -99   103     0.00 -2000.00   120',
-           '    7   -99   111     0.00 -1500.00   120',
-           '    8   -99   104  1000.00  1000.00   120',
-           '    9   -99   105  1000.00 -1000.00   120',
-           '   10   -99   106 -1000.00  1000.00   120',
-           '   11   -99   107 -1000.00 -1000.00   120']
+    exp = [
+        '<AcqTable length=12>',
+        ' idx   slot   id    yang     zang   halfw',
+        'int64 int64 int32 float64  float64  int64',
+        '----- ----- ----- -------- -------- -----',
+        '    0     0   100  2000.00     0.00   160',
+        '    1     1   108  1500.00     0.00   160',
+        '    2     2   101     0.00  2000.00   160',
+        '    3     3   109     0.00  1500.00   160',
+        '    4     4   102 -2000.00     0.00   160',
+        '    5     5   110 -1500.00     0.00   160',
+        '    6   -99   103     0.00 -2000.00   120',
+        '    7   -99   111     0.00 -1500.00   120',
+        '    8   -99   104  1000.00  1000.00   120',
+        '    9   -99   105  1000.00 -1000.00   120',
+        '   10   -99   106 -1000.00  1000.00   120',
+        '   11   -99   107 -1000.00 -1000.00   120',
+    ]
 
     assert repr(acqs.cand_acqs[TEST_COLS]).splitlines() == exp
 
@@ -753,10 +811,13 @@ def get_dark_stars_simple(box_size_thresh, dither):
 
     # Add stars near fid light positions.  For fids 3, 4 put in fid spoilers
     # so the initial fid set is empty.
-    stars.add_fake_stars_from_fid(fid_id=[2, 3, 4],
-                                  id=[2, 3, 4],
-                                  mag=[8.2, 11.5, 11.5],
-                                  offset_y=[offset, 10, 10], detector='HRC-S')
+    stars.add_fake_stars_from_fid(
+        fid_id=[2, 3, 4],
+        id=[2, 3, 4],
+        mag=[8.2, 11.5, 11.5],
+        offset_y=[offset, 10, 10],
+        detector='HRC-S',
+    )
 
     return dark, stars
 
@@ -775,8 +836,16 @@ def test_acq_fid_catalog_probs_low_level():
     dark, stars = get_dark_stars_simple(dither, box_size_thresh)
 
     # Get the catalogs (n_guide=0 so skip guide selection)
-    kwargs = mod_std_info(stars=stars, dark=dark, dither=dither, raise_exc=True,
-                          n_guide=0, n_acq=5, detector='HRC-S', optimize=False)
+    kwargs = mod_std_info(
+        stars=stars,
+        dark=dark,
+        dither=dither,
+        raise_exc=True,
+        n_guide=0,
+        n_acq=5,
+        detector='HRC-S',
+        optimize=False,
+    )
     aca = get_aca_catalog(**kwargs)
     acqs = aca.acqs
 
@@ -786,19 +855,22 @@ def test_acq_fid_catalog_probs_low_level():
 
     # Initial fid set is empty () and we check baseline p_safe
     assert acqs.fid_set == ()
-    assert np.allclose(np.log10(acqs.calc_p_safe()), -2.4,
-                       rtol=0, atol=0.1)
+    assert np.allclose(np.log10(acqs.calc_p_safe()), -2.4, rtol=0, atol=0.1)
 
     # This is the acq star spoiled by fid_id=2
     acq = acqs.get_id(2)
     p0 = acq['probs']
 
     assert p0.p_fid_id_spoiler(box_size_thresh - 1, fid_id=2, acqs=acqs) == 1.0  # OK
-    assert p0.p_fid_id_spoiler(box_size_thresh + 1, fid_id=2, acqs=acqs) == 0.0  # spoiled
+    assert (
+        p0.p_fid_id_spoiler(box_size_thresh + 1, fid_id=2, acqs=acqs) == 0.0
+    )  # spoiled
 
     # Caching of values
-    assert p0._p_fid_id_spoiler == {(box_size_thresh - 1, 2): 1.0,
-                                    (box_size_thresh + 1, 2): 0.0}
+    assert p0._p_fid_id_spoiler == {
+        (box_size_thresh - 1, 2): 1.0,
+        (box_size_thresh + 1, 2): 0.0,
+    }
 
     # With fid_set = (), the probability multiplier for any fid in the fid set
     # spoiling this star is 1.0, i.e. no fids spoil this star (since there
@@ -810,8 +882,7 @@ def test_acq_fid_catalog_probs_low_level():
     # spoils an acq star.  This makes the p_safe value much worse.
     acqs.fid_set = (4, 3, 2)
     assert acqs.fid_set == (2, 3, 4)  # gets sorted when set
-    assert np.allclose(np.log10(acqs.calc_p_safe()), -1.3,
-                       rtol=0, atol=0.1)
+    assert np.allclose(np.log10(acqs.calc_p_safe()), -1.3, rtol=0, atol=0.1)
 
     # With fid_set = (1, 2, 4), the probability multiplier for catalog
     # ids 2 and 4 are spoiled.  This test checks for star id=2 (which is
@@ -823,8 +894,7 @@ def test_acq_fid_catalog_probs_low_level():
     # set does not spoil an acq star.
     for fid_set in ((1, 3, 4), ()):
         acqs.fid_set = fid_set
-        assert np.allclose(np.log10(acqs.calc_p_safe()), -2.4,
-                           rtol=0, atol=0.1)
+        assert np.allclose(np.log10(acqs.calc_p_safe()), -2.4, rtol=0, atol=0.1)
 
     # Check that p_acqs() method responds to fid_set in expected way
     for box_size in ACQ.box_sizes:
@@ -847,9 +917,7 @@ def test_acq_fid_catalog_probs_low_level():
                 assert p_acq0 == p_acq1
 
 
-@pytest.mark.parametrize('n_fid_exp_fid_ids', [(1, [1]),
-                                               (2, [1, 4]),
-                                               (3, [1, 3, 4])])
+@pytest.mark.parametrize('n_fid_exp_fid_ids', [(1, [1]), (2, [1, 4]), (3, [1, 3, 4])])
 def test_acq_fid_catalog_n_fid(n_fid_exp_fid_ids):
     """
     Test optimizing acq and fid in a simple case (which does exercise acq-fid
@@ -887,8 +955,16 @@ def test_acq_fid_catalog_n_fid(n_fid_exp_fid_ids):
     dark, stars = get_dark_stars_simple(dither, box_size_thresh)
 
     # Get the catalogs (n_guide=0 so skip guide selection)
-    kwargs = mod_std_info(stars=stars, dark=dark, dither=dither, raise_exc=True,
-                          n_guide=0, n_fid=n_fid, n_acq=5, detector='HRC-S')
+    kwargs = mod_std_info(
+        stars=stars,
+        dark=dark,
+        dither=dither,
+        raise_exc=True,
+        n_guide=0,
+        n_fid=n_fid,
+        n_acq=5,
+        detector='HRC-S',
+    )
     aca = get_aca_catalog(**kwargs)
     acqs = aca.acqs
 
@@ -908,9 +984,17 @@ def test_acq_fid_catalog_zero_cand_fid():
     stars.add_fake_constellation(n_stars=5)
     dark = DARK40.copy()
 
-    kwargs = mod_std_info(stars=stars, dark=dark, dither=dither, raise_exc=True,
-                          n_guide=0, n_fid=3, n_acq=5,
-                          detector='HRC-S', sim_offset=300000)
+    kwargs = mod_std_info(
+        stars=stars,
+        dark=dark,
+        dither=dither,
+        raise_exc=True,
+        n_guide=0,
+        n_fid=3,
+        n_acq=5,
+        detector='HRC-S',
+        sim_offset=300000,
+    )
     aca = get_aca_catalog(**kwargs)
 
     assert len(aca.fids) == 0
@@ -944,15 +1028,26 @@ def test_acq_fid_catalog_one_cand_fid():
 
     # Add stars near fid light positions.  For fids 3, 4 put in fid spoilers
     # so the initial fid set is empty.
-    stars.add_fake_stars_from_fid(fid_id=[6, 6],
-                                  id=[1, 2],  # assigned catalog ID
-                                  mag=[8.2, 11.5],
-                                  offset_y=[offset, 10],
-                                  detector='ACIS-S', sim_offset=sim_offset)
+    stars.add_fake_stars_from_fid(
+        fid_id=[6, 6],
+        id=[1, 2],  # assigned catalog ID
+        mag=[8.2, 11.5],
+        offset_y=[offset, 10],
+        detector='ACIS-S',
+        sim_offset=sim_offset,
+    )
 
-    kwargs = mod_std_info(stars=stars, dark=dark, dither=dither, raise_exc=True,
-                          n_guide=0, n_fid=3, n_acq=5,
-                          detector='ACIS-S', sim_offset=sim_offset)
+    kwargs = mod_std_info(
+        stars=stars,
+        dark=dark,
+        dither=dither,
+        raise_exc=True,
+        n_guide=0,
+        n_fid=3,
+        n_acq=5,
+        detector='ACIS-S',
+        sim_offset=sim_offset,
+    )
     aca = get_aca_catalog(**kwargs)
 
     assert aca.acqs['id'].tolist() == [1, 100, 101, 102, 103]
@@ -963,8 +1058,9 @@ def test_acq_fid_catalog_one_cand_fid():
     assert aca.acqs.fid_set == (6,)
 
     # Not enough fids
-    assert aca.warnings == ['WARNING: No acq-fid combination was '
-                            'found that met stage requirements']
+    assert aca.warnings == [
+        'WARNING: No acq-fid combination was ' 'found that met stage requirements'
+    ]
 
 
 @pytest.mark.parametrize('n_fid', [2, 3])
@@ -992,15 +1088,26 @@ def test_acq_fid_catalog_two_cand_fid(n_fid):
     stars.add_fake_constellation(mag=[9.5, 9.6, 9.7, 10], n_stars=4)
 
     # Add stars near fid light positions.
-    stars.add_fake_stars_from_fid(fid_id=[1, 2],
-                                  id=[1, 2],  # assigned catalog ID
-                                  mag=[8.2, 11.5],
-                                  offset_y=[offset, 10],
-                                  detector='HRC-I', sim_offset=sim_offset)
+    stars.add_fake_stars_from_fid(
+        fid_id=[1, 2],
+        id=[1, 2],  # assigned catalog ID
+        mag=[8.2, 11.5],
+        offset_y=[offset, 10],
+        detector='HRC-I',
+        sim_offset=sim_offset,
+    )
 
-    kwargs = mod_std_info(stars=stars, dark=dark, dither=dither, raise_exc=True,
-                          n_guide=0, n_fid=n_fid, n_acq=5,
-                          detector='HRC-I', sim_offset=sim_offset)
+    kwargs = mod_std_info(
+        stars=stars,
+        dark=dark,
+        dither=dither,
+        raise_exc=True,
+        n_guide=0,
+        n_fid=n_fid,
+        n_acq=5,
+        detector='HRC-I',
+        sim_offset=sim_offset,
+    )
     aca = get_aca_catalog(**kwargs)
 
     assert aca.acqs['id'].tolist() == [1, 100, 101, 102, 103]
@@ -1021,8 +1128,9 @@ def test_0_5_degree_man_angle_bin():
     dark = DARK40.copy()
     stars = StarsTable.empty()
     stars.add_fake_constellation(mag=[7.99, 8.01, 8.99, 9.01, 10.2], n_stars=5)
-    kwargs = mod_std_info(stars=stars, dark=dark, t_ccd=-10.0,
-                          n_guide=0, n_fid=0, n_acq=8, man_angle=4.8)
+    kwargs = mod_std_info(
+        stars=stars, dark=dark, t_ccd=-10.0, n_guide=0, n_fid=0, n_acq=8, man_angle=4.8
+    )
     acqs = get_acq_catalog(**kwargs)
     assert acqs['halfw'].tolist() == [100, 80, 80, 60, 60]
     assert acqs[0]['box_sizes'].tolist() == [100, 80, 60]
@@ -1042,10 +1150,16 @@ def test_0_5_degree_man_angle_bin_diff_t_ccd():
     dark = DARK40.copy()
     stars = StarsTable.empty()
     stars.add_fake_constellation(mag=[7.99, 8.01, 8.99, 9.01, 10.2], n_stars=5)
-    for t_ccd, halfws in [(-9, [80, 80, 60, 60, 60]),
-                          (-11, [100, 100, 80, 80, 60])]:
-        kwargs = mod_std_info(stars=stars, dark=dark, t_ccd=t_ccd,
-                              n_guide=0, n_fid=0, n_acq=8, man_angle=4.8)
+    for t_ccd, halfws in [(-9, [80, 80, 60, 60, 60]), (-11, [100, 100, 80, 80, 60])]:
+        kwargs = mod_std_info(
+            stars=stars,
+            dark=dark,
+            t_ccd=t_ccd,
+            n_guide=0,
+            n_fid=0,
+            n_acq=8,
+            man_angle=4.8,
+        )
         acqs = get_acq_catalog(**kwargs)
         assert acqs['halfw'].tolist() == halfws
 
@@ -1060,8 +1174,9 @@ def test_bad_star_list():
     stars.add_fake_constellation(mag=np.linspace(9, 10.3, 5), n_stars=5)
     # Bright star that would normally be selected
     stars.add_fake_star(yang=100, zang=100, mag=6.5, id=bad_id)
-    kwargs = mod_std_info(stars=stars, dark=dark,
-                          n_guide=0, n_fid=0, n_acq=8, man_angle=4.8)
+    kwargs = mod_std_info(
+        stars=stars, dark=dark, n_guide=0, n_fid=0, n_acq=8, man_angle=4.8
+    )
     acqs = get_acq_catalog(**kwargs)
     assert bad_id not in acqs['id']
 
@@ -1080,10 +1195,16 @@ def test_acq_include_optimize_halfw_ids():
     stars.add_fake_star(yang=-200, zang=200, mag=10.5, id=201)
     stars.add_fake_star(yang=-200, zang=-200, mag=10.99, id=202)
 
-    kwargs = mod_std_info(stars=stars, dark=dark,
-                          n_guide=8, n_fid=0, n_acq=8, man_angle=90,
-                          include_ids_acq=[200, 201, 202],
-                          include_halfws_acq=[0, 0, 140])
+    kwargs = mod_std_info(
+        stars=stars,
+        dark=dark,
+        n_guide=8,
+        n_fid=0,
+        n_acq=8,
+        man_angle=90,
+        include_ids_acq=[200, 201, 202],
+        include_halfws_acq=[0, 0, 140],
+    )
     aca = get_aca_catalog(**kwargs)
 
     # Confirm that halfw values are good
@@ -1108,10 +1229,16 @@ def test_acq_include_ids_no_halfws(halfw_kwargs):
     stars.add_fake_star(yang=200, zang=200, mag=7.5, id=200)
     stars.add_fake_star(yang=-200, zang=200, mag=10.99, id=201)
 
-    kwargs = mod_std_info(stars=stars, dark=dark,
-                          n_guide=8, n_fid=0, n_acq=8, man_angle=90,
-                          include_ids_acq=[200, 201],
-                          **halfw_kwargs)
+    kwargs = mod_std_info(
+        stars=stars,
+        dark=dark,
+        n_guide=8,
+        n_fid=0,
+        n_acq=8,
+        man_angle=90,
+        include_ids_acq=[200, 201],
+        **halfw_kwargs,
+    )
     aca = get_aca_catalog(**kwargs)
 
     # Confirm that halfw values are good
@@ -1128,7 +1255,9 @@ def test_acq_include_ids_no_halfws_full_catalog():
     stars = StarsTable.empty()
     dark = DARK40.copy()
     stars.add_fake_constellation(mag=np.linspace(9.5, 10.6, 8), n_stars=8, size=2000)
-    kwargs = mod_std_info(stars=stars, dark=dark, n_guide=8, n_fid=0, n_acq=8, man_angle=30)
+    kwargs = mod_std_info(
+        stars=stars, dark=dark, n_guide=8, n_fid=0, n_acq=8, man_angle=30
+    )
     aca = get_aca_catalog(**kwargs)
     exp_halfws = [160, 160, 160, 160, 60, 60, 80, 60]
     assert np.all(aca.acqs['halfw'] == exp_halfws)
@@ -1146,7 +1275,9 @@ def test_acq_include_ids_all_halfws_full_catalog():
     stars = StarsTable.empty()
     dark = DARK40.copy()
     stars.add_fake_constellation(mag=np.linspace(9.5, 10.6, 8), n_stars=8, size=2000)
-    kwargs = mod_std_info(stars=stars, dark=dark, n_guide=8, n_fid=0, n_acq=8, man_angle=30)
+    kwargs = mod_std_info(
+        stars=stars, dark=dark, n_guide=8, n_fid=0, n_acq=8, man_angle=30
+    )
     aca = get_aca_catalog(**kwargs)
     exp_halfws = [160, 160, 160, 160, 60, 60, 80, 60]
     assert np.all(aca.acqs['halfw'] == exp_halfws)
@@ -1178,8 +1309,16 @@ def test_acq_include_ids_all_halfws_full_catalog_with_spoiler():
     stars.add_fake_star(yang=40, zang=0, mag=mags[7], id=ids[7])
     stars.add_fake_star(yang=20, zang=0, mag=5.0)  # Strong spoiler for 106 and 107
 
-    kwargs = mod_std_info(stars=stars, dark=dark, n_guide=8, n_fid=0, n_acq=8,
-                          man_angle=30, include_ids_acq=ids, include_halfws_acq=halfws)
+    kwargs = mod_std_info(
+        stars=stars,
+        dark=dark,
+        n_guide=8,
+        n_fid=0,
+        n_acq=8,
+        man_angle=30,
+        include_ids_acq=ids,
+        include_halfws_acq=halfws,
+    )
     aca = get_aca_catalog(**kwargs)
     aca.acqs.sort('id')
     assert np.all(aca.acqs['id'] == ids)

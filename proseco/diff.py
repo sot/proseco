@@ -61,8 +61,9 @@ HTML_FOOTER = """
 __all__ = ['get_catalog_lines', 'catalog_diff', 'CatalogDiff']
 
 
-def get_catalog_lines(cat, names=None, section_lines=True, sort_name='id',
-                      formats=None):
+def get_catalog_lines(
+    cat, names=None, section_lines=True, sort_name='id', formats=None
+):
     """Get list of lines representing catalog suitable for diffing.
 
     This function sorts the catalog into fids, guides, monitors,and acquisition
@@ -126,6 +127,7 @@ def get_catalog_lines(cat, names=None, section_lines=True, sort_name='id',
 
     out = vstack([fids, guides, mons, acqs], metadata_conflicts='silent')
     from .core import ACACatalogTable
+
     out = ACACatalogTable(out[names])
 
     # Handle odd case of catalog from starcheck with None in field
@@ -160,8 +162,8 @@ def get_catalog_lines(cat, names=None, section_lines=True, sort_name='id',
 
 
 class CatalogDiff:
-    """Represent an ACA catalog diff as either HTML or plain text
-    """
+    """Represent an ACA catalog diff as either HTML or plain text"""
+
     def __init__(self, text, is_html=False):
         self.text = text
         self.is_html = is_html
@@ -185,8 +187,17 @@ class CatalogDiff:
             fh.write(self.text)
 
 
-def catalog_diff(cats1, cats2, style='html', names=None, labels=None, formats=None,
-                 sort_name='id', section_lines=True, n_context=3):
+def catalog_diff(
+    cats1,
+    cats2,
+    style='html',
+    names=None,
+    labels=None,
+    formats=None,
+    sort_name='id',
+    section_lines=True,
+    n_context=3,
+):
     """
     Return the diff of ACA catalogs ``cats1`` and ``cats2``.
 
@@ -237,10 +248,14 @@ def catalog_diff(cats1, cats2, style='html', names=None, labels=None, formats=No
         lines1 = []
         lines2 = []
 
-        for cat, lines in ((cat1, lines1),
-                           (cat2, lines2)):
+        for cat, lines in ((cat1, lines1), (cat2, lines2)):
             cat_lines = get_catalog_lines(
-                cat, names, section_lines=section_lines, sort_name=sort_name, formats=formats)
+                cat,
+                names,
+                section_lines=section_lines,
+                sort_name=sort_name,
+                formats=formats,
+            )
             lines.extend(cat_lines)
 
         if style == 'html':
@@ -252,7 +267,14 @@ def catalog_diff(cats1, cats2, style='html', names=None, labels=None, formats=No
             func = getattr(difflib, f'{style}_diff')
             ls = os.linesep
             text = ls.join(
-                func(lines1, lines2, fromfile='catalog 1', tofile='catalog 2', n=n_context))
+                func(
+                    lines1,
+                    lines2,
+                    fromfile='catalog 1',
+                    tofile='catalog 2',
+                    n=n_context,
+                )
+            )
             if label:
                 sep = '=' * max(30, len(label))
                 text = sep + ls + label + ls + sep + ls + text + ls + ls

@@ -5,8 +5,12 @@ import numpy as np
 from proseco.characteristics import MonCoord, MonFunc
 import proseco.characteristics as ACA
 from proseco.core import ACACatalogTable
-from chandra_aca.transform import (pixels_to_yagzag, radec_to_yagzag, yagzag_to_pixels,
-                                   yagzag_to_radec)
+from chandra_aca.transform import (
+    pixels_to_yagzag,
+    radec_to_yagzag,
+    yagzag_to_pixels,
+    yagzag_to_radec,
+)
 
 
 class BadMonitorError(ValueError):
@@ -58,7 +62,8 @@ def get_mon_catalog(obsid=0, **kwargs):
         'dec': np.float64,
         'dim': np.int64,
         'res': np.int64,
-        'halfw': np.int64}
+        'halfw': np.int64,
+    }
 
     for name, dtype in names.items():
         mons[name] = np.empty(0, dtype=dtype)
@@ -119,41 +124,54 @@ class MonTable(ACACatalogTable):
                 # RA, Dec
                 monitor['ra'], monitor['dec'] = monitor['coord0'], monitor['coord1']
                 monitor['yang'], monitor['zang'] = radec_to_yagzag(
-                    monitor['ra'], monitor['dec'], self.att)
+                    monitor['ra'], monitor['dec'], self.att
+                )
                 monitor['row'], monitor['col'] = yagzag_to_pixels(
-                    monitor['yang'], monitor['zang'], allow_bad=True)
+                    monitor['yang'], monitor['zang'], allow_bad=True
+                )
 
             elif monitor['coord_type'] == MonCoord.ROWCOL:
                 # Row, col
                 monitor['row'], monitor['col'] = monitor['coord0'], monitor['coord1']
                 monitor['yang'], monitor['zang'] = pixels_to_yagzag(
-                    monitor['row'], monitor['col'], allow_bad=True, flight=True)
+                    monitor['row'], monitor['col'], allow_bad=True, flight=True
+                )
                 monitor['ra'], monitor['dec'] = yagzag_to_radec(
-                    monitor['yang'], monitor['zang'], self.att)
+                    monitor['yang'], monitor['zang'], self.att
+                )
 
             elif monitor['coord_type'] == MonCoord.YAGZAG:
                 # Yag, zag
                 monitor['yang'], monitor['zang'] = monitor['coord0'], monitor['coord1']
                 monitor['row'], monitor['col'] = yagzag_to_pixels(
-                    monitor['yang'], monitor['zang'], allow_bad=True)
+                    monitor['yang'], monitor['zang'], allow_bad=True
+                )
                 monitor['ra'], monitor['dec'] = yagzag_to_radec(
-                    monitor['yang'], monitor['zang'], self.att)
+                    monitor['yang'], monitor['zang'], self.att
+                )
 
         # Process bona fide monitor windows according to function
         mon_id = 1000
         for monitor in self.monitors:
             if monitor['function'] in (MonFunc.GUIDE, MonFunc.MON_TRACK):
                 # Try to get star at MON position
-                dist = np.linalg.norm([self.stars['yang'] - monitor['yang'],
-                                       self.stars['zang'] - monitor['zang']], axis=0)
+                dist = np.linalg.norm(
+                    [
+                        self.stars['yang'] - monitor['yang'],
+                        self.stars['zang'] - monitor['zang'],
+                    ],
+                    axis=0,
+                )
                 idx = np.argmin(dist)
                 if dist[idx] < 2.0:
                     star = self.stars[idx]
                     monitor['id'] = star['id']
                     monitor['mag'] = star['mag']
                 elif monitor['function'] == MonFunc.GUIDE:
-                    raise BadMonitorError('no acceptable AGASC star within '
-                                          '2 arcsec of monitor position')
+                    raise BadMonitorError(
+                        'no acceptable AGASC star within '
+                        '2 arcsec of monitor position'
+                    )
 
             if monitor['function'] in (MonFunc.MON_FIXED, MonFunc.MON_TRACK):
                 if monitor['id'] == 0:
@@ -164,9 +182,13 @@ class MonTable(ACACatalogTable):
                 # also works for str (giving '0').
                 mon = {col.name: col.dtype.type(0) for col in self.itercols()}
                 # These type codes get fixed later in merge_catalog
-                mon['type'] = 'MFX' if monitor['function'] == MonFunc.MON_FIXED else 'MTR'
+                mon['type'] = (
+                    'MFX' if monitor['function'] == MonFunc.MON_FIXED else 'MTR'
+                )
                 mon['sz'] = '8x8'
-                mon['dim'] = -999  # Set an obviously bad value for DTS, gets fixed later.
+                mon[
+                    'dim'
+                ] = -999  # Set an obviously bad value for DTS, gets fixed later.
                 mon['res'] = 0
                 mon['halfw'] = 20
                 mon['maxmag'] = ACA.monitor_maxmag

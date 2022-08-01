@@ -4,16 +4,25 @@ import numpy as np
 from itertools import combinations
 
 import chandra_aca.aca_image
-from chandra_aca.transform import (mag_to_count_rate, count_rate_to_mag,
-                                   snr_mag_for_t_ccd)
+from chandra_aca.transform import (
+    mag_to_count_rate,
+    count_rate_to_mag,
+    snr_mag_for_t_ccd,
+)
 from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
 
 from proseco.characteristics import MonFunc
 from . import characteristics as ACA
 from . import characteristics_guide as GUIDE
 
-from .core import (bin2x2, ACACatalogTable, MetaAttribute, AliasAttribute,
-                   get_dim_res, get_img_size)
+from .core import (
+    bin2x2,
+    ACACatalogTable,
+    MetaAttribute,
+    AliasAttribute,
+    get_dim_res,
+    get_img_size,
+)
 
 CCD = ACA.CCD
 APL = AcaPsfLibrary()
@@ -68,8 +77,10 @@ def get_guide_catalog(obsid=0, **kwargs):
     guides.add_columns(list(selected.columns.values()))
 
     if len(guides) < guides.n_guide:
-        guides.log(f'Selected only {len(guides)} guide stars versus requested {guides.n_guide}',
-                   warning=True)
+        guides.log(
+            f'Selected only {len(guides)} guide stars versus requested {guides.n_guide}',
+            warning=True,
+        )
 
     img_size = guides.get_img_size()
     if len(guides) > 0:
@@ -134,8 +145,7 @@ class GuideTable(ACACatalogTable):
             return
 
         monitors = self.mons.monitors
-        is_mon = np.isin(monitors['function'], [MonFunc.MON_FIXED,
-                                                MonFunc.MON_TRACK])
+        is_mon = np.isin(monitors['function'], [MonFunc.MON_FIXED, MonFunc.MON_TRACK])
         if np.any(is_mon):
             # For MON fixed and tracked, the dark cal map gets hacked to make a
             # local blob of hot pixels. Make a copy to avoid modifying the global
@@ -145,11 +155,13 @@ class GuideTable(ACACatalogTable):
         for monitor in monitors[is_mon]:
             # Make a square blob of saturated pixels that will keep away any
             # star selection.
-            is_track = (monitor['function'] == MonFunc.MON_TRACK)
+            is_track = monitor['function'] == MonFunc.MON_TRACK
             dr = int(4 + np.ceil(self.dither.row if is_track else 0))
             dc = int(4 + np.ceil(self.dither.col if is_track else 0))
             row, col = int(monitor['row']) + 512, int(monitor['col']) + 512
-            self.dark[row-dr: row+dr, col-dc: col+dc] = ACA.bad_pixel_dark_current  # noqa
+            self.dark[
+                row - dr : row + dr, col - dc : col + dc
+            ] = ACA.bad_pixel_dark_current  # noqa
 
             # Reduce n_guide for each MON. On input the n_guide arg is the
             # number of GUI + MON, but for guide selection we need to make the
@@ -228,6 +240,7 @@ class GuideTable(ACACatalogTable):
 
         """
         from .report_guide import make_report
+
         make_report(self, rootdir=rootdir)
 
     def run_search_stages(self):
@@ -276,19 +289,24 @@ class GuideTable(ACACatalogTable):
                 stage_selected = np.count_nonzero(stage_ok & sel)
                 self.log(f'{stage_selected} stars selected in stage {idx}', level=1)
             else:
-                self.log(f'Quitting after stage {idx - 1} with {already_selected} stars', level=1)
+                self.log(
+                    f'Quitting after stage {idx - 1} with {already_selected} stars',
+                    level=1,
+                )
                 break
         self.log('Done with search stages')
         stage_cands = cand_guides[cand_guides['stage'] != -1]
         stage_cands.sort(['stage', 'mag'])
         stage_cands = self.exclude_overlaps(stage_cands)
-        guides = self.select_catalog(stage_cands[0:n_guide + GUIDE.surplus_stars])
+        guides = self.select_catalog(stage_cands[0 : n_guide + GUIDE.surplus_stars])
 
         if self.dyn_bgd_n_faint > 0:
             self.drop_excess_bonus_stars(guides)
 
         if len(guides) < self.n_guide:
-            self.log(f'Could not find {self.n_guide} candidates after all search stages')
+            self.log(
+                f'Could not find {self.n_guide} candidates after all search stages'
+            )
         return guides
 
     def drop_excess_bonus_stars(self, guides):
@@ -309,9 +327,9 @@ class GuideTable(ACACatalogTable):
         n_bonus = 0
         idx = 0
         # Compute the non-bonus faint_mag_limit
-        faint_mag_limit = snr_mag_for_t_ccd(self.t_ccd,
-                                            ref_mag=GUIDE.ref_faint_mag,
-                                            ref_t_ccd=GUIDE.ref_faint_mag_t_ccd)
+        faint_mag_limit = snr_mag_for_t_ccd(
+            self.t_ccd, ref_mag=GUIDE.ref_faint_mag, ref_t_ccd=GUIDE.ref_faint_mag_t_ccd
+        )
         idxs_drop = []
         for idx in range(len(guides)):
             if guides['mag'][idx] > faint_mag_limit:
@@ -345,14 +363,17 @@ class GuideTable(ACACatalogTable):
                 if np.abs(drow) <= 12 and np.abs(dcol) <= 12:
                     self.log(
                         f"Rejecting star {star['id']} with track overlap (12 pixels) "
-                        f"with star {other_star['id']}")
+                        f"with star {other_star['id']}"
+                    )
                     self.reject(
-                        {'id': star['id'],
-                         'type': 'overlap',
-                         'stage': 0,
-                         'text':
-                         f'Cand {star["id"]} has track overlap (12 pixels) '
-                         f'with star {other_star["id"]}'})
+                        {
+                            'id': star['id'],
+                            'type': 'overlap',
+                            'stage': 0,
+                            'text': f'Cand {star["id"]} has track overlap (12 pixels) '
+                            f'with star {other_star["id"]}',
+                        }
+                    )
                     nok[idx] = True
         return stage_cands[~nok]
 
@@ -382,12 +403,20 @@ class GuideTable(ACACatalogTable):
         choose_m = min(len(stage_cands), self.n_guide)
 
         n_tries = 0
-        for n_tries, comb in enumerate(index_combinations(len(stage_cands), choose_m), start=1):
-            cands = stage_cands[list(comb)]  # (note that [(1,2)] is not the same as list((1,2))
-            n_pass, n_tests = run_select_checks(cands)  # This function knows how many tests get run
+        for n_tries, comb in enumerate(
+            index_combinations(len(stage_cands), choose_m), start=1
+        ):
+            cands = stage_cands[
+                list(comb)
+            ]  # (note that [(1,2)] is not the same as list((1,2))
+            n_pass, n_tests = run_select_checks(
+                cands
+            )  # This function knows how many tests get run
             if n_pass == n_tests:
-                self.log(f'Selected stars passing all tests at combination {n_tries}',
-                         tried_combinations=n_tries)
+                self.log(
+                    f'Selected stars passing all tests at combination {n_tries}',
+                    tried_combinations=n_tries,
+                )
                 return cands
             else:
                 if n_pass not in select_results:
@@ -398,7 +427,9 @@ class GuideTable(ACACatalogTable):
         max_n_pass = max(select_results)
         self.log(
             f'Settled for combination that satisfied {max_n_pass} cluster checks',
-            warning=True, tried_combinations=n_tries)
+            warning=True,
+            tried_combinations=n_tries,
+        )
         return select_results[max_n_pass]
 
     def search_stage(self, stage):
@@ -517,54 +548,73 @@ class GuideTable(ACACatalogTable):
         # bright limit (which is basically 5.2, but if bright lim set to less than 5.2
         # in the stage, take that).
         bad_mag = (
-            ((cand_guides['mag'] - max(n_sigma, 1) * mag_err) < bright_lim) |
-            ((cand_guides['mag'] + n_sigma * mag_err) > faint_lim) |
-            ((cand_guides['mag'] - 2 * mag_err) < min(bright_lim, 5.2)))
+            ((cand_guides['mag'] - max(n_sigma, 1) * mag_err) < bright_lim)
+            | ((cand_guides['mag'] + n_sigma * mag_err) > faint_lim)
+            | ((cand_guides['mag'] - 2 * mag_err) < min(bright_lim, 5.2))
+        )
         for idx in np.flatnonzero(bad_mag):
-            self.reject({'id': cand_guides['id'][idx],
-                         'type': 'mag outside range',
-                         'stage': stage['Stage'],
-                         'bright_lim': bright_lim,
-                         'faint_lim': faint_lim,
-                         'cand_mag': cand_guides['mag'][idx],
-                         'cand_mag_err_times_sigma': n_sigma * mag_err[idx],
-                         'text': (f'Cand {cand_guides["id"][idx]} rejected with '
-                                  'mag outside range for stage')})
+            self.reject(
+                {
+                    'id': cand_guides['id'][idx],
+                    'type': 'mag outside range',
+                    'stage': stage['Stage'],
+                    'bright_lim': bright_lim,
+                    'faint_lim': faint_lim,
+                    'cand_mag': cand_guides['mag'][idx],
+                    'cand_mag_err_times_sigma': n_sigma * mag_err[idx],
+                    'text': (
+                        f'Cand {cand_guides["id"][idx]} rejected with '
+                        'mag outside range for stage'
+                    ),
+                }
+            )
         cand_guides[scol][bad_mag] += GUIDE.errs['mag range']
         ok = ok & ~bad_mag
 
         # Check stage ASPQ1
         bad_aspq1 = cand_guides['ASPQ1'] > stage['ASPQ1Lim']
         for idx in np.flatnonzero(bad_aspq1):
-            self.reject({'id': cand_guides['id'][idx],
-                         'type': 'aspq1 outside range',
-                         'stage': stage['Stage'],
-                         'aspq1_lim': stage['ASPQ1Lim'],
-                         'text': (f'Cand {cand_guides["id"][idx]} rejected with '
-                                  f'aspq1 > {stage["ASPQ1Lim"]}')})
+            self.reject(
+                {
+                    'id': cand_guides['id'][idx],
+                    'type': 'aspq1 outside range',
+                    'stage': stage['Stage'],
+                    'aspq1_lim': stage['ASPQ1Lim'],
+                    'text': (
+                        f'Cand {cand_guides["id"][idx]} rejected with '
+                        f'aspq1 > {stage["ASPQ1Lim"]}'
+                    ),
+                }
+            )
         cand_guides[scol][bad_aspq1] += GUIDE.errs['aspq1']
         ok = ok & ~bad_aspq1
 
         # Check for bright pixels
-        pixmag_lims = get_pixmag_for_offset(cand_guides['mag'],
-                                            stage['Imposter']['CentroidOffsetLim'])
+        pixmag_lims = get_pixmag_for_offset(
+            cand_guides['mag'], stage['Imposter']['CentroidOffsetLim']
+        )
         # Which candidates have an 'imposter' brighter than the limit for this stage
         imp_spoil = cand_guides['imp_mag'] < pixmag_lims
         for idx in np.flatnonzero(imp_spoil):
             cand = cand_guides[idx]
             cen_limit = stage['Imposter']['CentroidOffsetLim']
-            self.reject({
-                'id': cand['id'],
-                'stage': stage['Stage'],
-                'type': 'hot pixel',
-                'centroid_offset_thresh': cen_limit,
-                'pseudo_mag_for_thresh': pixmag_lims[idx],
-                'imposter_mag': cand['imp_mag'],
-                'imp_row_start': cand['imp_r'],
-                'imp_col_start': cand['imp_c'],
-                'text': (f'Cand {cand["id"]} mag {cand["mag"]:.1f} imposter with '
-                         f'"mag" {cand["imp_mag"]:.1f} '
-                         f'limit {pixmag_lims[idx]:.2f} with offset lim {cen_limit} at stage')})
+            self.reject(
+                {
+                    'id': cand['id'],
+                    'stage': stage['Stage'],
+                    'type': 'hot pixel',
+                    'centroid_offset_thresh': cen_limit,
+                    'pseudo_mag_for_thresh': pixmag_lims[idx],
+                    'imposter_mag': cand['imp_mag'],
+                    'imp_row_start': cand['imp_r'],
+                    'imp_col_start': cand['imp_c'],
+                    'text': (
+                        f'Cand {cand["id"]} mag {cand["mag"]:.1f} imposter with '
+                        f'"mag" {cand["imp_mag"]:.1f} '
+                        f'limit {pixmag_lims[idx]:.2f} with offset lim {cen_limit} at stage'
+                    ),
+                }
+            )
         cand_guides[scol][imp_spoil] += GUIDE.errs['hot pix']
         ok = ok & ~imp_spoil
 
@@ -580,8 +630,9 @@ class GuideTable(ACACatalogTable):
         if stage['ASPQ1Lim'] > 0:
             bg_pix_thresh = np.percentile(dark, stage['Spoiler']['BgPixThresh'])
             reg_frac = stage['Spoiler']['RegionFrac']
-            bg_spoil, reg_spoil, light_rej = check_spoil_contrib(cand_guides, ok, stars,
-                                                                 reg_frac, bg_pix_thresh)
+            bg_spoil, reg_spoil, light_rej = check_spoil_contrib(
+                cand_guides, ok, stars, reg_frac, bg_pix_thresh
+            )
             for rej in light_rej:
                 rej['stage'] = stage['Stage']
                 self.reject(rej)
@@ -600,10 +651,14 @@ class GuideTable(ACACatalogTable):
         if stage['DoBminusVcheck'] == 1:
             bad_color = np.isclose(cand_guides['COLOR1'], 0.7, atol=1e-6, rtol=0)
             for idx in np.flatnonzero(bad_color):
-                self.reject({'id': cand_guides['id'][idx],
-                             'type': 'bad color',
-                             'stage': stage['Stage'],
-                             'text': f'Cand {cand_guides["id"][idx]} has bad color (0.7)'})
+                self.reject(
+                    {
+                        'id': cand_guides['id'][idx],
+                        'type': 'bad color',
+                        'stage': stage['Stage'],
+                        'text': f'Cand {cand_guides["id"][idx]} has bad color (0.7)',
+                    }
+                )
             cand_guides[scol][bad_color] += GUIDE.errs['bad color']
             ok = ok & ~bad_color
         return ok
@@ -618,8 +673,7 @@ class GuideTable(ACACatalogTable):
         row_max = CCD['row_max'] - CCD['row_pad'] - CCD['window_pad']
         col_max = CCD['col_max'] - CCD['col_pad'] - CCD['window_pad']
 
-        ok = ((np.abs(stars['row']) < row_max) &
-              (np.abs(stars['col']) < col_max))
+        ok = (np.abs(stars['row']) < row_max) & (np.abs(stars['col']) < col_max)
 
         super().process_include_ids(cand_guides, stars[ok])
 
@@ -640,23 +694,27 @@ class GuideTable(ACACatalogTable):
 
         # Scale the reference ACA faint mag limit to the CCD temperature keeping
         # expected signal-to-noise constant.
-        faint_mag_limit = snr_mag_for_t_ccd(t_ccd, ref_mag=GUIDE.ref_faint_mag,
-                                            ref_t_ccd=GUIDE.ref_faint_mag_t_ccd)
+        faint_mag_limit = snr_mag_for_t_ccd(
+            t_ccd, ref_mag=GUIDE.ref_faint_mag, ref_t_ccd=GUIDE.ref_faint_mag_t_ccd
+        )
 
         # Without dynamic background, ensure faint limit is no larger (fainter)
         # than ref_faint_mag (10.3 mag).
         if self.dyn_bgd_n_faint == 0:
             faint_mag_limit = min(faint_mag_limit, GUIDE.ref_faint_mag)
 
-        ok = ((stars['CLASS'] == 0) &
-              (stars['mag'] > 5.2) &
-              (stars['mag'] < faint_mag_limit) &
-              (stars['mag_err'] < 1.0) &  # Mag err < 1.0 mag
-              (stars['ASPQ1'] < 20) &  # Less than 1 arcsec offset from nearby spoiler
-              (stars['ASPQ2'] == 0) &  # Proper motion less than 0.5 arcsec/yr
-              (stars['POS_ERR'] < 1250) &  # Position error < 1.25 arcsec
-              ((stars['VAR'] == -9999) | (stars['VAR'] == 5))  # Not known to vary > 0.2 mag
-              )
+        ok = (
+            (stars['CLASS'] == 0)
+            & (stars['mag'] > 5.2)
+            & (stars['mag'] < faint_mag_limit)
+            & (stars['mag_err'] < 1.0)
+            & (stars['ASPQ1'] < 20)  # Mag err < 1.0 mag
+            & (stars['ASPQ2'] == 0)  # Less than 1 arcsec offset from nearby spoiler
+            & (stars['POS_ERR'] < 1250)  # Proper motion less than 0.5 arcsec/yr
+            & (  # Position error < 1.25 arcsec
+                (stars['VAR'] == -9999) | (stars['VAR'] == 5)
+            )  # Not known to vary > 0.2 mag
+        )
         return ok
 
     def get_initial_guide_candidates(self):
@@ -709,27 +767,34 @@ class GuideTable(ACACatalogTable):
         dark = self.dark
 
         # Mark stars that are off chip
-        offchip = (np.abs(stars['row']) > CCD['row_max']) | (np.abs(stars['col']) > CCD['col_max'])
+        offchip = (np.abs(stars['row']) > CCD['row_max']) | (
+            np.abs(stars['col']) > CCD['col_max']
+        )
         stars['offchip'] = offchip
 
         # Add a filter for stars that are too close to the chip edge including dither
         r_dith_pad = self.dither.row
         c_dith_pad = self.dither.col
-        row_max = (CCD['row_max'] -
-                   (CCD['row_pad'] + CCD['window_pad'] + CCD['guide_extra_pad'] + r_dith_pad))
-        col_max = (CCD['col_max'] -
-                   (CCD['col_pad'] + CCD['window_pad'] + CCD['guide_extra_pad'] + c_dith_pad))
-        outofbounds = (np.abs(stars['row']) > row_max) | (np.abs(stars['col']) > col_max)
+        row_max = CCD['row_max'] - (
+            CCD['row_pad'] + CCD['window_pad'] + CCD['guide_extra_pad'] + r_dith_pad
+        )
+        col_max = CCD['col_max'] - (
+            CCD['col_pad'] + CCD['window_pad'] + CCD['guide_extra_pad'] + c_dith_pad
+        )
+        outofbounds = (np.abs(stars['row']) > row_max) | (
+            np.abs(stars['col']) > col_max
+        )
 
         # Set the candidates to be the set of stars that is both *not* out of bounds
         # and satisfies the rules in 'get_candidates_mask' (which uses the primary
         # selection filter from acq, but allows bad color and limits to brighter stars).
         ok = self.get_candidates_mask(stars) & ~outofbounds
         cand_guides = stars[ok]
-        self.log('Filtering on CLASS, mag, row/col, '
-                 'mag_err, ASPQ1/2, POS_ERR:')
-        self.log(f'Reduced star list from {len(stars)} to '
-                 f'{len(cand_guides)} candidate guide stars')
+        self.log('Filtering on CLASS, mag, row/col, ' 'mag_err, ASPQ1/2, POS_ERR:')
+        self.log(
+            f'Reduced star list from {len(stars)} to '
+            f'{len(cand_guides)} candidate guide stars'
+        )
 
         bp, bp_rej = spoiled_by_bad_pixel(cand_guides, self.dither)
         for rej in bp_rej:
@@ -737,33 +802,47 @@ class GuideTable(ACACatalogTable):
             self.reject(rej)
         cand_guides = cand_guides[~bp]
         self.log('Filtering on candidates near bad (not just bright/hot) pixels')
-        self.log(f'Reduced star list from {len(bp)} to '
-                 f'{len(cand_guides)} candidate guide stars')
+        self.log(
+            f'Reduced star list from {len(bp)} to '
+            f'{len(cand_guides)} candidate guide stars'
+        )
 
         bs = self.in_bad_star_list(cand_guides)
         for idx in np.flatnonzero(bs):
-            self.reject({'id': cand_guides['id'][idx],
-                         'stage': 0,
-                         'type': 'bad star list',
-                         'text': f'Cand {cand_guides["id"][idx]} in bad star list'})
+            self.reject(
+                {
+                    'id': cand_guides['id'][idx],
+                    'stage': 0,
+                    'type': 'bad star list',
+                    'text': f'Cand {cand_guides["id"][idx]} in bad star list',
+                }
+            )
         cand_guides = cand_guides[~bs]
         self.log('Filtering stars on bad star list')
-        self.log(f'Reduced star list from {len(bs)} to '
-                 f'{len(cand_guides)} candidate guide stars')
+        self.log(
+            f'Reduced star list from {len(bs)} to '
+            f'{len(cand_guides)} candidate guide stars'
+        )
 
-        box_spoiled, box_rej = has_spoiler_in_box(cand_guides, stars,
-                                                  halfbox=GUIDE.box_spoiler['halfbox'],
-                                                  magdiff=GUIDE.box_spoiler['magdiff'])
+        box_spoiled, box_rej = has_spoiler_in_box(
+            cand_guides,
+            stars,
+            halfbox=GUIDE.box_spoiler['halfbox'],
+            magdiff=GUIDE.box_spoiler['magdiff'],
+        )
         for rej in box_rej:
             rej['stage'] = 0
             self.reject(rej)
         cand_guides = cand_guides[~box_spoiled]
         self.log('Filtering stars that have bright spoilers with centroids near/in 8x8')
-        self.log(f'Reduced star list from {len(box_spoiled)} to '
-                 f'{len(cand_guides)} candidate guide stars')
+        self.log(
+            f'Reduced star list from {len(box_spoiled)} to '
+            f'{len(cand_guides)} candidate guide stars'
+        )
 
-        fid_trap_spoilers, fid_rej = check_fid_trap(cand_guides, fids=self.fids,
-                                                    dither=self.dither)
+        fid_trap_spoilers, fid_rej = check_fid_trap(
+            cand_guides, fids=self.fids, dither=self.dither
+        )
         for rej in fid_rej:
             rej['stage'] = 0
             self.reject(rej)
@@ -775,10 +854,14 @@ class GuideTable(ACACatalogTable):
         # Deal with exclude_ids by cutting from the candidate list
         for star_id in self.exclude_ids:
             if star_id in cand_guides['id']:
-                self.reject({'stage': 0,
-                             'type': 'exclude_id',
-                             'id': star_id,
-                             'text': f'Cand {star_id} rejected.  In exclude_ids'})
+                self.reject(
+                    {
+                        'stage': 0,
+                        'type': 'exclude_id',
+                        'id': star_id,
+                        'text': f'Cand {star_id} rejected.  In exclude_ids',
+                    }
+                )
                 cand_guides = cand_guides[cand_guides['id'] != star_id]
 
         # Get the brightest 2x2 in the dark map for each candidate and save value and location
@@ -835,16 +918,22 @@ def check_fid_trap(cand_stars, fids, dither):
         if incol and inrow:
             fid_dist_to_trap = fid['row'] - bad_row
             star_dist_to_register = 512 - abs(cand_stars['row'])
-            spoils = abs(fid_dist_to_trap - star_dist_to_register) < (fid_margin + dither.row)
+            spoils = abs(fid_dist_to_trap - star_dist_to_register) < (
+                fid_margin + dither.row
+            )
             spoilers = spoilers | spoils
             for idx in np.flatnonzero(spoils):
                 cand = cand_stars[idx]
-                rej.append({'id': cand['id'],
-                            'type': 'fid trap effect',
-                            'fid_id': fid['id'],
-                            'fid_dist_to_trap': fid_dist_to_trap,
-                            'star_dist_to_register': star_dist_to_register[idx],
-                            'text': f'Cand {cand["id"]} in trap zone for fid {fid["id"]}'})
+                rej.append(
+                    {
+                        'id': cand['id'],
+                        'type': 'fid trap effect',
+                        'fid_id': fid['id'],
+                        'fid_dist_to_trap': fid_dist_to_trap,
+                        'star_dist_to_register': star_dist_to_register[idx],
+                        'text': f'Cand {cand["id"]} in trap zone for fid {fid["id"]}',
+                    }
+                )
     return spoilers, rej
 
 
@@ -872,8 +961,9 @@ def check_spoil_contrib(cand_stars, ok, stars, regfrac, bgthresh):
     for cand in cand_stars[ok]:
         if cand['ASPQ1'] == 0:
             continue
-        spoilers = ((np.abs(cand['row'] - stars['row']) < 9) &
-                    (np.abs(cand['col'] - stars['col']) < 9))
+        spoilers = (np.abs(cand['row'] - stars['row']) < 9) & (
+            np.abs(cand['col'] - stars['col']) < 9
+        )
 
         # If there is only one match, it is the candidate so there's nothing to do
         if np.count_nonzero(spoilers) == 1:
@@ -881,15 +971,21 @@ def check_spoil_contrib(cand_stars, ok, stars, regfrac, bgthresh):
         cand_counts = mag_to_count_rate(cand['mag'])
 
         # Get a reasonable AcaImage for the location of the 8x8 for the candidate
-        cand_img_region = ACAImage(np.zeros((8, 8)),
-                                   row0=int(round(cand['row'])) - 4,
-                                   col0=int(round(cand['col'])) - 4)
+        cand_img_region = ACAImage(
+            np.zeros((8, 8)),
+            row0=int(round(cand['row'])) - 4,
+            col0=int(round(cand['col'])) - 4,
+        )
         on_region = cand_img_region
         for spoil in stars[spoilers]:
             if spoil['id'] == cand['id']:
                 continue
-            spoil_img = APL.get_psf_image(row=spoil['row'], col=spoil['col'], pix_zero_loc='edge',
-                                          norm=mag_to_count_rate(spoil['mag']))
+            spoil_img = APL.get_psf_image(
+                row=spoil['row'],
+                col=spoil['col'],
+                pix_zero_loc='edge',
+                norm=mag_to_count_rate(spoil['mag']),
+            )
             on_region = on_region + spoil_img.aca
 
         # Consider it spoiled if the star contribution on the 8x8 is over a fraction
@@ -897,13 +993,19 @@ def check_spoil_contrib(cand_stars, ok, stars, regfrac, bgthresh):
         sum_in_region = np.sum(on_region)
         if sum_in_region > frac_limit:
             reg_spoiled[cand_stars['id'] == cand['id']] = True
-            rej.append({'id': cand_stars['id'],
-                        'type': 'region sum spoiled',
-                        'limit_for_star': frac_limit,
-                        'fraction': fraction,
-                        'sum_in_region': sum_in_region,
-                        'text': (f'Cand {cand_stars["id"]} has too much contribution '
-                                 'to region from spoilers')})
+            rej.append(
+                {
+                    'id': cand_stars['id'],
+                    'type': 'region sum spoiled',
+                    'limit_for_star': frac_limit,
+                    'fraction': fraction,
+                    'sum_in_region': sum_in_region,
+                    'text': (
+                        f'Cand {cand_stars["id"]} has too much contribution '
+                        'to region from spoilers'
+                    ),
+                }
+            )
             continue
 
         # Or consider it spoiled if the star contribution to any background pixel
@@ -912,12 +1014,16 @@ def check_spoil_contrib(cand_stars, ok, stars, regfrac, bgthresh):
             val = on_region[pixlabel == chandra_aca.aca_image.EIGHT_LABELS][0]
             if val > bgthresh:
                 bg_spoiled[cand_stars['id'] == cand['id']] = True
-                rej.append({'id': cand['id'],
-                            'type': 'region background spoiled',
-                            'bg_thresh': bgthresh,
-                            'bg_pix_val': val,
-                            'pix_id': pixlabel,
-                            'text': f'Cand {cand["id"]} has bg pix spoiled by spoilers'})
+                rej.append(
+                    {
+                        'id': cand['id'],
+                        'type': 'region background spoiled',
+                        'bg_thresh': bgthresh,
+                        'bg_pix_val': val,
+                        'pix_id': pixlabel,
+                        'text': f'Cand {cand["id"]} has bg pix spoiled by spoilers',
+                    }
+                )
                 continue
 
     return bg_spoiled, reg_spoiled, rej
@@ -953,8 +1059,9 @@ def check_mag_spoilers(cand_stars, ok, stars, n_sigma):
     for cand_idx in cand_idxs:
         cand = cand_stars[cand_idx]
         spoil_idxs = np.flatnonzero(
-            (np.abs(cand['row'] - stars['row']) < 10) &
-            (np.abs(cand['col'] - stars['col']) < 10))
+            (np.abs(cand['row'] - stars['row']) < 10)
+            & (np.abs(cand['col'] - stars['col']) < 10)
+        )
 
         # If there is only one match, it is the candidate so there's nothing to do
         if len(spoil_idxs) == 1:
@@ -966,22 +1073,31 @@ def check_mag_spoilers(cand_stars, ok, stars, n_sigma):
                 continue
             if (cand['mag'] - spoil['mag']) < magdifflim:
                 continue
-            mag_err_sum = np.sqrt((cand['MAG_ACA_ERR'] * 0.01) ** 2 +
-                                  (spoil['MAG_ACA_ERR'] * 0.01) ** 2)
+            mag_err_sum = np.sqrt(
+                (cand['MAG_ACA_ERR'] * 0.01) ** 2 + (spoil['MAG_ACA_ERR'] * 0.01) ** 2
+            )
             delmag = cand['mag'] - spoil['mag'] + n_sigma * mag_err_sum
             thsep = intercept + delmag * spoilslope
-            dist = np.sqrt(((cand['row'] - spoil['row']) ** 2) +
-                           ((cand['col'] - spoil['col']) ** 2))
+            dist = np.sqrt(
+                ((cand['row'] - spoil['row']) ** 2)
+                + ((cand['col'] - spoil['col']) ** 2)
+            )
             if dist < thsep:
-                rej.append({'id': cand['id'],
-                            'spoiler': spoil['id'],
-                            'spoiler_mag': spoil['mag'],
-                            'dmag_with_err': delmag,
-                            'min_dist_for_dmag': thsep,
-                            'actual_dist': dist,
-                            'type': 'spoiler by distance-mag line',
-                            'text': (f'Cand {cand["id"]} spoiled by {spoil["id"]}, '
-                                     f'too close ({dist:.1f}) pix for magdiff ({delmag:.1f})')})
+                rej.append(
+                    {
+                        'id': cand['id'],
+                        'spoiler': spoil['id'],
+                        'spoiler_mag': spoil['mag'],
+                        'dmag_with_err': delmag,
+                        'min_dist_for_dmag': thsep,
+                        'actual_dist': dist,
+                        'type': 'spoiler by distance-mag line',
+                        'text': (
+                            f'Cand {cand["id"]} spoiled by {spoil["id"]}, '
+                            f'too close ({dist:.1f}) pix for magdiff ({delmag:.1f})'
+                        ),
+                    }
+                )
                 mag_spoiled[cand['id'] == cand_stars['id']] = True
                 continue
 
@@ -1010,30 +1126,41 @@ def check_column_spoilers(cand_stars, ok, stars, n_sigma):
         # AND between the candidate star and readout register
         # AND in the column "band" for the candidate
         pos_spoil = (
-            (np.sign(cand['row']) == np.sign(stars['row'][~stars['offchip']])) &
-            (np.abs(cand['row']) < np.abs(stars['row'][~stars['offchip']])) &
-            (np.abs(cand['col'] - stars['col'][~stars['offchip']]) <= ACA.col_spoiler_pix_sep))
+            (np.sign(cand['row']) == np.sign(stars['row'][~stars['offchip']]))
+            & (np.abs(cand['row']) < np.abs(stars['row'][~stars['offchip']]))
+            & (
+                np.abs(cand['col'] - stars['col'][~stars['offchip']])
+                <= ACA.col_spoiler_pix_sep
+            )
+        )
         if not np.count_nonzero(pos_spoil) >= 1:
             continue
 
-        mag_errs = (n_sigma *
-                    np.sqrt((cand['MAG_ACA_ERR'] * 0.01) ** 2 +
-                            (stars['MAG_ACA_ERR'][~stars['offchip']][pos_spoil] * 0.01) ** 2))
-        dm = (cand['mag'] - stars['mag'][~stars['offchip']][pos_spoil] + mag_errs)
+        mag_errs = n_sigma * np.sqrt(
+            (cand['MAG_ACA_ERR'] * 0.01) ** 2
+            + (stars['MAG_ACA_ERR'][~stars['offchip']][pos_spoil] * 0.01) ** 2
+        )
+        dm = cand['mag'] - stars['mag'][~stars['offchip']][pos_spoil] + mag_errs
         spoils = dm > ACA.col_spoiler_mag_diff
         if np.any(spoils):
             column_spoiled[idx] = True
             spoiler = stars[~stars['offchip']][pos_spoil][spoils][0]
-            rej.append({'id': cand['id'],
-                        'type': 'column spoiled',
-                        'spoiler': spoiler['id'],
-                        'spoiler_mag': spoiler['mag'],
-                        'dmag_with_err': dm[spoils][0],
-                        'dmag_lim': ACA.col_spoiler_mag_diff,
-                        'dcol': cand['col'] - spoiler['col'],
-                        'text': (f'Cand {cand["id"]} has column spoiler {spoiler["id"]} '
-                                 f'at ({spoiler["row"]:.1f}, {spoiler["row"]:.1f}), '
-                                 f'mag {spoiler["mag"]:.2f}')})
+            rej.append(
+                {
+                    'id': cand['id'],
+                    'type': 'column spoiled',
+                    'spoiler': spoiler['id'],
+                    'spoiler_mag': spoiler['mag'],
+                    'dmag_with_err': dm[spoils][0],
+                    'dmag_lim': ACA.col_spoiler_mag_diff,
+                    'dcol': cand['col'] - spoiler['col'],
+                    'text': (
+                        f'Cand {cand["id"]} has column spoiler {spoiler["id"]} '
+                        f'at ({spoiler["row"]:.1f}, {spoiler["row"]:.1f}), '
+                        f'mag {spoiler["mag"]:.2f}'
+                    ),
+                }
+            )
     return column_spoiled, rej
 
 
@@ -1081,14 +1208,16 @@ def get_imposter_mags(cand_stars, dark, dither):
     for cand in cand_stars:
         rminus, rplus = get_ax_range(cand['row'], row_extent)
         cminus, cplus = get_ax_range(cand['col'], col_extent)
-        pix = np.array(dark[rminus + 512:rplus + 512, cminus + 512:cplus + 512])
+        pix = np.array(dark[rminus + 512 : rplus + 512, cminus + 512 : cplus + 512])
         pixmax = 0
         max_r = None
         max_c = None
         # Check the 2x2 bins for the max 2x2 region.  Search the "offset" versions as well
-        for pix_chunk, row_off, col_off in zip((pix, pix[1:-1, :], pix[:, 1:-1], pix[1:-1, 1:-1]),
-                                               (0, 1, 0, 1),
-                                               (0, 0, 1, 1)):
+        for pix_chunk, row_off, col_off in zip(
+            (pix, pix[1:-1, :], pix[:, 1:-1], pix[1:-1, 1:-1]),
+            (0, 1, 0, 1),
+            (0, 0, 1, 1),
+        ):
             bin_image = bin2x2(pix_chunk)
             pixsum = np.max(bin_image)
             if pixsum > pixmax:
@@ -1150,16 +1279,21 @@ def has_spoiler_in_box(cand_guides, stars, halfbox=5, magdiff=-4):
             boxsize = halfbox * 2
             bright = np.argmin(stars[box_spoilers]['mag'])
             spoiler = stars[box_spoilers][bright]
-            rej.append({'id': cand['id'],
-                        'type': 'in-box spoiler star',
-                        'boxsize': boxsize,
-                        'magdiff_thresh': magdiff,
-                        'spoiler': spoiler['id'],
-                        'dmag': cand['mag'] - spoiler['mag'],
-                        'n': n,
-                        'text': (f'Cand {cand["id"]} spoiled by {n} stars in {boxsize}x{boxsize} '
-                                 f' including {spoiler["id"]}')
-                        })
+            rej.append(
+                {
+                    'id': cand['id'],
+                    'type': 'in-box spoiler star',
+                    'boxsize': boxsize,
+                    'magdiff_thresh': magdiff,
+                    'spoiler': spoiler['id'],
+                    'dmag': cand['mag'] - spoiler['mag'],
+                    'n': n,
+                    'text': (
+                        f'Cand {cand["id"]} spoiled by {n} stars in {boxsize}x{boxsize} '
+                        f' including {spoiler["id"]}'
+                    ),
+                }
+            )
     return box_spoiled, rej
 
 
@@ -1201,15 +1335,26 @@ def spoiled_by_bad_pixel(cand_guides, dither):
         cplus = int(np.ceil(cand['col'] + col_extent + 1))
 
         # If any bad pixel is in the guide star pixel region, mark as spoiled
-        bps = ((bp_row >= rminus) & (bp_row <= rplus) & (bp_col >= cminus) & (bp_col <= cplus))
+        bps = (
+            (bp_row >= rminus)
+            & (bp_row <= rplus)
+            & (bp_col >= cminus)
+            & (bp_col <= cplus)
+        )
         if np.any(bps):
             spoiled[idx] = True
-            rej.append({'id': cand['id'],
-                        'type': 'bad pixel',
-                        'pixel': (bp_row[bps][0], bp_col[bps][0]),
-                        'n_bad': np.count_nonzero(bps),
-                        'text': (f'Cand {cand["id"]} spoiled by {np.count_nonzero(bps)} bad pixels '
-                                 f'including {(bp_row[bps][0], bp_col[bps][0])}')})
+            rej.append(
+                {
+                    'id': cand['id'],
+                    'type': 'bad pixel',
+                    'pixel': (bp_row[bps][0], bp_col[bps][0]),
+                    'n_bad': np.count_nonzero(bps),
+                    'text': (
+                        f'Cand {cand["id"]} spoiled by {np.count_nonzero(bps)} bad pixels '
+                        f'including {(bp_row[bps][0], bp_col[bps][0])}'
+                    ),
+                }
+            )
     return spoiled, rej
 
 
@@ -1237,7 +1382,7 @@ def check_single_cluster(cand_guide_set, threshold, n_minus):
     :returns: bool (True for check passing threshold)
     """
     min_dist = threshold
-    min_dist2 = min_dist ** 2
+    min_dist2 = min_dist**2
     guide_idxs = np.arange(len(cand_guide_set))
     n_guide = len(guide_idxs)
     for idxs in combinations(guide_idxs, n_guide - n_minus):
@@ -1262,6 +1407,9 @@ def run_select_checks(cand_guide_set):
     status = []
     for n_minus, threshold in enumerate(GUIDE.cluster_thresholds):
         if n_minus < len(cand_guide_set) + 1:
-            status.append(check_single_cluster(
-                cand_guide_set, threshold=threshold, n_minus=n_minus))
+            status.append(
+                check_single_cluster(
+                    cand_guide_set, threshold=threshold, n_minus=n_minus
+                )
+            )
     return sum(status), len(status)

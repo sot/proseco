@@ -51,16 +51,18 @@ def test_get_fid_position():
 
 def test_get_initial_catalog():
     """Test basic catalog with no stars in field using standard 2-4-5 config."""
-    exp = ['<FidTable length=6>',
-           '  id    yang     zang     row     col     mag   spoiler_score  idx   slot',
-           'int64 float64  float64  float64 float64 float64     int64     int64 int64',
-           '----- -------- -------- ------- ------- ------- ------------- ----- -----',
-           '    1   922.59 -1737.89 -180.05 -344.10    7.00             0     0   -99',
-           '    2  -773.20 -1742.03  160.79 -345.35    7.00             0     1     0',
-           '    3    40.01 -1871.10   -2.67 -371.00    7.00             0     2   -99',
-           '    4  2140.23   166.63 -424.51   39.13    7.00             0     3     1',
-           '    5 -1826.28   160.17  372.97   36.47    7.00             0     4     2',
-           '    6   388.59   803.75  -71.49  166.10    7.00             0     5   -99']
+    exp = [
+        '<FidTable length=6>',
+        '  id    yang     zang     row     col     mag   spoiler_score  idx   slot',
+        'int64 float64  float64  float64 float64 float64     int64     int64 int64',
+        '----- -------- -------- ------- ------- ------- ------------- ----- -----',
+        '    1   922.59 -1737.89 -180.05 -344.10    7.00             0     0   -99',
+        '    2  -773.20 -1742.03  160.79 -345.35    7.00             0     1     0',
+        '    3    40.01 -1871.10   -2.67 -371.00    7.00             0     2   -99',
+        '    4  2140.23   166.63 -424.51   39.13    7.00             0     3     1',
+        '    5 -1826.28   160.17  372.97   36.47    7.00             0     4     2',
+        '    6   388.59   803.75  -71.49  166.10    7.00             0     5   -99',
+    ]
     assert repr(FIDS.cand_fids).splitlines() == exp
     assert np.all(FIDS['id'] == [2, 4, 5])
 
@@ -68,21 +70,24 @@ def test_get_initial_catalog():
     # the fids.
     stars = StarsTable.empty()
     for fid in FIDS.cand_fids:
-        stars.add_fake_star(mag=fid['mag'], mag_err=0.1,
-                            yang=fid['yang'], zang=fid['zang'])
+        stars.add_fake_star(
+            mag=fid['mag'], mag_err=0.1, yang=fid['yang'], zang=fid['zang']
+        )
 
     # Spoil fids 1, 2
     fids2 = get_fid_catalog(stars=stars[:2], **STD_INFO)
-    exp = ['<FidTable length=6>',
-           '  id    yang     zang     row     col     mag   spoiler_score  idx   slot',
-           'int64 float64  float64  float64 float64 float64     int64     int64 int64',
-           '----- -------- -------- ------- ------- ------- ------------- ----- -----',
-           '    1   922.59 -1737.89 -180.05 -344.10    7.00             4     0   -99',
-           '    2  -773.20 -1742.03  160.79 -345.35    7.00             4     1   -99',
-           '    3    40.01 -1871.10   -2.67 -371.00    7.00             0     2     0',
-           '    4  2140.23   166.63 -424.51   39.13    7.00             0     3     1',
-           '    5 -1826.28   160.17  372.97   36.47    7.00             0     4     2',
-           '    6   388.59   803.75  -71.49  166.10    7.00             0     5   -99']
+    exp = [
+        '<FidTable length=6>',
+        '  id    yang     zang     row     col     mag   spoiler_score  idx   slot',
+        'int64 float64  float64  float64 float64 float64     int64     int64 int64',
+        '----- -------- -------- ------- ------- ------- ------------- ----- -----',
+        '    1   922.59 -1737.89 -180.05 -344.10    7.00             4     0   -99',
+        '    2  -773.20 -1742.03  160.79 -345.35    7.00             4     1   -99',
+        '    3    40.01 -1871.10   -2.67 -371.00    7.00             0     2     0',
+        '    4  2140.23   166.63 -424.51   39.13    7.00             0     3     1',
+        '    5 -1826.28   160.17  372.97   36.47    7.00             0     4     2',
+        '    6   388.59   803.75  -71.49  166.10    7.00             0     5   -99',
+    ]
     assert repr(fids2.cand_fids).splitlines() == exp
     assert np.all(fids2['id'] == [3, 4, 5])
 
@@ -97,8 +102,7 @@ def test_get_initial_catalog():
 
 
 def test_n_fid():
-    """Test specifying number of fids.
-    """
+    """Test specifying number of fids."""
     # Get only 2 fids
     fids = get_fid_catalog(**mod_std_info(n_fid=2))
     assert len(fids) == 2
@@ -128,25 +132,29 @@ def test_fid_spoiling_acq(dither_z):
     stars.add_fake_constellation(n_stars=5)
 
     for fid, offset in zip(FIDS[:3], [82, 149, 151]):
-        stars.add_fake_star(yang=fid['yang'] + offset + dither_y,
-                            zang=fid['zang'] + offset + dither_z,
-                            mag=7.0)
+        stars.add_fake_star(
+            yang=fid['yang'] + offset + dither_y,
+            zang=fid['zang'] + offset + dither_z,
+            mag=7.0,
+        )
 
     std_info = STD_INFO.copy()
     std_info['dither'] = (dither_y, dither_z)
     acqs = get_acq_catalog(stars=stars, **std_info)
     acqs['halfw'] = 100
     fids5 = get_fid_catalog(acqs=acqs, **std_info)
-    exp = ['<FidTable length=6>',
-           '  id    yang     zang     row     col     mag   spoiler_score  idx   slot',
-           'int64 float64  float64  float64 float64 float64     int64     int64 int64',
-           '----- -------- -------- ------- ------- ------- ------------- ----- -----',
-           '    1   922.59 -1737.89 -180.05 -344.10    7.00             0     0     0',
-           '    2  -773.20 -1742.03  160.79 -345.35    7.00             0     1   -99',
-           '    3    40.01 -1871.10   -2.67 -371.00    7.00             0     2   -99',
-           '    4  2140.23   166.63 -424.51   39.13    7.00             0     3   -99',
-           '    5 -1826.28   160.17  372.97   36.47    7.00             0     4     1',
-           '    6   388.59   803.75  -71.49  166.10    7.00             0     5     2']
+    exp = [
+        '<FidTable length=6>',
+        '  id    yang     zang     row     col     mag   spoiler_score  idx   slot',
+        'int64 float64  float64  float64 float64 float64     int64     int64 int64',
+        '----- -------- -------- ------- ------- ------- ------------- ----- -----',
+        '    1   922.59 -1737.89 -180.05 -344.10    7.00             0     0     0',
+        '    2  -773.20 -1742.03  160.79 -345.35    7.00             0     1   -99',
+        '    3    40.01 -1871.10   -2.67 -371.00    7.00             0     2   -99',
+        '    4  2140.23   166.63 -424.51   39.13    7.00             0     3   -99',
+        '    5 -1826.28   160.17  372.97   36.47    7.00             0     4     1',
+        '    6   388.59   803.75  -71.49  166.10    7.00             0     5     2',
+    ]
 
     assert repr(fids5.cand_fids).splitlines() == exp
 
@@ -182,9 +190,11 @@ def test_fid_spoiler_score():
     dither_z = 64
     stars = StarsTable.empty()
     for fid, offset in zip(FIDS[:2], [-1, 1]):
-        stars.add_fake_star(yang=fid['yang'] + FID.spoiler_margin + dither_y + offset,
-                            zang=fid['zang'] + FID.spoiler_margin + dither_z + offset,
-                            mag=7.0)
+        stars.add_fake_star(
+            yang=fid['yang'] + FID.spoiler_margin + dither_y + offset,
+            zang=fid['zang'] + FID.spoiler_margin + dither_z + offset,
+            mag=7.0,
+        )
 
     dither = (dither_y, dither_z)
 
@@ -205,11 +215,13 @@ def test_fid_hot_pixel_reject():
     """Test hot pixel rejecting a fid"""
     lim = FID.hot_pixel_spoiler_limit
     dark = DARK40.copy()
-    for fid_id, off, dc in [(1, 8.0, lim * 1.05),  # spoiler,
-                            (2, 12.0, lim * 1.05),  # not spoiler (spatially)
-                            (3, 8.0, lim * 0.95),  # not spoiler (dark current too low)
-                            (4, -8.0, lim * 1.05),  # spoiler
-                            (5, 0.0, lim * 1.05)]:  # spoiler
+    for fid_id, off, dc in [
+        (1, 8.0, lim * 1.05),  # spoiler,
+        (2, 12.0, lim * 1.05),  # not spoiler (spatially)
+        (3, 8.0, lim * 0.95),  # not spoiler (dark current too low)
+        (4, -8.0, lim * 1.05),  # spoiler
+        (5, 0.0, lim * 1.05),
+    ]:  # spoiler
         fid = FIDS.cand_fids.get_id(fid_id)
         r = int(round(fid['row'] + off))
         c = int(round(fid['col'] + off))
@@ -230,8 +242,13 @@ def test_fids_include_exclude():
     include_ids = [1, 4]
     exclude_ids = [5]
 
-    fids = get_fid_catalog(stars=StarsTable.empty(), dark=DARK40, **STD_INFO,
-                           include_ids=include_ids, exclude_ids=exclude_ids)
+    fids = get_fid_catalog(
+        stars=StarsTable.empty(),
+        dark=DARK40,
+        **STD_INFO,
+        include_ids=include_ids,
+        exclude_ids=exclude_ids
+    )
 
     assert fids.include_ids == include_ids
     assert fids.exclude_ids == exclude_ids
@@ -259,8 +276,13 @@ def test_fids_include_bad():
 
     # If you force-include a non-existent fid, you raise ValueError
     with pytest.raises(ValueError):
-        get_fid_catalog(stars=StarsTable.empty(), dark=DARK40, **STD_INFO,
-                        include_ids=include_ids, exclude_ids=exclude_ids)
+        get_fid_catalog(
+            stars=StarsTable.empty(),
+            dark=DARK40,
+            **STD_INFO,
+            include_ids=include_ids,
+            exclude_ids=exclude_ids
+        )
 
     # Set up a scenario with large offset so only two are on the CCD
     include_ids = [4]
@@ -269,8 +291,11 @@ def test_fids_include_bad():
     assert np.all(fids.cand_fids['id'] == [1, 2])
 
     # Force include one that isn't on the CCD
-    fids = get_fid_catalog(**mod_std_info(stars=StarsTable.empty(), sim_offset=80000),
-                           include_ids=include_ids, exclude_ids=exclude_ids)
+    fids = get_fid_catalog(
+        **mod_std_info(stars=StarsTable.empty(), sim_offset=80000),
+        include_ids=include_ids,
+        exclude_ids=exclude_ids
+    )
 
     assert np.all(fids['id'] == [1, 2, 4])
 

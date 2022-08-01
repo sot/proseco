@@ -55,9 +55,11 @@ from proseco.tests.test_common import get_starcheck_obs_kwargs
 import Ska.File
 
 
-def run_starcheck_proseco(load_name='JUL0218A',
-                          out_root=Path('loads', 'proseco'),
-                          load_root=Path('/data', 'mpcrit1', 'mplogs')):
+def run_starcheck_proseco(
+    load_name='JUL0218A',
+    out_root=Path('loads', 'proseco'),
+    load_root=Path('/data', 'mpcrit1', 'mplogs'),
+):
     """
     Do three steps to run starcheck on proseco-generated catalogs for a flight weekly load:
 
@@ -83,16 +85,18 @@ def run_all(out_root=Path('loads', 'proseco')):
     Convenience function to run starcheck_proseco on a standard set of 10 weekly loads
     for run-for-record validation testing.
     """
-    load_names = ['DEC0318B',
-                  'JUL0918A',  # dark cals
-                  'JUL0218A',
-                  'JUN2318A',
-                  'JUN1118A',
-                  'JUN0418A',
-                  'MAY2118A',
-                  'MAY1418A',
-                  'MAY0718A',
-                  'APR3018A']
+    load_names = [
+        'DEC0318B',
+        'JUL0918A',  # dark cals
+        'JUL0218A',
+        'JUN2318A',
+        'JUN1118A',
+        'JUN0418A',
+        'MAY2118A',
+        'MAY1418A',
+        'MAY0718A',
+        'APR3018A',
+    ]
     for load_name in load_names:
         run_starcheck_proseco(load_name)
 
@@ -110,21 +114,23 @@ def copy_load_products(load_name, out_root, load_root):
     load_dir = load_root / load_year / load_name[:-1] / ('ofls' + load_version)
     print(f'Copying load products from {load_dir} to {out_dir}')
 
-    globs = ('CR*.tlr',
-             'CR*.backstop',
-             'starcheck.txt',
-             'mps/md*.dot',
-             'mps/or/*.or',
-             'mps/ode/characteristics/CHARACTERIS_*',
-             'mps/m*.sum',
-             'output/*_ManErr.txt',
-             'output/*_dynamical_offsets.txt',
-             'output/TEST_mechcheck.txt',
-             'History/DITHER.txt',
-             'History/FIDSEL.txt',
-             'History/RADMON.txt',
-             'History/SIMFOCUS.txt',
-             'History/SIMTRANS.txt')
+    globs = (
+        'CR*.tlr',
+        'CR*.backstop',
+        'starcheck.txt',
+        'mps/md*.dot',
+        'mps/or/*.or',
+        'mps/ode/characteristics/CHARACTERIS_*',
+        'mps/m*.sum',
+        'output/*_ManErr.txt',
+        'output/*_dynamical_offsets.txt',
+        'output/TEST_mechcheck.txt',
+        'History/DITHER.txt',
+        'History/FIDSEL.txt',
+        'History/RADMON.txt',
+        'History/SIMFOCUS.txt',
+        'History/SIMTRANS.txt',
+    )
 
     for glob in globs:
         for src in load_dir.glob(glob):

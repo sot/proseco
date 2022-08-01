@@ -6,8 +6,13 @@ import numpy as np
 from astropy.io import ascii
 
 import agasc
-from ..core import (ACABox, get_kwargs_from_starcheck_text, calc_spoiler_impact,
-                    StarsTable, get_dim_res)
+from ..core import (
+    ACABox,
+    get_kwargs_from_starcheck_text,
+    calc_spoiler_impact,
+    StarsTable,
+    get_dim_res,
+)
 from ..acq import AcqTable
 from ..guide import GuideTable
 from ..characteristics import bad_star_set
@@ -159,19 +164,21 @@ def test_get_kwargs_from_starcheck_text():
     Dynamic Mag Limits: Yellow 10.08     Red 10.22
     """
     kwargs = get_kwargs_from_starcheck_text(text)
-    exp = {'obsid': 21071,
-           'att': [77.976747, -45.066796, 85.007351],
-           'man_angle': 98.0,
-           'dither': (8.0, 8.0),
-           't_ccd': -10.6,
-           'date': '2018:273:05:06:58.506',
-           'n_acq': 8,
-           'n_guide': 5,
-           'n_fid': 3,
-           'detector': 'ACIS-S',
-           'sim_offset': 0,
-           'focus_offset': 0,
-           'monitors': [[66, 31, 2, 13.938, 2], [500, 500, 2, 13.938, 3]]}
+    exp = {
+        'obsid': 21071,
+        'att': [77.976747, -45.066796, 85.007351],
+        'man_angle': 98.0,
+        'dither': (8.0, 8.0),
+        't_ccd': -10.6,
+        'date': '2018:273:05:06:58.506',
+        'n_acq': 8,
+        'n_guide': 5,
+        'n_fid': 3,
+        'detector': 'ACIS-S',
+        'sim_offset': 0,
+        'focus_offset': 0,
+        'monitors': [[66, 31, 2, 13.938, 2], [500, 500, 2, 13.938, 3]],
+    }
     assert kwargs == exp
 
     cat = get_aca_catalog(**kwargs)
@@ -226,24 +233,34 @@ def test_get_kwargs_from_starcheck_text2():
 
     kwargs = get_kwargs_from_starcheck_text(text2, force_catalog=True, include_cat=True)
     cat_exp = kwargs.pop('cat')
-    exp = {'dither': (8.0, 8.0),
-           't_ccd': -11.2,
-           'date': '2020:337:13:05:59.452',
-           'n_guide': 5,
-           'detector': 'ACIS-S',
-           'sim_offset': 0,
-           'focus_offset': 0,
-           'obsid': 23156,
-           'att': [305.083054, 43.865507, 310.023234],
-           'man_angle': 93.34,
-           'n_fid': 3,
-           'include_ids_acq': [414583264, 414583848, 414585176, 414718744,
-                               414725232, 414583128, 414588808, 414724728],
-           'n_acq': 8,
-           'include_halfws_acq': [160, 160, 160, 160, 160, 160, 160, 160],
-           'include_ids_guide': [414583264, 414583848, 414585176, 414718744, 414725232],
-           'include_ids_fid': [2, 4, 5],
-           'monitors': [[86, 41, 2, 7.037, 1]]}
+    exp = {
+        'dither': (8.0, 8.0),
+        't_ccd': -11.2,
+        'date': '2020:337:13:05:59.452',
+        'n_guide': 5,
+        'detector': 'ACIS-S',
+        'sim_offset': 0,
+        'focus_offset': 0,
+        'obsid': 23156,
+        'att': [305.083054, 43.865507, 310.023234],
+        'man_angle': 93.34,
+        'n_fid': 3,
+        'include_ids_acq': [
+            414583264,
+            414583848,
+            414585176,
+            414718744,
+            414725232,
+            414583128,
+            414588808,
+            414724728,
+        ],
+        'n_acq': 8,
+        'include_halfws_acq': [160, 160, 160, 160, 160, 160, 160, 160],
+        'include_ids_guide': [414583264, 414583848, 414585176, 414718744, 414725232],
+        'include_ids_fid': [2, 4, 5],
+        'monitors': [[86, 41, 2, 7.037, 1]],
+    }
     assert kwargs == exp
 
     cat = get_aca_catalog(**kwargs)
@@ -253,14 +270,16 @@ def test_get_kwargs_from_starcheck_text2():
         assert np.all(cat[attr] == cat_exp[attr])
 
 
-cases = [dict(row=4, col=0, mag0=8, mag1=10.5, exp=(0.16, -0.01, 1.00)),
-         dict(row=1, col=0, mag0=8, mag1=10.5, exp=(0.43, -0.00, 1.10)),
-         dict(row=1, col=0, mag0=8, mag1=8, exp=(2.37, -0.01, 1.98)),
-         dict(row=-3, col=3, mag0=8, mag1=8, exp=(99, 99, -99)),
-         dict(row=-3, col=3, mag0=8, mag1=10, exp=(-0.54, 0.49, 0.35)),
-         dict(row=-3, col=3, mag0=8, mag1=11, exp=(-0.10, 0.09, 0.74)),
-         dict(row=3, col=-3, mag0=10, mag1=12, exp=(0.34, -0.31, 0.50)),
-         dict(row=3, col=-3, mag0=10, mag1=13, exp=(0.08, -0.08, 0.81))]
+cases = [
+    dict(row=4, col=0, mag0=8, mag1=10.5, exp=(0.16, -0.01, 1.00)),
+    dict(row=1, col=0, mag0=8, mag1=10.5, exp=(0.43, -0.00, 1.10)),
+    dict(row=1, col=0, mag0=8, mag1=8, exp=(2.37, -0.01, 1.98)),
+    dict(row=-3, col=3, mag0=8, mag1=8, exp=(99, 99, -99)),
+    dict(row=-3, col=3, mag0=8, mag1=10, exp=(-0.54, 0.49, 0.35)),
+    dict(row=-3, col=3, mag0=8, mag1=11, exp=(-0.10, 0.09, 0.74)),
+    dict(row=3, col=-3, mag0=10, mag1=12, exp=(0.34, -0.31, 0.50)),
+    dict(row=3, col=-3, mag0=10, mag1=13, exp=(0.08, -0.08, 0.81)),
+]
 
 
 @pytest.mark.parametrize('case', cases)
@@ -285,9 +304,9 @@ def test_calc_spoiler_impact_21068():
     is acceptable and the star can be used as a candidate.
     """
     # These values are taken from the stars table for 21068.
-    stars = ascii.read(['row col mag id',
-                        '-366.63 -92.75  8.73 1',
-                        '-365.14 -92.93 10.52 2'])
+    stars = ascii.read(
+        ['row col mag id', '-366.63 -92.75  8.73 1', '-365.14 -92.93 10.52 2']
+    )
     dy, dz, f = calc_spoiler_impact(stars[0], stars)
     assert np.abs(dy) < 1.5
     assert np.abs(dz) < 1.5
@@ -299,14 +318,16 @@ def test_mag_err_clip():
     Test clipping magnitudes
     """
     # Clipping case for star
-    s1 = StarsTable.from_agasc_ids(att=[6.88641501, 16.8899464, 0],
-                                   agasc_ids=[154667024])
+    s1 = StarsTable.from_agasc_ids(
+        att=[6.88641501, 16.8899464, 0], agasc_ids=[154667024]
+    )
     # s1['MAG_ACA_ERR'] = 77 (0.77)
     assert s1['COLOR1'] == 1.5
     assert np.isclose(s1['mag_err'], 0.77, rtol=0, atol=0.01)
 
-    s1 = StarsTable.from_agasc_ids(att=[7.01214503, 17.8931235, 0],
-                                   agasc_ids=[155072616])
+    s1 = StarsTable.from_agasc_ids(
+        att=[7.01214503, 17.8931235, 0], agasc_ids=[155072616]
+    )
     # s1['MAG_ACA_ERR'] = 9  (0.09)
     assert s1['COLOR1'] == 1.5
     assert np.isclose(s1['mag_err'], 0.3, rtol=0, atol=0.01)
@@ -319,8 +340,7 @@ def test_alias_attributes(cls, attr):
     Unit testing of descriptors, in particular the alias attributes
     """
     suffix = '_' + cls.__name__[:-5].lower()
-    for val, exp in ((2.2, [2]),
-                     (np.array([2.2, 3]), [2, 3])):
+    for val, exp in ((2.2, [2]), (np.array([2.2, 3]), [2, 3])):
         obj = cls()
         setattr(obj, attr, val)
         assert getattr(obj, attr) == exp

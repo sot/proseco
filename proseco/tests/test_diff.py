@@ -4,7 +4,8 @@ from ..diff import catalog_diff, get_catalog_lines
 
 
 # Note the mag input as 7, which ends up as 7.00
-CAT1 = ascii.read("""
+CAT1 = ascii.read(
+    """
 slot idx  id type  sz p_acq  mag  maxmag   yang     zang   dim res halfw
 ---- --- --- ---- --- ----- ----- ------ -------- -------- --- --- -----
    0   1   2  FID 8x8 0.000     7   8.00  -773.20 -1742.03   1   1    25
@@ -18,11 +19,13 @@ slot idx  id type  sz p_acq  mag  maxmag   yang     zang   dim res halfw
    7   9 104  ACQ 6x6 0.980  8.00   9.50   750.00   750.00  20   1   160
    0  10 102  ACQ 6x6 0.966  9.00  10.50 -1500.00     0.00  20   1   160
    1  11 108  ACQ 6x6 0.551 10.50  11.20   300.00   300.00  20   1    60
-""")
+"""
+)
 
 # Note the first yang of 773.201 which is different, but not to the
 # precision used in diffing.
-CAT2 = ascii.read("""
+CAT2 = ascii.read(
+    """
 slot idx  id type  sz p_acq  mag  maxmag   yang     zang   dim res halfw
 ---- --- --- ---- --- ----- ----- ------ -------- -------- --- --- -----
    0   1   2  FID 8x8 0.000  7.00   8.00 -773.201 -1742.03   1   1    25
@@ -36,7 +39,8 @@ slot idx  id type  sz p_acq  mag  maxmag   yang     zang   dim res halfw
    7   9 104  ACQ 6x6 0.980  8.00   9.50   750.00   750.00  20   1   160
    0  10 102  ACQ 6x6 0.966  9.00  10.50 -1500.00     0.00  20   1   160
    1  11 108  ACQ 6x6 0.551 10.50  11.20   300.00   300.00  20   1    60
-""")
+"""
+)
 
 
 def test_diff_unified():
@@ -62,7 +66,7 @@ def test_diff_unified():
         '   5 105    4  AC*  7.50 6x6  20   1   160',
         '   6 106    5  AC*  7.00 6x6  20   1   160',
         '-  7 107    6  AC*  6.50 6x6  20   1   160',
-        '  11 108    1  ACQ 10.50 6x6  20   1    60'
+        '  11 108    1  ACQ 10.50 6x6  20   1    60',
     ]
 
 
@@ -103,7 +107,7 @@ def test_diff_context():
         '    9 104    7  ACQ  8.00 6x6  20   1   160',
         '    5 105    4  AC*  7.50 6x6  20   1   160',
         '    6 106    5  AC*  7.00 6x6  20   1   160',
-        '   11 108    1  ACQ 10.50 6x6  20   1    60'
+        '   11 108    1  ACQ 10.50 6x6  20   1    60',
     ]
 
 
@@ -128,7 +132,7 @@ def test_diff_section_lines():
         '   5 105    4  AC*  7.50 6x6  20   1   160',
         '   6 106    5  AC*  7.00 6x6  20   1   160',
         '-  7 107    6  AC*  6.50 6x6  20   1   160',
-        '  11 108    1  ACQ 10.50 6x6  20   1    60'
+        '  11 108    1  ACQ 10.50 6x6  20   1    60',
     ]
 
 
@@ -156,7 +160,7 @@ def test_diff_sort_name():
         '+--- --- ---- ---- ----- --- --- --- -----',
         '   6 106    5  AC*  7.00 6x6  20   1   160',
         '   5 105    4  AC*  7.50 6x6  20   1   160',
-        '   9 104    7  ACQ  8.00 6x6  20   1   160'
+        '   9 104    7  ACQ  8.00 6x6  20   1   160',
     ]
 
 
@@ -182,7 +186,7 @@ def test_diff_get_catalog_lines():
         '   7   9 104  ACQ 6x6 0.980  8.00   750.00  20   160',
         '   0  10 102  ACQ 6x6 0.966  9.00     0.00  20   160',
         '   3   4 101  AC* 6x6 0.935  9.50  1500.00  20   160',
-        '   1  11 108  ACQ 6x6 0.551 10.50   300.00  20    60'
+        '   1  11 108  ACQ 6x6 0.551 10.50   300.00  20    60',
     ]
 
 

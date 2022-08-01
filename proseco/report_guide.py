@@ -5,6 +5,7 @@ from copy import copy
 from pathlib import Path
 
 import matplotlib
+
 matplotlib.use('agg')  # noqa
 
 from jinja2 import Template
@@ -20,10 +21,20 @@ from .guide import GuideTable, get_ax_range, GUIDE
 
 # Do reporting for at-most MAX_CAND candidates
 MAX_CAND = 50
-COLS = ['id', 'stage', 'forced',
-        'mag', 'mag_err',
-        'yang', 'zang', 'row', 'col',
-        'COLOR1', 'ASPQ1', 'MAG_ACA_ERR']
+COLS = [
+    'id',
+    'stage',
+    'forced',
+    'mag',
+    'mag_err',
+    'yang',
+    'zang',
+    'row',
+    'col',
+    'COLOR1',
+    'ASPQ1',
+    'MAG_ACA_ERR',
+]
 FILEDIR = Path(__file__).parent
 APL = AcaPsfLibrary()
 
@@ -96,14 +107,16 @@ def make_report(obsid, rootdir='.'):
     cols.remove('forced')
     cols.remove('MAG_ACA_ERR')
     guides_table = guides[cols]
-    guides_table['id'] = ['<a href=#{0}>{0}</a>'.format(guide['id'])
-                          for guide in guides_table]
+    guides_table['id'] = [
+        '<a href=#{0}>{0}</a>'.format(guide['id']) for guide in guides_table
+    ]
     context['guides_table'] = table_to_html(guides_table)
 
     # Candidate guides table
     cand_guides_table = cand_guides[COLS]
-    cand_guides_table['id'] = ['<a href=#{0}>{0}</a>'.format(cand_guide['id'])
-                               for cand_guide in cand_guides]
+    cand_guides_table['id'] = [
+        '<a href=#{0}>{0}</a>'.format(cand_guide['id']) for cand_guide in cand_guides
+    ]
     context['cand_guides_table'] = table_to_html(cand_guides_table)
 
     # Make the HTML
@@ -125,12 +138,11 @@ def make_cand_report(guides, cand_guides, context, obsdir):
         select = 'SELECTED' if guide['id'] in guides['id'] else 'not selected'
 
         # Add debugging information if the star was in include/exclude lists
-        if (guide['id'] in guides.include_ids_guide) or (guide['id'] in guides.exclude_ids_guide):
+        if (guide['id'] in guides.include_ids_guide) or (
+            guide['id'] in guides.exclude_ids_guide
+        ):
             select = select + ' - forced with include/exclude'
-        rep = {
-            'id': guide['id'],
-            'selected': select
-        }
+        rep = {'id': guide['id'], 'selected': select}
         log = reject_info_to_report(guide['id'], guides.reject_info)
         if guide['stage'] != -1:
             if guide['stage'] == 0:
@@ -142,10 +154,12 @@ def make_cand_report(guides, cand_guides, context, obsdir):
         else:
             log.append(f"Not selected in any stage ({n_stages} stages run)")
         rep['log'] = log
-        guide_table = cand_guides[COLS][ii:ii + 1].copy()
-        guide_table['id'] = ['<a href="http://kadi.cfa.harvard.edu/star_hist/?agasc_id={0}" '
-                             'target="_blank">{0}</a>'
-                             .format(g['id']) for g in guide_table]
+        guide_table = cand_guides[COLS][ii : ii + 1].copy()
+        guide_table['id'] = [
+            '<a href="http://kadi.cfa.harvard.edu/star_hist/?agasc_id={0}" '
+            'target="_blank">{0}</a>'.format(g['id'])
+            for g in guide_table
+        ]
         rep['guide_table'] = table_to_html(guide_table)
 
         # Make the star detail plot
@@ -208,28 +222,38 @@ def plot_spoilers(guide, cand_guides, ax):
     col0 = colc - hw
 
     # Pixel image canvas for plot
-    region = ACAImage(np.zeros((hw * 2, hw * 2)),
-                      row0=row0,
-                      col0=col0)
+    region = ACAImage(np.zeros((hw * 2, hw * 2)), row0=row0, col0=col0)
 
     # Get spoilers
     stars = cand_guides.stars
-    ok = ((np.abs(guide['row'] - stars['row']) < hw) &
-          (np.abs(guide['col'] - stars['col']) < hw) &
-          (stars['id'] != guide['id']))
+    ok = (
+        (np.abs(guide['row'] - stars['row']) < hw)
+        & (np.abs(guide['col'] - stars['col']) < hw)
+        & (stars['id'] != guide['id'])
+    )
     spoilers = stars[ok]
 
     # Add to image
     for spoil in spoilers:
-        spoil_img = APL.get_psf_image(row=spoil['row'], col=spoil['col'], pix_zero_loc='edge',
-                                      norm=mag_to_count_rate(spoil['mag']))
+        spoil_img = APL.get_psf_image(
+            row=spoil['row'],
+            col=spoil['col'],
+            pix_zero_loc='edge',
+            norm=mag_to_count_rate(spoil['mag']),
+        )
         region = region + spoil_img.aca
 
     # Get vmax from max pix value, but round to nearest 100, and create the image
     vmax = np.max(region).clip(100)
     vmax = np.ceil(vmax / 100) * 100
-    ax.imshow(region.transpose(), cmap='hot', origin='lower', vmin=1, vmax=vmax,
-              extent=(row0, row0 + hw * 2, col0, col0 + hw * 2))
+    ax.imshow(
+        region.transpose(),
+        cmap='hot',
+        origin='lower',
+        vmin=1,
+        vmax=vmax,
+        extent=(row0, row0 + hw * 2, col0, col0 + hw * 2),
+    )
 
     # Plot a box showing the 8x8 image boundaries
     x = rowc - 4
@@ -239,8 +263,15 @@ def plot_spoilers(guide, cand_guides, ax):
 
     # Make an empty box (no spoilers) or a cute 8x8 grid
     if len(spoilers) == 0:
-        plt.text(rowc, colc, "No Spoilers", color='y', fontweight='bold',
-                 ha='center', va='center')
+        plt.text(
+            rowc,
+            colc,
+            "No Spoilers",
+            color='y',
+            fontweight='bold',
+            ha='center',
+            va='center',
+        )
     else:
         for i in range(1, 8):
             ax.plot([x, x + 8], [y + i, y + i], color='y', lw=1)
@@ -250,8 +281,15 @@ def plot_spoilers(guide, cand_guides, ax):
     for spoil in spoilers:
         # Mag label above or below to ensure the label is in the image
         dcol = -3 if (spoil['col'] > colc) else 3
-        plt.text(spoil['row'], spoil['col'] + dcol, f"mag={spoil['mag']:.1f}",
-                 color='y', fontweight='bold', ha='center', va='center')
+        plt.text(
+            spoil['row'],
+            spoil['col'] + dcol,
+            f"mag={spoil['mag']:.1f}",
+            color='y',
+            fontweight='bold',
+            ha='center',
+            va='center',
+        )
 
     plt.title(f"Spoiler stars (vmax={vmax:.0f})")
     ax.set_xlabel('Row')
@@ -269,8 +307,9 @@ def plot_imposters(guide, cand_guides, ax):
     cminus, cplus = get_ax_range(guide['col'], col_extent)
 
     # Pixel region of the guide
-    img = ACAImage(np.zeros(shape=(rplus - rminus, cplus - cminus)),
-                   row0=rminus, col0=cminus)
+    img = ACAImage(
+        np.zeros(shape=(rplus - rminus, cplus - cminus)), row0=rminus, col0=cminus
+    )
     dark = ACAImage(cand_guides.dark, row0=-512, col0=-512)
     img += dark.aca
 
@@ -282,8 +321,15 @@ def plot_imposters(guide, cand_guides, ax):
     canvas = ACAImage(np.zeros(shape=(drow, dcol)), row0=row0, col0=col0)
     canvas += img.aca
 
-    ax.imshow(canvas.transpose(), interpolation='none', cmap='hot', origin='lower',
-              vmin=50, vmax=3000, extent=(row0, row0 + drow, col0, col0 + dcol))
+    ax.imshow(
+        canvas.transpose(),
+        interpolation='none',
+        cmap='hot',
+        origin='lower',
+        vmin=50,
+        vmax=3000,
+        extent=(row0, row0 + drow, col0, col0 + dcol),
+    )
 
     # If force excluded, will not have imposter mag
     if not (guide['forced'] and guide['stage'] == -1):
@@ -292,8 +338,15 @@ def plot_imposters(guide, cand_guides, ax):
         y = guide['imp_c']
         patch = patches.Rectangle((x, y), 2, 2, edgecolor='y', facecolor='none', lw=1.5)
         ax.add_patch(patch)
-        plt.text(row0 + drow / 2, col0 + dcol - 1, f"box 'mag' {guide['imp_mag']:.1f}",
-                 ha='center', va='center', color='y', fontweight='bold')
+        plt.text(
+            row0 + drow / 2,
+            col0 + dcol - 1,
+            f"box 'mag' {guide['imp_mag']:.1f}",
+            ha='center',
+            va='center',
+            color='y',
+            fontweight='bold',
+        )
 
     # Plot a box showing the 8x8 image boundaries
     x = row0 + drow / 2 - 4
@@ -302,8 +355,14 @@ def plot_imposters(guide, cand_guides, ax):
     ax.add_patch(patch)
 
     # Plot a box showing the 8x8 image boundaries
-    patch = patches.Rectangle((rminus, cminus), rplus - rminus, cplus - cminus,
-                              edgecolor='g', facecolor='none', lw=1)
+    patch = patches.Rectangle(
+        (rminus, cminus),
+        rplus - rminus,
+        cplus - cminus,
+        edgecolor='g',
+        facecolor='none',
+        lw=1,
+    )
     ax.add_patch(patch)
 
     ax.set_xlabel('Row')

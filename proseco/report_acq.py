@@ -5,6 +5,7 @@ from copy import copy, deepcopy
 from pathlib import Path
 
 import matplotlib
+
 matplotlib.use('agg')  # noqa
 from matplotlib import patches
 from matplotlib.ticker import FixedLocator
@@ -22,8 +23,20 @@ from chandra_aca import plot as plot_aca
 
 
 FILEDIR = Path(__file__).parent
-ACQ_COLS = ['idx', 'slot', 'id', 'yang', 'zang', 'row', 'col',
-            'mag', 'mag_err', 'color', 'halfw', 'p_acq']
+ACQ_COLS = [
+    'idx',
+    'slot',
+    'id',
+    'yang',
+    'zang',
+    'row',
+    'col',
+    'mag',
+    'mag_err',
+    'color',
+    'halfw',
+    'p_acq',
+]
 
 
 def get_p_acqs_table(acqs, acq, p_name):
@@ -41,8 +54,10 @@ def get_p_acqs_table(acqs, acq, p_name):
     cols[r'box \ man_err'] = [f'{box_size}"' for box_size in box_sizes]
     for man_err in man_errs:
         name = f'{man_err}"'
-        cols[name] = [round(getattr(acq['probs'], p_name)(box_size, man_err, acqs), 3)
-                      for box_size in box_sizes]
+        cols[name] = [
+            round(getattr(acq['probs'], p_name)(box_size, man_err, acqs), 3)
+            for box_size in box_sizes
+        ]
 
     return table_to_html(Table(cols, names=names))
 
@@ -84,9 +99,12 @@ def get_p_acq_model_table(acq):
 
 
 def select_events(events, funcs, **select):
-    outs = [event for event in events
-            if event['func'] in funcs and
-            all(event.get(key) == val for key, val in select.items())]
+    outs = [
+        event
+        for event in events
+        if event['func'] in funcs
+        and all(event.get(key) == val for key, val in select.items())
+    ]
     return outs
 
 
@@ -109,9 +127,9 @@ def make_events(acqs):
 
 def make_p_man_errs_report(context):
     tbl = ACQ.p_man_errs.copy()
-    man_err = [f'<b>{lo}-{hi}"</b>'
-               for lo, hi in zip(tbl['man_err_lo'],
-                                 tbl['man_err_hi'])]
+    man_err = [
+        f'<b>{lo}-{hi}"</b>' for lo, hi in zip(tbl['man_err_lo'], tbl['man_err_hi'])
+    ]
     del tbl['man_err_lo']
     del tbl['man_err_hi']
 
@@ -133,13 +151,14 @@ def make_cand_acqs_report(acqs, cand_acqs, events, context, obsdir):
     # Start with table
     cand_acqs_table = cand_acqs[ACQ_COLS]
     # Probably won't work in astropy 1.0
-    cand_acqs_table['id'] = ['<a href=#{0}>{0}</a>'.format(cand_acq['id'])
-                             for cand_acq in cand_acqs]
+    cand_acqs_table['id'] = [
+        '<a href=#{0}>{0}</a>'.format(cand_acq['id']) for cand_acq in cand_acqs
+    ]
     context['cand_acqs_table'] = table_to_html(cand_acqs_table)
 
-    context['cand_acqs_events'] = select_events(events, ('get_acq_catalog',
-                                                         'from_agasc',
-                                                         'get_acq_candidates'))
+    context['cand_acqs_events'] = select_events(
+        events, ('get_acq_catalog', 'from_agasc', 'get_acq_candidates')
+    )
 
     # Now plot figure
     filename = obsdir / 'candidate_stars.png'
@@ -152,9 +171,12 @@ def make_cand_acqs_report(acqs, cand_acqs, events, context, obsdir):
             if acq['id'] in acqs['id']:
                 acq['type'] = 'BOT'
 
-        fig = plot_aca.plot_stars(acqs.att, stars=acqs.stars,
-                                  catalog=acqs.cand_acqs,
-                                  bad_stars=acqs.bad_stars_mask)
+        fig = plot_aca.plot_stars(
+            acqs.att,
+            stars=acqs.stars,
+            catalog=acqs.cand_acqs,
+            bad_stars=acqs.bad_stars_mask,
+        )
         # When Ska3 has matplotlib 2.2+ then just use `filename`
         fig.savefig(str(filename))
         plt.close(fig)
@@ -164,8 +186,9 @@ def make_cand_acqs_report(acqs, cand_acqs, events, context, obsdir):
 
 
 def make_initial_cat_report(events, context):
-    context['initial_cat_events'] = select_events(events, ('get_initial_catalog',
-                                                           'select_best_p_acqs'))
+    context['initial_cat_events'] = select_events(
+        events, ('get_initial_catalog', 'select_best_p_acqs')
+    )
 
 
 def make_acq_star_details_report(acqs, cand_acqs, events, context, obsdir):
@@ -177,19 +200,25 @@ def make_acq_star_details_report(acqs, cand_acqs, events, context, obsdir):
 
     for ii, acq in enumerate(cand_acqs):
         # Local context dict for each cand_acq star
-        cca = {'id': acq['id'],
-               'selected': 'SELECTED' if acq['id'] in acqs['id'] else 'not selected'}
+        cca = {
+            'id': acq['id'],
+            'selected': 'SELECTED' if acq['id'] in acqs['id'] else 'not selected',
+        }
 
         # Events related to this ACQ ID
-        cca['initial_selection_events'] = select_events(events, 'select_best_p_acqs', id=acq['id'])
-        cca['optimize_events'] = select_events(events,
-                                               ('optimize_catalog', 'optimize_acq_halfw'),
-                                               id=acq['id'])
+        cca['initial_selection_events'] = select_events(
+            events, 'select_best_p_acqs', id=acq['id']
+        )
+        cca['optimize_events'] = select_events(
+            events, ('optimize_catalog', 'optimize_acq_halfw'), id=acq['id']
+        )
         # Make a dict copy of everything in ``acq``
-        acq_table = cand_acqs[ACQ_COLS][ii:ii + 1].copy()
-        acq_table['id'] = ['<a href="http://kadi.cfa.harvard.edu/star_hist/?agasc_id={0}" '
-                           'target="_blank">{0}</a>'
-                           .format(aq['id']) for aq in acq_table]
+        acq_table = cand_acqs[ACQ_COLS][ii : ii + 1].copy()
+        acq_table['id'] = [
+            '<a href="http://kadi.cfa.harvard.edu/star_hist/?agasc_id={0}" '
+            'target="_blank">{0}</a>'.format(aq['id'])
+            for aq in acq_table
+        ]
         cca['acq_table'] = table_to_html(acq_table)
 
         cca['p_brightest_table'] = get_p_acqs_table(acqs, acq, 'p_brightest')
@@ -259,14 +288,16 @@ def make_acq_star_details_report(acqs, cand_acqs, events, context, obsdir):
 
 
 def make_optimize_catalog_report(events, context):
-    context['optimize_events'] = select_events(events, ('calc_p_safe',
-                                                        'optimize_catalog',
-                                                        'optimize_acq_halfw'))
+    context['optimize_events'] = select_events(
+        events, ('calc_p_safe', 'optimize_catalog', 'optimize_acq_halfw')
+    )
 
 
 def make_obsid_summary(acqs, events, context, obsdir):
     acqs_table = acqs[ACQ_COLS]
-    acqs_table['id'] = ['<a href="#{0}">{0}</a>'.format(acq['id']) for acq in acqs_table]
+    acqs_table['id'] = [
+        '<a href="#{0}">{0}</a>'.format(acq['id']) for acq in acqs_table
+    ]
     context['acqs_table'] = table_to_html(acqs_table)
 
     basename = 'acq_stars.png'
@@ -276,9 +307,13 @@ def make_obsid_summary(acqs, events, context, obsdir):
         fig = plt.figure(figsize=(4, 4))
         fig.subplots_adjust(top=0.95)
         ax = fig.add_subplot(1, 1, 1)
-        plot_aca.plot_stars(acqs.att, stars=acqs.stars,
-                            catalog=acqs,
-                            bad_stars=acqs.bad_stars_mask, ax=ax)
+        plot_aca.plot_stars(
+            acqs.att,
+            stars=acqs.stars,
+            catalog=acqs,
+            bad_stars=acqs.bad_stars_mask,
+            ax=ax,
+        )
         # When Ska3 has matplotlib 2.2+ then just use `filename`
         plt.savefig(str(filename))
         plt.close(fig)
@@ -356,8 +391,9 @@ def plot_spoilers(acq, acqs, filename=None):
 
     # Get stars
     stars = acqs.stars
-    ok = ((np.abs(stars['yang'] - acq['yang']) < plot_hw) &
-          (np.abs(stars['zang'] - acq['zang']) < plot_hw))
+    ok = (np.abs(stars['yang'] - acq['yang']) < plot_hw) & (
+        np.abs(stars['zang'] - acq['zang']) < plot_hw
+    )
     stars = stars[ok]
     bad_stars = acqs.bad_stars_mask[ok]
 
@@ -371,8 +407,9 @@ def plot_spoilers(acq, acqs, filename=None):
         hwp = box_size / 5  # half width in pixels
         r0 = acq['row'] - hwp
         c0 = acq['col'] - hwp
-        patch = patches.Rectangle((r0, c0), hwp * 2, hwp * 2, edgecolor='g',
-                                  facecolor='none', lw=1, alpha=0.3)
+        patch = patches.Rectangle(
+            (r0, c0), hwp * 2, hwp * 2, edgecolor='g', facecolor='none', lw=1, alpha=0.3
+        )
         ax.add_patch(patch)
         plt.text(r0 + 1, c0 + 1, f'{box_size}"', fontsize='small', color='g')
 
@@ -381,30 +418,32 @@ def plot_spoilers(acq, acqs, filename=None):
         hwp = acq0['halfw'] / 5
         r0 = acq0['row'] - hwp
         c0 = acq0['col'] - hwp
-        patch = patches.Rectangle((r0, c0), hwp * 2, hwp * 2, edgecolor='b',
-                                  facecolor='none', lw=2, alpha=0.5)
+        patch = patches.Rectangle(
+            (r0, c0), hwp * 2, hwp * 2, edgecolor='b', facecolor='none', lw=2, alpha=0.5
+        )
         ax.add_patch(patch)
 
     # Plot the CCD box and readout register indicator
     b1hw = 512
-    box1 = plt.Rectangle((b1hw, -b1hw), -2 * b1hw, 2 * b1hw,
-                         fill=False)
+    box1 = plt.Rectangle((b1hw, -b1hw), -2 * b1hw, 2 * b1hw, fill=False)
     ax.add_patch(box1)
     b2w = 520
-    box2 = plt.Rectangle((b2w, -b1hw), -4 + -2 * b2w, 2 * b1hw,
-                         fill=False)
+    box2 = plt.Rectangle((b2w, -b1hw), -4 + -2 * b2w, 2 * b1hw, fill=False)
     ax.add_patch(box2)
 
     # Monkey patch the symsize function to make the stars bigger
     orig_symsize = plot_aca.symsize
     plot_aca.symsize = local_symsize
-    plot_aca._plot_field_stars(ax, stars=stars, attitude=acqs.att,
-                               bad_stars=bad_stars)
+    plot_aca._plot_field_stars(ax, stars=stars, attitude=acqs.att, bad_stars=bad_stars)
     for star in stars:
-        plt.text(star['row'], star['col'] - 3,
-                 f'{star["mag"]:.1f}±{star["mag_err"]:.1f}',
-                 verticalalignment='top', horizontalalignment='center',
-                 fontsize='small')
+        plt.text(
+            star['row'],
+            star['col'] - 3,
+            f'{star["mag"]:.1f}±{star["mag_err"]:.1f}',
+            verticalalignment='top',
+            horizontalalignment='center',
+            fontsize='small',
+        )
     plot_aca.symsize = orig_symsize
 
     # Plot spoiler star indices
@@ -422,8 +461,17 @@ def plot_spoilers(acq, acqs, filename=None):
     plt.close(fig)
 
 
-def plot_imposters(acq, dark, dither, vmin=100, vmax=2000,
-                   figsize=(5, 5), r=None, c=None, filename=None):
+def plot_imposters(
+    acq,
+    dark,
+    dither,
+    vmin=100,
+    vmax=2000,
+    figsize=(5, 5),
+    r=None,
+    c=None,
+    filename=None,
+):
     """
     Plot dark current, relevant boxes, imposters and spoilers.
     """
@@ -442,22 +490,30 @@ def plot_imposters(acq, dark, dither, vmin=100, vmax=2000,
     # Show the dark current image
     fig = plt.figure(figsize=figsize)
     ax = fig.add_subplot(1, 1, 1)
-    ax.imshow(img.transpose(), interpolation='none', cmap='hot', origin='lower',
-              vmin=vmin, vmax=vmax)
+    ax.imshow(
+        img.transpose(),
+        interpolation='none',
+        cmap='hot',
+        origin='lower',
+        vmin=vmin,
+        vmax=vmax,
+    )
 
     # CCD edge
     r = -512.5 - img.row0
     c = -512.5 - img.col0
-    patch = patches.Rectangle((r, c), 1025, 1025,
-                              edgecolor="g", facecolor="none", lw=2.5)
+    patch = patches.Rectangle(
+        (r, c), 1025, 1025, edgecolor="g", facecolor="none", lw=2.5
+    )
     ax.add_patch(patch)
 
     # Imposter stars
     for idx, imp in enumerate(acq['imposters']):
         r = imp['row0'] - img.row0
         c = imp['col0'] - img.col0
-        patch = patches.Rectangle((r + 0.5, c + 0.5), 6, 6,
-                                  edgecolor="y", facecolor="none", lw=1.5)
+        patch = patches.Rectangle(
+            (r + 0.5, c + 0.5), 6, 6, edgecolor="y", facecolor="none", lw=1.5
+        )
         ax.add_patch(patch)
         plt.text(r + 7, c + 7, str(idx), color='y', fontsize='large', fontweight='bold')
 
@@ -467,8 +523,15 @@ def plot_imposters(acq, dark, dither, vmin=100, vmax=2000,
     for hw in ACQ.p_man_errs['man_err_hi']:
         hwpr = hw / 5 + dither.row
         hwpc = hw / 5 + dither.col
-        patch = patches.Rectangle((rc - hwpr, cc - hwpc), hwpr * 2, hwpc * 2, edgecolor='r',
-                                  facecolor='none', lw=1, alpha=1)
+        patch = patches.Rectangle(
+            (rc - hwpr, cc - hwpc),
+            hwpr * 2,
+            hwpc * 2,
+            edgecolor='r',
+            facecolor='none',
+            lw=1,
+            alpha=1,
+        )
         ax.add_patch(patch)
         plt.text(rc - hwpr + 1, cc - hwpc + 1, f'{hw}"', color='y', fontweight='bold')
 

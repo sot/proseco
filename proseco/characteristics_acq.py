@@ -50,7 +50,8 @@ spoiler_star_cols = ['id', 'yang', 'zang', 'row', 'col', 'mag', 'mag_err']
 
 
 def _get_fid_acq_stages():
-    fid_acqs = Table.read("""
+    fid_acqs = Table.read(
+        """
 
    warns score P2=0.0 P2=2.0 P2=2.5 P2=3.0 P2=4.0 P2=5.0 P2=6.0 P2=8.0 P2=99.0
    ----- ----- ------ ------ ------ ------ ------ ------ ------ ------ -------
@@ -65,18 +66,17 @@ def _get_fid_acq_stages():
      RRY     9      0    1.5    2.0    2.0    2.0    2.0    2.0    2.0     2.0
      RRR    12     -1   -1.0   -1.0   -1.0   -1.0   -1.0   -1.0   -1.0    -1.0
 
-    """, format='ascii.fixed_width_two_line')
+    """,
+        format='ascii.fixed_width_two_line',
+    )
 
-    P2s = [float(name[3:]) for name in fid_acqs.colnames
-           if name.startswith('P2=')]
+    P2s = [float(name[3:]) for name in fid_acqs.colnames if name.startswith('P2=')]
     funcs = []
     for fid_acq in fid_acqs:
-        vals = [fid_acq[name] for name in fid_acqs.colnames
-                if name.startswith('P2=')]
+        vals = [fid_acq[name] for name in fid_acqs.colnames if name.startswith('P2=')]
         funcs.append(interp1d(P2s, vals))
 
-    out = Table([fid_acqs['score'], funcs],
-                names=['spoiler_score', 'min_P2'])
+    out = Table([fid_acqs['score'], funcs], names=['spoiler_score', 'min_P2'])
     out.add_index('spoiler_score')
     return out
 

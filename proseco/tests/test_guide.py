@@ -14,8 +14,15 @@ import mica.starcheck
 from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
 from chandra_aca.transform import mag_to_count_rate, count_rate_to_mag
 
-from ..guide import (get_guide_catalog, check_spoil_contrib, get_pixmag_for_offset,
-                     check_mag_spoilers, get_ax_range, check_column_spoilers, GUIDE)
+from ..guide import (
+    get_guide_catalog,
+    check_spoil_contrib,
+    get_pixmag_for_offset,
+    check_mag_spoilers,
+    get_ax_range,
+    check_column_spoilers,
+    GUIDE,
+)
 from ..report_guide import make_report
 from ..characteristics_guide import mag_spoiler
 from ..characteristics import CCD
@@ -33,8 +40,9 @@ def test_select():
     """
     Regression test that 5 expected agasc ids are selected at an arbitrary ra/dec/roll .
     """
-    selected = get_guide_catalog(att=(10, 20, 3), date='2018:001', dither=(8, 8),
-                                 t_ccd=-13, n_guide=5)
+    selected = get_guide_catalog(
+        att=(10, 20, 3), date='2018:001', dither=(8, 8), t_ccd=-13, n_guide=5
+    )
     expected_star_ids = [156384720, 155980240, 156376184, 156381600, 156379416]
     assert selected['id'].tolist() == expected_star_ids
 
@@ -60,9 +68,9 @@ def test_common_column_obsid_19904():
     agasc_ids = [1091709256, 1091698696, 1091705224, 1091702440, 1091704824]
     date = '2018:001'
     stars = StarsTable.from_agasc_ids(att, agasc_ids)
-    selected = get_guide_catalog(att=att,
-                                 date=date, t_ccd=-20, dither=(8, 8), n_guide=5,
-                                 stars=stars)
+    selected = get_guide_catalog(
+        att=att, date=date, t_ccd=-20, dither=(8, 8), n_guide=5, stars=stars
+    )
     # Assert the column spoiled one isn't in the list
     assert 1091705224 not in selected['id'].tolist()
     assert selected['id'].tolist() == [1091702440, 1091698696, 1091704824]
@@ -77,7 +85,8 @@ comm_cases = [
     # Star id 2 between id 1 and readout register and 5 mags brighter
     {'r1': 10, 'c1': 15, 'm1': 9.0, 'r2': 50, 'c2': 6, 'm2': 4.0, 'spoils': True},
     # Star id 2 between id 1 and readout register and 5 mags brighter but 11 pix away in col
-    {'r1': 10, 'c1': 15, 'm1': 9.0, 'r2': 50, 'c2': 4, 'm2': 4.0, 'spoils': False}]
+    {'r1': 10, 'c1': 15, 'm1': 9.0, 'r2': 50, 'c2': 4, 'm2': 4.0, 'spoils': False},
+]
 
 
 @pytest.mark.parametrize('case', comm_cases)
@@ -106,8 +115,9 @@ def test_box_mag_spoiler():
     stars = StarsTable.from_agasc_ids(att, agasc_ids)
 
     stars.get_id(688522000)['mag'] = 16.0
-    selected1 = get_guide_catalog(att=att, date=date, t_ccd=-20, dither=(8, 8), n_guide=5,
-                                  stars=stars)
+    selected1 = get_guide_catalog(
+        att=att, date=date, t_ccd=-20, dither=(8, 8), n_guide=5, stars=stars
+    )
 
     # Confirm the 688523960 star is selected as a nominal star in this config
     assert 688523960 in selected1['id']
@@ -117,8 +127,9 @@ def test_box_mag_spoiler():
     stars.get_id(688522000)['row'] = 50
 
     # Confirm the 688523960 star is not selected if the spoiler is brighter
-    selected2 = get_guide_catalog(att=att, date=date, t_ccd=-20, dither=(8, 8), n_guide=5,
-                                  stars=stars)
+    selected2 = get_guide_catalog(
+        att=att, date=date, t_ccd=-20, dither=(8, 8), n_guide=5, stars=stars
+    )
     assert 688523960 not in selected2['id']
 
 
@@ -133,25 +144,33 @@ def test_region_contrib():
     """
     att = (8, 47, 0)
     date = '2018:001'
-    agasc_ids = [425740488, 425864552, 426263240, 425736928, 426255616, 426253528, 426253768]
+    agasc_ids = [
+        425740488,
+        425864552,
+        426263240,
+        425736928,
+        426255616,
+        426253528,
+        426253768,
+    ]
     stars = StarsTable.from_agasc_ids(att, agasc_ids)
 
     # Only pass the first 5 stars
-    selected1 = get_guide_catalog(att=att, date=date, t_ccd=-20, dither=(8, 8), n_guide=5,
-                                  stars=stars[0:5])
+    selected1 = get_guide_catalog(
+        att=att, date=date, t_ccd=-20, dither=(8, 8), n_guide=5, stars=stars[0:5]
+    )
     assert 426255616 in selected1['id']
 
     # The last two stars spoil the 5th star via too much light contrib in the region
     # so if we include all the stars, the 5th star should *not* be selected
-    selected2 = get_guide_catalog(att=att, date=date, t_ccd=-20, dither=(8, 8), n_guide=5,
-                                  stars=stars)
+    selected2 = get_guide_catalog(
+        att=att, date=date, t_ccd=-20, dither=(8, 8), n_guide=5, stars=stars
+    )
     assert 426255616 not in selected2['id']
 
 
 def test_bad_star_list():
-    """Test that a star with ID in the bad star list is not selected.
-
-    """
+    """Test that a star with ID in the bad star list is not selected."""
     bad_id = 39980640
     dark = DARK40.copy()
     stars = StarsTable.empty()
@@ -179,8 +198,9 @@ def test_avoid_trap():
     att = (ra, dec, roll1)
 
     stars = StarsTable.from_agasc_ids(att, agasc_ids)
-    selected1 = get_guide_catalog(att=att, date=date, t_ccd=-15, dither=(8, 8),
-                                  n_guide=5, stars=stars)
+    selected1 = get_guide_catalog(
+        att=att, date=date, t_ccd=-15, dither=(8, 8), n_guide=5, stars=stars
+    )
     assert selected1['id'].tolist() == agasc_ids
 
     # Roll so that 156381600 is on the trap
@@ -188,8 +208,9 @@ def test_avoid_trap():
     att = (ra, dec, roll2)
 
     stars = StarsTable.from_agasc_ids(att, agasc_ids)
-    selected2 = get_guide_catalog(att=att, date=date, t_ccd=-15, dither=(8, 8),
-                                  n_guide=5, stars=stars)
+    selected2 = get_guide_catalog(
+        att=att, date=date, t_ccd=-15, dither=(8, 8), n_guide=5, stars=stars
+    )
     assert 156381600 not in selected2['id'].tolist()
 
 
@@ -218,19 +239,20 @@ def test_check_pixmag_offset():
     APL = AcaPsfLibrary()
 
     # Then use one star and test with various pixels
-    star = {'row': -.5, 'col': .5, 'mag': 9.0, 'id': 1}
+    star = {'row': -0.5, 'col': 0.5, 'mag': 9.0, 'id': 1}
 
     # Confirm that when the bad pixel is bright enough to shift the centroid
     # by N arcsecs that the mag/offset code agrees
     rs = range(-4, 4)
     cs = range(-4, 4)
-    lims = [0.1, 0.2, .5, 1.0, 5.0]
+    lims = [0.1, 0.2, 0.5, 1.0, 5.0]
     pixvals = range(250, 5000, 250)
 
     for r_dist, c_dist, lim, pixval in itertools.product(rs, cs, lims, pixvals):
         # Get a new star image every time because centroid_fm messes with it in-place
-        star_img = APL.get_psf_image(star['row'], star['col'],
-                                     norm=mag_to_count_rate(star['mag']))
+        star_img = APL.get_psf_image(
+            star['row'], star['col'], norm=mag_to_count_rate(star['mag'])
+        )
         pix = ACAImage(np.zeros((8, 8)), row0=-4, col0=-4)
 
         # Get the the non-spoiled centroid
@@ -261,7 +283,9 @@ def test_check_spoil_contrib():
     stars = StarsTable.empty()
     stars.add_fake_star(row=0, col=0, mag=8.0, id=1, ASPQ1=1)
     stars.add_fake_star(row=0, col=-5, mag=6.0, id=2, ASPQ1=0)
-    bg_spoil, reg_spoil, rej = check_spoil_contrib(stars, np.array([True, True]), stars, .05, 25)
+    bg_spoil, reg_spoil, rej = check_spoil_contrib(
+        stars, np.array([True, True]), stars, 0.05, 25
+    )
     assert reg_spoil[0]
 
     # Construct a case where a star spoils just a background pixel
@@ -269,7 +293,9 @@ def test_check_spoil_contrib():
     stars.add_fake_star(row=0, col=0, mag=8.0, id=1, ASPQ1=1)
     stars.add_fake_star(row=-5.5, col=-5.5, mag=9.5, id=2, ASPQ1=0)
 
-    bg_spoil, reg_spoil, rej = check_spoil_contrib(stars, np.array([True, True]), stars, .05, 25)
+    bg_spoil, reg_spoil, rej = check_spoil_contrib(
+        stars, np.array([True, True]), stars, 0.05, 25
+    )
     assert bg_spoil[0]
 
 
@@ -297,15 +323,19 @@ def test_check_spoiler_cases():
             # Add a "spoiling" star and move it from center past edge through
             # the drcs.  The spoiling star is set with CLASS=1 so it is also not a
             # selectable guide star.
-            stars.add_fake_star(row=r + drc, col=c, mag=mag0 + dmag, id=2, ASPQ1=0, CLASS=1)
+            stars.add_fake_star(
+                row=r + drc, col=c, mag=mag0 + dmag, id=2, ASPQ1=0, CLASS=1
+            )
             selected = get_guide_catalog(**STD_INFO, stars=stars, dark=dark)
             # Is the id=1 star spoiled / not selected?
             spoiled.append(1 if (1 not in selected['id']) else 0)
     spoiled = np.array(spoiled).reshape(-1, len(drcs)).tolist()
     #                    0  2  4  6  8 10 12 pixels
-    expected_spoiled = [[1, 1, 1, 1, 1, 0, 0],  # dmag = 0
-                        [1, 1, 1, 1, 0, 0, 0],  # dmag = 3
-                        [1, 1, 1, 1, 0, 0, 0]]  # dmag = 7
+    expected_spoiled = [
+        [1, 1, 1, 1, 1, 0, 0],  # dmag = 0
+        [1, 1, 1, 1, 0, 0, 0],  # dmag = 3
+        [1, 1, 1, 1, 0, 0, 0],
+    ]  # dmag = 7
     assert spoiled == expected_spoiled
 
     spoiled = []
@@ -318,14 +348,18 @@ def test_check_spoiler_cases():
             stars.add_fake_star(row=r, col=c, mag=mag0, id=1, ASPQ1=1)
             # Add a "spoiling" star 5 mags fainter and move it from center out through a corner
             # The spoiling star is set with CLASS=1 so it is also not a selectable guide star.
-            stars.add_fake_star(row=r + drc, col=c + drc, mag=mag0 + dmag, id=2, ASPQ1=0, CLASS=1)
+            stars.add_fake_star(
+                row=r + drc, col=c + drc, mag=mag0 + dmag, id=2, ASPQ1=0, CLASS=1
+            )
             selected = get_guide_catalog(**STD_INFO, stars=stars, dark=dark)
             spoiled.append(1 if (1 not in selected['id']) else 0)
     spoiled = np.array(spoiled).reshape(-1, len(drcs)).tolist()
     #                    0  2  4  6  8 10 12 pixels
-    expected_spoiled = [[1, 1, 1, 1, 0, 0, 0],  # dmag = 3
-                        [1, 1, 1, 1, 0, 0, 0],  # dmag = 5
-                        [1, 1, 1, 1, 0, 0, 0]]  # dmag = 7
+    expected_spoiled = [
+        [1, 1, 1, 1, 0, 0, 0],  # dmag = 3
+        [1, 1, 1, 1, 0, 0, 0],  # dmag = 5
+        [1, 1, 1, 1, 0, 0, 0],
+    ]  # dmag = 7
     assert spoiled == expected_spoiled
 
 
@@ -364,16 +398,18 @@ def test_overlap_spoiler_include():
     # First, set this up with a constellation and 1 manual bright star
     stars.add_fake_constellation(n_stars=7, mag=9)
     stars.add_fake_star(id=1, mag=8, row=50, col=-50)
-    aca1 = get_guide_catalog(**mod_std_info(n_fid=0, n_guide=8), obsid=40000,
-                             stars=stars, dark=DARK40)
+    aca1 = get_guide_catalog(
+        **mod_std_info(n_fid=0, n_guide=8), obsid=40000, stars=stars, dark=DARK40
+    )
 
     # The bright star should be included
     assert 1 in aca1['id']
 
     # Add another bright star within 10 pixels of id 1
     stars.add_fake_star(id=2, mag=8.5, row=60, col=-50)
-    aca2 = get_guide_catalog(**mod_std_info(n_fid=0, n_guide=8), obsid=40000,
-                             stars=stars, dark=DARK40)
+    aca2 = get_guide_catalog(
+        **mod_std_info(n_fid=0, n_guide=8), obsid=40000, stars=stars, dark=DARK40
+    )
 
     # The id 2 star is a (within 12 pixels) overlap spoiler and fainter
     # so should not be selected
@@ -381,26 +417,36 @@ def test_overlap_spoiler_include():
     assert 1 in aca2['id']
 
     # Force include the fainter star (id 2) and 1 should not be selected
-    aca3 = get_guide_catalog(**mod_std_info(n_fid=0, n_guide=8), obsid=40000,
-                             stars=stars, dark=DARK40,
-                             include_ids_guide=[2])
+    aca3 = get_guide_catalog(
+        **mod_std_info(n_fid=0, n_guide=8),
+        obsid=40000,
+        stars=stars,
+        dark=DARK40,
+        include_ids_guide=[2],
+    )
     assert 2 in aca3['id']
     assert 1 not in aca3['id']
 
     # Force include them both and they should still be selected.
-    aca4 = get_guide_catalog(**mod_std_info(n_fid=0, n_guide=8), obsid=40000,
-                             stars=stars, dark=DARK40,
-                             include_ids_guide=[1, 2])
+    aca4 = get_guide_catalog(
+        **mod_std_info(n_fid=0, n_guide=8),
+        obsid=40000,
+        stars=stars,
+        dark=DARK40,
+        include_ids_guide=[1, 2],
+    )
     assert 2 in aca4['id']
     assert 1 in aca4['id']
 
 
-pix_cases = [{'dither': (8, 8), 'offset_row': 4, 'offset_col': 4, 'spoils': True},
-             {'dither': (64, 8), 'offset_row': 16, 'offset_col': 0, 'spoils': True},
-             {'dither': (64, 8), 'offset_row': 20, 'offset_col': 0, 'spoils': False},
-             {'dither': (64, 8), 'offset_row': 0, 'offset_col': 16, 'spoils': False},
-             {'dither': (8, 64), 'offset_row': 0, 'offset_col': 16, 'spoils': True},
-             {'dither': (8, 64), 'offset_row': 0, 'offset_col': 20, 'spoils': False}]
+pix_cases = [
+    {'dither': (8, 8), 'offset_row': 4, 'offset_col': 4, 'spoils': True},
+    {'dither': (64, 8), 'offset_row': 16, 'offset_col': 0, 'spoils': True},
+    {'dither': (64, 8), 'offset_row': 20, 'offset_col': 0, 'spoils': False},
+    {'dither': (64, 8), 'offset_row': 0, 'offset_col': 16, 'spoils': False},
+    {'dither': (8, 64), 'offset_row': 0, 'offset_col': 16, 'spoils': True},
+    {'dither': (8, 64), 'offset_row': 0, 'offset_col': 20, 'spoils': False},
+]
 
 
 @pytest.mark.parametrize('case', pix_cases)
@@ -413,14 +459,18 @@ def test_pix_spoiler(case):
     stars.add_fake_star(row=0, col=0, mag=7.0, id=1, ASPQ1=0)
     stars.add_fake_constellation(n_stars=4)
     dark = np.zeros((1024, 1024))
-    pix_config = {'att': (0, 0, 0),
-                  'date': '2018:001',
-                  't_ccd': -10,
-                  'n_guide': 5,
-                  'stars': stars}
+    pix_config = {
+        'att': (0, 0, 0),
+        'date': '2018:001',
+        't_ccd': -10,
+        'n_guide': 5,
+        'stars': stars,
+    }
     # Use the "case" to try to spoil the first star with a bad pixel
-    dark[case['offset_row'] + int(stars[0]['row']) + 512,
-         case['offset_col'] + int(stars[0]['col']) + 512] = mag_to_count_rate(stars[0]['mag'])
+    dark[
+        case['offset_row'] + int(stars[0]['row']) + 512,
+        case['offset_col'] + int(stars[0]['col']) + 512,
+    ] = mag_to_count_rate(stars[0]['mag'])
     selected = get_guide_catalog(**pix_config, dither=case['dither'], dark=dark)
     assert (1 not in selected['id']) == case['spoils']
 
@@ -443,12 +493,17 @@ def test_check_mag_spoilers():
     # or column, so don't bother simulating stars outside that distance
     r_dists = np.arange(-9.25, 10, 2)
     c_dists = np.arange(-9.5, 10, 2)
-    magdiffs = np.arange(2, -5, -.5)
+    magdiffs = np.arange(2, -5, -0.5)
 
     for r_dist, c_dist, magdiff in itertools.product(r_dists, c_dists, magdiffs):
-        star2 = {'row': r_dist, 'col': c_dist, 'mag': star1['mag'] - magdiff,
-                 'MAG_ACA_ERR': 0, 'id': 2}
-        dist = np.sqrt(r_dist ** 2 + c_dist ** 2)
+        star2 = {
+            'row': r_dist,
+            'col': c_dist,
+            'mag': star1['mag'] - magdiff,
+            'MAG_ACA_ERR': 0,
+            'id': 2,
+        }
+        dist = np.sqrt(r_dist**2 + c_dist**2)
         stars = Table([star1, star2])
         spoiled, rej = check_mag_spoilers(stars, np.array([True, True]), stars, 0)
         req_sep = intercept + magdiff * spoilslope
@@ -462,9 +517,12 @@ def test_warnings():
     """
     stars = StarsTable.empty()
     stars.add_fake_constellation(n_stars=6)
-    guides = get_guide_catalog(att=(0, 0, 0), date='2018:001', t_ccd=-10, dither=(8, 8),
-                               stars=stars, n_guide=8)
-    assert guides.warnings == ['WARNING: Selected only 6 guide stars versus requested 8']
+    guides = get_guide_catalog(
+        att=(0, 0, 0), date='2018:001', t_ccd=-10, dither=(8, 8), stars=stars, n_guide=8
+    )
+    assert guides.warnings == [
+        'WARNING: Selected only 6 guide stars versus requested 8'
+    ]
 
 
 def test_guides_include_exclude():
@@ -479,12 +537,15 @@ def test_guides_include_exclude():
     """
     stars = StarsTable.empty()
 
-    stars.add_fake_constellation(mag=[7.0, 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7],
-                                 id=[1, 2, 3, 4, 5, 6, 7, 8],
-                                 size=2000, n_stars=8)
-    stars.add_fake_constellation(mag=[10.0, 10.1, 12.0],
-                                 id=[9, 10, 11],
-                                 size=1500, n_stars=3)
+    stars.add_fake_constellation(
+        mag=[7.0, 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7],
+        id=[1, 2, 3, 4, 5, 6, 7, 8],
+        size=2000,
+        n_stars=8,
+    )
+    stars.add_fake_constellation(
+        mag=[10.0, 10.1, 12.0], id=[9, 10, 11], size=1500, n_stars=3
+    )
 
     # Make sure baseline catalog is working like expected
     std_info = STD_INFO.copy()
@@ -496,9 +557,9 @@ def test_guides_include_exclude():
     include_ids = [9, 11]
     exclude_ids = [1]
 
-    guides = get_guide_catalog(**std_info, stars=stars,
-                               include_ids=include_ids,
-                               exclude_ids=exclude_ids)
+    guides = get_guide_catalog(
+        **std_info, stars=stars, include_ids=include_ids, exclude_ids=exclude_ids
+    )
 
     assert guides.include_ids == include_ids
     assert guides.exclude_ids == exclude_ids
@@ -528,9 +589,12 @@ def test_guides_include_bad():
 
     stars = StarsTable.empty()
 
-    stars.add_fake_constellation(mag=[7.0, 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7],
-                                 id=[1, 2, 3, 4, 5, 6, 7, 8],
-                                 size=2000, n_stars=8)
+    stars.add_fake_constellation(
+        mag=[7.0, 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7],
+        id=[1, 2, 3, 4, 5, 6, 7, 8],
+        size=2000,
+        n_stars=8,
+    )
 
     # Bright star but class 1, not picked
     stars.add_fake_star(mag=6.5, row=row_max - 1, col=col_max - 1, id=10, CLASS=1)
@@ -561,22 +625,26 @@ def test_edge_star(dither):
     """
     stars = StarsTable.empty()
 
-    stars.add_fake_constellation(mag=[7.0, 7.1, 7.2, 7.3],
-                                 id=[1, 2, 3, 4],
-                                 size=2000, n_stars=4)
+    stars.add_fake_constellation(
+        mag=[7.0, 7.1, 7.2, 7.3], id=[1, 2, 3, 4], size=2000, n_stars=4
+    )
 
     # Add stars exactly at 4 corners of allowed "in bounds" area for this dither
-    row_dither = dither[0] / 5.
-    col_dither = dither[1] / 5.
-    row_max = CCD['row_max'] - (CCD['row_pad'] + CCD['window_pad'] + CCD['guide_extra_pad'] +
-                                row_dither)
-    col_max = CCD['col_max'] - (CCD['col_pad'] + CCD['window_pad'] + CCD['guide_extra_pad'] +
-                                col_dither)
+    row_dither = dither[0] / 5.0
+    col_dither = dither[1] / 5.0
+    row_max = CCD['row_max'] - (
+        CCD['row_pad'] + CCD['window_pad'] + CCD['guide_extra_pad'] + row_dither
+    )
+    col_max = CCD['col_max'] - (
+        CCD['col_pad'] + CCD['window_pad'] + CCD['guide_extra_pad'] + col_dither
+    )
     stars.add_fake_star(row=row_max, col=col_max, mag=6.0)
     stars.add_fake_star(row=row_max * -1, col=col_max, mag=6.0)
     stars.add_fake_star(row=row_max * -1, col=col_max * -1, mag=6.0)
     stars.add_fake_star(row=row_max, col=col_max * -1, mag=6.0)
-    info = mod_std_info(n_guide=8, dither_guide=(row_dither * 5, col_dither * 5), stars=stars)
+    info = mod_std_info(
+        n_guide=8, dither_guide=(row_dither * 5, col_dither * 5), stars=stars
+    )
     guides = get_guide_catalog(**info)
     # Confirm 4 generic stars plus four corner stars are selected
     assert len(guides) == 8
@@ -584,16 +652,18 @@ def test_edge_star(dither):
     # Do the same as above, but this time don't include the guide edge pad, so
     # the edge stars will be off the edge
     stars1 = StarsTable.empty()
-    stars1.add_fake_constellation(mag=[7.0, 7.1, 7.2, 7.3],
-                                  id=[1, 2, 3, 4],
-                                  size=2000, n_stars=4)
+    stars1.add_fake_constellation(
+        mag=[7.0, 7.1, 7.2, 7.3], id=[1, 2, 3, 4], size=2000, n_stars=4
+    )
     row_max = CCD['row_max'] - (CCD['row_pad'] + CCD['window_pad'] + row_dither)
     col_max = CCD['col_max'] - (CCD['col_pad'] + CCD['window_pad'] + col_dither)
     stars1.add_fake_star(row=row_max, col=col_max, mag=6.0)
     stars1.add_fake_star(row=row_max * -1, col=col_max, mag=6.0)
     stars1.add_fake_star(row=row_max * -1, col=col_max * -1, mag=6.0)
     stars1.add_fake_star(row=row_max, col=col_max * -1, mag=6.0)
-    info = mod_std_info(n_guide=8, dither_guide=(row_dither * 5, col_dither * 5), stars=stars1)
+    info = mod_std_info(
+        n_guide=8, dither_guide=(row_dither * 5, col_dither * 5), stars=stars1
+    )
     guides = get_guide_catalog(**info)
     # Confirm 4 generic stars are the only stars that can be used (edge stars are off the edges)
     assert len(guides) == 4
@@ -662,14 +732,18 @@ def test_guide_faint_mag_limit():
     ids = np.arange(1, 6)
 
     # 4 bright stars + one star just slightly brighter than the nominal faint mag limit
-    stars.add_fake_constellation(mag=[7.0] * 4 + [GUIDE.ref_faint_mag - 0.001], n_stars=5, id=ids)
+    stars.add_fake_constellation(
+        mag=[7.0] * 4 + [GUIDE.ref_faint_mag - 0.001], n_stars=5, id=ids
+    )
 
     # Select stars at 0.1 degC colder than reference temperature, expect 5 stars selected
-    guides = get_guide_catalog(**mod_std_info(t_ccd=GUIDE.ref_faint_mag_t_ccd - 0.1),
-                               stars=stars, dark=DARK40)
+    guides = get_guide_catalog(
+        **mod_std_info(t_ccd=GUIDE.ref_faint_mag_t_ccd - 0.1), stars=stars, dark=DARK40
+    )
     assert np.all(guides['id'] == ids)
 
     # Select stars at 0.1 degC warmer than reference temperature, expect 4 stars selected
-    guides = get_guide_catalog(**mod_std_info(t_ccd=GUIDE.ref_faint_mag_t_ccd + 0.1),
-                               stars=stars, dark=DARK40)
+    guides = get_guide_catalog(
+        **mod_std_info(t_ccd=GUIDE.ref_faint_mag_t_ccd + 0.1), stars=stars, dark=DARK40
+    )
     assert np.all(guides['id'] == [1, 2, 3, 4])

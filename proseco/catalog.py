@@ -9,8 +9,13 @@ import copy
 
 from astropy.table import Table
 
-from .core import (ACACatalogTable, get_kwargs_from_starcheck_text, MetaAttribute,
-                   get_dim_res, get_img_size)
+from .core import (
+    ACACatalogTable,
+    get_kwargs_from_starcheck_text,
+    MetaAttribute,
+    get_dim_res,
+    get_img_size,
+)
 from .guide import get_guide_catalog, GuideTable
 from .acq import get_acq_catalog, AcqTable
 from .fid import get_fid_catalog, FidTable
@@ -34,7 +39,7 @@ ACA_CATALOG_DTYPES = {
     'zang': np.float64,
     'dim': np.int64,
     'res': np.int64,
-    'halfw': np.int64
+    'halfw': np.int64,
 }
 
 
@@ -177,8 +182,15 @@ def _get_aca_catalog(**kwargs):
 
     # These are allowed inputs to get_aca_catalog but should not be passed to
     # get_{acq,guide,fid}_catalog. Pop them from kwargs.
-    for kwarg in ('t_ccd', 't_ccd_eff_acq', 't_ccd_eff_guide', 'stars',
-                  't_ccd_penalty_limit', 'duration', 'target_name'):
+    for kwarg in (
+        't_ccd',
+        't_ccd_eff_acq',
+        't_ccd_eff_guide',
+        'stars',
+        't_ccd_penalty_limit',
+        'duration',
+        'target_name',
+    ):
         kwargs.pop(kwarg, None)
 
     # Get stars (typically from AGASC) and do not filter for stars near
@@ -209,8 +221,13 @@ def _get_aca_catalog(**kwargs):
     aca.mons = get_mon_catalog(stars=aca.acqs.stars, **kwargs)
 
     aca.log('Starting get_guide_catalog')
-    aca.guides = get_guide_catalog(stars=aca.acqs.stars, fids=aca.fids, mons=aca.mons,
-                                   img_size=img_size_guide, **kwargs)
+    aca.guides = get_guide_catalog(
+        stars=aca.acqs.stars,
+        fids=aca.fids,
+        mons=aca.mons,
+        img_size=img_size_guide,
+        **kwargs,
+    )
 
     # Set output catalog aca.n_guide to the number of requested guide stars as
     # determined in guide star selection processing. This differs from the input
@@ -223,7 +240,9 @@ def _get_aca_catalog(**kwargs):
     # impacting operational work (call from Matlab).
     try:
         aca.log('Starting merge_cats')
-        merge_cat = merge_cats(fids=aca.fids, guides=aca.guides, acqs=aca.acqs, mons=aca.mons)
+        merge_cat = merge_cats(
+            fids=aca.fids, guides=aca.guides, acqs=aca.acqs, mons=aca.mons
+        )
         for name in merge_cat.colnames:
             aca[name] = merge_cat[name]
     except Exception:
@@ -318,8 +337,11 @@ def get_effective_t_ccd(t_ccd, t_ccd_penalty_limit=None):
     :returns: t_ccd_eff
         Effective CCD temperature (degC) for use in star selection
     """
-    t_limit = (ACA.aca_t_ccd_penalty_limit if t_ccd_penalty_limit is None
-               else t_ccd_penalty_limit)
+    t_limit = (
+        ACA.aca_t_ccd_penalty_limit
+        if t_ccd_penalty_limit is None
+        else t_ccd_penalty_limit
+    )
     if t_ccd > t_limit:
         return t_ccd + 1 + (t_ccd - t_limit)
     else:
@@ -331,14 +353,23 @@ class ACATable(ACACatalogTable):
     as attributes and other methods relevant to the merged catalog.
 
     """
+
     # Define base set of allowed keyword args to __init__. Subsequent MetaAttribute
     # or AliasAttribute properties will add to this.
     allowed_kwargs = ACACatalogTable.allowed_kwargs.copy()
 
-    required_attrs = ('att', 'n_fid', 'n_guide', 'man_angle',
-                      't_ccd_acq', 't_ccd_guide',
-                      'dither_acq', 'dither_guide', 'date',
-                      'detector')
+    required_attrs = (
+        'att',
+        'n_fid',
+        'n_guide',
+        'man_angle',
+        't_ccd_acq',
+        't_ccd_guide',
+        'dither_acq',
+        'dither_guide',
+        'date',
+        'detector',
+    )
 
     optimize = MetaAttribute(default=True)
     call_args = MetaAttribute(default={})
@@ -406,8 +437,12 @@ class ACATable(ACACatalogTable):
 
         if self.t_ccd_penalty_limit is None:
             self.t_ccd_penalty_limit = ACA.aca_t_ccd_penalty_limit
-        self.t_ccd_eff_acq = get_effective_t_ccd(self.t_ccd_acq, self.t_ccd_penalty_limit)
-        self.t_ccd_eff_guide = get_effective_t_ccd(self.t_ccd_guide, self.t_ccd_penalty_limit)
+        self.t_ccd_eff_acq = get_effective_t_ccd(
+            self.t_ccd_acq, self.t_ccd_penalty_limit
+        )
+        self.t_ccd_eff_guide = get_effective_t_ccd(
+            self.t_ccd_guide, self.t_ccd_penalty_limit
+        )
         self.version = VERSION
 
     def get_review_table(self):
@@ -431,8 +466,9 @@ class ACATable(ACACatalogTable):
         :returns: bool mask
 
         """
-        ok = (self.acqs.get_candidates_mask(stars) |
-              self.guides.get_candidates_mask(stars))
+        ok = self.acqs.get_candidates_mask(stars) | self.guides.get_candidates_mask(
+            stars
+        )
         return ok
 
     def make_report(self, rootdir='.'):
@@ -466,8 +502,12 @@ class ACATable(ACACatalogTable):
         #    OR no candidate fids are available,
         #    OR no candidate fid sets are available
         # THEN no optimization action required here.
-        if (len(self.fids) > 0 or self.n_fid == 0 or len(self.fids.cand_fids) == 0 or
-                len(self.fids.cand_fid_sets) == 0):
+        if (
+            len(self.fids) > 0
+            or self.n_fid == 0
+            or len(self.fids.cand_fids) == 0
+            or len(self.fids.cand_fid_sets) == 0
+        ):
             return
 
         # Start with the no-fids optimum catalog and save required info to restore
@@ -475,7 +515,9 @@ class ACATable(ACACatalogTable):
         orig_acq_idxs = acqs['idx'].tolist()
         orig_acq_halfws = acqs['halfw'].tolist()
 
-        self.log(f'Starting opt_P2={opt_P2:.2f}: ids={orig_acq_idxs} halfws={orig_acq_halfws}')
+        self.log(
+            f'Starting opt_P2={opt_P2:.2f}: ids={orig_acq_idxs} halfws={orig_acq_halfws}'
+        )
 
         # If not at least 2 fids then punt on optimization.
         cand_fids = fids.cand_fids
@@ -485,8 +527,9 @@ class ACATable(ACACatalogTable):
         # order.
         rows = []
         for fid_set in fids.cand_fid_sets:
-            spoiler_score = sum(cand_fids.get_id(fid_id)['spoiler_score']
-                                for fid_id in fid_set)
+            spoiler_score = sum(
+                cand_fids.get_id(fid_id)['spoiler_score'] for fid_id in fid_set
+            )
             rows.append((fid_set, spoiler_score))
 
         # Make a table to keep track of candidate fid_sets along with the
@@ -521,8 +564,10 @@ class ACATable(ACACatalogTable):
                 fid_set_P2 = -acqs.get_log_p_2_or_fewer()
                 found_good_set = fid_set_P2 - opt_P2 > -0.001
                 if found_good_set:
-                    self.log(f'No change in P2 for fid set {acqs.fid_set}, '
-                             f'skipping optimization')
+                    self.log(
+                        f'No change in P2 for fid set {acqs.fid_set}, '
+                        f'skipping optimization'
+                    )
                 else:
                     # Re-optimize the catalog with the fid set selected and get new probs.
                     acqs.optimize_catalog()
@@ -533,9 +578,11 @@ class ACATable(ACACatalogTable):
                 fid_set['acq_idxs'] = acqs['idx'].tolist()
                 fid_set['acq_halfws'] = acqs['halfw'].tolist()
 
-                self.log(f"Fid set {fid_set['fid_ids']}: P2={fid_set['P2']:.2f} "
-                         f"acq_idxs={fid_set['acq_idxs']} halfws={fid_set['acq_halfws']}",
-                         level=2)
+                self.log(
+                    f"Fid set {fid_set['fid_ids']}: P2={fid_set['P2']:.2f} "
+                    f"acq_idxs={fid_set['acq_idxs']} halfws={fid_set['acq_halfws']}",
+                    level=2,
+                )
 
                 if found_good_set:
                     break
@@ -554,8 +601,11 @@ class ACATable(ACACatalogTable):
             stage = ACQ.fid_acq_stages.loc[spoiler_score]
             stage_min_P2 = stage['min_P2'](opt_P2)
 
-            self.log(f'Best P2={best_P2:.2f} at idx={best_idx} vs. '
-                     'stage_min_P2={stage_min_P2:.2f}', level=1)
+            self.log(
+                f'Best P2={best_P2:.2f} at idx={best_idx} vs. '
+                'stage_min_P2={stage_min_P2:.2f}',
+                level=1,
+            )
 
             # If we have a winner then use that.
             if best_P2 >= stage_min_P2:
@@ -570,12 +620,16 @@ class ACATable(ACACatalogTable):
         # Finally set the fids table to the desired fid set
         fids.set_fid_set(acqs.fid_set)
 
-        self.log(f"Best acq-fid set: P2={best_P2:.2f} "
-                 f"acq_idxs={best_acq_idxs} halfws={best_acq_halfws} fid_ids={acqs.fid_set}")
+        self.log(
+            f"Best acq-fid set: P2={best_P2:.2f} "
+            f"acq_idxs={best_acq_idxs} halfws={best_acq_halfws} fid_ids={acqs.fid_set}"
+        )
 
         if best_P2 < stage_min_P2:
-            self.log('No acq-fid combination was found that met stage requirements',
-                     warning=True)
+            self.log(
+                'No acq-fid combination was found that met stage requirements',
+                warning=True,
+            )
 
 
 class ObcCat(list):
@@ -592,6 +646,7 @@ class ObcCat(list):
     - Allows adding an entry to the first/last available slot, doing nothing if
       the ``id`` is already in the catalog.
     """
+
     def __init__(self, *args, **kwargs):
         self.name = kwargs.pop('name', '')
         self.debug = kwargs.pop('debug', None)
@@ -741,13 +796,14 @@ def merge_cats(fids=None, guides=None, acqs=None, mons=None):
         acqs['sz'] = f'{img_size}x{img_size}'
 
     if len(acqs) > 8:
-        raise ValueError('catalog has too many acq entries: '
-                         f'n_acq={len(acqs)}')
+        raise ValueError('catalog has too many acq entries: ' f'n_acq={len(acqs)}')
 
     if len(guides) + len(mons) + len(gfms) + len(fids) > 8:
-        raise ValueError('catalog has too many guide entries: '
-                         f'n_guide={len(guides)} n_fid={len(fids)} '
-                         f'n_mon={len(mons)} n_gfm={len(gfms)}')
+        raise ValueError(
+            'catalog has too many guide entries: '
+            f'n_guide={len(guides)} n_fid={len(fids)} '
+            f'n_mon={len(mons)} n_gfm={len(gfms)}'
+        )
 
     # Create two 8-slot tables where all slots are initially empty. These
     # correspond to the OBC acquisition and guide tables. The guide table
@@ -842,10 +898,12 @@ def merge_cats(fids=None, guides=None, acqs=None, mons=None):
             rows.append(acq[colnames])
 
     # Create final table and assign idx
-    aca = ACACatalogTable(rows=rows, names=colnames,
-                          dtype=[ACA_CATALOG_DTYPES[name] for name in colnames])
-    aca.add_column(np.arange(1, len(aca) + 1, dtype=ACA_CATALOG_DTYPES['idx']),
-                   name='idx', index=1)
+    aca = ACACatalogTable(
+        rows=rows, names=colnames, dtype=[ACA_CATALOG_DTYPES[name] for name in colnames]
+    )
+    aca.add_column(
+        np.arange(1, len(aca) + 1, dtype=ACA_CATALOG_DTYPES['idx']), name='idx', index=1
+    )
 
     # Finally, fix up the monitor window designated track slots (DIM/DTS)
     for row in aca:
