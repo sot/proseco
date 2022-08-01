@@ -77,27 +77,27 @@ def get_fid_catalog(obsid=0, **kwargs):
 class FidTable(ACACatalogTable):
     # Define base set of allowed keyword args to __init__. Subsequent MetaAttribute
     # or AliasAttribute properties will add to this.
-    allowed_kwargs = ACACatalogTable.allowed_kwargs | set(['acqs'])
+    allowed_kwargs = ACACatalogTable.allowed_kwargs | set(["acqs"])
 
     # Catalog type when plotting (None | 'FID' | 'ACQ' | 'GUI')
-    catalog_type = 'FID'
+    catalog_type = "FID"
 
     # Name of table.  Use to define default file names where applicable.
     # (e.g. `obs19387/fids.pkl`).
-    name = 'fids'
+    name = "fids"
 
     cand_fids = MetaAttribute(is_kwarg=False)
     cand_fid_sets = MetaAttribute(is_kwarg=False)
 
     required_attrs = (
-        'att',
-        'detector',
-        'sim_offset',
-        'focus_offset',
-        't_ccd_guide',
-        'date',
-        'dither_acq',
-        'dither_guide',
+        "att",
+        "detector",
+        "sim_offset",
+        "focus_offset",
+        "t_ccd_guide",
+        "date",
+        "dither_acq",
+        "dither_guide",
     )
 
     include_ids = AliasAttribute()
@@ -105,7 +105,7 @@ class FidTable(ACACatalogTable):
 
     @property
     def acqs(self):
-        return self._acqs() if hasattr(self, '_acqs') else None
+        return self._acqs() if hasattr(self, "_acqs") else None
 
     @acqs.setter
     def acqs(self, val):
@@ -144,7 +144,7 @@ class FidTable(ACACatalogTable):
         cand_fids = self.cand_fids
 
         if self.n_fid > 3 or self.n_fid < 0:
-            raise ValueError('number of fids n_fid must be between 0 and 3 inclusive')
+            raise ValueError("number of fids n_fid must be between 0 and 3 inclusive")
 
         # Final number of fids is the max of n_fid and the number of candidate fids.
         actual_n_fid = min(self.n_fid, len(cand_fids))
@@ -153,7 +153,7 @@ class FidTable(ACACatalogTable):
             cand_fid_sets = []
 
         elif actual_n_fid == 1:
-            cand_fid_sets = [set([fid_id]) for fid_id in cand_fids['id']]
+            cand_fid_sets = [set([fid_id]) for fid_id in cand_fids["id"]]
 
         elif actual_n_fid == 2:
             # Make a list of available pairs sorted in order of radial separation
@@ -166,11 +166,11 @@ class FidTable(ACACatalogTable):
                     fid0 = cand_fids[idx0]
                     fid1 = cand_fids[idx1]
                     dist2 = -(
-                        (fid0['yang'] - fid1['yang']) ** 2
-                        + (fid0['zang'] - fid1['zang']) ** 2
+                        (fid0["yang"] - fid1["yang"]) ** 2
+                        + (fid0["zang"] - fid1["zang"]) ** 2
                     )
-                    fid_ids0.append(fid0['id'])
-                    fid_ids1.append(fid1['id'])
+                    fid_ids0.append(fid0["id"])
+                    fid_ids1.append(fid1["id"])
                     dist2s.append(dist2)
 
             sort_idx = np.argsort(dist2s)
@@ -182,7 +182,7 @@ class FidTable(ACACatalogTable):
             ]
 
         elif actual_n_fid == 3:
-            cand_fids_ids = set(cand_fids['id'])
+            cand_fids_ids = set(cand_fids["id"])
             cand_fid_sets = [
                 fid_set
                 for fid_set in FID.fid_sets[self.detector]
@@ -195,7 +195,7 @@ class FidTable(ACACatalogTable):
             fid_set for fid_set in cand_fid_sets if fid_set >= include_ids_set
         ]
         self.log(
-            f'Reducing fid sets to those that include fid ids {self.include_ids_fid}'
+            f"Reducing fid sets to those that include fid ids {self.include_ids_fid}"
         )
 
         return cand_fid_sets
@@ -204,16 +204,16 @@ class FidTable(ACACatalogTable):
         """
         Set the `slot` column.
         """
-        self['slot'] = np.arange(len(self), dtype=np.int64)
+        self["slot"] = np.arange(len(self), dtype=np.int64)
 
         # Add slot to cand_fids table, putting in -99 if not selected as acq.
         # This is for convenience in downstream reporting or introspection.
         cand_fids = self.cand_fids
         slots = [
-            self.get_id(fid['id'])['slot'] if fid['id'] in self['id'] else -99
+            self.get_id(fid["id"])["slot"] if fid["id"] in self["id"] else -99
             for fid in cand_fids
         ]
-        cand_fids['slot'] = np.array(slots, dtype=np.int64)
+        cand_fids["slot"] = np.array(slots, dtype=np.int64)
 
     def set_initial_catalog(self):
         """Set initial fid catalog (fid set) if possible to the first set which is
@@ -230,7 +230,7 @@ class FidTable(ACACatalogTable):
         # meaning no star spoils the fid as set previously in get_initial_candidates.
         cand_fids = self.cand_fids
         unspoiled_fid_ids = set(
-            fid['id'] for fid in cand_fids if fid['spoiler_score'] == 0
+            fid["id"] for fid in cand_fids if fid["spoiler_score"] == 0
         )
 
         # Get list of fid_sets that are consistent with candidate fids. These
@@ -243,38 +243,38 @@ class FidTable(ACACatalogTable):
         # If no fid_sets are possible, return a zero-length table with correct columns
         if not ok_fid_sets:
             fid_set = ()
-            self.log('No acceptable fid sets (off-CCD or spoiled by field stars)')
+            self.log("No acceptable fid sets (off-CCD or spoiled by field stars)")
 
         # If no acq stars then just pick the first allowed fid set.
         elif self.acqs is None:
             fid_set = ok_fid_sets[0]
-            self.log(f'No acq stars available, using first OK fid set {fid_set}')
+            self.log(f"No acq stars available, using first OK fid set {fid_set}")
 
         else:
             spoils_any_acq = {}
 
             for fid_set in ok_fid_sets:
-                self.log(f'Checking fid set {fid_set} for acq star spoilers', level=1)
+                self.log(f"Checking fid set {fid_set} for acq star spoilers", level=1)
                 for fid_id in fid_set:
                     if fid_id not in spoils_any_acq:
                         fid = cand_fids.get_id(fid_id)
                         spoils_any_acq[fid_id] = any(
-                            self.spoils(fid, acq, acq['halfw']) for acq in self.acqs
+                            self.spoils(fid, acq, acq["halfw"]) for acq in self.acqs
                         )
                     if spoils_any_acq[fid_id]:
                         # Loser, don't bother with the rest.
-                        self.log(f'Fid {fid_id} spoils an acq star', level=2)
+                        self.log(f"Fid {fid_id} spoils an acq star", level=2)
                         break
                 else:
                     # We have a winner, none of the fid_ids in current fid set
                     # will spoil any acquisition star.  Break out of loop with
                     # fid_set as the winner.
-                    self.log(f'Fid set {fid_set} is fine for acq stars')
+                    self.log(f"Fid set {fid_set} is fine for acq stars")
                     break
             else:
                 # Tried every set and none were acceptable.
                 fid_set = ()
-                self.log('No acceptable fid set found')
+                self.log("No acceptable fid set found")
 
         # Transfer fid set columns to self (which at this point is an empty
         # table)
@@ -302,8 +302,8 @@ class FidTable(ACACatalogTable):
         :returns: True if ``fid`` could be within ``acq`` search box
         """
         spoiler_margin = FID.spoiler_margin + self.dither_acq + box_size
-        dy = np.abs(fid['yang'] - acq['yang'])
-        dz = np.abs(fid['zang'] - acq['zang'])
+        dy = np.abs(fid["yang"] - acq["yang"])
+        dz = np.abs(fid["zang"] - acq["zang"])
         return dy < spoiler_margin.y and dz < spoiler_margin.z
 
     def get_fid_candidates(self):
@@ -324,27 +324,27 @@ class FidTable(ACACatalogTable):
         # Set up candidate fids table (which copies relevant meta data) and add
         # columns.
         cand_fids = FidTable(
-            [ids, yang, zang, row, col], names=['id', 'yang', 'zang', 'row', 'col']
+            [ids, yang, zang, row, col], names=["id", "yang", "zang", "row", "col"]
         )
         shape = (len(cand_fids),)
-        cand_fids['mag'] = np.full(shape, FID.fid_mag)  # 7.000
-        cand_fids['spoilers'] = np.full(shape, None)  # Filled in with Table of spoilers
-        cand_fids['spoiler_score'] = np.full(shape, 0, dtype=np.int64)
+        cand_fids["mag"] = np.full(shape, FID.fid_mag)  # 7.000
+        cand_fids["spoilers"] = np.full(shape, None)  # Filled in with Table of spoilers
+        cand_fids["spoiler_score"] = np.full(shape, 0, dtype=np.int64)
 
         self.log(f'Initial candidate fid ids are {cand_fids["id"].tolist()}')
 
         # First check that any manually included fid ids are valid by seeing if
         # the supplied fid is in the initial ids for this detector.
-        if id_diff := set(self.include_ids_fid) - set(cand_fids['id']):
-            raise ValueError(f'included fid ids {id_diff} are not valid')
+        if id_diff := set(self.include_ids_fid) - set(cand_fids["id"]):
+            raise ValueError(f"included fid ids {id_diff} are not valid")
 
         # Then reject candidates that are off CCD, have a bad pixel, are spoiled,
         # or are manually excluded, unless the candidates are forced/manually included.
         # Check for spoilers only against stars that are bright enough and on CCD
         # (within dither).
         idx_bads = []
-        stars_mask = (self.stars['mag'] < FID.fid_mag - ACA.col_spoiler_mag_diff) & (
-            np.abs(self.stars['row']) < 512 + self.dither_guide.row
+        stars_mask = (self.stars["mag"] < FID.fid_mag - ACA.col_spoiler_mag_diff) & (
+            np.abs(self.stars["row"]) < 512 + self.dither_guide.row
         )
         for idx, fid in enumerate(cand_fids):
             excluded = (
@@ -353,14 +353,14 @@ class FidTable(ACACatalogTable):
                 or self.has_column_spoiler(fid, self.stars, stars_mask)
                 or self.is_excluded(fid)
             )
-            included = fid['id'] in self.include_ids_fid
+            included = fid["id"] in self.include_ids_fid
             if not included and excluded:
                 idx_bads.append(idx)
 
         if idx_bads:
             cand_fids.remove_rows(idx_bads)
 
-        cand_fids['idx'] = np.arange(len(cand_fids), dtype=np.int64)
+        cand_fids["idx"] = np.arange(len(cand_fids), dtype=np.int64)
 
         # If stars are available then find stars that are bad for fid.
         if self.stars:
@@ -374,8 +374,8 @@ class FidTable(ACACatalogTable):
 
         :param fid: FidTable Row of candidate fid
         """
-        if (np.abs(fid['row']) + FID.ccd_edge_margin > ACA.max_ccd_row) or (
-            np.abs(fid['col']) + FID.ccd_edge_margin > ACA.max_ccd_col
+        if (np.abs(fid["row"]) + FID.ccd_edge_margin > ACA.max_ccd_row) or (
+            np.abs(fid["col"]) + FID.ccd_edge_margin > ACA.max_ccd_col
         ):
             self.log(
                 f'Rejecting fid id={fid["id"]} row,col='
@@ -391,7 +391,7 @@ class FidTable(ACACatalogTable):
 
         :param fid: FidTable Row of candidate fid light
         """
-        if fid['id'] in self.exclude_ids_fid:
+        if fid["id"] in self.exclude_ids_fid:
             self.log(f'Rejecting fid {fid["id"]}: manually excluded by exclude_ids_fid')
             return True
         else:
@@ -403,10 +403,10 @@ class FidTable(ACACatalogTable):
         :param fid: FidTable Row of candidate fid light
         """
         dp = FID.spoiler_margin / 5
-        r0 = int(fid['row'] - dp)
-        c0 = int(fid['col'] - dp)
-        r1 = int(fid['row'] + dp) + 1
-        c1 = int(fid['col'] + dp) + 1
+        r0 = int(fid["row"] - dp)
+        c0 = int(fid["col"] - dp)
+        r1 = int(fid["row"] + dp) + 1
+        c1 = int(fid["col"] + dp) + 1
         dark = self.dark[r0 + 512 : r1 + 512, c0 + 512 : c1 + 512]
 
         bad = dark > FID.hot_pixel_spoiler_limit
@@ -416,7 +416,7 @@ class FidTable(ACACatalogTable):
             vals = dark[rows, cols]
             self.log(
                 f'Rejecting fid {fid["id"]}: near hot or bad pixel(s) '
-                f'rows={rows + r0} cols={cols + c0} vals={vals}'
+                f"rows={rows + r0} cols={cols + c0} vals={vals}"
             )
             return True
         else:
@@ -440,32 +440,32 @@ class FidTable(ACACatalogTable):
 
         # Potential spoiler by position
         spoil = (
-            np.abs(stars['yang'] - fid['yang']) < FID.spoiler_margin + dither.y
-        ) & (np.abs(stars['zang'] - fid['zang']) < FID.spoiler_margin + dither.z)
+            np.abs(stars["yang"] - fid["yang"]) < FID.spoiler_margin + dither.y
+        ) & (np.abs(stars["zang"] - fid["zang"]) < FID.spoiler_margin + dither.z)
 
         if not np.any(spoil):
             # Make an empty table with same columns
-            fid['spoilers'] = []
+            fid["spoilers"] = []
         else:
             stars = stars[spoil]
 
             # Now check mags
-            red = stars['mag'] - fid['mag'] < 4.0
-            yellow = (stars['mag'] - fid['mag'] >= 4.0) & (
-                stars['mag'] - fid['mag'] < 5.0
+            red = stars["mag"] - fid["mag"] < 4.0
+            yellow = (stars["mag"] - fid["mag"] >= 4.0) & (
+                stars["mag"] - fid["mag"] < 5.0
             )
 
             spoilers = stars[red | yellow]
-            spoilers.sort('mag')
-            spoilers['warn'] = np.where(red[red | yellow], 'red', 'yellow')
-            fid['spoilers'] = spoilers
+            spoilers.sort("mag")
+            spoilers["warn"] = np.where(red[red | yellow], "red", "yellow")
+            fid["spoilers"] = spoilers
 
             if np.any(red):
-                fid['spoiler_score'] = 4
+                fid["spoiler_score"] = 4
             elif np.any(yellow):
-                fid['spoiler_score'] = 1
+                fid["spoiler_score"] = 1
 
-            if fid['spoiler_score'] != 0:
+            if fid["spoiler_score"] != 0:
                 self.log(
                     f'Set fid {fid["id"]} spoiler score to {fid["spoiler_score"]}',
                     level=1,
@@ -505,7 +505,7 @@ def get_fid_positions(detector, focus_offset, sim_offset):
     fa_pos = focus_offset_table[:, 1]  # Focus offset in meters
     xshift = np.interp(focus_offset, steps, fa_pos, left=np.nan, right=np.nan)
     if np.isnan(xshift):
-        raise ValueError('focus_offset is out of range')
+        raise ValueError("focus_offset is out of range")
 
     # Y and Z position of fids on focal plane in meters.
     # Apply SIM Z translation from sim offset to the nominal Z position.

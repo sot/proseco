@@ -73,7 +73,7 @@ def get_acq_catalog(obsid=0, **kwargs):
         ref_t_ccd=ACQ.imposter_mag_lim_ref_t_ccd,
     )
 
-    acqs.log(f'getting dark cal image at date={acqs.date} t_ccd={acqs.t_ccd:.1f}')
+    acqs.log(f"getting dark cal image at date={acqs.date} t_ccd={acqs.t_ccd:.1f}")
 
     # Probability of man_err for this observation with a given man_angle.  Used
     # for marginalizing probabilities over different man_errs.
@@ -86,7 +86,7 @@ def get_acq_catalog(obsid=0, **kwargs):
     # Fill in the entire acq['probs'].p_acqs table (which is actual a dict of keyed by
     # (box_size, man_err) tuples).
     for acq in acqs.cand_acqs:
-        acq['probs'] = AcqProbs(
+        acq["probs"] = AcqProbs(
             acqs, acq, acqs.dither, acqs.stars, acqs.dark, acqs.t_ccd, acqs.date
         )
 
@@ -105,22 +105,22 @@ def get_acq_catalog(obsid=0, **kwargs):
     # clear out the meta before sorting and then restore from a (light) copy.
     acqs_meta_copy = acqs.meta.copy()
     acqs.meta.clear()
-    acqs.sort('idx')
+    acqs.sort("idx")
     acqs.meta.update(acqs_meta_copy)
 
-    acqs['slot'] = np.arange(len(acqs), dtype=np.int64)
+    acqs["slot"] = np.arange(len(acqs), dtype=np.int64)
 
     # Add slot to cand_acqs table, putting in -99 if not selected as acq.
     # This is for convenience in downstream reporting or introspection.
     slots = [
-        acqs.get_id(acq['id'])['slot'] if acq['id'] in acqs['id'] else -99
+        acqs.get_id(acq["id"])["slot"] if acq["id"] in acqs["id"] else -99
         for acq in acqs.cand_acqs
     ]
-    acqs.cand_acqs['slot'] = np.array(slots, dtype=np.int64)
+    acqs.cand_acqs["slot"] = np.array(slots, dtype=np.int64)
 
     if len(acqs) < acqs.n_acq:
         acqs.log(
-            f'Selected only {len(acqs)} acq stars versus requested {acqs.n_acq}',
+            f"Selected only {len(acqs)} acq stars versus requested {acqs.n_acq}",
             warning=True,
         )
 
@@ -137,18 +137,18 @@ class AcqTable(ACACatalogTable):
     allowed_kwargs = ACACatalogTable.allowed_kwargs.copy()
 
     # Catalog type when plotting (None | 'FID' | 'ACQ' | 'GUI')
-    catalog_type = 'ACQ'
+    catalog_type = "ACQ"
 
     # Elements of meta that should not be directly serialized to pickle
     # (either too big or requires special handling).
-    pickle_exclude = ('stars', 'dark', 'bad_stars')
+    pickle_exclude = ("stars", "dark", "bad_stars")
 
     # Name of table.  Use to define default file names where applicable.
     # (e.g. `obs19387/acqs.pkl`).
-    name = 'acqs'
+    name = "acqs"
 
     # Required attributes
-    required_attrs = ('att', 'man_angle', 't_ccd_acq', 'date', 'dither_acq')
+    required_attrs = ("att", "man_angle", "t_ccd_acq", "date", "dither_acq")
 
     t_ccd = AliasAttribute()  # Maps t_ccd to t_ccd_acq base attribute
     dither = AliasAttribute()  # .. and likewise.
@@ -176,12 +176,12 @@ class AcqTable(ACACatalogTable):
         :returns: StarsTable of stars (empty)
         """
         out = super().empty()
-        out['halfw'] = np.full(fill_value=0, shape=(0,), dtype=np.int64)
+        out["halfw"] = np.full(fill_value=0, shape=(0,), dtype=np.int64)
         return out
 
     @property
     def fid_set(self):
-        if not hasattr(self, '_fid_set'):
+        if not hasattr(self, "_fid_set"):
             self._fid_set = ()
         return self._fid_set
 
@@ -192,21 +192,21 @@ class AcqTable(ACACatalogTable):
             return
 
         if self.fids is None:
-            raise ValueError('cannot set fid_set before setting fids')
+            raise ValueError("cannot set fid_set before setting fids")
 
         cand_fids = self.fids.cand_fids
         if cand_fids is None:
-            raise ValueError('cannot set fid_set before selecting candidate fids')
+            raise ValueError("cannot set fid_set before selecting candidate fids")
 
         self._fid_set = ()
-        cand_fids_ids = list(cand_fids['id'])
+        cand_fids_ids = list(cand_fids["id"])
         for fid_id in sorted(fid_ids):
             if fid_id in cand_fids_ids:
                 self._fid_set += (fid_id,)
             else:
                 self.log(
-                    f'Fid {fid_id} is not in available candidate '
-                    f'fid ids {cand_fids_ids}, ignoring',
+                    f"Fid {fid_id} is not in available candidate "
+                    f"fid ids {cand_fids_ids}, ignoring",
                     warning=True,
                 )
 
@@ -215,7 +215,7 @@ class AcqTable(ACACatalogTable):
         self.update_p_acq_column(self)
         self.calc_p_safe()
 
-    def make_report(self, rootdir='.'):
+    def make_report(self, rootdir="."):
         """
         Make summary HTML report for acq selection process and outputs.
 
@@ -239,7 +239,7 @@ class AcqTable(ACACatalogTable):
         :param acqs:
         """
         for acq in self:
-            acq['p_acq'] = acq['probs'].p_acq_marg(acq['halfw'], acqs)
+            acq["p_acq"] = acq["probs"].p_acq_marg(acq["halfw"], acqs)
 
     def update_idxs_halfws(self, idxs, halfws):
         """
@@ -251,14 +251,14 @@ class AcqTable(ACACatalogTable):
         :param halfws: list of search box half widths
         """
         if len(idxs) != len(self) or len(halfws) != len(self):
-            raise ValueError('input lists must match length of acqs')
+            raise ValueError("input lists must match length of acqs")
 
         for acq, idx, halfw in zip(self, idxs, halfws):
-            if acq['idx'] != idx:
+            if acq["idx"] != idx:
                 acq_new = self.cand_acqs[idx]
                 for name in self.colnames:
                     acq[name] = acq_new[name]
-            acq['halfw'] = halfw
+            acq["halfw"] = halfw
 
     def get_log_p_2_or_fewer(self):
         """
@@ -267,7 +267,7 @@ class AcqTable(ACACatalogTable):
 
         :returns: log10(probability) (float)
         """
-        n_or_fewer_probs = prob_n_acq(self['p_acq'])[1]
+        n_or_fewer_probs = prob_n_acq(self["p_acq"])[1]
         if len(n_or_fewer_probs) > 2:
             p_2_or_fewer = n_or_fewer_probs[2]
         else:
@@ -282,17 +282,17 @@ class AcqTable(ACACatalogTable):
         :returns: dict of observation information
         """
         keys = (
-            'obsid',
-            'att',
-            'date',
-            't_ccd_acq',
-            't_ccd_guide',
-            'man_angle',
-            'dither_acq',
-            'dither_guide',
-            'detector',
-            'sim_offset',
-            'focus_offset',
+            "obsid",
+            "att",
+            "date",
+            "t_ccd_acq",
+            "t_ccd_guide",
+            "man_angle",
+            "dither_acq",
+            "dither_guide",
+            "detector",
+            "sim_offset",
+            "focus_offset",
         )
         return {key: getattr(self, key) for key in keys}
 
@@ -306,18 +306,18 @@ class AcqTable(ACACatalogTable):
 
         """
         ok = (
-            (stars['CLASS'] == 0)
-            & (stars['mag'] > 5.3)
-            & (stars['mag'] < 11.0)
-            & (~np.isclose(stars['COLOR1'], 0.7))
-            & (stars['mag_err'] < 1.0)
-            & (stars['ASPQ1'] < 40)  # Mag err < 1.0 mag
+            (stars["CLASS"] == 0)
+            & (stars["mag"] > 5.3)
+            & (stars["mag"] < 11.0)
+            & (~np.isclose(stars["COLOR1"], 0.7))
+            & (stars["mag_err"] < 1.0)
+            & (stars["ASPQ1"] < 40)  # Mag err < 1.0 mag
             & (  # Less than 2 arcsec centroid offset due to nearby spoiler
-                stars['ASPQ2'] == 0
+                stars["ASPQ2"] == 0
             )
-            & (stars['POS_ERR'] < 3000)  # Proper motion less than 0.5 arcsec/yr
+            & (stars["POS_ERR"] < 3000)  # Proper motion less than 0.5 arcsec/yr
             & (  # Position error < 3.0 arcsec
-                (stars['VAR'] == -9999) | (stars['VAR'] == 5)
+                (stars["VAR"] == -9999) | (stars["VAR"] == 5)
             )  # Not known to vary > 0.2 mag
         )
         return ok
@@ -336,21 +336,21 @@ class AcqTable(ACACatalogTable):
         """
         ok = (
             self.get_candidates_mask(stars)
-            & (np.abs(stars['row']) < ACA.max_ccd_row)
+            & (np.abs(stars["row"]) < ACA.max_ccd_row)
             & (  # Max usable row
-                np.abs(stars['col']) < ACA.max_ccd_col
+                np.abs(stars["col"]) < ACA.max_ccd_col
             )  # Max usable col
         )
 
         cand_acqs = stars[ok]
 
-        cand_acqs.sort('mag')
+        cand_acqs.sort("mag")
         self.log(
-            'Filtering on CLASS, mag, COLOR1, row/col, ' 'mag_err, ASPQ1/2, POS_ERR:'
+            "Filtering on CLASS, mag, COLOR1, row/col, " "mag_err, ASPQ1/2, POS_ERR:"
         )
         self.log(
-            f'Reduced star list from {len(stars)} to '
-            f'{len(cand_acqs)} candidate acq stars'
+            f"Reduced star list from {len(stars)} to "
+            f"{len(cand_acqs)} candidate acq stars"
         )
 
         # Reject any candidate with a spoiler or bad star.  Collect a list of
@@ -358,7 +358,7 @@ class AcqTable(ACACatalogTable):
         # max_candidates.  Check for col spoilers only against stars that are
         # bright enough and on CCD
         goods = []
-        stars_mask = stars['mag'] < 11.5 - ACA.col_spoiler_mag_diff
+        stars_mask = stars["mag"] < 11.5 - ACA.col_spoiler_mag_diff
         for ii, acq in enumerate(cand_acqs):
             if (
                 self.in_bad_star_set(acq)
@@ -373,7 +373,7 @@ class AcqTable(ACACatalogTable):
 
         cand_acqs = cand_acqs[goods]
         self.log(
-            'Selected {} candidates with no spoiler (star within 3 mag and 30 arcsec)'.format(
+            "Selected {} candidates with no spoiler (star within 3 mag and 30 arcsec)".format(
                 len(cand_acqs)
             )
         )
@@ -382,9 +382,9 @@ class AcqTable(ACACatalogTable):
         # star is in the cand_acqs table.  Need to re-sort as well.
         if self.include_ids or self.include_halfws:
             self.process_include_ids(cand_acqs, stars)
-            cand_acqs.sort('mag')
+            cand_acqs.sort("mag")
 
-        cand_acqs.rename_column('COLOR1', 'color')
+        cand_acqs.rename_column("COLOR1", "color")
         # Drop all the other AGASC columns.  No longer useful.
         names = [name for name in cand_acqs.colnames if not name.isupper()]
         cand_acqs = AcqTable(cand_acqs[names])
@@ -394,24 +394,24 @@ class AcqTable(ACACatalogTable):
 
         # Make this suitable for plotting
         n_cand = len(cand_acqs)
-        cand_acqs['idx'] = np.arange(n_cand, dtype=np.int64)
-        cand_acqs['type'] = np.full(n_cand, 'ACQ')
-        cand_acqs['halfw'] = np.array(halfws, dtype=np.int64)
+        cand_acqs["idx"] = np.arange(n_cand, dtype=np.int64)
+        cand_acqs["type"] = np.full(n_cand, "ACQ")
+        cand_acqs["halfw"] = np.array(halfws, dtype=np.int64)
 
         # Acq prob for box_size=halfw, marginalized over man_err
-        cand_acqs['p_acq'] = np.full(n_cand, -999.0)
-        cand_acqs['probs'] = np.full(n_cand, None)  # Filled in with AcqProb objects
-        cand_acqs['spoilers'] = np.full(
+        cand_acqs["p_acq"] = np.full(n_cand, -999.0)
+        cand_acqs["probs"] = np.full(n_cand, None)  # Filled in with AcqProb objects
+        cand_acqs["spoilers"] = np.full(
             n_cand, None
         )  # Filled in with Table of spoilers
-        cand_acqs['imposters'] = np.full(
+        cand_acqs["imposters"] = np.full(
             n_cand, None
         )  # Filled in with Table of imposters
         # Cached value of box_size + man_err for spoilers
-        cand_acqs['spoilers_box'] = np.full(n_cand, None)
+        cand_acqs["spoilers_box"] = np.full(n_cand, None)
         # Cached value of box_size + dither for imposters
-        cand_acqs['imposters_box'] = np.full(n_cand, None)
-        cand_acqs['box_sizes'] = box_sizes_list
+        cand_acqs["imposters_box"] = np.full(n_cand, None)
+        cand_acqs["box_sizes"] = box_sizes_list
 
         return cand_acqs
 
@@ -443,7 +443,7 @@ class AcqTable(ACACatalogTable):
         mag_9 = snr_mag_for_t_ccd(self.t_ccd, ref_mag=9.0, ref_t_ccd=-10.0)
 
         for cand_acq in cand_acqs:
-            mag = cand_acq['mag']
+            mag = cand_acq["mag"]
             if mag < mag_8:
                 max_box_size = max(max_man_err, 100)
             elif mag < mag_9:
@@ -462,11 +462,11 @@ class AcqTable(ACACatalogTable):
         :param acq: AcqTable Row
         :returns: bool
         """
-        if acq['id'] in ACA.bad_star_set:
+        if acq["id"] in ACA.bad_star_set:
             self.log(
-                f'Rejecting star {acq["id"]} which is in bad star list', id=acq['id']
+                f'Rejecting star {acq["id"]} which is in bad star list', id=acq["id"]
             )
-            idx = self.stars.get_id_idx(acq['id'])
+            idx = self.stars.get_id_idx(acq["id"])
             self.bad_stars_mask[idx] = True
 
             return True
@@ -481,15 +481,15 @@ class AcqTable(ACACatalogTable):
         :param stars: StarsTable
         :returns: bool
         """
-        if acq['ASPQ1'] == 0:
+        if acq["ASPQ1"] == 0:
             return False
 
         dy, dz, frac_norm = calc_spoiler_impact(acq, stars)
         if np.abs(dy) > 1.5 or np.abs(dz) > 1.5 or frac_norm < 0.95:
             self.log(
                 f'Candidate acq star {acq["id"]} rejected due to nearby spoiler(s) '
-                f'dy={dy:.1f} dz={dz:.1f} frac_norm={frac_norm:.2f}',
-                id=acq['id'],
+                f"dy={dy:.1f} dz={dz:.1f} frac_norm={frac_norm:.2f}",
+                id=acq["id"],
             )
             return True
         else:
@@ -509,11 +509,11 @@ class AcqTable(ACACatalogTable):
             self.include_halfws = [0] * len(self.include_ids)
 
         if len(self.include_ids) != len(self.include_halfws):
-            raise ValueError('include_ids and include_halfws must have same length')
+            raise ValueError("include_ids and include_halfws must have same length")
 
         # Ensure values are valid box_sizes
         grid_func = interp1d(
-            ACQ.box_sizes, ACQ.box_sizes, kind='nearest', fill_value='extrapolate'
+            ACQ.box_sizes, ACQ.box_sizes, kind="nearest", fill_value="extrapolate"
         )
         self.include_optimize_halfw_ids = [
             acq_id
@@ -548,8 +548,8 @@ class AcqTable(ACACatalogTable):
         :param acq_indices: list of indices into cand_acqs of selected stars
         :param box_sizes: list of box sizes of selected stars
         """
-        self.log(f'Find stars with best acq prob for min_p_acq={min_p_acq}')
-        self.log(f'Current catalog: acq_indices={acq_indices} box_sizes={box_sizes}')
+        self.log(f"Find stars with best acq prob for min_p_acq={min_p_acq}")
+        self.log(f"Current catalog: acq_indices={acq_indices} box_sizes={box_sizes}")
 
         for box_size in ACQ.box_sizes:
             # Get array of marginalized (over man_err) p_acq values corresponding
@@ -558,21 +558,21 @@ class AcqTable(ACACatalogTable):
             # probability to zero.  This happens for small maneuver angles where
             # acq.box_sizes might be only [60] or [60, 80].
             p_acqs_for_box = np.zeros(len(cand_acqs))
-            my_box_sizes = cand_acqs['box_sizes']
-            my_probs = cand_acqs['probs']
+            my_box_sizes = cand_acqs["box_sizes"]
+            my_probs = cand_acqs["probs"]
             for idx in range(len(cand_acqs)):
                 if box_size in my_box_sizes[idx]:
                     p_acqs_for_box[idx] = my_probs[idx].p_acq_marg(box_size, self)
 
-            self.log(f'Trying search box size {box_size} arcsec', level=1)
+            self.log(f"Trying search box size {box_size} arcsec", level=1)
 
             if np.all(p_acqs_for_box < min_p_acq):
                 self.log(
-                    f'No acceptable candidates (probably small man angle)', level=2
+                    f"No acceptable candidates (probably small man angle)", level=2
                 )
                 continue
 
-            indices = np.argsort(-p_acqs_for_box, kind='mergesort')
+            indices = np.argsort(-p_acqs_for_box, kind="mergesort")
             for acq_idx in indices:
                 if acq_idx in acq_indices:
                     continue
@@ -580,17 +580,17 @@ class AcqTable(ACACatalogTable):
                 acq = cand_acqs[acq_idx]
 
                 # Don't consider any stars in the exclude list
-                if acq['id'] in self.exclude_ids:
+                if acq["id"] in self.exclude_ids:
                     continue
 
                 p_acq = p_acqs_for_box[acq_idx]
                 accepted = p_acq > min_p_acq
-                status = 'ACCEPTED' if accepted else 'rejected'
+                status = "ACCEPTED" if accepted else "rejected"
                 self.log(
                     f'Star idx={acq_idx:2d} id={acq["id"]:10d} '
                     f'box={box_size:3d} mag={acq["mag"]:5.1f} p_acq={p_acq:.3f} '
-                    f'{status}',
-                    id=acq['id'],
+                    f"{status}",
+                    id=acq["id"],
                     level=2,
                 )
 
@@ -599,7 +599,7 @@ class AcqTable(ACACatalogTable):
                     box_sizes.append(box_size)
 
                 if len(acq_indices) == self.n_acq:
-                    self.log(f'Found {self.n_acq} acq stars, done')
+                    self.log(f"Found {self.n_acq} acq stars, done")
                     return
 
     def get_initial_catalog(self):
@@ -618,7 +618,7 @@ class AcqTable(ACACatalogTable):
         """
         cand_acqs = self.cand_acqs
 
-        self.log(f'Getting initial catalog from {len(cand_acqs)} candidates')
+        self.log(f"Getting initial catalog from {len(cand_acqs)} candidates")
 
         # Build up the initial catalog as a list of indices into cand_acqs
         # and the corresponding initial box size (halfw).
@@ -628,12 +628,12 @@ class AcqTable(ACACatalogTable):
         # Start with force-include stars, if any.
         if self.include_ids:
             self.log(
-                f'Processing force-include ids={self.include_ids} '
-                f'halfws={self.include_halfws}'
+                f"Processing force-include ids={self.include_ids} "
+                f"halfws={self.include_halfws}"
             )
 
             # Re-order candidate acqs to put those in the include list first
-            ok = np.in1d(cand_acqs['id'], self.include_ids)
+            ok = np.in1d(cand_acqs["id"], self.include_ids)
             idxs = np.concatenate([np.where(ok)[0], np.where(~ok)[0]])
             cand_acqs = cand_acqs[idxs]
 
@@ -648,7 +648,7 @@ class AcqTable(ACACatalogTable):
 
             # This should never happen but be careful
             if len(acq_indices) != n_include:
-                raise RuntimeError(f'failure in force-include')
+                raise RuntimeError(f"failure in force-include")
 
             # For include stars where the halfw is not going to be optimized
             # then then override the box size that was just found with the
@@ -658,7 +658,7 @@ class AcqTable(ACACatalogTable):
                     # Find the position in box_sizes that corresponds to include_id
                     # and set to the specified include_halfw.
                     for idx in range(len(acq_indices)):
-                        if include_id == cand_acqs[acq_indices[idx]]['id']:
+                        if include_id == cand_acqs[acq_indices[idx]]["id"]:
                             box_sizes[idx] = include_halfw
                             break
 
@@ -675,8 +675,8 @@ class AcqTable(ACACatalogTable):
         # Make all the not-accepted candidate acqs have halfw=120 as a reasonable
         # default and then set the accepted acqs to the best box_size.  Then set
         # p_acq to the marginalized acquisition probability.
-        cand_acqs['halfw'] = np.minimum(120, cand_acqs['halfw'])
-        cand_acqs['halfw'][acq_indices] = box_sizes
+        cand_acqs["halfw"] = np.minimum(120, cand_acqs["halfw"])
+        cand_acqs["halfw"][acq_indices] = box_sizes
         cand_acqs.update_p_acq_column(self)
 
         # Finally select the initial catalog
@@ -712,7 +712,7 @@ class AcqTable(ACACatalogTable):
         spoilers = get_intruders(
             acq,
             ext_box_size,
-            'spoilers',
+            "spoilers",
             n_sigma=2.0,  # TO DO: put to characteristics
             get_func=get_spoiler_stars,
             kwargs=kwargs,
@@ -721,9 +721,9 @@ class AcqTable(ACACatalogTable):
         # Imposters
         ext_box_size = box_size + dither
         kwargs = dict(
-            star_row=acq['row'],
-            star_col=acq['col'],
-            maxmag=acq['mag'] + acq['mag_err'],
+            star_row=acq["row"],
+            star_col=acq["col"],
+            maxmag=acq["mag"] + acq["mag_err"],
             box_size=ext_box_size,
             dark=dark,
             bgd=bgd,  # TO DO deal with this
@@ -732,14 +732,14 @@ class AcqTable(ACACatalogTable):
         imposters = get_intruders(
             acq,
             ext_box_size,
-            'imposters',
+            "imposters",
             n_sigma=1.0,  # TO DO: put to characteristics
             get_func=get_imposter_stars,
             kwargs=kwargs,
         )
 
-        mags = np.concatenate([spoilers['mag'], imposters['mag']])
-        mag_errs = np.concatenate([spoilers['mag_err'], imposters['mag_err']])
+        mags = np.concatenate([spoilers["mag"], imposters["mag"]])
+        mag_errs = np.concatenate([spoilers["mag_err"], imposters["mag_err"]])
         prob = calc_p_brightest_compare(acq, mags, mag_errs)
 
         return prob
@@ -761,8 +761,8 @@ class AcqTable(ACACatalogTable):
 
         p_no_safe = 1.0
 
-        self_halfws = self['halfw']
-        self_probs = self['probs']
+        self_halfws = self["halfw"]
+        self_probs = self["probs"]
 
         for man_err, p_man_err in zip(ACQ.man_errs, self.p_man_errs):
             if p_man_err == 0.0:
@@ -779,11 +779,11 @@ class AcqTable(ACACatalogTable):
             p2 = p_n_cum[2]
 
             if verbose:
-                self.log(f'man_err = {man_err}, p_man_err = {p_man_err}')
+                self.log(f"man_err = {man_err}, p_man_err = {p_man_err}")
                 self.log(
-                    'p_acqs =' + ' '.join(['{:.3f}'.format(val) for val in p_acqs])
+                    "p_acqs =" + " ".join(["{:.3f}".format(val) for val in p_acqs])
                 )
-                self.log('log10(p 2_or_fewer) = {:.2f}'.format(np.log10(p2)))
+                self.log("log10(p 2_or_fewer) = {:.2f}".format(np.log10(p2)))
 
             p_no_safe *= 1 - p_man_err * p2
 
@@ -803,28 +803,28 @@ class AcqTable(ACACatalogTable):
         :returns improved, p_safe: whether p_safe was improved and the new value
         """
         acq = self[idx]
-        orig_halfw = acq['halfw']
-        orig_p_acq = acq['probs'].p_acq_marg(acq['halfw'], self)
+        orig_halfw = acq["halfw"]
+        orig_p_acq = acq["probs"].p_acq_marg(acq["halfw"], self)
 
-        self.log(f'Optimizing halfw for idx={idx} id={acq["id"]}', id=acq['id'])
+        self.log(f'Optimizing halfw for idx={idx} id={acq["id"]}', id=acq["id"])
 
         # Compute p_safe for each possible halfw for the current star
         p_safes = []
-        box_sizes = acq['box_sizes']
+        box_sizes = acq["box_sizes"]
         for box_size in box_sizes:
-            new_p_acq = acq['probs'].p_acq_marg(box_size, self)
+            new_p_acq = acq["probs"].p_acq_marg(box_size, self)
             # Do not reduce marginalized p_acq to below 0.1.  It can happen that p_safe
             # goes down very slightly with an increase in box size from the original,
             # and then the box size gets stuck there because of the deadband for later
             # reducing box size.
             if new_p_acq < 0.1 and new_p_acq < orig_p_acq:
                 self.log(
-                    f'Skipping halfw {box_size}: new marg p_acq < 0.1 and new < orig'
-                    f' ({new_p_acq:.3f} < {orig_p_acq:.3f})'
+                    f"Skipping halfw {box_size}: new marg p_acq < 0.1 and new < orig"
+                    f" ({new_p_acq:.3f} < {orig_p_acq:.3f})"
                 )
                 p_safes.append(p_safe)
             else:
-                acq['halfw'] = box_size
+                acq["halfw"] = box_size
                 p_safes.append(self.calc_p_safe(verbose))
 
         # Find best p_safe
@@ -844,25 +844,25 @@ class AcqTable(ACACatalogTable):
             f'{np.log10(p):.2f} ({box_size}")'
             for p, box_size in zip(p_safes, box_sizes)
         ]
-        self.log('p_safes={}'.format(', '.join(p_safes_strs)), level=1, id=acq['id'])
+        self.log("p_safes={}".format(", ".join(p_safes_strs)), level=1, id=acq["id"])
         self.log(
-            'min_p_safe={:.2f} p_safe={:.2f} min_halfw={} orig_halfw={} improved={}'.format(
+            "min_p_safe={:.2f} p_safe={:.2f} min_halfw={} orig_halfw={} improved={}".format(
                 np.log10(min_p_safe), np.log10(p_safe), min_halfw, orig_halfw, improved
             ),
             level=1,
-            id=acq['id'],
+            id=acq["id"],
         )
 
         if improved:
             self.log(
-                f'Update acq idx={idx} halfw from {orig_halfw} to {min_halfw}',
+                f"Update acq idx={idx} halfw from {orig_halfw} to {min_halfw}",
                 level=1,
-                id=acq['id'],
+                id=acq["id"],
             )
             p_safe = min_p_safe
-            acq['halfw'] = min_halfw
+            acq["halfw"] = min_halfw
         else:
-            acq['halfw'] = orig_halfw
+            acq["halfw"] = orig_halfw
 
         return p_safe, improved
 
@@ -875,7 +875,7 @@ class AcqTable(ACACatalogTable):
         :param verbose: include additional information in the run log
         """
         p_safe = self.calc_p_safe()
-        idxs = self['p_acq'].argsort()
+        idxs = self["p_acq"].argsort()
 
         # Any updates made?
         any_improved = False
@@ -884,7 +884,7 @@ class AcqTable(ACACatalogTable):
             # Don't optimize halfw for a star that is specified for inclusion
             # with a valid (non-zero) halfw set.  The set of include_optimize_halfw_ids is
             # any ids where halfw=0 was provided.
-            if self['id'][idx] in set(self.include_ids) - set(
+            if self["id"][idx] in set(self.include_ids) - set(
                 self.include_optimize_halfw_ids
             ):
                 continue
@@ -901,11 +901,11 @@ class AcqTable(ACACatalogTable):
         :param verbose: include additional information in the run log
         """
         # If every acq star is specified as included, then no optimization
-        if all(acq['id'] in self.include_ids for acq in self):
+        if all(acq["id"] in self.include_ids for acq in self):
             return
 
         p_safe = self.calc_p_safe(verbose=True)
-        self.log('initial log10(p_safe)={:.2f}'.format(np.log10(p_safe)))
+        self.log("initial log10(p_safe)={:.2f}".format(np.log10(p_safe)))
 
         # Start by optimizing the half-widths of the initial catalog
         for _ in range(5):
@@ -913,24 +913,24 @@ class AcqTable(ACACatalogTable):
             if not improved:
                 break
 
-        self.log(f'After optimizing initial catalog p_safe = {p_safe:.5f}')
+        self.log(f"After optimizing initial catalog p_safe = {p_safe:.5f}")
 
         # Now try to swap in a new star from the candidate list and see if
         # it can improve p_safe.  Skips candidates already in the catalog
         # or specifically excluded.
-        skip_acq_ids = set(self['id']) | set(self.exclude_ids)
+        skip_acq_ids = set(self["id"]) | set(self.exclude_ids)
         for cand_acq in self.cand_acqs:
-            cand_id = cand_acq['id']
+            cand_id = cand_acq["id"]
             if cand_id in skip_acq_ids:
                 continue
 
             # Get the index of the worst p_acq in the catalog, excluding acq stars
             # that are in include_ids (since they are not to be replaced).
-            ok = [acq['id'] not in self.include_ids for acq in self]
+            ok = [acq["id"] not in self.include_ids for acq in self]
             # acqs = self[ok]
-            acqs_probs_ok = self['probs'][ok]
-            acqs_halfw_ok = self['halfw'][ok]
-            acqs_id_ok = self['id'][ok]
+            acqs_probs_ok = self["probs"][ok]
+            acqs_halfw_ok = self["halfw"][ok]
+            acqs_id_ok = self["id"][ok]
 
             # Sort by the marginalized acq probability for the current box size
             p_acqs = [
@@ -938,13 +938,13 @@ class AcqTable(ACACatalogTable):
                 for acq_probs, acq_halfw in zip(acqs_probs_ok, acqs_halfw_ok)
             ]
             # TODO: performance?
-            idx_worst = np.argsort(p_acqs, kind='mergesort')[0]
+            idx_worst = np.argsort(p_acqs, kind="mergesort")[0]
 
             idx = self.get_id_idx(acqs_id_ok[idx_worst])
 
             self.log(
-                'Trying to use {} mag={:.2f} to replace idx={} with p_acq={:.3f}'.format(
-                    cand_id, cand_acq['mag'], idx, p_acqs[idx_worst]
+                "Trying to use {} mag={:.2f} to replace idx={} with p_acq={:.3f}".format(
+                    cand_id, cand_acq["mag"], idx, p_acqs[idx_worst]
                 ),
                 id=cand_id,
             )
@@ -960,12 +960,12 @@ class AcqTable(ACACatalogTable):
             # comparable but with a bigger box, then accept it and do one round of
             # full catalog box-size optimization.
             improved = (new_p_safe / p_safe < 0.9) or (
-                new_p_safe < p_safe and self['halfw'][idx] > orig_acq['halfw']
+                new_p_safe < p_safe and self["halfw"][idx] > orig_acq["halfw"]
             )
             if improved:
                 p_safe, improved = self.optimize_acqs_halfw(verbose)
                 self.calc_p_safe(verbose=True)
-                self.log(f'  accepted, new p_safe = {p_safe:.5f}', id=cand_id)
+                self.log(f"  accepted, new p_safe = {p_safe:.5f}", id=cand_id)
             else:
                 self[idx] = orig_acq
 
@@ -1001,17 +1001,17 @@ def get_spoiler_stars(stars, acq, box_size):
     stars = stars.as_array()
     # 1-sigma of difference of stars['mag'] - acq['mag']
     # TO DO: lower limit clip?
-    mag_diff_err = np.sqrt(stars['mag_err'] ** 2 + acq['mag_err'] ** 2)
+    mag_diff_err = np.sqrt(stars["mag_err"] ** 2 + acq["mag_err"] ** 2)
 
     # Stars in extended box and within 3-sigma (99.7%)
     ok = (
-        (np.abs(stars['yang'] - acq['yang']) < box_size)
-        & (np.abs(stars['zang'] - acq['zang']) < box_size)
-        & (stars['mag'] - acq['mag'] < 3 * mag_diff_err)
-        & (stars['id'] != acq['id'])
+        (np.abs(stars["yang"] - acq["yang"]) < box_size)
+        & (np.abs(stars["zang"] - acq["zang"]) < box_size)
+        & (stars["mag"] - acq["mag"] < 3 * mag_diff_err)
+        & (stars["id"] != acq["id"])
     )
     spoilers = stars[ok]
-    spoilers.sort(order=['mag'])
+    spoilers.sort(order=["mag"])
 
     return spoilers
 
@@ -1160,21 +1160,21 @@ def get_imposter_stars(
 
     if len(outs) > 0:
         dtype = [
-            ('row', '<f8'),
-            ('col', '<f8'),
-            ('d_row', '<f8'),
-            ('d_col', '<f8'),
-            ('yang', '<f8'),
-            ('zang', '<f8'),
-            ('row0', '<i8'),
-            ('col0', '<i8'),
-            ('img', 'f8', (8, 8)),
-            ('img_sum', '<f8'),
-            ('mag', '<f8'),
-            ('mag_err', '<f8'),
+            ("row", "<f8"),
+            ("col", "<f8"),
+            ("d_row", "<f8"),
+            ("d_col", "<f8"),
+            ("yang", "<f8"),
+            ("zang", "<f8"),
+            ("row0", "<i8"),
+            ("col0", "<i8"),
+            ("img", "f8", (8, 8)),
+            ("img_sum", "<f8"),
+            ("mag", "<f8"),
+            ("mag_err", "<f8"),
         ]
         outs = np.rec.fromrecords(outs, dtype=dtype)
-        outs.sort(order=['mag'])
+        outs.sort(order=["mag"])
 
     return outs
 
@@ -1195,11 +1195,11 @@ def calc_p_brightest_compare(acq, mags, mag_errs):
         return 1.0
 
     n_pts = 100
-    x0, x1 = stats.norm.ppf([0.001, 0.999], loc=acq['mag'], scale=acq['mag_err'])
+    x0, x1 = stats.norm.ppf([0.001, 0.999], loc=acq["mag"], scale=acq["mag_err"])
     x = np.linspace(x0, x1, n_pts)
     dx = (x1 - x0) / (n_pts - 1)
 
-    acq_pdf = stats.norm.pdf(x, loc=acq['mag'], scale=acq['mag_err'])
+    acq_pdf = stats.norm.pdf(x, loc=acq["mag"], scale=acq["mag_err"])
 
     sp_cdfs = []
     for mag, mag_err in zip(mags, mag_errs):
@@ -1229,7 +1229,7 @@ def get_intruders(acq, box_size, name, n_sigma, get_func, kwargs):
 
     :returns: dict with keys yang, zang, mag, mag_err.
     """
-    name_box = name + '_box'
+    name_box = name + "_box"
     intruders = acq[name]
     box_size = ACABox(box_size)
 
@@ -1239,8 +1239,8 @@ def get_intruders(acq, box_size, name, n_sigma, get_func, kwargs):
 
         if len(intruders) > 0:
             # Clip to within n_sigma.  d_mag < 0 for intruder brighter than acq
-            d_mag = intruders['mag'] - acq['mag']
-            d_mag_err = np.sqrt(intruders['mag_err'] ** 2 + acq['mag_err'] ** 2)
+            d_mag = intruders["mag"] - acq["mag"]
+            d_mag_err = np.sqrt(intruders["mag_err"] ** 2 + acq["mag_err"] ** 2)
             ok = d_mag < n_sigma * d_mag_err
             intruders = intruders[ok]
         acq[name] = intruders
@@ -1248,16 +1248,16 @@ def get_intruders(acq, box_size, name, n_sigma, get_func, kwargs):
     else:
         # Ensure cached spoilers cover the current case.
         if box_size > acq[name_box]:
-            raise ValueError(f'box_size is greater than {name_box}')
+            raise ValueError(f"box_size is greater than {name_box}")
 
-    colnames = ['yang', 'zang', 'mag', 'mag_err']
+    colnames = ["yang", "zang", "mag", "mag_err"]
     if len(intruders) == 0:
         intruders = {name: np.array([], dtype=np.float64) for name in colnames}
     else:
-        ok = (np.abs(intruders['yang'] - acq['yang']) < box_size.y) & (
-            np.abs(intruders['zang'] - acq['zang']) < box_size.z
+        ok = (np.abs(intruders["yang"] - acq["yang"]) < box_size.y) & (
+            np.abs(intruders["zang"] - acq["zang"]) < box_size.z
         )
-        intruders = {name: intruders[name][ok] for name in ['mag', 'mag_err']}
+        intruders = {name: intruders[name][ok] for name in ["mag", "mag_err"]}
 
     return intruders
 
@@ -1358,7 +1358,7 @@ class AcqProbs:
         self._p_fid_id_spoiler = {}
 
         # Convert table row to plain dict for persistence
-        self.acq = {key: acq[key] for key in ('yang', 'zang')}
+        self.acq = {key: acq[key] for key in ("yang", "zang")}
 
         for box_size in ACQ.box_sizes:
             # Need to iterate over man_errs in reverse order because calc_p_brightest
@@ -1382,8 +1382,8 @@ class AcqProbs:
             p_acq_model = acq_success_prob(
                 date=date,
                 t_ccd=t_ccd,
-                mag=acq['mag'],
-                color=acq['color'],
+                mag=acq["mag"],
+                color=acq["color"],
                 spoiler=False,
                 halfwidth=box_size,
             )
@@ -1391,7 +1391,7 @@ class AcqProbs:
 
         # Probability star is in acq box (function of man_err and dither only)
         for man_err in ACQ.man_errs:
-            p_on_ccd = calc_p_on_ccd(acq['row'], acq['col'], box_size=man_err + dither)
+            p_on_ccd = calc_p_on_ccd(acq["row"], acq["col"], box_size=man_err + dither)
             self._p_on_ccd[man_err] = p_on_ccd
 
     def p_on_ccd(self, man_err):
@@ -1478,8 +1478,8 @@ class AcqProbs:
             fids = acqs.fids
             if fids is None:
                 acqs.add_warning(
-                    'Requested fid spoiler probability without '
-                    'setting acqs.fids first'
+                    "Requested fid spoiler probability without "
+                    "setting acqs.fids first"
                 )
                 return 1.0
 
@@ -1490,9 +1490,9 @@ class AcqProbs:
                 # This should not happen, but ignore with a warning in any case.  Non-candidate
                 # fid cannot spoil an acq star.
                 acqs.add_warning(
-                    f'Requested fid spoiler probability for fid '
-                    f'{acqs.detector}-{fid_id} but it is '
-                    f'not a candidate'
+                    f"Requested fid spoiler probability for fid "
+                    f"{acqs.detector}-{fid_id} but it is "
+                    f"not a candidate"
                 )
             else:
                 if fids.spoils(fid, self.acq, box_size):
@@ -1515,9 +1515,9 @@ def get_p_man_err(man_err, man_angle):
     pmea = ACQ.p_man_errs_angles  # [0, 5, 20, 40, 60, 80, 100, 120, 180]
     pme = ACQ.p_man_errs
     man_angle_idx = np.searchsorted(pmea, man_angle) if (man_angle > 0) else 1
-    name = '{}-{}'.format(pmea[man_angle_idx - 1], pmea[man_angle_idx])
+    name = "{}-{}".format(pmea[man_angle_idx - 1], pmea[man_angle_idx])
 
-    man_err_idx = np.searchsorted(pme['man_err_hi'], man_err)
+    man_err_idx = np.searchsorted(pme["man_err_hi"], man_err)
     if man_err_idx == len(pme):
         raise ValueError(f'man_err must be <= {pme["man_err_hi"]}')
 

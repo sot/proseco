@@ -5,7 +5,7 @@ import os
 import matplotlib
 from Quaternion import Quat
 
-matplotlib.use('agg')  # noqa
+matplotlib.use("agg")  # noqa
 
 import pickle
 from pathlib import Path
@@ -21,33 +21,33 @@ from ..core import ACACatalogTable, StarsTable, includes_for_obsid
 from ..fid import FidTable, get_fid_catalog
 from .test_common import DARK40, OBS_INFO, STD_INFO, mod_std_info
 
-HAS_SC_ARCHIVE = Path(mica.starcheck.starcheck.FILES['data_root']).exists()
-TEST_COLS = 'slot idx id type sz yang zang dim res halfw'.split()
+HAS_SC_ARCHIVE = Path(mica.starcheck.starcheck.FILES["data_root"]).exists()
+TEST_COLS = "slot idx id type sz yang zang dim res halfw".split()
 
 # Do not use the AGASC supplement in testing by default since mags can change
-os.environ[agasc.SUPPLEMENT_ENABLED_ENV] = 'False'
+os.environ[agasc.SUPPLEMENT_ENABLED_ENV] = "False"
 
-HAS_MAG_SUPPLEMENT = len(agasc.get_supplement_table('mags')) > 0
+HAS_MAG_SUPPLEMENT = len(agasc.get_supplement_table("mags")) > 0
 
 
 def test_allowed_kwargs():
     """Test #332 where allowed_kwargs class attribute is unique for each subclass"""
     new_kwargs = ACATable.allowed_kwargs - ACACatalogTable.allowed_kwargs
     assert new_kwargs == {
-        'call_args',
-        'version',
-        't_ccd_eff_acq',
-        't_ccd_eff_guide',
-        't_ccd_penalty_limit',
-        'duration',
-        'target_name',
+        "call_args",
+        "version",
+        "t_ccd_eff_acq",
+        "t_ccd_eff_guide",
+        "t_ccd_penalty_limit",
+        "duration",
+        "target_name",
     }
 
     new_kwargs = FidTable.allowed_kwargs - ACACatalogTable.allowed_kwargs
-    assert new_kwargs == {'acqs', 'include_ids', 'exclude_ids'}
+    assert new_kwargs == {"acqs", "include_ids", "exclude_ids"}
 
 
-@pytest.mark.skipif(not HAS_SC_ARCHIVE, reason='Test requires starcheck archive')
+@pytest.mark.skipif(not HAS_SC_ARCHIVE, reason="Test requires starcheck archive")
 def test_get_aca_catalog_49531():
     """
     Test of getting an ER using the mica.starcheck archive for getting the
@@ -61,9 +61,9 @@ def test_get_aca_catalog_49531():
     assert len(aca.fids) == 0
 
 
-@pytest.mark.skipif(not HAS_SC_ARCHIVE, reason='Test requires starcheck archive')
+@pytest.mark.skipif(not HAS_SC_ARCHIVE, reason="Test requires starcheck archive")
 @pytest.mark.skipif(
-    not HAS_MAG_SUPPLEMENT, reason='No estimated mags in AGASC supplement'
+    not HAS_MAG_SUPPLEMENT, reason="No estimated mags in AGASC supplement"
 )
 def test_get_aca_catalog_20603_with_supplement():
     """Test that results for 20603 are different if the AGASC supplement is used."""
@@ -80,14 +80,14 @@ def test_get_aca_catalog_20603_with_supplement():
         aca = get_aca_catalog(**kwargs)
 
     assert len(aca_no.guides) != len(aca.guides) or np.any(
-        aca_no.guides['mag'] != aca.guides['mag']
+        aca_no.guides["mag"] != aca.guides["mag"]
     )
     assert len(aca_no.acqs) != len(aca.acqs) or np.any(
-        aca_no.acqs['mag'] != aca.acqs['mag']
+        aca_no.acqs["mag"] != aca.acqs["mag"]
     )
 
 
-@pytest.mark.skipif(not HAS_SC_ARCHIVE, reason='Test requires starcheck archive')
+@pytest.mark.skipif(not HAS_SC_ARCHIVE, reason="Test requires starcheck archive")
 def test_get_aca_catalog_20603():
     """Put it all together.  Regression test for selected stars."""
     # Force not using a bright star so there is a GUI-only (not BOT) star
@@ -96,18 +96,18 @@ def test_get_aca_catalog_20603():
     )
     # Expected 2 fids, 4 guide, 7 acq
     exp = [
-        'slot idx     id    type  sz   yang     zang   dim res halfw',
-        '---- --- --------- ---- --- -------- -------- --- --- -----',
-        '   0   1         4  FID 8x8  2140.23   166.63   1   1    25',
-        '   1   2         5  FID 8x8 -1826.28   160.17   1   1    25',
-        '   2   3 116791824  BOT 6x6   622.00  -953.60  28   1   160',
-        '   3   4  40114416  BOT 6x6   394.22  1204.43  24   1   140',
-        '   4   5  40112304  BOT 6x6 -1644.35  2032.47  12   1    80',
-        '   5   6  40113544  GUI 6x6   102.74  1133.37   1   1    25',
-        '   0   7 116923496  ACQ 6x6 -1337.79  1049.27  20   1   120',
-        '   1   8 116923528  ACQ 6x6 -2418.65  1088.40  28   1   160',
-        '   5   9 116791744  ACQ 6x6   985.38 -1210.19  28   1   160',
-        '   6  10  40108048  ACQ 6x6     2.21  1619.17  24   1   140',
+        "slot idx     id    type  sz   yang     zang   dim res halfw",
+        "---- --- --------- ---- --- -------- -------- --- --- -----",
+        "   0   1         4  FID 8x8  2140.23   166.63   1   1    25",
+        "   1   2         5  FID 8x8 -1826.28   160.17   1   1    25",
+        "   2   3 116791824  BOT 6x6   622.00  -953.60  28   1   160",
+        "   3   4  40114416  BOT 6x6   394.22  1204.43  24   1   140",
+        "   4   5  40112304  BOT 6x6 -1644.35  2032.47  12   1    80",
+        "   5   6  40113544  GUI 6x6   102.74  1133.37   1   1    25",
+        "   0   7 116923496  ACQ 6x6 -1337.79  1049.27  20   1   120",
+        "   1   8 116923528  ACQ 6x6 -2418.65  1088.40  28   1   160",
+        "   5   9 116791744  ACQ 6x6   985.38 -1210.19  28   1   160",
+        "   6  10  40108048  ACQ 6x6     2.21  1619.17  24   1   140",
     ]
 
     assert aca[TEST_COLS].pformat(max_width=-1) == exp
@@ -122,10 +122,10 @@ def test_get_aca_catalog_20603():
     aca.stars.plot()
     aca.fids.plot()
 
-    assert aca.dark_date == '2018:100'
+    assert aca.dark_date == "2018:100"
 
 
-@pytest.mark.skipif(not HAS_SC_ARCHIVE, reason='Test requires starcheck archive')
+@pytest.mark.skipif(not HAS_SC_ARCHIVE, reason="Test requires starcheck archive")
 def test_get_aca_catalog_20259():
     """
     Test obsid 20259 which has two spoiled fids: HRC-2 is yellow and HRC-4 is red.
@@ -136,19 +136,19 @@ def test_get_aca_catalog_20259():
     """
     aca = get_aca_catalog(20259, raise_exc=True)
     exp = [
-        'slot idx     id    type  sz   yang     zang   dim res halfw',
-        '---- --- --------- ---- --- -------- -------- --- --- -----',
-        '   0   1         1  FID 8x8 -1175.03  -468.23   1   1    25',
-        '   1   2         2  FID 8x8  1224.70  -460.93   1   1    25',
-        '   2   3         3  FID 8x8 -1177.69   561.30   1   1    25',
-        '   3   4 896009152  BOT 6x6  1693.39   217.92  16   1   100',
-        '   4   5 897712576  BOT 6x6 -1099.95  2140.23  12   1    80',
-        '   5   6 897717296  BOT 6x6   932.58  1227.48  12   1    80',
-        '   6   7 896013056  BOT 6x6  1547.25 -2455.12  12   1    80',
-        '   7   8 896009240  BOT 6x6  -911.41   402.62  12   1    80',
-        '   0   9 896011576  ACQ 6x6   810.99   -69.21  16   1   100',
-        '   1  10 897718208  ACQ 6x6   765.61  1530.27  12   1    80',
-        '   2  11 897192352  ACQ 6x6 -2110.43  2005.21  12   1    80',
+        "slot idx     id    type  sz   yang     zang   dim res halfw",
+        "---- --- --------- ---- --- -------- -------- --- --- -----",
+        "   0   1         1  FID 8x8 -1175.03  -468.23   1   1    25",
+        "   1   2         2  FID 8x8  1224.70  -460.93   1   1    25",
+        "   2   3         3  FID 8x8 -1177.69   561.30   1   1    25",
+        "   3   4 896009152  BOT 6x6  1693.39   217.92  16   1   100",
+        "   4   5 897712576  BOT 6x6 -1099.95  2140.23  12   1    80",
+        "   5   6 897717296  BOT 6x6   932.58  1227.48  12   1    80",
+        "   6   7 896013056  BOT 6x6  1547.25 -2455.12  12   1    80",
+        "   7   8 896009240  BOT 6x6  -911.41   402.62  12   1    80",
+        "   0   9 896011576  ACQ 6x6   810.99   -69.21  16   1   100",
+        "   1  10 897718208  ACQ 6x6   765.61  1530.27  12   1    80",
+        "   2  11 897192352  ACQ 6x6 -2110.43  2005.21  12   1    80",
     ]
 
     assert aca[TEST_COLS].pformat(max_width=-1) == exp
@@ -167,12 +167,12 @@ def test_exception_handling():
     aca = get_aca_catalog(
         att=(0, 0, 0),
         man_angle=10,
-        date='2018:001',
+        date="2018:001",
         dither_acq=(8, 8),
         dither_guide=(8, 8),
         t_ccd_acq=-10,
         t_ccd_guide=-10,
-        detector='ACIS-S',
+        detector="ACIS-S",
         sim_offset=0,
         focus_offset=0,
         n_guide=8,
@@ -182,26 +182,26 @@ def test_exception_handling():
         include_halfws_acq=[100, 120],
         raise_exc=False,
     )  # Fail
-    assert 'include_ids and include_halfws must have same length' in aca.exception
+    assert "include_ids and include_halfws must have same length" in aca.exception
 
     for obj in (aca, aca.acqs, aca.guides, aca.fids):
         assert len(obj) == 0
-        assert 'id' in obj.colnames
-        assert 'idx' in obj.colnames
-        if obj.name == 'acqs':
-            assert 'halfw' in obj.colnames
+        assert "id" in obj.colnames
+        assert "idx" in obj.colnames
+        if obj.name == "acqs":
+            assert "halfw" in obj.colnames
 
 
 def test_unhandled_exception():
-    with pytest.raises(ValueError, match=r'missing required parameters'):
+    with pytest.raises(ValueError, match=r"missing required parameters"):
         # TypeError in get_starcheck_catalog due to NoneType obsid
         get_aca_catalog(obsid=None, raise_exc=True)
 
-    with pytest.raises(ValueError, match=r'missing required parameters'):
+    with pytest.raises(ValueError, match=r"missing required parameters"):
         # Obsid 0 implies all all pars must be provided
         get_aca_catalog(obsid=0, raise_exc=True)
 
-    with pytest.raises(ValueError, match=r'missing required parameters'):
+    with pytest.raises(ValueError, match=r"missing required parameters"):
         # Obsid > 0 implies missing pars are to be found in starcheck archive,
         # but this one will certainly not be found.
         get_aca_catalog(obsid=99999, raise_exc=True)
@@ -218,10 +218,10 @@ def test_no_candidates():
         n_fid=3,
         n_acq=8,
         att=(0, 0, 0),
-        detector='ACIS-S',
+        detector="ACIS-S",
         sim_offset=0,
         focus_offset=0,
-        date='2018:001',
+        date="2018:001",
         t_ccd_acq=-11,
         t_ccd_guide=-11,
         man_angle=90,
@@ -232,13 +232,13 @@ def test_no_candidates():
     stars.add_fake_constellation(mag=13.0, n_stars=2)
     acas = get_aca_catalog(**test_info, stars=stars, raise_exc=False)
 
-    assert 'id' in acas.acqs.colnames
-    assert 'halfw' in acas.acqs.colnames
-    assert 'id' in acas.guides.colnames
-    assert 'id' in acas.fids.colnames
+    assert "id" in acas.acqs.colnames
+    assert "halfw" in acas.acqs.colnames
+    assert "id" in acas.guides.colnames
+    assert "id" in acas.fids.colnames
 
 
-@pytest.mark.skipif(not HAS_SC_ARCHIVE, reason='Test requires starcheck archive')
+@pytest.mark.skipif(not HAS_SC_ARCHIVE, reason="Test requires starcheck archive")
 def test_big_dither_from_mica_starcheck():
     """
     Test code that infers dither_acq and dither_guide for a big-dither
@@ -247,7 +247,7 @@ def test_big_dither_from_mica_starcheck():
     aca = ACATable()
     aca.set_attrs_from_kwargs(obsid=20168)
 
-    assert aca.detector == 'HRC-S'
+    assert aca.detector == "HRC-S"
     assert aca.dither_acq == (20, 20)
     assert aca.dither_guide == (64, 8)
 
@@ -273,17 +273,17 @@ def test_pickle():
     assert repr(aca) == repr(aca2)
     assert repr(aca.acqs.cand_acqs) == repr(aca2.acqs.cand_acqs)
 
-    for cat in None, 'acqs', 'guides', 'fids':
+    for cat in None, "acqs", "guides", "fids":
         if cat:
             obj = getattr(aca, cat)
             obj2 = getattr(aca2, cat)
-            for event, event2 in zip(obj.log_info['events'], obj2.log_info['events']):
+            for event, event2 in zip(obj.log_info["events"], obj2.log_info["events"]):
                 assert event == event2
         else:
             obj = aca
             obj2 = aca2
 
-        for attr in ['att', 'date', 't_ccd', 'man_angle', 'dither']:
+        for attr in ["att", "date", "t_ccd", "man_angle", "dither"]:
             val = getattr(obj, attr)
             val2 = getattr(obj2, attr)
             if isinstance(val, float):
@@ -325,9 +325,9 @@ def test_copy_deepcopy_pickle():
         aca2 = func(aca)
 
         # Functional test for #303, mostly just for pickle.
-        assert aca2.dark_date == '2017:272'
+        assert aca2.dark_date == "2017:272"
 
-        for attr in ('acqs', 'guides', 'fids'):
+        for attr in ("acqs", "guides", "fids"):
             val = getattr(aca, attr)
             val2 = getattr(aca2, attr)
             # New table appears the same but is not the same object
@@ -359,16 +359,16 @@ def test_clip_maxmag():
         **STD_INFO,
     )
 
-    assert np.all(aca['maxmag'] <= ACA.max_maxmag)
+    assert np.all(aca["maxmag"] <= ACA.max_maxmag)
 
-    ok = aca['type'] == 'FID'
-    assert np.allclose(aca['maxmag'][ok], 8.0)
+    ok = aca["type"] == "FID"
+    assert np.allclose(aca["maxmag"][ok], 8.0)
 
-    ok = aca['type'] == 'GUI'
-    assert np.allclose(aca['maxmag'][ok], (mags_guide + 1.5).clip(None, ACA.max_maxmag))
+    ok = aca["type"] == "GUI"
+    assert np.allclose(aca["maxmag"][ok], (mags_guide + 1.5).clip(None, ACA.max_maxmag))
 
-    ok = aca['type'] == 'ACQ'
-    assert np.allclose(aca['maxmag'][ok], (mags_acq + 1.5).clip(None, ACA.max_maxmag))
+    ok = aca["type"] == "ACQ"
+    assert np.allclose(aca["maxmag"][ok], (mags_acq + 1.5).clip(None, ACA.max_maxmag))
 
 
 def test_big_sim_offset():
@@ -380,19 +380,19 @@ def test_big_sim_offset():
     """
     aca = get_aca_catalog(
         **mod_std_info(
-            sim_offset=200000, duration=10000, target_name='Target Name', raise_exc=True
+            sim_offset=200000, duration=10000, target_name="Target Name", raise_exc=True
         )
     )
     assert len(aca.acqs) == 8
     assert len(aca.guides) == 5
     assert len(aca.fids) == 0
-    names = ['id', 'yang', 'zang', 'row', 'col', 'mag', 'spoiler_score', 'idx']
+    names = ["id", "yang", "zang", "row", "col", "mag", "spoiler_score", "idx"]
     assert all(name in aca.fids.colnames for name in names)
     assert aca.duration == 10000
-    assert aca.target_name == 'Target Name'
+    assert aca.target_name == "Target Name"
 
 
-@pytest.mark.parametrize('call_t_ccd', [True, False])
+@pytest.mark.parametrize("call_t_ccd", [True, False])
 def test_calling_with_t_ccd_acq_guide(call_t_ccd):
     """Test that calling get_aca_catalog with t_ccd or t_ccd_acq/guide args sets all
     CCD attributes correctly in the nominal case of a temperature
@@ -409,12 +409,12 @@ def test_calling_with_t_ccd_acq_guide(call_t_ccd):
         # Call with just t_ccd=t_ccd
         t_ccd_guide = t_ccd
         t_ccd_acq = t_ccd
-        ccd_kwargs = {'t_ccd': t_ccd}
+        ccd_kwargs = {"t_ccd": t_ccd}
     else:
         # Call with separate values
         t_ccd_guide = t_ccd
         t_ccd_acq = t_ccd - 1
-        ccd_kwargs = {'t_ccd_acq': t_ccd_acq, 't_ccd_guide': t_ccd_guide}
+        ccd_kwargs = {"t_ccd_acq": t_ccd_acq, "t_ccd_guide": t_ccd_guide}
 
     kwargs = mod_std_info(stars=stars, dark=dark, **ccd_kwargs)
     aca = get_aca_catalog(**kwargs)
@@ -442,7 +442,7 @@ def test_calling_with_t_ccd_acq_guide(call_t_ccd):
 t_ccd_cases = [(-0.5, 0, 0), (0, 0, 0), (0.5, 1.5, 1.4)]
 
 
-@pytest.mark.parametrize('t_ccd_case', t_ccd_cases)
+@pytest.mark.parametrize("t_ccd_case", t_ccd_cases)
 def test_t_ccd_effective_acq_guide(t_ccd_case):
     """Test setting of effective T_ccd temperatures for cases above and
     below the penalty limit.
@@ -473,7 +473,7 @@ def test_t_ccd_effective_acq_guide(t_ccd_case):
     assert np.isclose(aca.t_ccd_eff_guide, aca.guides.t_ccd)
 
 
-@pytest.mark.parametrize('t_ccd_case', t_ccd_cases)
+@pytest.mark.parametrize("t_ccd_case", t_ccd_cases)
 def test_t_ccd_effective_acq_guide_via_kwarg(t_ccd_case):
     """Test setting of effective T_ccd temperatures for cases above and
     below a manually specified limit
@@ -489,7 +489,7 @@ def test_t_ccd_effective_acq_guide_via_kwarg(t_ccd_case):
     t_ccd_guide = t_ccd_acq - 0.1
 
     kwargs = mod_std_info(stars=stars, t_ccd_acq=t_ccd_acq, t_ccd_guide=t_ccd_guide)
-    kwargs['t_ccd_penalty_limit'] = t_limit
+    kwargs["t_ccd_penalty_limit"] = t_limit
     aca = get_aca_catalog(**kwargs)
 
     assert aca.t_ccd_penalty_limit == t_limit
@@ -510,26 +510,26 @@ def test_call_args_attr():
         **mod_std_info(optimize=False, n_guide=0, n_acq=0, n_fid=0), raise_exc=False
     )
     assert aca.call_args == {
-        'att': (0, 0, 0),
-        'date': '2018:001',
-        'detector': 'ACIS-S',
-        'dither': 8.0,
-        'focus_offset': 0,
-        'man_angle': 90,
-        'n_acq': 0,
-        'n_fid': 0,
-        'n_guide': 0,
-        'obsid': 0,
-        'optimize': False,
-        'sim_offset': 0,
-        't_ccd': -11,
+        "att": (0, 0, 0),
+        "date": "2018:001",
+        "detector": "ACIS-S",
+        "dither": 8.0,
+        "focus_offset": 0,
+        "man_angle": 90,
+        "n_acq": 0,
+        "n_fid": 0,
+        "n_guide": 0,
+        "obsid": 0,
+        "optimize": False,
+        "sim_offset": 0,
+        "t_ccd": -11,
     }
 
 
 def test_bad_obsid():
     # Expects this to be starcheck catalog
-    aca = get_aca_catalog(obsid='blah blah', raise_exc=False)
-    assert 'ValueError: text does not have OBSID' in aca.exception
+    aca = get_aca_catalog(obsid="blah blah", raise_exc=False)
+    assert "ValueError: text does not have OBSID" in aca.exception
 
 
 def test_bad_pixel_dark_current():
@@ -564,9 +564,9 @@ def test_bad_pixel_dark_current():
     )
 
     exp_ids = [2, 100, 101, 102, 103]
-    assert sorted(aca.guides['id']) == sorted(exp_ids + [4])
-    assert aca.acqs['id'].tolist() == exp_ids
-    assert aca.acqs['halfw'].tolist() == [100, 160, 160, 160, 160]
+    assert sorted(aca.guides["id"]) == sorted(exp_ids + [4])
+    assert aca.acqs["id"].tolist() == exp_ids
+    assert aca.acqs["halfw"].tolist() == [100, 160, 160, 160, 160]
 
 
 def test_fid_trap_effect():
@@ -581,7 +581,7 @@ def test_fid_trap_effect():
     att = [10.659376, 40.980028, 181.012903]
     stars = StarsTable.from_agasc_ids(att, agasc_ids)
     cat = get_aca_catalog(obsid=1576, stars=stars, raise_exc=True)
-    assert 367674552 not in cat.guides['id']
+    assert 367674552 not in cat.guides["id"]
 
     # Obsid 2365
     # NOTE: the att below is in fact the actual 2365 attitude, which differs
@@ -593,7 +593,7 @@ def test_fid_trap_effect():
 
     # Specify att kwarg explicitly to override what is found in mica.starcheck
     cat = get_aca_catalog(obsid=2365, stars=stars, raise_exc=True, att=att)
-    assert 1184897704 not in cat.guides['id']
+    assert 1184897704 not in cat.guides["id"]
 
 
 def test_monitors_and_target_offset_args():
@@ -624,10 +624,10 @@ def test_monitors_and_target_offset_args():
         )
     )
     exp = [
-        ' coord0 coord1 coord_type mag function',
-        '------- ------ ---------- --- --------',
-        '-1700.0 1900.0          2 7.5        3',
-        '  500.0 -500.0          2 7.5        2',
+        " coord0 coord1 coord_type mag function",
+        "------- ------ ---------- --- --------",
+        "-1700.0 1900.0          2 7.5        3",
+        "  500.0 -500.0          2 7.5        2",
     ]
     assert aca.monitors.pformat_all() == exp
     assert aca.target_offset is target_offset
@@ -639,7 +639,7 @@ def test_reject_column_spoilers():
     Also tests not selecting stars that are too bright.
     """
     stars = StarsTable.empty()
-    fids = get_fid_catalog(**mod_std_info(stars=stars, detector='HRC-I')).cand_fids
+    fids = get_fid_catalog(**mod_std_info(stars=stars, detector="HRC-I")).cand_fids
     stars.add_fake_constellation(mag=8.0, n_stars=5)
 
     def offset(id, drow, dcol, dmag, rmult=1):
@@ -649,9 +649,9 @@ def test_reject_column_spoilers():
             star = stars.get_id(id)
 
         return dict(
-            row=(star['row'] + drow * np.sign(star['row'])) * rmult,
-            col=star['col'] + dcol,
-            mag=star['mag'] - dmag,
+            row=(star["row"] + drow * np.sign(star["row"])) * rmult,
+            col=star["col"] + dcol,
+            mag=star["mag"] - dmag,
         )
 
     # Spoil first star with downstream spoiler that is just in limits
@@ -676,14 +676,14 @@ def test_reject_column_spoilers():
     stars.add_fake_star(**offset(3, drow=-30, dcol=9, dmag=4.6))  # Upstream
 
     kwargs = mod_std_info(
-        stars=stars, n_guide=8, n_fid=3, n_acq=8, dark=DARK40.copy(), detector='HRC-I'
+        stars=stars, n_guide=8, n_fid=3, n_acq=8, dark=DARK40.copy(), detector="HRC-I"
     )
     aca = get_aca_catalog(**kwargs)
 
-    assert aca.fids['id'].tolist() == [2, 3]
-    assert 100 not in aca.acqs.cand_acqs['id']
-    assert aca.guides['id'].tolist() == [101, 102, 103, 104]
-    assert aca.acqs['id'].tolist() == [101, 102, 103, 104]
+    assert aca.fids["id"].tolist() == [2, 3]
+    assert 100 not in aca.acqs.cand_acqs["id"]
+    assert aca.guides["id"].tolist() == [101, 102, 103, 104]
+    assert aca.acqs["id"].tolist() == [101, 102, 103, 104]
 
 
 def test_dark_property():
@@ -694,13 +694,13 @@ def test_dark_property():
     :return: None
     """
     aca = get_aca_catalog(**STD_INFO)
-    for attr in ('acqs', 'guides', 'fids'):
+    for attr in ("acqs", "guides", "fids"):
         assert aca.dark is getattr(aca, attr).dark
 
     kwargs = STD_INFO.copy()
-    del kwargs['t_ccd']
-    kwargs['t_ccd_acq'] = -12.5
-    kwargs['t_ccd_guide'] = -11.5
+    del kwargs["t_ccd"]
+    kwargs["t_ccd_acq"] = -12.5
+    kwargs["t_ccd_guide"] = -11.5
     aca = get_aca_catalog(**kwargs)
     assert aca.dark is aca.guides.dark
     assert aca.dark is aca.fids.dark
@@ -718,23 +718,23 @@ def test_dense_star_field_regress():
     att = (167.0672, -59.1235, 0)
     aca = get_aca_catalog(**mod_std_info(att=att, n_fid=3, n_guide=5, n_acq=8))
     exp = [
-        'slot idx     id     type  sz   yang     zang   dim res halfw  mag ',
-        '---- --- ---------- ---- --- -------- -------- --- --- ----- -----',
-        '   0   1          3  FID 8x8    40.01 -1871.10   1   1    25  7.00',
-        '   1   2          4  FID 8x8  2140.23   166.63   1   1    25  7.00',
-        '   2   3          5  FID 8x8 -1826.28   160.17   1   1    25  7.00',
-        '   3   4 1130899056  BOT 6x6  2386.83 -1808.51  28   1   160  6.24',
-        '   4   5 1130889232  BOT 6x6  -251.98 -1971.97  28   1   160  6.99',
-        '   5   6 1130893664  BOT 6x6  1530.07 -2149.38  28   1   160  7.62',
-        '   6   7 1130898232  GUI 6x6  1244.84  2399.68   1   1    25  7.38',
-        '   7   8 1130773616  GUI 6x6 -1713.06  1312.10   1   1    25  7.50',
-        '   0   9 1130770696  ACQ 6x6 -1900.42  2359.33  28   1   160  7.35',
-        '   1  10 1130890288  ACQ 6x6  2030.55 -2011.89  28   1   160  7.67',
-        '   2  11 1130890616  ACQ 6x6  1472.68  -376.72  28   1   160  7.77',
-        '   6  12 1130893640  ACQ 6x6    64.32 -1040.81  28   1   160  7.77',
-        '   7  13 1130894376  ACQ 6x6  -633.90  1186.80  28   1   160  7.78',
+        "slot idx     id     type  sz   yang     zang   dim res halfw  mag ",
+        "---- --- ---------- ---- --- -------- -------- --- --- ----- -----",
+        "   0   1          3  FID 8x8    40.01 -1871.10   1   1    25  7.00",
+        "   1   2          4  FID 8x8  2140.23   166.63   1   1    25  7.00",
+        "   2   3          5  FID 8x8 -1826.28   160.17   1   1    25  7.00",
+        "   3   4 1130899056  BOT 6x6  2386.83 -1808.51  28   1   160  6.24",
+        "   4   5 1130889232  BOT 6x6  -251.98 -1971.97  28   1   160  6.99",
+        "   5   6 1130893664  BOT 6x6  1530.07 -2149.38  28   1   160  7.62",
+        "   6   7 1130898232  GUI 6x6  1244.84  2399.68   1   1    25  7.38",
+        "   7   8 1130773616  GUI 6x6 -1713.06  1312.10   1   1    25  7.50",
+        "   0   9 1130770696  ACQ 6x6 -1900.42  2359.33  28   1   160  7.35",
+        "   1  10 1130890288  ACQ 6x6  2030.55 -2011.89  28   1   160  7.67",
+        "   2  11 1130890616  ACQ 6x6  1472.68  -376.72  28   1   160  7.77",
+        "   6  12 1130893640  ACQ 6x6    64.32 -1040.81  28   1   160  7.77",
+        "   7  13 1130894376  ACQ 6x6  -633.90  1186.80  28   1   160  7.78",
     ]
-    assert aca[TEST_COLS + ['mag']].pformat(max_width=-1) == exp
+    assert aca[TEST_COLS + ["mag"]].pformat(max_width=-1) == exp
 
 
 def test_aca_acqs_include_exclude():
@@ -765,9 +765,9 @@ def test_aca_acqs_include_exclude():
 
     # Put in a neighboring star that will keep star 9 out of the cand_acqs table
     star9 = stars.get_id(9)
-    star9['ASPQ1'] = 20
+    star9["ASPQ1"] = 20
     stars.add_fake_star(
-        yang=star9['yang'] + 20, zang=star9['zang'] + 20, mag=star9['mag'] + 2.5, id=90
+        yang=star9["yang"] + 20, zang=star9["zang"] + 20, mag=star9["mag"] + 2.5, id=90
     )
 
     # Define includes and excludes. id=9 is in nominal cand_acqs but not in acqs.
@@ -789,14 +789,14 @@ def test_aca_acqs_include_exclude():
     assert acqs.include_ids == include_ids
     assert acqs.include_halfws == exp_include_halfws
     assert acqs.exclude_ids == exclude_ids
-    assert all(id_ in acqs.cand_acqs['id'] for id_ in include_ids)
+    assert all(id_ in acqs.cand_acqs["id"] for id_ in include_ids)
 
-    assert all(id_ in acqs['id'] for id_ in include_ids)
-    assert all(id_ not in acqs['id'] for id_ in exclude_ids)
+    assert all(id_ in acqs["id"] for id_ in include_ids)
+    assert all(id_ not in acqs["id"] for id_ in exclude_ids)
 
-    assert np.all(acqs['id'] == [2, 3, 4, 5, 6, 7, 9, 11])
-    assert np.all(acqs['halfw'] == [160, 160, 160, 160, 160, 160, 60, 80])
-    assert np.allclose(acqs['mag'], [7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 10.0, 12.0])
+    assert np.all(acqs["id"] == [2, 3, 4, 5, 6, 7, 9, 11])
+    assert np.all(acqs["halfw"] == [160, 160, 160, 160, 160, 160, 60, 80])
+    assert np.allclose(acqs["mag"], [7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 10.0, 12.0])
 
     guides = aca.guides
     assert guides.include_ids == include_ids
@@ -818,11 +818,11 @@ def test_report_from_objects(tmpdir):
     aca.guides.make_report(rootdir=rootdir)
     aca.acqs.make_report(rootdir=rootdir)
 
-    obsdir = rootdir / f'obs{obsid:05}'
-    for subdir in 'acq', 'guide':
+    obsdir = rootdir / f"obs{obsid:05}"
+    for subdir in "acq", "guide":
         outdir = obsdir / subdir
-        assert (outdir / 'index.html').exists()
-        assert len(list(outdir.glob('*.png'))) > 0
+        assert (outdir / "index.html").exists()
+        assert len(list(outdir.glob("*.png"))) > 0
 
 
 def test_force_catalog_from_starcheck():
@@ -867,8 +867,8 @@ def test_force_catalog_from_starcheck():
     Predicted Max CCD temperature: -9.9 C    N100 Warm Pix Frac 0.286
     Dynamic Mag Limits: Yellow 9.99          Red 10.17"""
 
-    aca = get_aca_catalog(obs + '--force-catalog')
-    assert aca['id'].tolist() == [
+    aca = get_aca_catalog(obs + "--force-catalog")
+    assert aca["id"].tolist() == [
         1,
         4,
         5,
@@ -881,34 +881,34 @@ def test_force_catalog_from_starcheck():
         765070392,
         765068968,
     ]
-    assert aca['type'].tolist() == [
-        'FID',
-        'FID',
-        'FID',
-        'BOT',
-        'BOT',
-        'BOT',
-        'BOT',
-        'BOT',
-        'ACQ',
-        'ACQ',
-        'ACQ',
+    assert aca["type"].tolist() == [
+        "FID",
+        "FID",
+        "FID",
+        "BOT",
+        "BOT",
+        "BOT",
+        "BOT",
+        "BOT",
+        "ACQ",
+        "ACQ",
+        "ACQ",
     ]
-    assert aca['halfw'].tolist() == [25, 25, 25, 160, 160, 160, 120, 120, 120, 120, 120]
+    assert aca["halfw"].tolist() == [25, 25, 25, 160, 160, 160, 120, 120, 120, 120, 120]
     assert np.allclose(
         aca.att.equatorial, [358.341787, -12.949882, 276.997597], rtol=0, atol=1e-6
     )
     assert np.allclose(aca.acqs.man_angle, 89.16)
 
 
-@pytest.mark.skipif(not HAS_SC_ARCHIVE, reason='Test requires starcheck archive')
+@pytest.mark.skipif(not HAS_SC_ARCHIVE, reason="Test requires starcheck archive")
 def test_includes_for_obsid():
     """
     Test helper function to get the include_* kwargs for forcing a catalog.
     """
     exp = {
-        'include_halfws_acq': [120, 120, 120, 120, 85, 120, 120, 120],
-        'include_ids_acq': [
+        "include_halfws_acq": [120, 120, 120, 120, 85, 120, 120, 120],
+        "include_ids_acq": [
             31075128,
             31076560,
             31463496,
@@ -918,8 +918,8 @@ def test_includes_for_obsid():
             31982136,
             32375384,
         ],
-        'include_ids_guide': [31075128, 31076560, 31463496, 31983336, 32374896],
-        'include_ids_fid': [1, 5, 6],
+        "include_ids_guide": [31075128, 31076560, 31463496, 31983336, 32374896],
+        "include_ids_fid": [1, 5, 6],
     }
 
     out = includes_for_obsid(8008)
@@ -929,15 +929,15 @@ def test_includes_for_obsid():
 def test_dark_date_warning():
     aca = get_aca_catalog(**STD_INFO)
     acap = pickle.loads(pickle.dumps(aca))
-    assert acap.dark_date == '2017:272'
+    assert acap.dark_date == "2017:272"
 
     # Fudge date forward, after the 2018:002 dark cal
-    acap.date = '2018:010'
+    acap.date = "2018:010"
     with pytest.warns(None) as warns:
         acap.dark  # Accessing the `dark` property triggers code to read it (and warn)
 
     assert len(warns) == 1
-    assert 'Unexpected dark_date: dark_id nearest dark_date' in str(warns[0].message)
+    assert "Unexpected dark_date: dark_id nearest dark_date" in str(warns[0].message)
 
 
 def test_img_size_guide():
@@ -950,36 +950,36 @@ def test_img_size_guide():
 
     # Confirm that for an inferred ER, boxes are 8x8
     aca = get_aca_catalog(**mod_std_info(stars=stars, dark=dark, n_fid=0))
-    assert np.all(aca.guides['sz'] == '8x8')
+    assert np.all(aca.guides["sz"] == "8x8")
     assert aca.guides.img_size is None
 
     # Confirm that for an inferred OR, boxes are 6x6
     aca = get_aca_catalog(**mod_std_info(stars=stars, dark=dark, n_fid=3))
-    assert np.all(aca.guides['sz'] == '6x6')
+    assert np.all(aca.guides["sz"] == "6x6")
     assert aca.guides.img_size is None
 
     # Confirm that for explicit img_size_guide of 8 boxes are '8x8'
     aca = get_aca_catalog(
         **mod_std_info(stars=stars, dark=dark, n_fid=3, img_size_guide=8)
     )
-    assert np.all(aca.guides['sz'] == '8x8')
+    assert np.all(aca.guides["sz"] == "8x8")
     assert aca.guides.img_size == 8
 
     # Confirm that for explicit img_size_guide of 6 boxes are '6x6'
     aca = get_aca_catalog(
         **mod_std_info(stars=stars, dark=dark, n_fid=0, img_size_guide=6)
     )
-    assert np.all(aca.guides['sz'] == '6x6')
+    assert np.all(aca.guides["sz"] == "6x6")
     assert aca.guides.img_size == 6
 
     # Confirm that for explicit img_size_guide of 6 boxes are '6x6'
     aca = get_aca_catalog(
         **mod_std_info(stars=stars, dark=dark, n_fid=0, img_size_guide=4)
     )
-    assert np.all(aca.guides['sz'] == '4x4')
+    assert np.all(aca.guides["sz"] == "4x4")
     assert aca.guides.img_size == 4
 
-    with pytest.raises(ValueError, match='img_size must be 4, 6, 8, or None'):
+    with pytest.raises(ValueError, match="img_size must be 4, 6, 8, or None"):
         get_aca_catalog(**mod_std_info(stars=stars, dark=dark, img_size_guide=3))
 
 
@@ -997,15 +997,15 @@ def test_dyn_bgd_star_bonus():
     )
     assert len(aca_leg.guides) == 3
     assert len(aca_dyn.guides) == 5
-    assert np.allclose(aca_leg.guides['mag'], [9.5, 9.5, 9.5])
-    assert np.allclose(aca_dyn.guides['mag'], [9.5, 9.5, 9.5, 10.3, 10.4])
+    assert np.allclose(aca_leg.guides["mag"], [9.5, 9.5, 9.5])
+    assert np.allclose(aca_dyn.guides["mag"], [9.5, 9.5, 9.5, 10.3, 10.4])
 
 
 def test_man_angle_away():
     aca1 = get_aca_catalog(**STD_INFO)
     aca2 = get_aca_catalog(**STD_INFO, man_angle_next=5)
-    assert np.all(aca1['id'] == aca2['id'])
-    assert np.all(aca1.acqs['halfw'] == aca2.acqs['halfw'])
+    assert np.all(aca1["id"] == aca2["id"])
+    assert np.all(aca1.acqs["halfw"] == aca2.acqs["halfw"])
 
     # Confirm that the man_angle_next attribute has the default value
     # for aca1 (180) and the specified kw value for aca2

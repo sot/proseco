@@ -3,19 +3,19 @@ import numpy as np
 # Nominal fid light positions on focal plane for each detector (y, z) in meters.
 
 fidpos = {
-    'HRC-S': [
+    "HRC-S": [
         [0.0571252, 0.0227634],
         [-0.0595400, 0.0224085],
         [0.0572545, -0.0272881],
         [-0.0594729, -0.0274048],
     ],
-    'HRC-I': [
+    "HRC-I": [
         [0.0377667, 0.0635461],
         [-0.0406593, 0.0636239],
         [0.0586035, -0.0485306],
         [-0.0615813, -0.0484119],
     ],
-    'ACIS-S': [
+    "ACIS-S": [
         [-0.0448963, 0.0845719],
         [0.0376268, 0.0847734],
         [-0.00194703, 0.0910544],
@@ -23,7 +23,7 @@ fidpos = {
         [0.0888731, -0.0077944],
         [-0.0189102, -0.0391135],
     ],
-    'ACIS-I': [
+    "ACIS-I": [
         [-0.0447620, 0.0410805],
         [0.0376852, 0.0413759],
         [-0.00180980, 0.0475558],
@@ -39,21 +39,21 @@ for key, val in fidpos.items():
 
 
 # Nominal TSC steps for each detector
-simpos = {'HRC-S': -99612, 'HRC-I': -50505, 'ACIS-S': 75620, 'ACIS-I': 92905}
+simpos = {"HRC-S": -99612, "HRC-I": -50505, "ACIS-S": 75620, "ACIS-I": 92905}
 
 # Nominal focal length [m] for each detector
 focal_length = {
-    'HRC-S': 10.02773,
-    'HRC-I': 10.031032,
-    'ACIS-S': 10.037572,
-    'ACIS-I': 10.037572,
+    "HRC-S": 10.02773,
+    "HRC-I": 10.031032,
+    "ACIS-S": 10.037572,
+    "ACIS-I": 10.037572,
 }
 
 # Preferred fid combinations (note subsequent processing in next block)
 fid_sets = {
-    'HRC-S': [[1, 2, 3], [1, 3, 4], [2, 3, 4], [1, 2, 4]],
-    'HRC-I': [[1, 2, 3], [1, 3, 4], [2, 3, 4], [1, 2, 4]],
-    'ACIS-I': [
+    "HRC-S": [[1, 2, 3], [1, 3, 4], [2, 3, 4], [1, 2, 4]],
+    "HRC-I": [[1, 2, 3], [1, 3, 4], [2, 3, 4], [1, 2, 4]],
+    "ACIS-I": [
         [1, 5, 6],
         [3, 5, 6],
         [1, 3, 5],
@@ -75,7 +75,7 @@ fid_sets = {
         [4, 5, 6],
         [1, 2, 3],
     ],
-    'ACIS-S': [
+    "ACIS-S": [
         [2, 4, 5],
         [3, 4, 5],
         [1, 4, 5],
@@ -106,17 +106,17 @@ for detector in fid_sets:
 # Nominal magnitudes for each fid light from Matlab tools characteristics.  SAUSAGE always
 # commands 7.000, so not clear what is happening with these.
 fid_mags = {
-    'HRC-S': [7.1007, 7.1007, 7.0857, 7.1198],
-    'HRC-I': [7.0749, 7.0830, 7.1159, 7.0806],
-    'ACIS-S': [7.2531, 7.1778, 7.3382, 7.1966, 7.2168, 7.2696],
-    'ACIS-I': [7.2531, 7.1778, 7.3382, 7.1966, 7.2168, 7.2696],
+    "HRC-S": [7.1007, 7.1007, 7.0857, 7.1198],
+    "HRC-I": [7.0749, 7.0830, 7.1159, 7.0806],
+    "ACIS-S": [7.2531, 7.1778, 7.3382, 7.1966, 7.2168, 7.2696],
+    "ACIS-I": [7.2531, 7.1778, 7.3382, 7.1966, 7.2168, 7.2696],
 }
 
 # Actual fid mag that is used in proseco calculations and outputs
 fid_mag = 7.0
 
 # The nominal focus position for each instrument
-focus_pos = {'HRC-S': -991, 'HRC-I': -716, 'ACIS-S': -468, 'ACIS-I': -536}
+focus_pos = {"HRC-S": -991, "HRC-I": -716, "ACIS-S": -468, "ACIS-I": -536}
 
 # Sim translation step size in units of m / step
 tsc_stepsize = 2.51432e-6

@@ -57,9 +57,9 @@ from proseco.tests.test_common import get_starcheck_obs_kwargs
 
 
 def run_starcheck_proseco(
-    load_name='JUL0218A',
-    out_root=Path('loads', 'proseco'),
-    load_root=Path('/data', 'mpcrit1', 'mplogs'),
+    load_name="JUL0218A",
+    out_root=Path("loads", "proseco"),
+    load_root=Path("/data", "mpcrit1", "mplogs"),
 ):
     """
     Do three steps to run starcheck on proseco-generated catalogs for a flight weekly load:
@@ -81,22 +81,22 @@ def run_starcheck_proseco(
     run_starcheck(load_name, out_root)
 
 
-def run_all(out_root=Path('loads', 'proseco')):
+def run_all(out_root=Path("loads", "proseco")):
     """
     Convenience function to run starcheck_proseco on a standard set of 10 weekly loads
     for run-for-record validation testing.
     """
     load_names = [
-        'DEC0318B',
-        'JUL0918A',  # dark cals
-        'JUL0218A',
-        'JUN2318A',
-        'JUN1118A',
-        'JUN0418A',
-        'MAY2118A',
-        'MAY1418A',
-        'MAY0718A',
-        'APR3018A',
+        "DEC0318B",
+        "JUL0918A",  # dark cals
+        "JUL0218A",
+        "JUN2318A",
+        "JUN1118A",
+        "JUN0418A",
+        "MAY2118A",
+        "MAY1418A",
+        "MAY0718A",
+        "APR3018A",
     ]
     for load_name in load_names:
         run_starcheck_proseco(load_name)
@@ -105,32 +105,32 @@ def run_all(out_root=Path('loads', 'proseco')):
 def copy_load_products(load_name, out_root, load_root):
     out_dir = Path(out_root, load_name)
     if out_dir.exists():
-        print(f'Skipping copy_load_products {out_dir} already exists')
+        print(f"Skipping copy_load_products {out_dir} already exists")
         return
 
     load_root = Path(load_root)
     load_version = load_name[-1:].lower()
-    load_year = '20' + load_name[-3:-1]
+    load_year = "20" + load_name[-3:-1]
 
-    load_dir = load_root / load_year / load_name[:-1] / ('ofls' + load_version)
-    print(f'Copying load products from {load_dir} to {out_dir}')
+    load_dir = load_root / load_year / load_name[:-1] / ("ofls" + load_version)
+    print(f"Copying load products from {load_dir} to {out_dir}")
 
     globs = (
-        'CR*.tlr',
-        'CR*.backstop',
-        'starcheck.txt',
-        'mps/md*.dot',
-        'mps/or/*.or',
-        'mps/ode/characteristics/CHARACTERIS_*',
-        'mps/m*.sum',
-        'output/*_ManErr.txt',
-        'output/*_dynamical_offsets.txt',
-        'output/TEST_mechcheck.txt',
-        'History/DITHER.txt',
-        'History/FIDSEL.txt',
-        'History/RADMON.txt',
-        'History/SIMFOCUS.txt',
-        'History/SIMTRANS.txt',
+        "CR*.tlr",
+        "CR*.backstop",
+        "starcheck.txt",
+        "mps/md*.dot",
+        "mps/or/*.or",
+        "mps/ode/characteristics/CHARACTERIS_*",
+        "mps/m*.sum",
+        "output/*_ManErr.txt",
+        "output/*_dynamical_offsets.txt",
+        "output/TEST_mechcheck.txt",
+        "History/DITHER.txt",
+        "History/FIDSEL.txt",
+        "History/RADMON.txt",
+        "History/SIMFOCUS.txt",
+        "History/SIMTRANS.txt",
     )
 
     for glob in globs:
@@ -142,41 +142,41 @@ def copy_load_products(load_name, out_root, load_root):
 
 def update_products(load_name, out_root, orv_pickle=None):
     load_dir = Path(out_root) / load_name
-    touch_file = load_dir / '000-proseco'
+    touch_file = load_dir / "000-proseco"
     if touch_file.exists():
-        print('Skipping update products, already done')
+        print("Skipping update products, already done")
         return
 
-    gspath = list(load_dir.glob('mps/mg*.sum'))[0]
-    bspath = list(load_dir.glob('CR*.backstop'))[0]
-    dotpath = list(load_dir.glob('mps/md*.dot'))[0]
+    gspath = list(load_dir.glob("mps/mg*.sum"))[0]
+    bspath = list(load_dir.glob("CR*.backstop"))[0]
+    dotpath = list(load_dir.glob("mps/md*.dot"))[0]
 
     gs = parse_cm.read_guide_summary(gspath)
     bs = parse_cm.read_backstop(bspath)
     dt = parse_cm.read_dot_as_list(dotpath)
 
     if orv_pickle is None:
-        obs_kwargs = get_starcheck_obs_kwargs(load_dir / 'starcheck.txt')
+        obs_kwargs = get_starcheck_obs_kwargs(load_dir / "starcheck.txt")
         cats = {}
         for obsid, kwargs in obs_kwargs.items():
-            print(f'  Generating proseco catalog for {obsid}')
+            print(f"  Generating proseco catalog for {obsid}")
             cats[obsid] = get_aca_catalog(raise_exc=True, **kwargs)
     else:
-        orvcats = pickle.load(open(orv_pickle, 'rb'))
+        orvcats = pickle.load(open(orv_pickle, "rb"))
         # The ORV proseco pickle uses strings as the keys, so int them
         cats = {int(k): v for k, v in orvcats.items()}
         # It looks like the proseco pickle has catalogs for no-catalog
         # observations (dark cal), so trim those
-        extras = set(cats.keys()) - set([summ['obsid'] for summ in gs['summs']])
+        extras = set(cats.keys()) - set([summ["obsid"] for summ in gs["summs"]])
         for obs in extras:
             del cats[obs]
 
-    print('Updating backstop, DOT and guide summary products')
+    print("Updating backstop, DOT and guide summary products")
     gs = parse_cm.replace_starcat_guide_summary(gs, cats)
     bs = parse_cm.replace_starcat_backstop(bs, cats)
     dt = parse_cm.replace_starcat_dot(dt, cats)
 
-    print('Writing ...')
+    print("Writing ...")
     parse_cm.write_guide_summary(gs, gspath)
     parse_cm.write_backstop(bs, bspath)
     parse_cm.write_dot(dt, dotpath)
@@ -186,16 +186,16 @@ def update_products(load_name, out_root, orv_pickle=None):
 
 def run_starcheck(load_name, out_root):
     load_dir = Path(out_root, load_name)
-    starcheck_html = load_dir / 'starcheck.html'
+    starcheck_html = load_dir / "starcheck.html"
     if starcheck_html.exists():
-        print(f'Skipping because {starcheck_html} already exists')
+        print(f"Skipping because {starcheck_html} already exists")
         return
-    print(f'Running starcheck in {load_dir}')
+    print(f"Running starcheck in {load_dir}")
     with Ska.File.chdir(str(load_dir)):
-        subprocess.run(['bash', '/proj/sot/ska/bin/starcheck'])
+        subprocess.run(["bash", "/proj/sot/ska/bin/starcheck"])
 
 
-def get_starcheck_proseco_outputs(load_name, out_root='.'):
+def get_starcheck_proseco_outputs(load_name, out_root="."):
     """Get the complete set of output proseco pickles for each obsid and the corresponding
     set of observations parameters and backstop catalogs by parsing starcheck.txt.
 
@@ -205,8 +205,8 @@ def get_starcheck_proseco_outputs(load_name, out_root='.'):
     :returns: proseco_cats, starcheck_obss: dicts by obsid
     """
     load_dir = Path(out_root, load_name)
-    starcheck_txt = load_dir / 'starcheck.txt'
-    proseco_pickle = load_dir / f'{load_name}_proseco.pkl'
+    starcheck_txt = load_dir / "starcheck.txt"
+    proseco_pickle = load_dir / f"{load_name}_proseco.pkl"
 
     # First get all the expected calling arguments for all obsids in starcheck output.
     # This returns a list of dict with get_aca_catalog calling args.  This also returns
@@ -214,7 +214,7 @@ def get_starcheck_proseco_outputs(load_name, out_root='.'):
     starcheck_obss = get_starcheck_obs_kwargs(starcheck_txt)
 
     # Now load the load products pickle with all catalogs
-    proseco_cats = pickle.load(open(proseco_pickle, 'rb'))
+    proseco_cats = pickle.load(open(proseco_pickle, "rb"))
 
     # Change obsid key from str to int (that's the way MATLAB stores them).
     for str_obsid in list(proseco_cats):
