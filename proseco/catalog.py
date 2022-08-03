@@ -13,7 +13,7 @@ from proseco.characteristics import MonFunc
 from . import __version__ as VERSION
 from . import characteristics as ACA
 from . import characteristics_acq as ACQ
-from .acq import AcqTable, get_acq_catalog
+from .acq import AcqTable, get_acq_catalog, get_maxmag
 from .core import (
     ACACatalogTable,
     MetaAttribute,
@@ -791,7 +791,13 @@ def merge_cats(fids=None, guides=None, acqs=None, mons=None):
         # TODO: move these into acq.py where possible
         img_size = get_img_size(len(fids))
         acqs["type"] = "ACQ"
-        acqs["maxmag"] = (acqs["mag"] + 1.5).clip(None, ACA.max_maxmag)
+        acqs["maxmag"] = [
+            min(
+                acq["mag"] + ACA.max_delta_maxmag,  # Legacy MAG + 1.5
+                get_maxmag(acq["halfw"], acqs.t_ccd),  # Search hits < 50 limit
+            )
+            for acq in acqs
+        ]
         acqs["dim"], acqs["res"] = get_dim_res(acqs["halfw"])
         acqs["sz"] = f"{img_size}x{img_size}"
 
