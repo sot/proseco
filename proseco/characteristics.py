@@ -34,6 +34,8 @@ class MonCoord:
 # Maximum value of star catalog MAXMAG parameter.  Clip value and implications
 # of clipping discussed in emails circa June 7, 2019 with search key "maxmag".
 max_maxmag = 11.2
+min_delta_maxmag = 0.5
+max_delta_maxmag = 1.5
 
 # Monitor window MAXMAG. This value comes from the commanded MAXMAG parameter
 # in the backstop AOSTRCAT command for obsid 23382 in MAR0821A. This also

@@ -753,7 +753,7 @@ class ACACatalogTable(BaseCatalogTable):
             if not isinstance(dither, ACABox):
                 setattr(self, dither_attr, ACABox(dither))
 
-    def set_stars(self, acqs=None, filter_near_fov=True):
+    def set_stars(self, acqs=None, filter_near_fov=True) -> None:
         """Set the object ``stars`` attribute to an appropriate StarsTable object.
 
         If ``acqs`` is defined that will be a previously computed AcqTable with
@@ -777,7 +777,7 @@ class ACACatalogTable(BaseCatalogTable):
             if not np.all(ok):
                 stars = stars[ok]
 
-        self.stars = stars
+        self.stars = stars  # type: StarsTable
 
     def get_catalog_for_plot(self):
         """Return value of ``catalog`` for plot_stars() call for this object
@@ -1208,7 +1208,7 @@ class StarsTable(BaseCatalogTable):
         return StarsTable.from_stars(att, stars=agasc_stars)
 
     @classmethod
-    def from_stars(cls, att, stars, logger=None, copy=True):
+    def from_stars(cls, att, stars, logger=None, copy=True) -> "StarsTable":
         """
         Return a StarsTable from an existing AGASC stars query.  This just updates
         columns in place.
