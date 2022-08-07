@@ -793,7 +793,7 @@ def merge_cats(fids=None, guides=None, acqs=None, mons=None):
         acqs["type"] = "ACQ"
         acqs["maxmag"] = [
             min(
-                acq["mag"] + ACA.max_delta_maxmag,  # Legacy MAG + 1.5
+                np.clip(acq["mag"] + ACA.max_delta_maxmag, a_max=11.2),  # Legacy
                 get_maxmag(acq["halfw"], acqs.t_ccd),  # Search hits < 50 limit
             )
             for acq in acqs
