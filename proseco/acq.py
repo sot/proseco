@@ -104,6 +104,11 @@ def filter_box_sizes_for_maxmag(
     ok = [maxmag_min <= get_maxmag(box_size, t_ccd) for box_size in box_sizes]
     out: np.ndarray = box_sizes[ok]
 
+    # Always allow at least the smallest box size. This situation will be
+    # flagged in ACA review.
+    if len(out) == 0:
+        out = np.array([60], dtype=np.int64)
+
     return out
 
 
