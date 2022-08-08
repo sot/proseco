@@ -32,9 +32,12 @@ from .core import (
 )
 
 
-def load_maxmags():
+def load_maxmags() -> dict:
     """
     Load maxmags from disk.
+
+    Maxmag data made with analysis/interpolate-maxmags-contour-plot.ipynb
+
     """
     path = Path(__file__).parent / "maxmags.npz"
     with np.load(path) as arrs:
@@ -53,6 +56,8 @@ def get_maxmag(box_size: int, t_ccd: float) -> float:
 
     This corresponds to the MAXMAG that results in exactly 50 search hits. See
     https://occweb.cfa.harvard.edu/twiki/bin/view/Aspect/PeaMaxMagTesting.
+
+    Maxmag data made with analysis/interpolate-maxmags-contour-plot.ipynb.
 
     :param box_size: box size (int, arcsec)
     :param t_ccd: CCD temperature (float, C)
@@ -97,7 +102,7 @@ def filter_box_sizes_for_maxmag(
     maxmag_min = maxmag_min.clip(None, ACA.max_maxmag)
 
     ok = [maxmag_min <= get_maxmag(box_size, t_ccd) for box_size in box_sizes]
-    out = box_sizes[ok]  # type: np.ndarray
+    out: np.ndarray = box_sizes[ok]
 
     return out
 
