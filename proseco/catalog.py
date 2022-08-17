@@ -791,13 +791,20 @@ def merge_cats(fids=None, guides=None, acqs=None, mons=None):
         # TODO: move these into acq.py where possible
         img_size = get_img_size(len(fids))
         acqs["type"] = "ACQ"
-        acqs["maxmag"] = [
-            min(
-                np.clip(acq["mag"] + ACA.max_delta_maxmag, a_max=11.2),  # Legacy
-                get_maxmag(acq["halfw"], acqs.t_ccd),  # Search hits < 50 limit
-            )
-            for acq in acqs
-        ]
+
+        # Set maxmag for acqs. Start w/ legacy version corresponding to behavior
+        # prior to using the search_hits < 50 constraint.
+        maxmags_legacy = np.clip(
+            acqs["mag"] + ACA.max_delta_maxmag, a_min=None, a_max=11.2
+        )
+        if "PROSECO_IGNORE_MAXMAGS_CONSTRAINTS" in os.environ:
+            # Use the legacy version
+            acqs["maxmag"] = maxmags_legacy
+        else:
+            # Use the min of the legacy and search hits < 50 limits
+            maxmags_search = [get_maxmag(acq["halfw"], acqs.t_ccd) for acq in acqs]
+            acqs["maxmag"] = np.minimum(maxmags_legacy, maxmags_search)
+
         acqs["dim"], acqs["res"] = get_dim_res(acqs["halfw"])
         acqs["sz"] = f"{img_size}x{img_size}"
 

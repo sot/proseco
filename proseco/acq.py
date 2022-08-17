@@ -6,6 +6,7 @@ Get a catalog of acquisition stars using the algorithm described in
 https://docs.google.com/presentation/d/1VtFKAW9he2vWIQAnb6unpK4u1bVAVziIdX9TnqRS3a8
 """
 
+import os
 import warnings
 from pathlib import Path
 
@@ -539,9 +540,10 @@ class AcqTable(ACACatalogTable):
             else:
                 max_box_size = max_man_err
             box_sizes = ACQ.box_sizes[ACQ.box_sizes <= max_box_size]
-            box_sizes = filter_box_sizes_for_maxmag(
-                cand_acq["mag"], cand_acq["mag_err"], box_sizes, self.t_ccd
-            )
+            if "PROSECO_IGNORE_MAXMAGS_CONSTRAINTS" not in os.environ:
+                box_sizes = filter_box_sizes_for_maxmag(
+                    cand_acq["mag"], cand_acq["mag_err"], box_sizes, self.t_ccd
+                )
             box_sizes_list.append(box_sizes)
 
         return box_sizes_list
