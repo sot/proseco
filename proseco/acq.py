@@ -99,7 +99,7 @@ def filter_box_sizes_for_maxmag(
     maxmag_min = mag + np.clip(3 * mag_err, ACA.min_delta_maxmag, ACA.max_delta_maxmag)
 
     # Hard limit of ACA.max_maxmag (11.2) from operational change made in 2019.
-    # We always accept a maxmax of 11.2 regardless of star mag / mag_err.
+    # We always accept a maxmag of 11.2 regardless of star mag / mag_err.
     maxmag_min = maxmag_min.clip(None, ACA.max_maxmag)
 
     ok = [maxmag_min <= get_maxmag(box_size, t_ccd) for box_size in box_sizes]
