@@ -541,9 +541,15 @@ class AcqTable(ACACatalogTable):
                 max_box_size = max_man_err
             box_sizes = ACQ.box_sizes[ACQ.box_sizes <= max_box_size]
             if "PROSECO_IGNORE_MAXMAGS_CONSTRAINTS" not in os.environ:
-                box_sizes = filter_box_sizes_for_maxmag(
+                box_sizes_new = filter_box_sizes_for_maxmag(
                     cand_acq["mag"], cand_acq["mag_err"], box_sizes, self.t_ccd
                 )
+                if box_sizes_filtered := sorted(set(box_sizes) - set(box_sizes_new)):
+                    self.log(
+                        f"id={cand_acq['id']}: filtered {box_sizes_filtered} boxes "
+                        "for maxmag constraints"
+                    )
+                    box_sizes = box_sizes_new
             box_sizes_list.append(box_sizes)
 
         return box_sizes_list
