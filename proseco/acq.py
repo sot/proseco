@@ -6,11 +6,16 @@ Get a catalog of acquisition stars using the algorithm described in
 https://docs.google.com/presentation/d/1VtFKAW9he2vWIQAnb6unpK4u1bVAVziIdX9TnqRS3a8
 """
 
+import os
+import warnings
+from pathlib import Path
+
 import numpy as np
 from chandra_aca.star_probs import acq_success_prob, prob_n_acq
 from chandra_aca.transform import mag_to_count_rate, pixels_to_yagzag, snr_mag_for_t_ccd
 from scipy import ndimage, stats
 from scipy.interpolate import interp1d
+from ska_helpers.utils import LazyDict
 
 from . import characteristics as ACA
 from . import characteristics_acq as ACQ
@@ -19,12 +24,93 @@ from .core import (
     ACACatalogTable,
     AliasAttribute,
     MetaAttribute,
+    StarsTable,
     bin2x2,
     calc_spoiler_impact,
     get_image_props,
     get_mag_std,
     pea_reject_image,
 )
+
+
+def load_maxmags() -> dict:
+    """
+    Load maxmags from disk.
+
+    Maxmag data made with analysis/interpolate-maxmags-contour-plot.ipynb
+
+    """
+    path = Path(__file__).parent / "maxmags.npz"
+    with np.load(path) as arrs:
+        out = dict(arrs)
+    for box_sz in out["box_sizes"]:
+        out[box_sz] = out.pop(f"vals_{box_sz}")
+    return out
+
+
+MAXMAGS = LazyDict(load_maxmags)
+
+
+def get_maxmag(box_size: int, t_ccd: float) -> float:
+    """
+    Get maxmag for given box_size and t_ccd.
+
+    This corresponds to the MAXMAG that results in exactly 50 search hits. See
+    https://occweb.cfa.harvard.edu/twiki/bin/view/Aspect/PeaMaxMagTesting.
+
+    Maxmag data made with analysis/interpolate-maxmags-contour-plot.ipynb.
+
+    :param box_size: box size (int, arcsec)
+    :param t_ccd: CCD temperature (float, C)
+    :returns: maxmag (float)
+    """
+    if t_ccd < -10.0:
+        return 11.2
+    if t_ccd > 0:
+        warnings.warn(f"Clipping {t_ccd=} to 0.0 for interpolating MAXMAGs table")
+        t_ccd = 0.0
+
+    maxmag = np.interp(t_ccd, xp=MAXMAGS["t_ccds"], fp=MAXMAGS[box_size])
+
+    # Need to round to nearest 0.01 mag because of values that are just slightly
+    # below 11.2. These need to become exactly 11.2.
+    return maxmag.round(2)
+
+
+def filter_box_sizes_for_maxmag(
+    mag: float, mag_err: float, box_sizes: np.ndarray, t_ccd: float
+) -> np.ndarray:
+    """Filter the list of box sizes
+
+    First compute the smallest allowed value of MAXMAG for this star, which is
+    the star mag + 3 times the star mag error (clipped to be within 0.5 to 1.5
+    mag, nominal).
+
+    For each box size and t_ccd compute the MAXMAG that keeps the search hits
+    at exactly 50. Then keep the box sizes where MAXMAG is less than the star
+    minimum MAXMAG.
+
+    :param mag: star mag (float)
+    :param mag_err: star mag error (float)
+    :param box_sizes: ndarray of box sizes (float, arcsec)
+    :param t_ccd: CCD temperature (float, C)
+    :returns: ndarray of box sizes (float, arcsec)
+    """
+    maxmag_min = mag + np.clip(3 * mag_err, ACA.min_delta_maxmag, ACA.max_delta_maxmag)
+
+    # Hard limit of ACA.max_maxmag (11.2) from operational change made in 2019.
+    # We always accept a maxmag of 11.2 regardless of star mag / mag_err.
+    maxmag_min = maxmag_min.clip(None, ACA.max_maxmag)
+
+    ok = [maxmag_min <= get_maxmag(box_size, t_ccd) for box_size in box_sizes]
+    out: np.ndarray = box_sizes[ok]
+
+    # Always allow at least the smallest box size. This situation will be
+    # flagged in ACA review.
+    if len(out) == 0:
+        out = np.array([60], dtype=np.int64)
+
+    return out
 
 
 def get_acq_catalog(obsid=0, **kwargs):
@@ -322,7 +408,7 @@ class AcqTable(ACACatalogTable):
         )
         return ok
 
-    def get_acq_candidates(self, stars, max_candidates=20):
+    def get_acq_candidates(self, stars, max_candidates=20) -> StarsTable:
         """
         Get candidates for acquisition stars from ``stars`` table.
 
@@ -411,7 +497,10 @@ class AcqTable(ACACatalogTable):
         cand_acqs["spoilers_box"] = np.full(n_cand, None)
         # Cached value of box_size + dither for imposters
         cand_acqs["imposters_box"] = np.full(n_cand, None)
-        cand_acqs["box_sizes"] = box_sizes_list
+        # Need to make an object array to prevent numpy from turning list of
+        # ndarray into a 2-d array.
+        cand_acqs["box_sizes"] = np.full(n_cand, None)
+        cand_acqs["box_sizes"][()] = box_sizes_list
 
         return cand_acqs
 
@@ -451,6 +540,16 @@ class AcqTable(ACACatalogTable):
             else:
                 max_box_size = max_man_err
             box_sizes = ACQ.box_sizes[ACQ.box_sizes <= max_box_size]
+            if "PROSECO_IGNORE_MAXMAGS_CONSTRAINTS" not in os.environ:
+                box_sizes_new = filter_box_sizes_for_maxmag(
+                    cand_acq["mag"], cand_acq["mag_err"], box_sizes, self.t_ccd
+                )
+                if box_sizes_filtered := sorted(set(box_sizes) - set(box_sizes_new)):
+                    self.log(
+                        f"id={cand_acq['id']}: filtered {box_sizes_filtered} boxes "
+                        "for maxmag constraints"
+                    )
+                    box_sizes = box_sizes_new
             box_sizes_list.append(box_sizes)
 
         return box_sizes_list

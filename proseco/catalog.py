@@ -13,7 +13,7 @@ from proseco.characteristics import MonFunc
 from . import __version__ as VERSION
 from . import characteristics as ACA
 from . import characteristics_acq as ACQ
-from .acq import AcqTable, get_acq_catalog
+from .acq import AcqTable, get_acq_catalog, get_maxmag
 from .core import (
     ACACatalogTable,
     MetaAttribute,
@@ -791,7 +791,20 @@ def merge_cats(fids=None, guides=None, acqs=None, mons=None):
         # TODO: move these into acq.py where possible
         img_size = get_img_size(len(fids))
         acqs["type"] = "ACQ"
-        acqs["maxmag"] = (acqs["mag"] + 1.5).clip(None, ACA.max_maxmag)
+
+        # Set maxmag for acqs. Start w/ legacy version corresponding to behavior
+        # prior to using the search_hits < 50 constraint.
+        maxmags_legacy = np.clip(
+            acqs["mag"] + ACA.max_delta_maxmag, a_min=None, a_max=11.2
+        )
+        if "PROSECO_IGNORE_MAXMAGS_CONSTRAINTS" in os.environ:
+            # Use the legacy version
+            acqs["maxmag"] = maxmags_legacy
+        else:
+            # Use the min of the legacy and search hits < 50 limits
+            maxmags_search = [get_maxmag(acq["halfw"], acqs.t_ccd) for acq in acqs]
+            acqs["maxmag"] = np.minimum(maxmags_legacy, maxmags_search)
+
         acqs["dim"], acqs["res"] = get_dim_res(acqs["halfw"])
         acqs["sz"] = f"{img_size}x{img_size}"
 

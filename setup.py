@@ -14,7 +14,7 @@ setup(
     setup_requires=["setuptools_scm", "setuptools_scm_git_archive"],
     zip_safe=False,
     packages=["proseco", "proseco.tests"],
-    package_data={"proseco": ["index_template*.html"]},
+    package_data={"proseco": ["index_template*.html", "maxmags.npz"]},
     tests_require=["pytest"],
     cmdclass=cmdclass,
 )

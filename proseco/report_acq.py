@@ -155,7 +155,7 @@ def make_cand_acqs_report(acqs, cand_acqs, events, context, obsdir):
     context["cand_acqs_table"] = table_to_html(cand_acqs_table)
 
     context["cand_acqs_events"] = select_events(
-        events, ("get_acq_catalog", "from_agasc", "get_acq_candidates")
+        events, ("get_acq_catalog", "from_agasc", "get_acq_candidates", "get_box_sizes")
     )
 
     # Now plot figure

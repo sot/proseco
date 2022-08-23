@@ -1,9 +1,9 @@
 # Various working files
 /go.py
-*.ipynb
-*.pkl
-*.npz
+/go[1-9].py
+/*.ipynb
 /validate
+/notebooks
 /obs?????
 /.idea
 /.vscode
