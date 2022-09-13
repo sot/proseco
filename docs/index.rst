@@ -1,8 +1,3 @@
-.. proseco documentation master file, created by
-   sphinx-quickstart on Thu Sep 13 18:24:27 2018.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 Proseco
 =======
 
@@ -54,6 +49,7 @@ Argument            Description
 =================== =================================================================
 target_name         Target name, e.g. from the OR list (str)
 duration            Observation duration (secs)
+man_angle_next      Manvr angle to next attitude after observation (deg, default=180)
 sim_offset          SIM translation offset from nominal [steps] (default=0)
 focus_offset        SIM focus offset [steps] (default=0)
 target_offset       target offset including dynamical offset (y, z, deg)
@@ -69,7 +65,8 @@ stars               table of AGASC stars (will be fetched from agasc if None)
 monitors            N x 5 array of monitor star specifications (see `Monitor stars`_)
 t_ccd_eff_acq       ACA CCD effective temperature for acquisition (degC)
 t_ccd_eff_guide     ACA CCD effective temperature for guide (degC)
-dark_date           date of dark cal
+dark                1024x1024 dark image (e-/sec, default=None => auto-fetch)
+dark_date           date of dark cal (str)
 =================== =================================================================
 
 The input ``n_guide`` parameter represents the number of slots available for the
