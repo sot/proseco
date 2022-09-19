@@ -202,8 +202,9 @@ class GuideTable(ACACatalogTable):
     def get_img_size(self, n_fids=None):
         """Get guide image readout size from ``img_size`` and ``n_fids``.
 
-        If img_size is None (typical case) then this uses the default rule
-        that OR's get 6x6 and ER's (no fids) get 8x8.
+        If img_size is None (typical case) then this uses the default rules
+        defined in ``core.get_img_size()``, namely 8x8 for all guide stars
+        unless overridden by the PROSECO_OR_IMAGE_SIZE environment variable.
 
         This requires that the ``fids`` attribute has been set, normally by
         providing the table as an arg to ``get_guide_catalog()``.

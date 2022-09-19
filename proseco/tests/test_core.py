@@ -196,7 +196,7 @@ def test_get_kwargs_from_starcheck_text():
     assert mon["zang"] == 500.0
 
 
-def test_get_kwargs_from_starcheck_text2():
+def test_get_kwargs_from_starcheck_text2(monkeypatch):
     text2 = """
     OBSID: 23156  WR 140                 ACIS-S SIM Z offset:0     (0.00mm) Grating: HETG
     RA, Dec, Roll (deg):   305.083054    43.865507   310.023234
@@ -232,7 +232,7 @@ def test_get_kwargs_from_starcheck_text2():
     Predicted Max CCD temperature: -11.2 C  N100 Warm Pix Frac 0.291
     Dynamic Mag Limits: Yellow 10.30  Red 10.56
     """
-
+    monkeypatch.setenv("PROSECO_OR_IMAGE_SIZE", "6")
     kwargs = get_kwargs_from_starcheck_text(text2, force_catalog=True, include_cat=True)
     cat_exp = kwargs.pop("cat")
     exp = {

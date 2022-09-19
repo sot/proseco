@@ -75,7 +75,8 @@ def get_aca_catalog(*args, **kwargs):
     :param include_ids_guide: list of AGASC IDs of stars to include in guide catalog
     :param exclude_ids_guide: list of AGASC IDs of stars to exclude from guide catalog
     :param img_size_guide: readout window size for guide stars (6, 8, or ``None``).
-                           For default value ``None`` use 8 for no fids, 6 for fids.
+        Default value: 8 for ER's; PROSECO_OR_IMAGE_SIZE environment value if
+        if set, otherwise 8.
     :param optimize: optimize star catalog after initial selection (default=True)
     :param verbose: provide extra logging info (mostly calc_p_safe) (default=False)
     :param print_log: print the run log to stdout (default=False)

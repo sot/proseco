@@ -1919,8 +1919,15 @@ def get_dim_res(halfws):
 def get_img_size(n_fids):
     """Get guide image readout size from ``n_fids``.
 
-    This is the core definition for the default rule that OR's (with fids) get
-    6x6 and ER's (no fids) get 8x8. This might change in the future.
+    This is the core definition for the default rule specifying the guide star
+    image size.
+
+    ER's (observations with no fids) always get 8x8.
+
+    OR's (observations with fids) default to 8x8. This can be globally
+    overridden by setting the ``PROSECO_OR_IMAGE_SIZE`` environment
+    variable to "4", "6" or "8". As a reminder the ``img_size_guide`` parameter
+    of ``get_aca_catalog`` can also be set.
 
     Parameters
     ----------
@@ -1932,4 +1939,9 @@ def get_img_size(n_fids):
     int
         Guide star image readout size to be used in a catalog (6 or 8)
     """
-    return 6 if n_fids > 0 else 8
+    default_or_img_size = os.environ.get("PROSECO_OR_IMAGE_SIZE", "8")
+    if default_or_img_size not in ("4", "6", "8"):
+        raise ValueError(
+            f"PROSECO_OR_IMAGE_SIZE must be 6 or 8, not {default_or_img_size}"
+        )
+    return int(default_or_img_size) if n_fids > 0 else 8

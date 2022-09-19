@@ -92,7 +92,13 @@ def test_get_aca_catalog_20603():
     """Put it all together.  Regression test for selected stars."""
     # Force not using a bright star so there is a GUI-only (not BOT) star
     aca = get_aca_catalog(
-        20603, exclude_ids_acq=[40113544], n_fid=2, n_guide=6, n_acq=7, raise_exc=True
+        20603,
+        exclude_ids_acq=[40113544],
+        n_fid=2,
+        n_guide=6,
+        n_acq=7,
+        img_size_guide=6,
+        raise_exc=True,
     )
     # Expected 2 fids, 4 guide, 7 acq
     exp = [
@@ -134,7 +140,7 @@ def test_get_aca_catalog_20259():
     Also do a test that set_stars() processing is behaving as expected.
 
     """
-    aca = get_aca_catalog(20259, raise_exc=True)
+    aca = get_aca_catalog(20259, img_size_guide=6, raise_exc=True)
     exp = [
         "slot idx     id    type  sz   yang     zang   dim res halfw",
         "---- --- --------- ---- --- -------- -------- --- --- -----",
@@ -723,16 +729,16 @@ def test_dense_star_field_regress():
         "   0   1          3  FID 8x8    40.01 -1871.10   1   1    25  7.00",
         "   1   2          4  FID 8x8  2140.23   166.63   1   1    25  7.00",
         "   2   3          5  FID 8x8 -1826.28   160.17   1   1    25  7.00",
-        "   3   4 1130899056  BOT 6x6  2386.83 -1808.51  28   1   160  6.24",
-        "   4   5 1130889232  BOT 6x6  -251.98 -1971.97  28   1   160  6.99",
-        "   5   6 1130893664  BOT 6x6  1530.07 -2149.38  28   1   160  7.62",
-        "   6   7 1130898232  GUI 6x6  1244.84  2399.68   1   1    25  7.38",
-        "   7   8 1130773616  GUI 6x6 -1713.06  1312.10   1   1    25  7.50",
-        "   0   9 1130770696  ACQ 6x6 -1900.42  2359.33  28   1   160  7.35",
-        "   1  10 1130890288  ACQ 6x6  2030.55 -2011.89  28   1   160  7.67",
-        "   2  11 1130890616  ACQ 6x6  1472.68  -376.72  28   1   160  7.77",
-        "   6  12 1130893640  ACQ 6x6    64.32 -1040.81  28   1   160  7.77",
-        "   7  13 1130894376  ACQ 6x6  -633.90  1186.80  28   1   160  7.78",
+        "   3   4 1130899056  BOT 8x8  2386.83 -1808.51  28   1   160  6.24",
+        "   4   5 1130889232  BOT 8x8  -251.98 -1971.97  28   1   160  6.99",
+        "   5   6 1130893664  BOT 8x8  1530.07 -2149.38  28   1   160  7.62",
+        "   6   7 1130898232  GUI 8x8  1244.84  2399.68   1   1    25  7.38",
+        "   7   8 1130773616  GUI 8x8 -1713.06  1312.10   1   1    25  7.50",
+        "   0   9 1130770696  ACQ 8x8 -1900.42  2359.33  28   1   160  7.35",
+        "   1  10 1130890288  ACQ 8x8  2030.55 -2011.89  28   1   160  7.67",
+        "   2  11 1130890616  ACQ 8x8  1472.68  -376.72  28   1   160  7.77",
+        "   6  12 1130893640  ACQ 8x8    64.32 -1040.81  28   1   160  7.77",
+        "   7  13 1130894376  ACQ 8x8  -633.90  1186.80  28   1   160  7.78",
     ]
     assert aca[TEST_COLS + ["mag"]].pformat(max_width=-1) == exp
 
@@ -953,9 +959,9 @@ def test_img_size_guide():
     assert np.all(aca.guides["sz"] == "8x8")
     assert aca.guides.img_size is None
 
-    # Confirm that for an inferred OR, boxes are 6x6
+    # Confirm that for an inferred OR, boxes are 8x8
     aca = get_aca_catalog(**mod_std_info(stars=stars, dark=dark, n_fid=3))
-    assert np.all(aca.guides["sz"] == "6x6")
+    assert np.all(aca.guides["sz"] == "8x8")
     assert aca.guides.img_size is None
 
     # Confirm that for explicit img_size_guide of 8 boxes are '8x8'
@@ -972,7 +978,7 @@ def test_img_size_guide():
     assert np.all(aca.guides["sz"] == "6x6")
     assert aca.guides.img_size == 6
 
-    # Confirm that for explicit img_size_guide of 6 boxes are '6x6'
+    # Confirm that for explicit img_size_guide of 6 boxes are '4x4'
     aca = get_aca_catalog(
         **mod_std_info(stars=stars, dark=dark, n_fid=0, img_size_guide=4)
     )
@@ -981,6 +987,27 @@ def test_img_size_guide():
 
     with pytest.raises(ValueError, match="img_size must be 4, 6, 8, or None"):
         get_aca_catalog(**mod_std_info(stars=stars, dark=dark, img_size_guide=3))
+
+
+def test_img_size_guide_override_with_env(monkeypatch):
+    """
+    Test img_size_guide for setting guide star readout image size when
+    PROSECO_OR_IMAGE_SIZE is set.
+    """
+    monkeypatch.setenv("PROSECO_OR_IMAGE_SIZE", "6")
+    dark = DARK40.copy()
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(mag=8.0, n_stars=8)
+
+    # Confirm that for an inferred ER, boxes are still 8x8 despite override
+    aca = get_aca_catalog(**mod_std_info(stars=stars, dark=dark, n_fid=0))
+    assert np.all(aca.guides["sz"] == "8x8")
+    assert aca.guides.img_size is None
+
+    # Confirm that for an inferred OR, boxes are 6x6
+    aca = get_aca_catalog(**mod_std_info(stars=stars, dark=dark, n_fid=3))
+    assert np.all(aca.guides["sz"] == "6x6")
+    assert aca.guides.img_size is None
 
 
 def test_dyn_bgd_star_bonus():
