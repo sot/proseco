@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>API documentation &#8212; proseco 5.7.0 documentation</title>
+    <title>API documentation &#8212; proseco 5.8.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/bootstrap-astropy.css" />
     
@@ -60,7 +60,7 @@
 	 |
       </li>
       <li>
-	<a href="index.html">proseco 5.7.0 documentation</a>
+	<a href="index.html">proseco 5.8.0 documentation</a>
 	 &#187;
       </li>
       
@@ -253,6 +253,8 @@ feature of the implementation that works for now.</p>
 provided this defaults to value from the ACA xija thermal model.</p></li>
 <li><p><strong>t_ccd_eff_acq</strong> – ACA CCD effective temperature for acquisition (degC)</p></li>
 <li><p><strong>t_ccd_eff_guide</strong> – ACA CCD effective temperature for guide (degC)</p></li>
+<li><p><strong>dark</strong> – 1024x1024 dark image (e-/sec, default=None =&gt; auto-fetch)</p></li>
+<li><p><strong>dark_date</strong> – Date of dark cal (str, optional)</p></li>
 <li><p><strong>duration</strong> – duration of observation (sec)</p></li>
 <li><p><strong>target_name</strong> – name of target (str)</p></li>
 <li><p><strong>date</strong> – date of acquisition (any DateTime-compatible format)</p></li>
@@ -277,7 +279,8 @@ sets of fids include the id, no fids will be selected.</p></li>
 <li><p><strong>include_ids_guide</strong> – list of AGASC IDs of stars to include in guide catalog</p></li>
 <li><p><strong>exclude_ids_guide</strong> – list of AGASC IDs of stars to exclude from guide catalog</p></li>
 <li><p><strong>img_size_guide</strong> – readout window size for guide stars (6, 8, or <code class="docutils literal notranslate"><span class="pre">None</span></code>).
-For default value <code class="docutils literal notranslate"><span class="pre">None</span></code> use 8 for no fids, 6 for fids.</p></li>
+Default value: 8 for ER’s; PROSECO_OR_IMAGE_SIZE environment value if
+if set, otherwise 8.</p></li>
 <li><p><strong>optimize</strong> – optimize star catalog after initial selection (default=True)</p></li>
 <li><p><strong>verbose</strong> – provide extra logging info (mostly calc_p_safe) (default=False)</p></li>
 <li><p><strong>print_log</strong> – print the run log to stdout (default=False)</p></li>
@@ -402,7 +405,7 @@ it should have ‘id’ and ‘halfw’ columns.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="proseco.acq.AcqTable.get_acq_candidates">
-<span class="sig-name descname"><span class="pre">get_acq_candidates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stars</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_candidates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/acq.html#AcqTable.get_acq_candidates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.acq.AcqTable.get_acq_candidates" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_acq_candidates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stars</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_candidates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#proseco.core.StarsTable" title="proseco.core.StarsTable"><span class="pre">proseco.core.StarsTable</span></a></span></span><a class="reference internal" href="_modules/proseco/acq.html#AcqTable.get_acq_candidates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.acq.AcqTable.get_acq_candidates" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get candidates for acquisition stars from <code class="docutils literal notranslate"><span class="pre">stars</span></code> table.</p>
 <p>This allows for candidates right up to the useful part of the CCD.
 The p_acq will be accordingly penalized.</p>
@@ -716,6 +719,31 @@ of the CCD.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="proseco.acq.filter_box_sizes_for_maxmag">
+<span class="sig-prename descclassname"><span class="pre">proseco.acq.</span></span><span class="sig-name descname"><span class="pre">filter_box_sizes_for_maxmag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mag</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_err</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">box_sizes</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_ccd</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><span class="pre">float</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">numpy.ndarray</span></span></span><a class="reference internal" href="_modules/proseco/acq.html#filter_box_sizes_for_maxmag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.acq.filter_box_sizes_for_maxmag" title="Permalink to this definition">¶</a></dt>
+<dd><p>Filter the list of box sizes</p>
+<p>First compute the smallest allowed value of MAXMAG for this star, which is
+the star mag + 3 times the star mag error (clipped to be within 0.5 to 1.5
+mag, nominal).</p>
+<p>For each box size and t_ccd compute the MAXMAG that keeps the search hits
+at exactly 50. Then keep the box sizes where MAXMAG is less than the star
+minimum MAXMAG.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mag</strong> – star mag (float)</p></li>
+<li><p><strong>mag_err</strong> – star mag error (float)</p></li>
+<li><p><strong>box_sizes</strong> – ndarray of box sizes (float, arcsec)</p></li>
+<li><p><strong>t_ccd</strong> – CCD temperature (float, C)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>ndarray of box sizes (float, arcsec)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="proseco.acq.get_acq_catalog">
 <span class="sig-prename descclassname"><span class="pre">proseco.acq.</span></span><span class="sig-name descname"><span class="pre">get_acq_catalog</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obsid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/acq.html#get_acq_catalog"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.acq.get_acq_catalog" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get a catalog of acquisition stars using the algorithm described in
@@ -803,6 +831,26 @@ If not already in acq then call <code class="docutils literal notranslate"><span
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="proseco.acq.get_maxmag">
+<span class="sig-prename descclassname"><span class="pre">proseco.acq.</span></span><span class="sig-name descname"><span class="pre">get_maxmag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">box_size</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_ccd</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><span class="pre">float</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><span class="pre">float</span></a></span></span><a class="reference internal" href="_modules/proseco/acq.html#get_maxmag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.acq.get_maxmag" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get maxmag for given box_size and t_ccd.</p>
+<p>This corresponds to the MAXMAG that results in exactly 50 search hits. See
+<a class="reference external" href="https://occweb.cfa.harvard.edu/twiki/bin/view/Aspect/PeaMaxMagTesting">https://occweb.cfa.harvard.edu/twiki/bin/view/Aspect/PeaMaxMagTesting</a>.</p>
+<p>Maxmag data made with analysis/interpolate-maxmags-contour-plot.ipynb.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>box_size</strong> – box size (int, arcsec)</p></li>
+<li><p><strong>t_ccd</strong> – CCD temperature (float, C)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>maxmag (float)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="proseco.acq.get_p_man_err">
 <span class="sig-prename descclassname"><span class="pre">proseco.acq.</span></span><span class="sig-name descname"><span class="pre">get_p_man_err</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">man_err</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">man_angle</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/acq.html#get_p_man_err"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.acq.get_p_man_err" title="Permalink to this definition">¶</a></dt>
 <dd><p>Probability for given <code class="docutils literal notranslate"><span class="pre">man_err</span></code> given maneuver angle <code class="docutils literal notranslate"><span class="pre">man_angle</span></code>.</p>
@@ -851,6 +899,13 @@ background subtraction and warm pixel corruption of background.</p>
 <dd class="field-even"><p>numpy structured array of spoiler stars</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="proseco.acq.load_maxmags">
+<span class="sig-prename descclassname"><span class="pre">proseco.acq.</span></span><span class="sig-name descname"><span class="pre">load_maxmags</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.10)"><span class="pre">dict</span></a></span></span><a class="reference internal" href="_modules/proseco/acq.html#load_maxmags"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.acq.load_maxmags" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load maxmags from disk.</p>
+<p>Maxmag data made with analysis/interpolate-maxmags-contour-plot.ipynb</p>
 </dd></dl>
 
 </section>
@@ -904,8 +959,9 @@ tracking space with another. Overlap is defined as being within 12 pixels.</p>
 <dt class="sig sig-object py" id="proseco.guide.GuideTable.get_img_size">
 <span class="sig-name descname"><span class="pre">get_img_size</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_fids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/guide.html#GuideTable.get_img_size"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.guide.GuideTable.get_img_size" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get guide image readout size from <code class="docutils literal notranslate"><span class="pre">img_size</span></code> and <code class="docutils literal notranslate"><span class="pre">n_fids</span></code>.</p>
-<p>If img_size is None (typical case) then this uses the default rule
-that OR’s get 6x6 and ER’s (no fids) get 8x8.</p>
+<p>If img_size is None (typical case) then this uses the default rules
+defined in <code class="docutils literal notranslate"><span class="pre">core.get_img_size()</span></code>, namely 8x8 for all guide stars
+unless overridden by the PROSECO_OR_IMAGE_SIZE environment variable.</p>
 <p>This requires that the <code class="docutils literal notranslate"><span class="pre">fids</span></code> attribute has been set, normally by
 providing the table as an arg to <code class="docutils literal notranslate"><span class="pre">get_guide_catalog()</span></code>.</p>
 <dl class="simple">
@@ -1431,8 +1487,9 @@ tracking space with another. Overlap is defined as being within 12 pixels.</p>
 <dt class="sig sig-object py" id="id4">
 <span class="sig-name descname"><span class="pre">get_img_size</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_fids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/guide.html#GuideTable.get_img_size"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id4" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get guide image readout size from <code class="docutils literal notranslate"><span class="pre">img_size</span></code> and <code class="docutils literal notranslate"><span class="pre">n_fids</span></code>.</p>
-<p>If img_size is None (typical case) then this uses the default rule
-that OR’s get 6x6 and ER’s (no fids) get 8x8.</p>
+<p>If img_size is None (typical case) then this uses the default rules
+defined in <code class="docutils literal notranslate"><span class="pre">core.get_img_size()</span></code>, namely 8x8 for all guide stars
+unless overridden by the PROSECO_OR_IMAGE_SIZE environment variable.</p>
 <p>This requires that the <code class="docutils literal notranslate"><span class="pre">fids</span></code> attribute has been set, normally by
 providing the table as an arg to <code class="docutils literal notranslate"><span class="pre">get_guide_catalog()</span></code>.</p>
 <dl class="simple">
@@ -2053,7 +2110,7 @@ columns.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="proseco.core.ACACatalogTable.set_stars">
-<span class="sig-name descname"><span class="pre">set_stars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acqs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_near_fov</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/core.html#ACACatalogTable.set_stars"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.ACACatalogTable.set_stars" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">set_stars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acqs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_near_fov</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.10)"><span class="pre">None</span></a></span></span><a class="reference internal" href="_modules/proseco/core.html#ACACatalogTable.set_stars"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.ACACatalogTable.set_stars" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set the object <code class="docutils literal notranslate"><span class="pre">stars</span></code> attribute to an appropriate StarsTable object.</p>
 <p>If <code class="docutils literal notranslate"><span class="pre">acqs</span></code> is defined that will be a previously computed AcqTable with
 <code class="docutils literal notranslate"><span class="pre">stars</span></code> already available, so use that.</p>
@@ -2340,7 +2397,7 @@ within 3-sigma of 11.5 mag.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="proseco.core.StarsTable.from_stars">
-<em class="property"><span class="pre">classmethod</span> </em><span class="sig-name descname"><span class="pre">from_stars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">att</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stars</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/core.html#StarsTable.from_stars"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.StarsTable.from_stars" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">classmethod</span> </em><span class="sig-name descname"><span class="pre">from_stars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">att</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stars</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#proseco.core.StarsTable" title="proseco.core.StarsTable"><span class="pre">proseco.core.StarsTable</span></a></span></span><a class="reference internal" href="_modules/proseco/core.html#StarsTable.from_stars"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.StarsTable.from_stars" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a StarsTable from an existing AGASC stars query.  This just updates
 columns in place.</p>
 <p>If <code class="docutils literal notranslate"><span class="pre">stars</span></code> is a StarsTable, the attitude of that object <code class="docutils literal notranslate"><span class="pre">stars.att</span></code> must
@@ -2459,8 +2516,13 @@ of the image.  Returns the 8x8 image and mag.</p>
 <dt class="sig sig-object py" id="proseco.core.get_img_size">
 <span class="sig-prename descclassname"><span class="pre">proseco.core.</span></span><span class="sig-name descname"><span class="pre">get_img_size</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_fids</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/core.html#get_img_size"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.get_img_size" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get guide image readout size from <code class="docutils literal notranslate"><span class="pre">n_fids</span></code>.</p>
-<p>This is the core definition for the default rule that OR’s (with fids) get
-6x6 and ER’s (no fids) get 8x8. This might change in the future.</p>
+<p>This is the core definition for the default rule specifying the guide star
+image size.</p>
+<p>ER’s (observations with no fids) always get 8x8.</p>
+<p>OR’s (observations with fids) default to 8x8. This can be globally
+overridden by setting the <code class="docutils literal notranslate"><span class="pre">PROSECO_OR_IMAGE_SIZE</span></code> environment
+variable to “4”, “6” or “8”. As a reminder the <code class="docutils literal notranslate"><span class="pre">img_size_guide</span></code> parameter
+of <code class="docutils literal notranslate"><span class="pre">get_aca_catalog</span></code> can also be set.</p>
 <dl class="simple">
 <dt>n_fids<span class="classifier">int</span></dt><dd><p>Number of fids in the catalog</p>
 </dd>

@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>proseco.fid &#8212; proseco 5.7.0 documentation</title>
+    <title>proseco.fid &#8212; proseco 5.8.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/bootstrap-astropy.css" />
     
@@ -46,7 +46,7 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../index.html">proseco 5.7.0 documentation</a>
+	<a href="../../index.html">proseco 5.8.0 documentation</a>
 	 &#187;
       </li>
       <li><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
@@ -72,14 +72,12 @@
 <span class="kn">import</span> <span class="nn">weakref</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-
 <span class="kn">from</span> <span class="nn">chandra_aca.transform</span> <span class="kn">import</span> <span class="n">yagzag_to_pixels</span>
 
 <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">characteristics</span> <span class="k">as</span> <span class="n">ACA</span>
-<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">characteristics_fid</span> <span class="k">as</span> <span class="n">FID</span>
 <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">characteristics_acq</span> <span class="k">as</span> <span class="n">ACQ</span>
-
-<span class="kn">from</span> <span class="nn">.core</span> <span class="kn">import</span> <span class="n">ACACatalogTable</span><span class="p">,</span> <span class="n">MetaAttribute</span><span class="p">,</span> <span class="n">AliasAttribute</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">characteristics_fid</span> <span class="k">as</span> <span class="n">FID</span>
+<span class="kn">from</span> <span class="nn">.core</span> <span class="kn">import</span> <span class="n">ACACatalogTable</span><span class="p">,</span> <span class="n">AliasAttribute</span><span class="p">,</span> <span class="n">MetaAttribute</span>
 
 
 <div class="viewcode-block" id="get_fid_catalog"><a class="viewcode-back" href="../../api.html#proseco.fid.get_fid_catalog">[docs]</a><span class="k">def</span> <span class="nf">get_fid_catalog</span><span class="p">(</span><span class="n">obsid</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -143,28 +141,35 @@
 <div class="viewcode-block" id="FidTable"><a class="viewcode-back" href="../../api.html#proseco.fid.FidTable">[docs]</a><span class="k">class</span> <span class="nc">FidTable</span><span class="p">(</span><span class="n">ACACatalogTable</span><span class="p">):</span>
     <span class="c1"># Define base set of allowed keyword args to __init__. Subsequent MetaAttribute</span>
     <span class="c1"># or AliasAttribute properties will add to this.</span>
-    <span class="n">allowed_kwargs</span> <span class="o">=</span> <span class="n">ACACatalogTable</span><span class="o">.</span><span class="n">allowed_kwargs</span> <span class="o">|</span> <span class="nb">set</span><span class="p">([</span><span class="s1">&#39;acqs&#39;</span><span class="p">])</span>
+    <span class="n">allowed_kwargs</span> <span class="o">=</span> <span class="n">ACACatalogTable</span><span class="o">.</span><span class="n">allowed_kwargs</span> <span class="o">|</span> <span class="nb">set</span><span class="p">([</span><span class="s2">&quot;acqs&quot;</span><span class="p">])</span>
 
     <span class="c1"># Catalog type when plotting (None | &#39;FID&#39; | &#39;ACQ&#39; | &#39;GUI&#39;)</span>
-    <span class="n">catalog_type</span> <span class="o">=</span> <span class="s1">&#39;FID&#39;</span>
+    <span class="n">catalog_type</span> <span class="o">=</span> <span class="s2">&quot;FID&quot;</span>
 
     <span class="c1"># Name of table.  Use to define default file names where applicable.</span>
     <span class="c1"># (e.g. `obs19387/fids.pkl`).</span>
-    <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;fids&#39;</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;fids&quot;</span>
 
     <span class="n">cand_fids</span> <span class="o">=</span> <span class="n">MetaAttribute</span><span class="p">(</span><span class="n">is_kwarg</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">cand_fid_sets</span> <span class="o">=</span> <span class="n">MetaAttribute</span><span class="p">(</span><span class="n">is_kwarg</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
-    <span class="n">required_attrs</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;att&#39;</span><span class="p">,</span> <span class="s1">&#39;detector&#39;</span><span class="p">,</span> <span class="s1">&#39;sim_offset&#39;</span><span class="p">,</span> <span class="s1">&#39;focus_offset&#39;</span><span class="p">,</span>
-                      <span class="s1">&#39;t_ccd_guide&#39;</span><span class="p">,</span> <span class="s1">&#39;date&#39;</span><span class="p">,</span>
-                      <span class="s1">&#39;dither_acq&#39;</span><span class="p">,</span> <span class="s1">&#39;dither_guide&#39;</span><span class="p">)</span>
+    <span class="n">required_attrs</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;att&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;detector&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;sim_offset&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;focus_offset&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;t_ccd_guide&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;date&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;dither_acq&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;dither_guide&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
 
     <span class="n">include_ids</span> <span class="o">=</span> <span class="n">AliasAttribute</span><span class="p">()</span>
     <span class="n">exclude_ids</span> <span class="o">=</span> <span class="n">AliasAttribute</span><span class="p">()</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">acqs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_acqs</span><span class="p">()</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_acqs&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_acqs</span><span class="p">()</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_acqs&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
 
     <span class="nd">@acqs</span><span class="o">.</span><span class="n">setter</span>
     <span class="k">def</span> <span class="nf">acqs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
@@ -203,7 +208,7 @@
         <span class="n">cand_fids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cand_fids</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_fid</span> <span class="o">&gt;</span> <span class="mi">3</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_fid</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;number of fids n_fid must be between 0 and 3 inclusive&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;number of fids n_fid must be between 0 and 3 inclusive&quot;</span><span class="p">)</span>
 
         <span class="c1"># Final number of fids is the max of n_fid and the number of candidate fids.</span>
         <span class="n">actual_n_fid</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_fid</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">cand_fids</span><span class="p">))</span>
@@ -212,7 +217,7 @@
             <span class="n">cand_fid_sets</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="k">elif</span> <span class="n">actual_n_fid</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">cand_fid_sets</span> <span class="o">=</span> <span class="p">[</span><span class="nb">set</span><span class="p">([</span><span class="n">fid_id</span><span class="p">])</span> <span class="k">for</span> <span class="n">fid_id</span> <span class="ow">in</span> <span class="n">cand_fids</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]]</span>
+            <span class="n">cand_fid_sets</span> <span class="o">=</span> <span class="p">[</span><span class="nb">set</span><span class="p">([</span><span class="n">fid_id</span><span class="p">])</span> <span class="k">for</span> <span class="n">fid_id</span> <span class="ow">in</span> <span class="n">cand_fids</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]]</span>
 
         <span class="k">elif</span> <span class="n">actual_n_fid</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
             <span class="c1"># Make a list of available pairs sorted in order of radial separation</span>
@@ -224,28 +229,38 @@
                 <span class="k">for</span> <span class="n">idx1</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">idx0</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">cand_fids</span><span class="p">)):</span>
                     <span class="n">fid0</span> <span class="o">=</span> <span class="n">cand_fids</span><span class="p">[</span><span class="n">idx0</span><span class="p">]</span>
                     <span class="n">fid1</span> <span class="o">=</span> <span class="n">cand_fids</span><span class="p">[</span><span class="n">idx1</span><span class="p">]</span>
-                    <span class="n">dist2</span> <span class="o">=</span> <span class="o">-</span><span class="p">((</span><span class="n">fid0</span><span class="p">[</span><span class="s1">&#39;yang&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">fid1</span><span class="p">[</span><span class="s1">&#39;yang&#39;</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span>
-                              <span class="p">(</span><span class="n">fid0</span><span class="p">[</span><span class="s1">&#39;zang&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">fid1</span><span class="p">[</span><span class="s1">&#39;zang&#39;</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
-                    <span class="n">fid_ids0</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fid0</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">])</span>
-                    <span class="n">fid_ids1</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fid1</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">])</span>
+                    <span class="n">dist2</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span>
+                        <span class="p">(</span><span class="n">fid0</span><span class="p">[</span><span class="s2">&quot;yang&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">fid1</span><span class="p">[</span><span class="s2">&quot;yang&quot;</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span>
+                        <span class="o">+</span> <span class="p">(</span><span class="n">fid0</span><span class="p">[</span><span class="s2">&quot;zang&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">fid1</span><span class="p">[</span><span class="s2">&quot;zang&quot;</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span>
+                    <span class="p">)</span>
+                    <span class="n">fid_ids0</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fid0</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">])</span>
+                    <span class="n">fid_ids1</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fid1</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">])</span>
                     <span class="n">dist2s</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dist2</span><span class="p">)</span>
 
             <span class="n">sort_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">dist2s</span><span class="p">)</span>
             <span class="n">fid_ids0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">fid_ids0</span><span class="p">)[</span><span class="n">sort_idx</span><span class="p">]</span>
             <span class="n">fid_ids1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">fid_ids1</span><span class="p">)[</span><span class="n">sort_idx</span><span class="p">]</span>
 
-            <span class="n">cand_fid_sets</span> <span class="o">=</span> <span class="p">[</span><span class="nb">set</span><span class="p">([</span><span class="n">fid_id0</span><span class="p">,</span> <span class="n">fid_id1</span><span class="p">])</span> <span class="k">for</span>
-                             <span class="n">fid_id0</span><span class="p">,</span> <span class="n">fid_id1</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">fid_ids0</span><span class="p">,</span> <span class="n">fid_ids1</span><span class="p">)]</span>
+            <span class="n">cand_fid_sets</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="nb">set</span><span class="p">([</span><span class="n">fid_id0</span><span class="p">,</span> <span class="n">fid_id1</span><span class="p">])</span> <span class="k">for</span> <span class="n">fid_id0</span><span class="p">,</span> <span class="n">fid_id1</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">fid_ids0</span><span class="p">,</span> <span class="n">fid_ids1</span><span class="p">)</span>
+            <span class="p">]</span>
 
         <span class="k">elif</span> <span class="n">actual_n_fid</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
-            <span class="n">cand_fids_ids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">cand_fids</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">])</span>
-            <span class="n">cand_fid_sets</span> <span class="o">=</span> <span class="p">[</span><span class="n">fid_set</span> <span class="k">for</span> <span class="n">fid_set</span> <span class="ow">in</span> <span class="n">FID</span><span class="o">.</span><span class="n">fid_sets</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">detector</span><span class="p">]</span>
-                             <span class="k">if</span> <span class="n">fid_set</span> <span class="o">&lt;=</span> <span class="n">cand_fids_ids</span><span class="p">]</span>
+            <span class="n">cand_fids_ids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">cand_fids</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">])</span>
+            <span class="n">cand_fid_sets</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">fid_set</span>
+                <span class="k">for</span> <span class="n">fid_set</span> <span class="ow">in</span> <span class="n">FID</span><span class="o">.</span><span class="n">fid_sets</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">detector</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">fid_set</span> <span class="o">&lt;=</span> <span class="n">cand_fids_ids</span>
+            <span class="p">]</span>
 
         <span class="c1"># Restrict candidate fid sets to those that entirely contain the include_ids_set</span>
         <span class="n">include_ids_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">include_ids_fid</span><span class="p">)</span>
-        <span class="n">cand_fid_sets</span> <span class="o">=</span> <span class="p">[</span><span class="n">fid_set</span> <span class="k">for</span> <span class="n">fid_set</span> <span class="ow">in</span> <span class="n">cand_fid_sets</span> <span class="k">if</span> <span class="n">fid_set</span> <span class="o">&gt;=</span> <span class="n">include_ids_set</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Reducing fid sets to those that include fid ids </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">include_ids_fid</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">cand_fid_sets</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">fid_set</span> <span class="k">for</span> <span class="n">fid_set</span> <span class="ow">in</span> <span class="n">cand_fid_sets</span> <span class="k">if</span> <span class="n">fid_set</span> <span class="o">&gt;=</span> <span class="n">include_ids_set</span>
+        <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Reducing fid sets to those that include fid ids </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">include_ids_fid</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">cand_fid_sets</span></div>
 
@@ -253,14 +268,16 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Set the `slot` column.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;slot&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">[</span><span class="s2">&quot;slot&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
 
         <span class="c1"># Add slot to cand_fids table, putting in -99 if not selected as acq.</span>
         <span class="c1"># This is for convenience in downstream reporting or introspection.</span>
         <span class="n">cand_fids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cand_fids</span>
-        <span class="n">slots</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_id</span><span class="p">(</span><span class="n">fid</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">])[</span><span class="s1">&#39;slot&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="n">fid</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span> <span class="k">else</span> <span class="o">-</span><span class="mi">99</span>
-                 <span class="k">for</span> <span class="n">fid</span> <span class="ow">in</span> <span class="n">cand_fids</span><span class="p">]</span>
-        <span class="n">cand_fids</span><span class="p">[</span><span class="s1">&#39;slot&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">slots</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span></div>
+        <span class="n">slots</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_id</span><span class="p">(</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">])[</span><span class="s2">&quot;slot&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="k">else</span> <span class="o">-</span><span class="mi">99</span>
+            <span class="k">for</span> <span class="n">fid</span> <span class="ow">in</span> <span class="n">cand_fids</span>
+        <span class="p">]</span>
+        <span class="n">cand_fids</span><span class="p">[</span><span class="s2">&quot;slot&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">slots</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="FidTable.set_initial_catalog"><a class="viewcode-back" href="../../api.html#proseco.fid.FidTable.set_initial_catalog">[docs]</a>    <span class="k">def</span> <span class="nf">set_initial_catalog</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Set initial fid catalog (fid set) if possible to the first set which is</span>
@@ -276,49 +293,52 @@
         <span class="c1"># Start by getting the id of every fid that has a zero spoiler score,</span>
         <span class="c1"># meaning no star spoils the fid as set previously in get_initial_candidates.</span>
         <span class="n">cand_fids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cand_fids</span>
-        <span class="n">unspoiled_fid_ids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">fid</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">fid</span> <span class="ow">in</span> <span class="n">cand_fids</span>
-                                <span class="k">if</span> <span class="n">fid</span><span class="p">[</span><span class="s1">&#39;spoiler_score&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">unspoiled_fid_ids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+            <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">fid</span> <span class="ow">in</span> <span class="n">cand_fids</span> <span class="k">if</span> <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;spoiler_score&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span>
+        <span class="p">)</span>
 
         <span class="c1"># Get list of fid_sets that are consistent with candidate fids. These</span>
         <span class="c1"># fid sets are the combinations of 3 (or 2) fid lights in preferred</span>
         <span class="c1"># order.</span>
-        <span class="n">ok_fid_sets</span> <span class="o">=</span> <span class="p">[</span><span class="n">fid_set</span> <span class="k">for</span> <span class="n">fid_set</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cand_fid_sets</span>
-                       <span class="k">if</span> <span class="n">fid_set</span> <span class="o">&lt;=</span> <span class="n">unspoiled_fid_ids</span><span class="p">]</span>
+        <span class="n">ok_fid_sets</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">fid_set</span> <span class="k">for</span> <span class="n">fid_set</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cand_fid_sets</span> <span class="k">if</span> <span class="n">fid_set</span> <span class="o">&lt;=</span> <span class="n">unspoiled_fid_ids</span>
+        <span class="p">]</span>
 
         <span class="c1"># If no fid_sets are possible, return a zero-length table with correct columns</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">ok_fid_sets</span><span class="p">:</span>
             <span class="n">fid_set</span> <span class="o">=</span> <span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="s1">&#39;No acceptable fid sets (off-CCD or spoiled by field stars)&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="s2">&quot;No acceptable fid sets (off-CCD or spoiled by field stars)&quot;</span><span class="p">)</span>
 
         <span class="c1"># If no acq stars then just pick the first allowed fid set.</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">acqs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">fid_set</span> <span class="o">=</span> <span class="n">ok_fid_sets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;No acq stars available, using first OK fid set </span><span class="si">{</span><span class="n">fid_set</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No acq stars available, using first OK fid set </span><span class="si">{</span><span class="n">fid_set</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
         <span class="k">else</span><span class="p">:</span>
             <span class="n">spoils_any_acq</span> <span class="o">=</span> <span class="p">{}</span>
 
             <span class="k">for</span> <span class="n">fid_set</span> <span class="ow">in</span> <span class="n">ok_fid_sets</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Checking fid set </span><span class="si">{</span><span class="n">fid_set</span><span class="si">}</span><span class="s1"> for acq star spoilers&#39;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Checking fid set </span><span class="si">{</span><span class="n">fid_set</span><span class="si">}</span><span class="s2"> for acq star spoilers&quot;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">fid_id</span> <span class="ow">in</span> <span class="n">fid_set</span><span class="p">:</span>
                     <span class="k">if</span> <span class="n">fid_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">spoils_any_acq</span><span class="p">:</span>
                         <span class="n">fid</span> <span class="o">=</span> <span class="n">cand_fids</span><span class="o">.</span><span class="n">get_id</span><span class="p">(</span><span class="n">fid_id</span><span class="p">)</span>
-                        <span class="n">spoils_any_acq</span><span class="p">[</span><span class="n">fid_id</span><span class="p">]</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spoils</span><span class="p">(</span><span class="n">fid</span><span class="p">,</span> <span class="n">acq</span><span class="p">,</span> <span class="n">acq</span><span class="p">[</span><span class="s1">&#39;halfw&#39;</span><span class="p">])</span>
-                                                     <span class="k">for</span> <span class="n">acq</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">acqs</span><span class="p">)</span>
+                        <span class="n">spoils_any_acq</span><span class="p">[</span><span class="n">fid_id</span><span class="p">]</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">spoils</span><span class="p">(</span><span class="n">fid</span><span class="p">,</span> <span class="n">acq</span><span class="p">,</span> <span class="n">acq</span><span class="p">[</span><span class="s2">&quot;halfw&quot;</span><span class="p">])</span> <span class="k">for</span> <span class="n">acq</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">acqs</span>
+                        <span class="p">)</span>
                     <span class="k">if</span> <span class="n">spoils_any_acq</span><span class="p">[</span><span class="n">fid_id</span><span class="p">]:</span>
                         <span class="c1"># Loser, don&#39;t bother with the rest.</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Fid </span><span class="si">{</span><span class="n">fid_id</span><span class="si">}</span><span class="s1"> spoils an acq star&#39;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Fid </span><span class="si">{</span><span class="n">fid_id</span><span class="si">}</span><span class="s2"> spoils an acq star&quot;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
                         <span class="k">break</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="c1"># We have a winner, none of the fid_ids in current fid set</span>
                     <span class="c1"># will spoil any acquisition star.  Break out of loop with</span>
                     <span class="c1"># fid_set as the winner.</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Fid set </span><span class="si">{</span><span class="n">fid_set</span><span class="si">}</span><span class="s1"> is fine for acq stars&#39;</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Fid set </span><span class="si">{</span><span class="n">fid_set</span><span class="si">}</span><span class="s2"> is fine for acq stars&quot;</span><span class="p">)</span>
                     <span class="k">break</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="c1"># Tried every set and none were acceptable.</span>
                 <span class="n">fid_set</span> <span class="o">=</span> <span class="p">()</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="s1">&#39;No acceptable fid set found&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="s2">&quot;No acceptable fid set found&quot;</span><span class="p">)</span>
 
         <span class="c1"># Transfer fid set columns to self (which at this point is an empty</span>
         <span class="c1"># table)</span>
@@ -346,8 +366,8 @@
 <span class="sd">        :returns: True if ``fid`` could be within ``acq`` search box</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">spoiler_margin</span> <span class="o">=</span> <span class="n">FID</span><span class="o">.</span><span class="n">spoiler_margin</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dither_acq</span> <span class="o">+</span> <span class="n">box_size</span>
-        <span class="n">dy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">fid</span><span class="p">[</span><span class="s1">&#39;yang&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">acq</span><span class="p">[</span><span class="s1">&#39;yang&#39;</span><span class="p">])</span>
-        <span class="n">dz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">fid</span><span class="p">[</span><span class="s1">&#39;zang&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">acq</span><span class="p">[</span><span class="s1">&#39;zang&#39;</span><span class="p">])</span>
+        <span class="n">dy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;yang&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">acq</span><span class="p">[</span><span class="s2">&quot;yang&quot;</span><span class="p">])</span>
+        <span class="n">dz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;zang&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">acq</span><span class="p">[</span><span class="s2">&quot;zang&quot;</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">dy</span> <span class="o">&lt;</span> <span class="n">spoiler_margin</span><span class="o">.</span><span class="n">y</span> <span class="ow">and</span> <span class="n">dz</span> <span class="o">&lt;</span> <span class="n">spoiler_margin</span><span class="o">.</span><span class="n">z</span></div>
 
 <div class="viewcode-block" id="FidTable.get_fid_candidates"><a class="viewcode-back" href="../../api.html#proseco.fid.FidTable.get_fid_candidates">[docs]</a>    <span class="k">def</span> <span class="nf">get_fid_candidates</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -359,48 +379,52 @@
 
 <span class="sd">        Result is updating self.cand_fids.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">yang</span><span class="p">,</span> <span class="n">zang</span> <span class="o">=</span> <span class="n">get_fid_positions</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detector</span><span class="p">,</span>
-                                       <span class="bp">self</span><span class="o">.</span><span class="n">focus_offset</span><span class="p">,</span>
-                                       <span class="bp">self</span><span class="o">.</span><span class="n">sim_offset</span><span class="p">)</span>
+        <span class="n">yang</span><span class="p">,</span> <span class="n">zang</span> <span class="o">=</span> <span class="n">get_fid_positions</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">detector</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">focus_offset</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sim_offset</span>
+        <span class="p">)</span>
         <span class="n">row</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="n">yagzag_to_pixels</span><span class="p">(</span><span class="n">yang</span><span class="p">,</span> <span class="n">zang</span><span class="p">,</span> <span class="n">allow_bad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">ids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">yang</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>  <span class="c1"># E.g. 1 to 6 for ACIS</span>
 
         <span class="c1"># Set up candidate fids table (which copies relevant meta data) and add</span>
         <span class="c1"># columns.</span>
-        <span class="n">cand_fids</span> <span class="o">=</span> <span class="n">FidTable</span><span class="p">([</span><span class="n">ids</span><span class="p">,</span> <span class="n">yang</span><span class="p">,</span> <span class="n">zang</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">],</span>
-                             <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="s1">&#39;yang&#39;</span><span class="p">,</span> <span class="s1">&#39;zang&#39;</span><span class="p">,</span> <span class="s1">&#39;row&#39;</span><span class="p">,</span> <span class="s1">&#39;col&#39;</span><span class="p">])</span>
+        <span class="n">cand_fids</span> <span class="o">=</span> <span class="n">FidTable</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">ids</span><span class="p">,</span> <span class="n">yang</span><span class="p">,</span> <span class="n">zang</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">],</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;yang&quot;</span><span class="p">,</span> <span class="s2">&quot;zang&quot;</span><span class="p">,</span> <span class="s2">&quot;row&quot;</span><span class="p">,</span> <span class="s2">&quot;col&quot;</span><span class="p">]</span>
+        <span class="p">)</span>
         <span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cand_fids</span><span class="p">),)</span>
-        <span class="n">cand_fids</span><span class="p">[</span><span class="s1">&#39;mag&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">FID</span><span class="o">.</span><span class="n">fid_mag</span><span class="p">)</span>  <span class="c1"># 7.000</span>
-        <span class="n">cand_fids</span><span class="p">[</span><span class="s1">&#39;spoilers&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>  <span class="c1"># Filled in with Table of spoilers</span>
-        <span class="n">cand_fids</span><span class="p">[</span><span class="s1">&#39;spoiler_score&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+        <span class="n">cand_fids</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">FID</span><span class="o">.</span><span class="n">fid_mag</span><span class="p">)</span>  <span class="c1"># 7.000</span>
+        <span class="n">cand_fids</span><span class="p">[</span><span class="s2">&quot;spoilers&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>  <span class="c1"># Filled in with Table of spoilers</span>
+        <span class="n">cand_fids</span><span class="p">[</span><span class="s2">&quot;spoiler_score&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Initial candidate fid ids are </span><span class="si">{</span><span class="n">cand_fids</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
 
         <span class="c1"># First check that any manually included fid ids are valid by seeing if</span>
         <span class="c1"># the supplied fid is in the initial ids for this detector.</span>
-        <span class="k">if</span> <span class="n">id_diff</span> <span class="o">:=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">include_ids_fid</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">cand_fids</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;included fid ids </span><span class="si">{</span><span class="n">id_diff</span><span class="si">}</span><span class="s1"> are not valid&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">id_diff</span> <span class="o">:=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">include_ids_fid</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">cand_fids</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;included fid ids </span><span class="si">{</span><span class="n">id_diff</span><span class="si">}</span><span class="s2"> are not valid&quot;</span><span class="p">)</span>
 
         <span class="c1"># Then reject candidates that are off CCD, have a bad pixel, are spoiled,</span>
         <span class="c1"># or are manually excluded, unless the candidates are forced/manually included.</span>
         <span class="c1"># Check for spoilers only against stars that are bright enough and on CCD</span>
         <span class="c1"># (within dither).</span>
         <span class="n">idx_bads</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">stars_mask</span> <span class="o">=</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">stars</span><span class="p">[</span><span class="s1">&#39;mag&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">FID</span><span class="o">.</span><span class="n">fid_mag</span> <span class="o">-</span> <span class="n">ACA</span><span class="o">.</span><span class="n">col_spoiler_mag_diff</span><span class="p">)</span> <span class="o">&amp;</span>
-                      <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stars</span><span class="p">[</span><span class="s1">&#39;row&#39;</span><span class="p">])</span> <span class="o">&lt;</span> <span class="mi">512</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dither_guide</span><span class="o">.</span><span class="n">row</span><span class="p">))</span>
+        <span class="n">stars_mask</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">FID</span><span class="o">.</span><span class="n">fid_mag</span> <span class="o">-</span> <span class="n">ACA</span><span class="o">.</span><span class="n">col_spoiler_mag_diff</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;row&quot;</span><span class="p">])</span> <span class="o">&lt;</span> <span class="mi">512</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dither_guide</span><span class="o">.</span><span class="n">row</span>
+        <span class="p">)</span>
         <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">fid</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cand_fids</span><span class="p">):</span>
-            <span class="n">excluded</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">off_ccd</span><span class="p">(</span><span class="n">fid</span><span class="p">)</span>
-                        <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">near_hot_or_bad_pixel</span><span class="p">(</span><span class="n">fid</span><span class="p">)</span>
-                        <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_column_spoiler</span><span class="p">(</span><span class="n">fid</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stars</span><span class="p">,</span> <span class="n">stars_mask</span><span class="p">)</span>
-                        <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_excluded</span><span class="p">(</span><span class="n">fid</span><span class="p">))</span>
-            <span class="n">included</span> <span class="o">=</span> <span class="n">fid</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_ids_fid</span>
+            <span class="n">excluded</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">off_ccd</span><span class="p">(</span><span class="n">fid</span><span class="p">)</span>
+                <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">near_hot_or_bad_pixel</span><span class="p">(</span><span class="n">fid</span><span class="p">)</span>
+                <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_column_spoiler</span><span class="p">(</span><span class="n">fid</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stars</span><span class="p">,</span> <span class="n">stars_mask</span><span class="p">)</span>
+                <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_excluded</span><span class="p">(</span><span class="n">fid</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">included</span> <span class="o">=</span> <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_ids_fid</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">included</span> <span class="ow">and</span> <span class="n">excluded</span><span class="p">:</span>
                 <span class="n">idx_bads</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">idx_bads</span><span class="p">:</span>
             <span class="n">cand_fids</span><span class="o">.</span><span class="n">remove_rows</span><span class="p">(</span><span class="n">idx_bads</span><span class="p">)</span>
 
-        <span class="n">cand_fids</span><span class="p">[</span><span class="s1">&#39;idx&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cand_fids</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+        <span class="n">cand_fids</span><span class="p">[</span><span class="s2">&quot;idx&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cand_fids</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
 
         <span class="c1"># If stars are available then find stars that are bad for fid.</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stars</span><span class="p">:</span>
@@ -414,11 +438,14 @@
 
 <span class="sd">        :param fid: FidTable Row of candidate fid</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">fid</span><span class="p">[</span><span class="s1">&#39;row&#39;</span><span class="p">])</span> <span class="o">+</span> <span class="n">FID</span><span class="o">.</span><span class="n">ccd_edge_margin</span> <span class="o">&gt;</span> <span class="n">ACA</span><span class="o">.</span><span class="n">max_ccd_row</span><span class="p">)</span> <span class="ow">or</span>
-                <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">fid</span><span class="p">[</span><span class="s1">&#39;col&#39;</span><span class="p">])</span> <span class="o">+</span> <span class="n">FID</span><span class="o">.</span><span class="n">ccd_edge_margin</span> <span class="o">&gt;</span> <span class="n">ACA</span><span class="o">.</span><span class="n">max_ccd_col</span><span class="p">)):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Rejecting fid id=</span><span class="si">{</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1"> row,col=&#39;</span>
-                     <span class="sa">f</span><span class="s1">&#39;(</span><span class="si">{</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;row&quot;</span><span class="p">]</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">, </span><span class="si">{</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;col&quot;</span><span class="p">]</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">) off CCD&#39;</span><span class="p">,</span>
-                     <span class="n">level</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;row&quot;</span><span class="p">])</span> <span class="o">+</span> <span class="n">FID</span><span class="o">.</span><span class="n">ccd_edge_margin</span> <span class="o">&gt;</span> <span class="n">ACA</span><span class="o">.</span><span class="n">max_ccd_row</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;col&quot;</span><span class="p">])</span> <span class="o">+</span> <span class="n">FID</span><span class="o">.</span><span class="n">ccd_edge_margin</span> <span class="o">&gt;</span> <span class="n">ACA</span><span class="o">.</span><span class="n">max_ccd_col</span>
+        <span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;Rejecting fid id=</span><span class="si">{</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1"> row,col=&#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;(</span><span class="si">{</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;row&quot;</span><span class="p">]</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">, </span><span class="si">{</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;col&quot;</span><span class="p">]</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">) off CCD&#39;</span><span class="p">,</span>
+                <span class="n">level</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="p">)</span>
             <span class="k">return</span> <span class="kc">True</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">False</span></div>
@@ -428,7 +455,7 @@
 
 <span class="sd">        :param fid: FidTable Row of candidate fid light</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">fid</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">exclude_ids_fid</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">exclude_ids_fid</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Rejecting fid </span><span class="si">{</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1">: manually excluded by exclude_ids_fid&#39;</span><span class="p">)</span>
             <span class="k">return</span> <span class="kc">True</span>
         <span class="k">else</span><span class="p">:</span>
@@ -440,19 +467,21 @@
 <span class="sd">        :param fid: FidTable Row of candidate fid light</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">dp</span> <span class="o">=</span> <span class="n">FID</span><span class="o">.</span><span class="n">spoiler_margin</span> <span class="o">/</span> <span class="mi">5</span>
-        <span class="n">r0</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">fid</span><span class="p">[</span><span class="s1">&#39;row&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">dp</span><span class="p">)</span>
-        <span class="n">c0</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">fid</span><span class="p">[</span><span class="s1">&#39;col&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">dp</span><span class="p">)</span>
-        <span class="n">r1</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">fid</span><span class="p">[</span><span class="s1">&#39;row&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">dp</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
-        <span class="n">c1</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">fid</span><span class="p">[</span><span class="s1">&#39;col&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">dp</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
-        <span class="n">dark</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dark</span><span class="p">[</span><span class="n">r0</span> <span class="o">+</span> <span class="mi">512</span><span class="p">:</span><span class="n">r1</span> <span class="o">+</span> <span class="mi">512</span><span class="p">,</span> <span class="n">c0</span> <span class="o">+</span> <span class="mi">512</span><span class="p">:</span><span class="n">c1</span> <span class="o">+</span> <span class="mi">512</span><span class="p">]</span>
+        <span class="n">r0</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;row&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">dp</span><span class="p">)</span>
+        <span class="n">c0</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;col&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">dp</span><span class="p">)</span>
+        <span class="n">r1</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;row&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">dp</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">c1</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;col&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">dp</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">dark</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dark</span><span class="p">[</span><span class="n">r0</span> <span class="o">+</span> <span class="mi">512</span> <span class="p">:</span> <span class="n">r1</span> <span class="o">+</span> <span class="mi">512</span><span class="p">,</span> <span class="n">c0</span> <span class="o">+</span> <span class="mi">512</span> <span class="p">:</span> <span class="n">c1</span> <span class="o">+</span> <span class="mi">512</span><span class="p">]</span>
 
         <span class="n">bad</span> <span class="o">=</span> <span class="n">dark</span> <span class="o">&gt;</span> <span class="n">FID</span><span class="o">.</span><span class="n">hot_pixel_spoiler_limit</span>
         <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">bad</span><span class="p">):</span>
             <span class="n">idxs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">bad</span><span class="p">)</span>
             <span class="n">rows</span><span class="p">,</span> <span class="n">cols</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unravel_index</span><span class="p">(</span><span class="n">idxs</span><span class="p">,</span> <span class="n">dark</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
             <span class="n">vals</span> <span class="o">=</span> <span class="n">dark</span><span class="p">[</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Rejecting fid </span><span class="si">{</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1">: near hot or bad pixel(s) &#39;</span>
-                     <span class="sa">f</span><span class="s1">&#39;rows=</span><span class="si">{</span><span class="n">rows</span> <span class="o">+</span> <span class="n">r0</span><span class="si">}</span><span class="s1"> cols=</span><span class="si">{</span><span class="n">cols</span> <span class="o">+</span> <span class="n">c0</span><span class="si">}</span><span class="s1"> vals=</span><span class="si">{</span><span class="n">vals</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;Rejecting fid </span><span class="si">{</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1">: near hot or bad pixel(s) &#39;</span>
+                <span class="sa">f</span><span class="s2">&quot;rows=</span><span class="si">{</span><span class="n">rows</span> <span class="o">+</span> <span class="n">r0</span><span class="si">}</span><span class="s2"> cols=</span><span class="si">{</span><span class="n">cols</span> <span class="o">+</span> <span class="n">c0</span><span class="si">}</span><span class="s2"> vals=</span><span class="si">{</span><span class="n">vals</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
             <span class="k">return</span> <span class="kc">True</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">False</span></div>
@@ -474,33 +503,37 @@
         <span class="n">dither</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dither_guide</span>
 
         <span class="c1"># Potential spoiler by position</span>
-        <span class="n">spoil</span> <span class="o">=</span> <span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s1">&#39;yang&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">fid</span><span class="p">[</span><span class="s1">&#39;yang&#39;</span><span class="p">])</span> <span class="o">&lt;</span> <span class="n">FID</span><span class="o">.</span><span class="n">spoiler_margin</span> <span class="o">+</span> <span class="n">dither</span><span class="o">.</span><span class="n">y</span><span class="p">)</span> <span class="o">&amp;</span>
-                 <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s1">&#39;zang&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">fid</span><span class="p">[</span><span class="s1">&#39;zang&#39;</span><span class="p">])</span> <span class="o">&lt;</span> <span class="n">FID</span><span class="o">.</span><span class="n">spoiler_margin</span> <span class="o">+</span> <span class="n">dither</span><span class="o">.</span><span class="n">z</span><span class="p">))</span>
+        <span class="n">spoil</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;yang&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;yang&quot;</span><span class="p">])</span> <span class="o">&lt;</span> <span class="n">FID</span><span class="o">.</span><span class="n">spoiler_margin</span> <span class="o">+</span> <span class="n">dither</span><span class="o">.</span><span class="n">y</span>
+        <span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;zang&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;zang&quot;</span><span class="p">])</span> <span class="o">&lt;</span> <span class="n">FID</span><span class="o">.</span><span class="n">spoiler_margin</span> <span class="o">+</span> <span class="n">dither</span><span class="o">.</span><span class="n">z</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">spoil</span><span class="p">):</span>
             <span class="c1"># Make an empty table with same columns</span>
-            <span class="n">fid</span><span class="p">[</span><span class="s1">&#39;spoilers&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;spoilers&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">stars</span> <span class="o">=</span> <span class="n">stars</span><span class="p">[</span><span class="n">spoil</span><span class="p">]</span>
 
             <span class="c1"># Now check mags</span>
-            <span class="n">red</span> <span class="o">=</span> <span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s1">&#39;mag&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">fid</span><span class="p">[</span><span class="s1">&#39;mag&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">4.0</span><span class="p">)</span>
-            <span class="n">yellow</span> <span class="o">=</span> <span class="p">((</span><span class="n">stars</span><span class="p">[</span><span class="s1">&#39;mag&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">fid</span><span class="p">[</span><span class="s1">&#39;mag&#39;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mf">4.0</span><span class="p">)</span> <span class="o">&amp;</span>
-                      <span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s1">&#39;mag&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">fid</span><span class="p">[</span><span class="s1">&#39;mag&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">5.0</span><span class="p">))</span>
+            <span class="n">red</span> <span class="o">=</span> <span class="n">stars</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">4.0</span>
+            <span class="n">yellow</span> <span class="o">=</span> <span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mf">4.0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span>
+                <span class="n">stars</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">5.0</span>
+            <span class="p">)</span>
 
             <span class="n">spoilers</span> <span class="o">=</span> <span class="n">stars</span><span class="p">[</span><span class="n">red</span> <span class="o">|</span> <span class="n">yellow</span><span class="p">]</span>
-            <span class="n">spoilers</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="s1">&#39;mag&#39;</span><span class="p">)</span>
-            <span class="n">spoilers</span><span class="p">[</span><span class="s1">&#39;warn&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">red</span><span class="p">[</span><span class="n">red</span> <span class="o">|</span> <span class="n">yellow</span><span class="p">],</span> <span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="s1">&#39;yellow&#39;</span><span class="p">)</span>
-            <span class="n">fid</span><span class="p">[</span><span class="s1">&#39;spoilers&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">spoilers</span>
+            <span class="n">spoilers</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="s2">&quot;mag&quot;</span><span class="p">)</span>
+            <span class="n">spoilers</span><span class="p">[</span><span class="s2">&quot;warn&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">red</span><span class="p">[</span><span class="n">red</span> <span class="o">|</span> <span class="n">yellow</span><span class="p">],</span> <span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="s2">&quot;yellow&quot;</span><span class="p">)</span>
+            <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;spoilers&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">spoilers</span>
 
             <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">red</span><span class="p">):</span>
-                <span class="n">fid</span><span class="p">[</span><span class="s1">&#39;spoiler_score&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">4</span>
+                <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;spoiler_score&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">4</span>
             <span class="k">elif</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">yellow</span><span class="p">):</span>
-                <span class="n">fid</span><span class="p">[</span><span class="s1">&#39;spoiler_score&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;spoiler_score&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
 
-            <span class="k">if</span> <span class="n">fid</span><span class="p">[</span><span class="s1">&#39;spoiler_score&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Set fid </span><span class="si">{</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1"> spoiler score to </span><span class="si">{</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;spoiler_score&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
-                         <span class="n">level</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></div></div>
+            <span class="k">if</span> <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;spoiler_score&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;Set fid </span><span class="si">{</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1"> spoiler score to </span><span class="si">{</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;spoiler_score&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
+                    <span class="n">level</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                <span class="p">)</span></div></div>
 
 
 <div class="viewcode-block" id="get_fid_positions"><a class="viewcode-back" href="../../api.html#proseco.fid.get_fid_positions">[docs]</a><span class="k">def</span> <span class="nf">get_fid_positions</span><span class="p">(</span><span class="n">detector</span><span class="p">,</span> <span class="n">focus_offset</span><span class="p">,</span> <span class="n">sim_offset</span><span class="p">):</span>
@@ -536,7 +569,7 @@
     <span class="n">fa_pos</span> <span class="o">=</span> <span class="n">focus_offset_table</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>  <span class="c1"># Focus offset in meters</span>
     <span class="n">xshift</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">focus_offset</span><span class="p">,</span> <span class="n">steps</span><span class="p">,</span> <span class="n">fa_pos</span><span class="p">,</span> <span class="n">left</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">xshift</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;focus_offset is out of range&#39;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;focus_offset is out of range&quot;</span><span class="p">)</span>
 
     <span class="c1"># Y and Z position of fids on focal plane in meters.</span>
     <span class="c1"># Apply SIM Z translation from sim offset to the nominal Z position.</span>

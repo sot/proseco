@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Unit tests &#8212; proseco 5.7.0 documentation</title>
+    <title>Unit tests &#8212; proseco 5.8.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/bootstrap-astropy.css" />
     
@@ -54,7 +54,7 @@
 	
       </li>
       <li>
-	<a href="index.html">proseco 5.7.0 documentation</a>
+	<a href="index.html">proseco 5.8.0 documentation</a>
 	 &#187;
       </li>
       
@@ -216,6 +216,13 @@ functionality.</p>
 <dt class="sig sig-object py" id="proseco.tests.test_catalog.test_img_size_guide">
 <span class="sig-prename descclassname"><span class="pre">proseco.tests.test_catalog.</span></span><span class="sig-name descname"><span class="pre">test_img_size_guide</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_catalog.html#test_img_size_guide"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_catalog.test_img_size_guide" title="Permalink to this definition">¶</a></dt>
 <dd><p>Test img_size_guide for setting guide star readout image size</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="proseco.tests.test_catalog.test_img_size_guide_override_with_env">
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_catalog.</span></span><span class="sig-name descname"><span class="pre">test_img_size_guide_override_with_env</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">monkeypatch</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_catalog.html#test_img_size_guide_override_with_env"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_catalog.test_img_size_guide_override_with_env" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test img_size_guide for setting guide star readout image size when
+PROSECO_OR_IMAGE_SIZE is set.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -808,8 +815,88 @@ specific expected warning in get_guide_catalog (too few stars selected).</p>
 </dd></dl>
 
 </section>
-<section id="fid">
-<h2>Fid<a class="headerlink" href="#fid" title="Permalink to this headline">¶</a></h2>
+<section id="module-proseco.tests.test_fid">
+<span id="fid"></span><h2>Fid<a class="headerlink" href="#module-proseco.tests.test_fid" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="proseco.tests.test_fid.test_big_sim_offset">
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_fid.</span></span><span class="sig-name descname"><span class="pre">test_big_sim_offset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_fid.html#test_big_sim_offset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_fid.test_big_sim_offset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test of an observation with a big SIM offset</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="proseco.tests.test_fid.test_dither_as_sequence">
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_fid.</span></span><span class="sig-name descname"><span class="pre">test_dither_as_sequence</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_fid.html#test_dither_as_sequence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_fid.test_dither_as_sequence" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test that calling get_acq_catalog with a 2-element sequence (dither_y, dither_z)
+gives the expected response.  (Basically that it still returns a catalog).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="proseco.tests.test_fid.test_fid_hot_pixel_reject">
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_fid.</span></span><span class="sig-name descname"><span class="pre">test_fid_hot_pixel_reject</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_fid.html#test_fid_hot_pixel_reject"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_fid.test_fid_hot_pixel_reject" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test hot pixel rejecting a fid</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="proseco.tests.test_fid.test_fid_mult_spoilers">
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_fid.</span></span><span class="sig-name descname"><span class="pre">test_fid_mult_spoilers</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_fid.html#test_fid_mult_spoilers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_fid.test_fid_mult_spoilers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test of fix for bug #54.  19605 and 20144 were previous crashing.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="proseco.tests.test_fid.test_fid_spoiler_score">
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_fid.</span></span><span class="sig-name descname"><span class="pre">test_fid_spoiler_score</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_fid.html#test_fid_spoiler_score"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_fid.test_fid_spoiler_score" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test computing the fid spoiler score.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="proseco.tests.test_fid.test_fid_spoiling_acq">
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_fid.</span></span><span class="sig-name descname"><span class="pre">test_fid_spoiling_acq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dither_z</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_fid.html#test_fid_spoiling_acq"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_fid.test_fid_spoiling_acq" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test fid spoiling acq.</p>
+<p>Check fid spoiling acq:</p>
+<ul class="simple">
+<li><p>20” (4 pix) positional err on fid light</p></li>
+<li><p>4 pixel readout halfw for fid light</p></li>
+<li><p>2 pixel PSF of fid light that could creep into search box</p></li>
+<li><p>Acq search box half-width</p></li>
+<li><p>Dither amplitude (since OBC adjusts search box for dither)</p></li>
+</ul>
+<p>For this case (100” halfw and dither) the threshold for spoiling
+is 20 + 20 + 10 + 100 + dither = 150” + dither.  So this test puts stars at the
+positions of ACIS-S 2, 4, 5 but offset by 82, 149 and 151 arcsec + dither.
+Only ACIS-S-5 is allowed, so we end up with the first fid set using
+1, 3, 5, 6, which is 1, 5, 6.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="proseco.tests.test_fid.test_fids_include_bad">
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_fid.</span></span><span class="sig-name descname"><span class="pre">test_fids_include_bad</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_fid.html#test_fids_include_bad"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_fid.test_fids_include_bad" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test include bad id fid and fid not on CCD</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="proseco.tests.test_fid.test_fids_include_exclude">
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_fid.</span></span><span class="sig-name descname"><span class="pre">test_fids_include_exclude</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_fid.html#test_fids_include_exclude"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_fid.test_fids_include_exclude" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test include and exclude fids.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="proseco.tests.test_fid.test_get_fid_position">
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_fid.</span></span><span class="sig-name descname"><span class="pre">test_get_fid_position</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_fid.html#test_get_fid_position"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_fid.test_get_fid_position" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compare computed fid positions to flight values from starcheck reports.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="proseco.tests.test_fid.test_get_initial_catalog">
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_fid.</span></span><span class="sig-name descname"><span class="pre">test_get_initial_catalog</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_fid.html#test_get_initial_catalog"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_fid.test_get_initial_catalog" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test basic catalog with no stars in field using standard 2-4-5 config.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="proseco.tests.test_fid.test_n_fid">
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_fid.</span></span><span class="sig-name descname"><span class="pre">test_n_fid</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_fid.html#test_n_fid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_fid.test_n_fid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test specifying number of fids.</p>
+</dd></dl>
+
 </section>
 <section id="module-proseco.tests.test_core">
 <span id="core"></span><h2>Core<a class="headerlink" href="#module-proseco.tests.test_core" title="Permalink to this headline">¶</a></h2>
@@ -910,7 +997,7 @@ different (not OK).</p>
 <li><a class="reference internal" href="#module-proseco.tests.test_catalog">Catalog</a></li>
 <li><a class="reference internal" href="#module-proseco.tests.test_acq">Acquisition</a></li>
 <li><a class="reference internal" href="#module-proseco.tests.test_guide">Guide</a></li>
-<li><a class="reference internal" href="#fid">Fid</a></li>
+<li><a class="reference internal" href="#module-proseco.tests.test_fid">Fid</a></li>
 <li><a class="reference internal" href="#module-proseco.tests.test_core">Core</a></li>
 </ul>
 </li>
