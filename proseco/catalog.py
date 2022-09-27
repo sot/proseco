@@ -717,7 +717,7 @@ def merge_cats(fids=None, guides=None, acqs=None, mons=None):
 
     if len(acqs) > 0:
         # TODO: move these into acq.py where possible
-        img_size = get_img_size(len(fids))
+        img_size = guides.img_size or get_img_size(len(fids))
         acqs["type"] = "ACQ"
 
         # Set maxmag for acqs. Start w/ legacy version corresponding to behavior
