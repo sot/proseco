@@ -939,7 +939,7 @@ def test_dark_date_warning():
 
     # Fudge date forward, after the 2018:002 dark cal
     acap.date = "2018:010"
-    with pytest.warns(None) as warns:
+    with pytest.warns(UserWarning) as warns:
         acap.dark  # Accessing the `dark` property triggers code to read it (and warn)
 
     assert len(warns) == 1
