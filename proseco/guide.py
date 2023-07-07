@@ -348,13 +348,11 @@ class GuideTable(ACACatalogTable):
         self.log("Checking for guide star overlap in stage-selected stars")
         nok = np.zeros(len(stage_cands)).astype(bool)
         for idx, star in enumerate(stage_cands):
-
             # If the star was manually-selected, don't bother checking to possibly exclude it.
             if star["id"] in self.include_ids:
                 continue
 
             for jdx, other_star in enumerate(stage_cands):
-
                 # The stage_cands are supplied in the order of preference (currently by mag)
                 # Check and exclude a guide star only if it would spoil a lower index (better) star.
                 if idx <= jdx:

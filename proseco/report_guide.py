@@ -130,7 +130,6 @@ def make_report(obsid, rootdir="."):
 
 
 def make_cand_report(guides, cand_guides, context, obsdir):
-
     n_stages = np.max(cand_guides["stage"])
     context["cand_guides"] = []
     for ii, guide in enumerate(cand_guides):

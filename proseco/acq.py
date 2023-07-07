@@ -1398,7 +1398,6 @@ def calc_p_on_ccd(row, col, box_size):
         (row, max_ccd_row, box_size.row),
         (col, max_ccd_col, box_size.col),
     ):
-
         # Pixel boundaries are symmetric so just take abs(row/col)
         rc1 = abs(rc) + half_width
 

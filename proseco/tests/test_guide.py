@@ -674,7 +674,7 @@ def test_get_ax_range():
     """
     ns = [0, 0.71, 495.3, -200.2]
     extents = [4.0, 5.6, 4.8, 9.0]
-    for (n, extent) in itertools.product(ns, extents):
+    for n, extent in itertools.product(ns, extents):
         minus, plus = get_ax_range(n, extent)
         # Confirm range divisable by 2
         assert (plus - minus) % 2 == 0
