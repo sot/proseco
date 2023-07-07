@@ -161,7 +161,6 @@ def make_cand_acqs_report(acqs, cand_acqs, events, context, obsdir):
     # Now plot figure
     filename = obsdir / "candidate_stars.png"
     if not filename.exists():
-
         # Pull a fast-one and mark the final selected ACQ stars as BOT so they
         # get a circle in the plot.  This might be confusing and need fixing
         # later, but for now it is an easy way to show the winning candidates.
