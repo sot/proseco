@@ -11,7 +11,11 @@ import warnings
 from pathlib import Path
 
 import numpy as np
-from chandra_aca.star_probs import acq_success_prob, prob_n_acq
+from chandra_aca.star_probs import (
+    acq_success_prob,
+    get_default_acq_prob_model_info,
+    prob_n_acq,
+)
 from chandra_aca.transform import mag_to_count_rate, pixels_to_yagzag, snr_mag_for_t_ccd
 from scipy import ndimage, stats
 from scipy.interpolate import interp1d
@@ -210,6 +214,9 @@ def get_acq_catalog(obsid=0, **kwargs):
             warning=True,
         )
 
+    # Get the acq prob model info and add to the table.
+    acqs.acq_prob_model_info = get_default_acq_prob_model_info(verbose=False)
+
     return acqs
 
 
@@ -252,6 +259,7 @@ class AcqTable(ACACatalogTable):
     p_safe = MetaAttribute(is_kwarg=False)
     _fid_set = MetaAttribute(is_kwarg=False, default=())
     imposters_mag_limit = MetaAttribute(is_kwarg=False, default=20.0)
+    acq_prob_model_info = MetaAttribute(is_kwarg=False)
 
     @classmethod
     def empty(cls):

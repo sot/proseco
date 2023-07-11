@@ -6,9 +6,11 @@ from pathlib import Path
 import agasc
 import numpy as np
 import pytest
+from chandra_aca import star_probs
 from chandra_aca.aca_image import AcaPsfLibrary
 from chandra_aca.transform import mag_to_count_rate, yagzag_to_pixels
 from Quaternion import Quat
+from ska_helpers import chandra_models
 
 from .. import characteristics as ACA
 from .. import characteristics_acq as ACQ
@@ -467,6 +469,8 @@ def test_get_acq_catalog_19387():
 def test_get_acq_catalog_21007():
     """Put it all together.  Regression test for selected stars.
 
+    Also test that the acq prob model info dict is correctly set.
+
     From ipython::
 
       >>> from proseco.acq import AcqTable
@@ -475,7 +479,9 @@ def test_get_acq_catalog_21007():
       >>> repr(acqs.cand_acqs[TEST_COLS]).splitlines()
 
     """
-    acqs = get_acq_catalog(**OBS_INFO[21007])
+    # Force default acq prob model to be grid-* for checking the info dict later
+    with star_probs.conf.set_temp("default_model", "grid-*"):
+        acqs = get_acq_catalog(**OBS_INFO[21007])
 
     exp = [
         "<AcqTable length=14>",
@@ -516,6 +522,26 @@ def test_get_acq_catalog_21007():
     ]
 
     assert repr(acqs[TEST_COLS]).splitlines() == exp
+
+    # Check the acq prob model info dict
+    info = acqs.acq_prob_model_info
+
+    # These can change with each run or on different machines
+    del info["data_file_path"]
+    del info["repo_path"]
+
+    exp = {
+        "default_model": "grid-*",
+        "version": "3.48",
+        "commit": "68a58099a9b51bef52ef14fbd0f1971f950e6ba3",
+        "md5": "3a47774392beeca2921b705e137338f4",
+    }
+    # For acqs info with verbose=False only non-None env vars are included
+    for name in chandra_models.ENV_VAR_NAMES:
+        if val := os.environ.get(name):
+            exp[name] = val
+
+    assert info == exp
 
 
 def test_box_strategy_20603():
