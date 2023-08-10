@@ -112,16 +112,11 @@ def _set_aca_limits():
     names = ("aca_t_ccd_penalty_limit", "aca_t_ccd_planning_limit")
     spec_names = ("planning.penalty.high", "planning.warning.high")
     for name, spec_name in zip(names, spec_names):
-        try:
-            limit = spec["limits"]["aacccdpt"][spec_name]
-        except KeyError:
-            raise KeyError(
-                f"unable to find ['limits']['aacccdpt']['{spec_name}'] "
-                "in the ACA xija model in "
-                f"chandra_models version {chandra_models_version}."
-            )
-        else:
-            globals()[name] = limit
+        globals()[name] = (
+            spec["limits"]["aacccdpt"][spec_name]
+            if spec_name in spec["limits"]["aacccdpt"]
+            else None
+        )
 
 
 # Make sure module-level `dir()` includes the lazy attributes.
