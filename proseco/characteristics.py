@@ -77,14 +77,12 @@ def _load_bad_star_set():
 
 bad_star_set = LazyDict(_load_bad_star_set)
 
-# Version of chandra_models to use for the ACA xija model from which the
-# planning and penalty limits are extracted. Default of None means use the
-# current flight-approved version. For testing or other rare circumstances this
-# can be overridden prior to calling get_aca_catalog(). This module variable
-# gets set to the actual chandra_models version when the ACA attributes are
-# first accessed.
+# READ-ONLY variable which gives the version of chandra_models being use for the ACA
+# xija model from which the planning and penalty limits are extracted. This module
+# variable is set on demand to the chandra_models repo version. To select a specific
+# version set the CHANDRA_MODELS_DEFAULT_VERSION environment variable.
 #
-# chandra_models_version = None
+# chandra_models_version
 
 # The next two characteristics are lazily defined to ensure import succeeds.
 
