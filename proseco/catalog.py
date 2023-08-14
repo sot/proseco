@@ -270,7 +270,7 @@ def get_effective_t_ccd(t_ccd, t_ccd_penalty_limit=None):
         if t_ccd_penalty_limit is None
         else t_ccd_penalty_limit
     )
-    if t_ccd > t_limit:
+    if t_limit is not None and t_ccd > t_limit:
         return t_ccd + 1 + (t_ccd - t_limit)
     else:
         return t_ccd

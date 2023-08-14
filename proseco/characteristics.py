@@ -1,4 +1,7 @@
+import json
+
 import agasc
+from ska_helpers import chandra_models
 from ska_helpers.utils import LazyDict
 
 CCD = {
@@ -74,13 +77,12 @@ def _load_bad_star_set():
 
 bad_star_set = LazyDict(_load_bad_star_set)
 
-# Version of chandra_models to use for the ACA xija model from which the
-# planning and penalty limits are extracted. Default of None means use the
-# current flight-approved version. For testing or other rare circumstances this
-# can be overridden prior to calling get_aca_catalog(). This module variable
-# gets set to the actual chandra_models version when the ACA attributes are
-# first accessed.
-chandra_models_version = None
+# READ-ONLY variable which gives the version of chandra_models being use for the ACA
+# xija model from which the planning and penalty limits are extracted. This module
+# variable is set on demand to the chandra_models repo version. To select a specific
+# version set the CHANDRA_MODELS_DEFAULT_VERSION environment variable.
+#
+# chandra_models_version
 
 # The next two characteristics are lazily defined to ensure import succeeds.
 
@@ -93,7 +95,11 @@ chandra_models_version = None
 
 def __getattr__(name):
     """Lazily define module attributes for the ACA planning and penalty limits"""
-    if name in ("aca_t_ccd_penalty_limit", "aca_t_ccd_planning_limit"):
+    if name in (
+        "chandra_models_version",
+        "aca_t_ccd_penalty_limit",
+        "aca_t_ccd_planning_limit",
+    ):
         _set_aca_limits()
         return globals()[name]
     else:
@@ -103,25 +109,16 @@ def __getattr__(name):
 def _set_aca_limits():
     """Set global variables for ACA thermal planning and penalty limits"""
     global chandra_models_version
-    from xija.get_model_spec import get_xija_model_spec
 
-    spec, chandra_models_version = get_xija_model_spec(
-        "aca", version=chandra_models_version
-    )
+    spec_txt, info = chandra_models.get_data("chandra_models/xija/aca/aca_spec.json")
+    spec = json.loads(spec_txt)
+
+    chandra_models_version = info["version"]
 
     names = ("aca_t_ccd_penalty_limit", "aca_t_ccd_planning_limit")
     spec_names = ("planning.penalty.high", "planning.warning.high")
     for name, spec_name in zip(names, spec_names):
-        try:
-            limit = spec["limits"]["aacccdpt"][spec_name]
-        except KeyError:
-            raise KeyError(
-                f"unable to find ['limits']['aacccdpt']['{spec_name}'] "
-                "in the ACA xija model in "
-                f"chandra_models version {chandra_models_version}."
-            )
-        else:
-            globals()[name] = limit
+        globals()[name] = spec["limits"]["aacccdpt"].get(spec_name)
 
 
 # Make sure module-level `dir()` includes the lazy attributes.
