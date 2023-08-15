@@ -1,7 +1,7 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 import copy
 import os
-import pickle  # noqa
+import pickle
 from pathlib import Path
 
 import agasc
@@ -17,7 +17,7 @@ from ..core import ACACatalogTable, StarsTable, includes_for_obsid
 from ..fid import FidTable, get_fid_catalog
 from .test_common import DARK40, OBS_INFO, STD_INFO, mod_std_info
 
-# Switch the matplotlib backend to Agg
+# Ensure all plotting is to a non-interactive backend
 matplotlib.pyplot.switch_backend("agg")
 
 HAS_SC_ARCHIVE = Path(mica.starcheck.starcheck.FILES["data_root"]).exists()
