@@ -92,33 +92,34 @@ bad_star_set = LazyDict(_load_bad_star_set)
 # aca_t_ccd_planning_limit : ACA T_ccd planning limit (degC).
 # Predicted ACA CCD temperatures must be below this limit.
 
+ACA_SPEC_ATTRS = {
+    "aca_t_ccd_penalty_limit": "planning.penalty.high",
+    "aca_t_ccd_planning_limit": "planning.warning.high",
+    "chandra_models_version": None,
+}
+
 
 def __getattr__(name):
     """Lazily define module attributes for the ACA planning and penalty limits"""
-    if name in (
-        "chandra_models_version",
-        "aca_t_ccd_penalty_limit",
-        "aca_t_ccd_planning_limit",
-    ):
-        _set_aca_limits()
-        return globals()[name]
+    if name in ACA_SPEC_ATTRS:
+        attrs = _get_aca_spec_attrs()
+        return attrs[name]
     else:
         raise AttributeError(f"module {__name__} has no attribute {name}")
 
 
-def _set_aca_limits():
+@chandra_models.chandra_models_cache
+def _get_aca_spec_attrs():
     """Set global variables for ACA thermal planning and penalty limits"""
-    global chandra_models_version
-
     spec_txt, info = chandra_models.get_data("chandra_models/xija/aca/aca_spec.json")
     spec = json.loads(spec_txt)
 
-    chandra_models_version = info["version"]
+    out = {"chandra_models_version": info["version"]}
+    for name, spec_name in ACA_SPEC_ATTRS.items():
+        if spec_name is not None:
+            out[name] = spec["limits"]["aacccdpt"].get(spec_name)
 
-    names = ("aca_t_ccd_penalty_limit", "aca_t_ccd_planning_limit")
-    spec_names = ("planning.penalty.high", "planning.warning.high")
-    for name, spec_name in zip(names, spec_names):
-        globals()[name] = spec["limits"]["aacccdpt"].get(spec_name)
+    return out
 
 
 # Make sure module-level `dir()` includes the lazy attributes.
@@ -128,4 +129,4 @@ _attrs = dir()
 
 
 def __dir__():
-    return sorted(_attrs + ["aca_t_ccd_penalty_limit", "aca_t_ccd_planning_limit"])
+    return sorted(_attrs + list(ACA_SPEC_ATTRS))

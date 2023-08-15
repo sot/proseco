@@ -398,19 +398,6 @@ def test_big_sim_offset():
 
 
 def test_optional_penalty_limit():
-    """Check that the optional penalty limit is supported correctly."""
-    try:
-        _test_optional_penalty_limit()
-    finally:
-        # Reset ACA limits characteristics that get set above
-        ACA._set_aca_limits()
-
-    # Back to values from conftest.py
-    assert ACA.chandra_models_version == "3.48"
-    assert ACA.aca_t_ccd_penalty_limit == -5.5
-
-
-def _test_optional_penalty_limit():
     import json
 
     from ska_helpers import chandra_models, paths
@@ -433,7 +420,6 @@ def _test_optional_penalty_limit():
 
         with temp_env_var("CHANDRA_MODELS_REPO_DIR", repo_path_local):
             with temp_env_var("CHANDRA_MODELS_DEFAULT_VERSION", "test_branch"):
-                ACA._set_aca_limits()
                 assert ACA.aca_t_ccd_penalty_limit is None
                 assert ACA.chandra_models_version == "test_branch"
 
@@ -441,6 +427,10 @@ def _test_optional_penalty_limit():
                 assert aca.t_ccd_acq == aca.t_ccd_eff_acq
                 assert aca.t_ccd_guide == aca.t_ccd_eff_guide
                 assert aca.t_ccd_penalty_limit is None
+
+    # Back to values from conftest.py
+    assert ACA.chandra_models_version == "3.48"
+    assert ACA.aca_t_ccd_penalty_limit == -5.5
 
 
 @pytest.mark.parametrize("call_t_ccd", [True, False])
