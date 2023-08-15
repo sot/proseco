@@ -1,25 +1,24 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 import copy
 import os
-
-import matplotlib
-from Quaternion import Quat
-
-matplotlib.use("agg")  # noqa
-
 import pickle
 from pathlib import Path
 
 import agasc
+import matplotlib
 import mica.starcheck
 import numpy as np
 import pytest
+from Quaternion import Quat
 
 from .. import characteristics as ACA
 from ..catalog import ACATable, get_aca_catalog
 from ..core import ACACatalogTable, StarsTable, includes_for_obsid
 from ..fid import FidTable, get_fid_catalog
 from .test_common import DARK40, OBS_INFO, STD_INFO, mod_std_info
+
+# Ensure all plotting is to a non-interactive backend
+matplotlib.pyplot.switch_backend("agg")
 
 HAS_SC_ARCHIVE = Path(mica.starcheck.starcheck.FILES["data_root"]).exists()
 TEST_COLS = "slot idx id type sz yang zang dim res halfw".split()
@@ -396,6 +395,52 @@ def test_big_sim_offset():
     assert all(name in aca.fids.colnames for name in names)
     assert aca.duration == 10000
     assert aca.target_name == "Target Name"
+
+
+def test_optional_penalty_limit():
+    """Check that the optional penalty limit is supported correctly."""
+    try:
+        _test_optional_penalty_limit()
+    finally:
+        # Reset ACA limits characteristics that get set above
+        ACA._set_aca_limits()
+
+    # Back to values from conftest.py
+    assert ACA.chandra_models_version == "3.48"
+    assert ACA.aca_t_ccd_penalty_limit == -5.5
+
+
+def _test_optional_penalty_limit():
+    import json
+
+    from ska_helpers import chandra_models, paths
+    from ska_helpers.utils import temp_env_var
+
+    version = "3.49"
+    repo_path = paths.chandra_models_repo_path()
+
+    with chandra_models.get_local_repo(repo_path, version) as (repo, repo_path_local):
+        path_aca_spec = (
+            Path(repo_path_local) / "chandra_models" / "xija" / "aca" / "aca_spec.json"
+        )
+        text_aca_spec = path_aca_spec.read_text()
+        aca_spec = json.loads(text_aca_spec)
+        del aca_spec["limits"]["aacccdpt"]["planning.penalty.high"]
+        repo.git.checkout("HEAD", b="test_branch")
+        path_aca_spec.write_text(json.dumps(aca_spec, indent=4))
+        repo.git.add(path_aca_spec)
+        repo.git.commit("-m", "test commit")
+
+        with temp_env_var("CHANDRA_MODELS_REPO_DIR", repo_path_local):
+            with temp_env_var("CHANDRA_MODELS_DEFAULT_VERSION", "test_branch"):
+                ACA._set_aca_limits()
+                assert ACA.aca_t_ccd_penalty_limit is None
+                assert ACA.chandra_models_version == "test_branch"
+
+                aca = get_aca_catalog(**STD_INFO, dark=DARK40)
+                assert aca.t_ccd_acq == aca.t_ccd_eff_acq
+                assert aca.t_ccd_guide == aca.t_ccd_eff_guide
+                assert aca.t_ccd_penalty_limit is None
 
 
 @pytest.mark.parametrize("call_t_ccd", [True, False])
