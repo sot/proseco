@@ -6,6 +6,7 @@ from pathlib import Path
 
 import agasc
 import matplotlib
+import matplotlib.pyplot
 import mica.starcheck
 import numpy as np
 import pytest
