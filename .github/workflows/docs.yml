@@ -1,5 +1,5 @@
 name: Deploy Docs
-true:
+on:
   release:
     types:
     - released
