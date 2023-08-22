@@ -1,18 +1,17 @@
 
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>proseco.diff &#8212; proseco 5.9.0 documentation</title>
+    <title>proseco.diff &#8212; proseco 5.10.1.dev3+g18daf21 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/bootstrap-astropy.css" />
     
     <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
     <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
     <script type="text/javascript" src="../../_static/sidebar.js"></script>
     <script type="text/javascript" src="../../_static/copybutton.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
@@ -46,7 +45,7 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../index.html">proseco 5.9.0 documentation</a>
+	<a href="../../index.html">proseco 5.10.1.dev3+g18daf21 documentation</a>
 	 &#187;
       </li>
       <li><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
@@ -128,7 +127,7 @@
 <div class="viewcode-block" id="get_catalog_lines"><a class="viewcode-back" href="../../api.html#proseco.diff.get_catalog_lines">[docs]</a><span class="k">def</span> <span class="nf">get_catalog_lines</span><span class="p">(</span>
     <span class="n">cat</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">section_lines</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">sort_name</span><span class="o">=</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="n">formats</span><span class="o">=</span><span class="kc">None</span>
 <span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Get list of lines representing catalog suitable for diffing.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get list of lines representing catalog suitable for diffing.</span>
 
 <span class="sd">    This function sorts the catalog into fids, guides, monitors,and acquisition</span>
 <span class="sd">    stars and outputs the table into a separate list of lines. In addition:</span>
@@ -226,7 +225,7 @@
 
 
 <div class="viewcode-block" id="CatalogDiff"><a class="viewcode-back" href="../../api.html#proseco.diff.CatalogDiff">[docs]</a><span class="k">class</span> <span class="nc">CatalogDiff</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Represent an ACA catalog diff as either HTML or plain text&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represent an ACA catalog diff as either HTML or plain text&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">is_html</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">text</span>
@@ -242,7 +241,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">text</span>
 
 <div class="viewcode-block" id="CatalogDiff.write"><a class="viewcode-back" href="../../api.html#proseco.diff.CatalogDiff.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">out_file</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Write output to ``out_file``</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write output to ``out_file``</span>
 
 <span class="sd">        :param out_file: str, Path</span>
 <span class="sd">            Output file</span>
@@ -262,7 +261,7 @@
     <span class="n">section_lines</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="n">n_context</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
 <span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Return the diff of ACA catalogs ``cats1`` and ``cats2``.</span>
 
 <span class="sd">    The output is returned in a ``CatalogDiff`` object that will display the</span>
@@ -305,7 +304,7 @@
 
     <span class="k">if</span> <span class="n">labels</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">ok</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">cats1</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span>
-        <span class="n">labels</span> <span class="o">=</span> <span class="p">[(</span><span class="sa">f</span><span class="s2">&quot;Catalog </span><span class="si">{</span><span class="n">ii</span> <span class="o">+</span> <span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">ok</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span> <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cats1</span><span class="p">))]</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="p">[(</span><span class="sa">f</span><span class="s2">&quot;Catalog </span><span class="si">{</span><span class="n">ii</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">ok</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span> <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cats1</span><span class="p">))]</span>
 
     <span class="n">text_all</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
     <span class="k">for</span> <span class="n">cat1</span><span class="p">,</span> <span class="n">cat2</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">cats1</span><span class="p">,</span> <span class="n">cats2</span><span class="p">,</span> <span class="n">labels</span><span class="p">):</span>
@@ -372,7 +371,7 @@
     <a href="#">Back to Top</a></p>
   <p>
     &copy; Copyright 2018, Tom Aldcroft, Jean Connelly.<br/>
-    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 4.2.0. &nbsp;
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 6.1.3. &nbsp;
   </p>
 </footer>
   </body>

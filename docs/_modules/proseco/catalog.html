@@ -1,0 +1,964 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>proseco.catalog &#8212; proseco 5.10.1.dev3+g18daf21 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/bootstrap-astropy.css" />
+    
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <script type="text/javascript" src="../../_static/sidebar.js"></script>
+    <script type="text/javascript" src="../../_static/copybutton.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,600' rel='stylesheet' type='text/css'/>
+
+  </head><body>
+<div class="topbar">
+  <a class="brand" title="Documentation Home" href="../../index.html"><span id="logotext1">Ska!</span><span id="logotext2">proseco</span><span id="logotext3"></span></a>
+  <ul>
+    
+    <li><a class="home" title="Homepage" href="https://cxc.cfa.harvard.edu/mta/ASPECT/tool_doc">
+        <span id="logotext1">ska</span><span id="logotext2">tools</span>
+    </a></li>
+    <li><a title="General Index" href="../../genindex.html">Index</a></li>
+    <li><a title="Module Index" href="../../py-modindex.html">Modules</a></li>
+    <li>
+      
+      
+<form action="../../search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+      
+    </li>
+  </ul>
+</div>
+
+<div class="related">
+    <h3>Navigation</h3>
+    <ul>
+      <li>
+	<a href="../../index.html">proseco 5.10.1.dev3+g18daf21 documentation</a>
+	 &#187;
+      </li>
+      <li><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+      
+       
+    </ul>
+</div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for proseco.catalog</h1><div class="highlight"><pre>
+<span></span><span class="c1"># coding: utf-8</span>
+<span class="c1"># Licensed under a 3-clause BSD style license - see LICENSE.rst</span>
+
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">astropy.table</span> <span class="kn">import</span> <span class="n">Table</span>
+
+<span class="kn">from</span> <span class="nn">proseco.characteristics</span> <span class="kn">import</span> <span class="n">MonFunc</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">__version__</span> <span class="k">as</span> <span class="n">VERSION</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">characteristics</span> <span class="k">as</span> <span class="n">ACA</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">characteristics_acq</span> <span class="k">as</span> <span class="n">ACQ</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">get_aca_catalog</span> <span class="k">as</span> <span class="n">_get_aca_catalog_package</span>
+<span class="kn">from</span> <span class="nn">.acq</span> <span class="kn">import</span> <span class="n">AcqTable</span><span class="p">,</span> <span class="n">get_acq_catalog</span><span class="p">,</span> <span class="n">get_maxmag</span>
+<span class="kn">from</span> <span class="nn">.core</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ACACatalogTable</span><span class="p">,</span>
+    <span class="n">MetaAttribute</span><span class="p">,</span>
+    <span class="n">get_dim_res</span><span class="p">,</span>
+    <span class="n">get_img_size</span><span class="p">,</span>
+    <span class="n">get_kwargs_from_starcheck_text</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">.fid</span> <span class="kn">import</span> <span class="n">FidTable</span><span class="p">,</span> <span class="n">get_fid_catalog</span>
+<span class="kn">from</span> <span class="nn">.guide</span> <span class="kn">import</span> <span class="n">GuideTable</span><span class="p">,</span> <span class="n">get_guide_catalog</span>
+<span class="kn">from</span> <span class="nn">.monitor</span> <span class="kn">import</span> <span class="n">BadMonitorError</span><span class="p">,</span> <span class="n">get_mon_catalog</span>
+
+<span class="c1"># Colnames and types for final ACA catalog</span>
+<span class="n">ACA_CATALOG_DTYPES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;slot&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span>
+    <span class="s2">&quot;idx&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span>
+    <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span>
+    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;U3&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;sz&quot;</span><span class="p">:</span> <span class="s2">&quot;U3&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;p_acq&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span>
+    <span class="s2">&quot;mag&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span>
+    <span class="s2">&quot;maxmag&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span>
+    <span class="s2">&quot;yang&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span>
+    <span class="s2">&quot;zang&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span>
+    <span class="s2">&quot;dim&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span>
+    <span class="s2">&quot;res&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span>
+    <span class="s2">&quot;halfw&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="get_aca_catalog"><a class="viewcode-back" href="../../api.html#proseco.catalog.get_aca_catalog">[docs]</a><span class="k">def</span> <span class="nf">get_aca_catalog</span><span class="p">(</span><span class="n">obsid</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="c1"># Docstring is in __init__.py and defined below.</span>
+
+    <span class="n">raise_exc</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;raise_exc&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>  <span class="c1"># This cannot credibly fail</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="c1"># If obsid is supplied as a string then it is taken to be starcheck text</span>
+        <span class="c1"># with required info.  User-supplied kwargs take precedence, however.</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obsid</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">force_catalog</span> <span class="o">=</span> <span class="s2">&quot;--force-catalog&quot;</span> <span class="ow">in</span> <span class="n">obsid</span>
+            <span class="n">kw</span> <span class="o">=</span> <span class="n">get_kwargs_from_starcheck_text</span><span class="p">(</span><span class="n">obsid</span><span class="p">,</span> <span class="n">force_catalog</span><span class="o">=</span><span class="n">force_catalog</span><span class="p">)</span>
+            <span class="n">obsid</span> <span class="o">=</span> <span class="n">kw</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;obsid&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">kw</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+                    <span class="n">kwargs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+
+        <span class="k">if</span> <span class="s2">&quot;monitors&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="n">aca</span> <span class="o">=</span> <span class="n">_get_aca_catalog_monitors</span><span class="p">(</span><span class="n">obsid</span><span class="o">=</span><span class="n">obsid</span><span class="p">,</span> <span class="n">raise_exc</span><span class="o">=</span><span class="n">raise_exc</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">aca</span> <span class="o">=</span> <span class="n">_get_aca_catalog</span><span class="p">(</span><span class="n">obsid</span><span class="o">=</span><span class="n">obsid</span><span class="p">,</span> <span class="n">raise_exc</span><span class="o">=</span><span class="n">raise_exc</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">raise_exc</span><span class="p">:</span>
+            <span class="c1"># This is for debugging</span>
+            <span class="k">raise</span>
+
+        <span class="n">aca</span> <span class="o">=</span> <span class="n">ACATable</span><span class="o">.</span><span class="n">empty</span><span class="p">()</span>  <span class="c1"># Makes zero-length table with correct columns</span>
+        <span class="n">aca</span><span class="o">.</span><span class="n">exception</span> <span class="o">=</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">aca</span></div>
+
+
+<span class="n">get_aca_catalog</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">=</span> <span class="n">_get_aca_catalog_package</span><span class="o">.</span><span class="vm">__doc__</span>
+
+
+<span class="k">def</span> <span class="nf">_get_aca_catalog</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Do the actual work of getting the acq, fid and guide catalogs and</span>
+<span class="sd">    assembling the merged aca catalog.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">raise_exc</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;raise_exc&quot;</span><span class="p">)</span>
+    <span class="n">img_size_guide</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;img_size_guide&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+    <span class="n">aca</span> <span class="o">=</span> <span class="n">ACATable</span><span class="p">()</span>
+    <span class="n">aca</span><span class="o">.</span><span class="n">set_attrs_from_kwargs</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">aca</span><span class="o">.</span><span class="n">call_args</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">aca</span><span class="o">.</span><span class="n">version</span> <span class="o">=</span> <span class="n">VERSION</span>
+
+    <span class="c1"># Override t_ccd related inputs with effective temperatures for downstream</span>
+    <span class="c1"># action by AcqTable, GuideTable, FidTable.  See set_attrs_from_kwargs()</span>
+    <span class="c1"># - t_ccd_eff_{acq,guide} are the effective T_ccd values which are adjusted</span>
+    <span class="c1">#   if the actual t_ccd{acq,guide} values are above ACA.aca_t_ccd_penalty_limit.</span>
+    <span class="c1"># - t_ccd_{acq,guide} are the actual (or predicted) values from the call</span>
+    <span class="c1"># The downstream AcqTable, GuideTable, and FidTable are initialized with the</span>
+    <span class="c1"># *effective* values as t_ccd.  Those classes do not have the concept of effective</span>
+    <span class="c1"># temperature.</span>
+    <span class="k">if</span> <span class="n">aca</span><span class="o">.</span><span class="n">t_ccd_eff_acq</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">aca</span><span class="o">.</span><span class="n">t_ccd_eff_acq</span> <span class="o">=</span> <span class="n">get_effective_t_ccd</span><span class="p">(</span><span class="n">aca</span><span class="o">.</span><span class="n">t_ccd_acq</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">aca</span><span class="o">.</span><span class="n">t_ccd_eff_guide</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">aca</span><span class="o">.</span><span class="n">t_ccd_eff_guide</span> <span class="o">=</span> <span class="n">get_effective_t_ccd</span><span class="p">(</span><span class="n">aca</span><span class="o">.</span><span class="n">t_ccd_guide</span><span class="p">)</span>
+
+    <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;t_ccd_acq&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">aca</span><span class="o">.</span><span class="n">t_ccd_eff_acq</span>
+    <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;t_ccd_guide&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">aca</span><span class="o">.</span><span class="n">t_ccd_eff_guide</span>
+
+    <span class="c1"># These are allowed inputs to get_aca_catalog but should not be passed to</span>
+    <span class="c1"># get_{acq,guide,fid}_catalog. Pop them from kwargs.</span>
+    <span class="k">for</span> <span class="n">kwarg</span> <span class="ow">in</span> <span class="p">(</span>
+        <span class="s2">&quot;t_ccd&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;t_ccd_eff_acq&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;t_ccd_eff_guide&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;stars&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;t_ccd_penalty_limit&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;duration&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;target_name&quot;</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">kwarg</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+    <span class="c1"># Get stars (typically from AGASC) and do not filter for stars near</span>
+    <span class="c1"># the ACA FOV.  This leaves the full radial selection available for</span>
+    <span class="c1"># later roll optimization.  Use aca.stars or aca.acqs.stars from here.</span>
+    <span class="n">aca</span><span class="o">.</span><span class="n">set_stars</span><span class="p">(</span><span class="n">filter_near_fov</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="n">aca</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="s2">&quot;Starting get_acq_catalog&quot;</span><span class="p">)</span>
+    <span class="n">aca</span><span class="o">.</span><span class="n">acqs</span> <span class="o">=</span> <span class="n">get_acq_catalog</span><span class="p">(</span><span class="n">stars</span><span class="o">=</span><span class="n">aca</span><span class="o">.</span><span class="n">stars</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="c1"># Store the date of the dark cal if available.</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">aca</span><span class="o">.</span><span class="n">acqs</span><span class="p">,</span> <span class="s2">&quot;dark_date&quot;</span><span class="p">):</span>
+        <span class="n">aca</span><span class="o">.</span><span class="n">dark_date</span> <span class="o">=</span> <span class="n">aca</span><span class="o">.</span><span class="n">acqs</span><span class="o">.</span><span class="n">dark_date</span>
+
+    <span class="c1"># Note that aca.acqs.stars is a filtered version of aca.stars and includes</span>
+    <span class="c1"># only stars that are in or near ACA FOV.  Use this for fids and guides stars.</span>
+    <span class="n">aca</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="s2">&quot;Starting get_fid_catalog&quot;</span><span class="p">)</span>
+    <span class="n">aca</span><span class="o">.</span><span class="n">fids</span> <span class="o">=</span> <span class="n">get_fid_catalog</span><span class="p">(</span><span class="n">stars</span><span class="o">=</span><span class="n">aca</span><span class="o">.</span><span class="n">acqs</span><span class="o">.</span><span class="n">stars</span><span class="p">,</span> <span class="n">acqs</span><span class="o">=</span><span class="n">aca</span><span class="o">.</span><span class="n">acqs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">aca</span><span class="o">.</span><span class="n">acqs</span><span class="o">.</span><span class="n">fids</span> <span class="o">=</span> <span class="n">aca</span><span class="o">.</span><span class="n">fids</span>
+
+    <span class="k">if</span> <span class="n">aca</span><span class="o">.</span><span class="n">optimize</span><span class="p">:</span>
+        <span class="n">aca</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="s2">&quot;Starting optimize_acqs_fids&quot;</span><span class="p">)</span>
+        <span class="n">aca</span><span class="o">.</span><span class="n">optimize_acqs_fids</span><span class="p">()</span>
+
+    <span class="n">aca</span><span class="o">.</span><span class="n">acqs</span><span class="o">.</span><span class="n">fid_set</span> <span class="o">=</span> <span class="n">aca</span><span class="o">.</span><span class="n">fids</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span>
+
+    <span class="n">aca</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="s2">&quot;Starting get_mon_catalog&quot;</span><span class="p">)</span>
+    <span class="n">aca</span><span class="o">.</span><span class="n">mons</span> <span class="o">=</span> <span class="n">get_mon_catalog</span><span class="p">(</span><span class="n">stars</span><span class="o">=</span><span class="n">aca</span><span class="o">.</span><span class="n">acqs</span><span class="o">.</span><span class="n">stars</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="n">aca</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="s2">&quot;Starting get_guide_catalog&quot;</span><span class="p">)</span>
+    <span class="n">aca</span><span class="o">.</span><span class="n">guides</span> <span class="o">=</span> <span class="n">get_guide_catalog</span><span class="p">(</span>
+        <span class="n">stars</span><span class="o">=</span><span class="n">aca</span><span class="o">.</span><span class="n">acqs</span><span class="o">.</span><span class="n">stars</span><span class="p">,</span>
+        <span class="n">fids</span><span class="o">=</span><span class="n">aca</span><span class="o">.</span><span class="n">fids</span><span class="p">,</span>
+        <span class="n">mons</span><span class="o">=</span><span class="n">aca</span><span class="o">.</span><span class="n">mons</span><span class="p">,</span>
+        <span class="n">img_size</span><span class="o">=</span><span class="n">img_size_guide</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Set output catalog aca.n_guide to the number of requested guide stars as</span>
+    <span class="c1"># determined in guide star selection processing. This differs from the input</span>
+    <span class="c1"># arg value of n_guide which is (confusingly) the number of available slots</span>
+    <span class="c1"># for guide + monitor stars / windows. Thus if the input n_guide is set to</span>
+    <span class="c1"># 5 and there is a monitor window then aca.n_guide will be 4.</span>
+    <span class="n">aca</span><span class="o">.</span><span class="n">n_guide</span> <span class="o">=</span> <span class="n">aca</span><span class="o">.</span><span class="n">guides</span><span class="o">.</span><span class="n">n_guide</span>
+
+    <span class="c1"># Make a merged starcheck-like catalog.  Catch any errors at this point to avoid</span>
+    <span class="c1"># impacting operational work (call from Matlab).</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">aca</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="s2">&quot;Starting merge_cats&quot;</span><span class="p">)</span>
+        <span class="n">merge_cat</span> <span class="o">=</span> <span class="n">merge_cats</span><span class="p">(</span>
+            <span class="n">fids</span><span class="o">=</span><span class="n">aca</span><span class="o">.</span><span class="n">fids</span><span class="p">,</span> <span class="n">guides</span><span class="o">=</span><span class="n">aca</span><span class="o">.</span><span class="n">guides</span><span class="p">,</span> <span class="n">acqs</span><span class="o">=</span><span class="n">aca</span><span class="o">.</span><span class="n">acqs</span><span class="p">,</span> <span class="n">mons</span><span class="o">=</span><span class="n">aca</span><span class="o">.</span><span class="n">mons</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">merge_cat</span><span class="o">.</span><span class="n">colnames</span><span class="p">:</span>
+            <span class="n">aca</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">merge_cat</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">raise_exc</span><span class="p">:</span>
+            <span class="k">raise</span>
+
+        <span class="n">empty</span> <span class="o">=</span> <span class="n">ACACatalogTable</span><span class="o">.</span><span class="n">empty</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">empty</span><span class="o">.</span><span class="n">colnames</span><span class="p">:</span>
+            <span class="n">aca</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">empty</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+
+        <span class="n">aca</span><span class="o">.</span><span class="n">exception</span> <span class="o">=</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span>
+
+    <span class="n">aca</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="s2">&quot;Finished aca_get_catalog&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">aca</span>
+
+
+<span class="k">def</span> <span class="nf">_get_aca_catalog_monitors</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the ACA catalog for a case with possible monitor windows / stars.</span>
+
+<span class="sd">    If there are only pure MON windows or Guide-From-Mon windows (no possible</span>
+<span class="sd">    auto-conversion to GUI) then just run the standard _get_aca_catalog, which</span>
+<span class="sd">    handles these cases.</span>
+
+<span class="sd">    Otherwise, first get the catalog forcing tracking MON window commanding.</span>
+<span class="sd">    This will be short a guide star for each MON window. Second get the catalog</span>
+<span class="sd">    forcing MON conversion to GUI. This requires that an acceptable guide star</span>
+<span class="sd">    is within 2 arcsec of the MON position. &quot;Acceptable&quot; means that ``guides``</span>
+<span class="sd">    has a candidate (``cand_guides``) guide star within 2 arcsec. If the catalog</span>
+<span class="sd">    with the converted GUI star has no new critical warnings then it is</span>
+<span class="sd">    accepted.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">kwargs_orig</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;raise_exc&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Make a stub aca to get monitors attribute</span>
+    <span class="n">aca</span> <span class="o">=</span> <span class="n">ACATable</span><span class="p">()</span>
+    <span class="n">aca</span><span class="o">.</span><span class="n">set_attrs_from_kwargs</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="c1"># If no auto-convert mon stars then do the normal star selection.</span>
+    <span class="n">monitors</span> <span class="o">=</span> <span class="n">aca</span><span class="o">.</span><span class="n">monitors</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">monitors</span><span class="p">[</span><span class="s2">&quot;function&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">MonFunc</span><span class="o">.</span><span class="n">AUTO</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">_get_aca_catalog</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs_orig</span><span class="p">)</span>
+
+    <span class="c1"># Find the entries with auto-convert</span>
+    <span class="n">is_auto</span> <span class="o">=</span> <span class="n">monitors</span><span class="p">[</span><span class="s2">&quot;function&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">MonFunc</span><span class="o">.</span><span class="n">AUTO</span>  <span class="c1"># Auto-convert to guide</span>
+
+    <span class="c1"># First get the catalog with automon entries scheduled as tracking MON windows.</span>
+    <span class="n">kwargs</span> <span class="o">=</span> <span class="n">kwargs_orig</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">monitors</span><span class="p">[</span><span class="s2">&quot;function&quot;</span><span class="p">][</span><span class="n">is_auto</span><span class="p">]</span> <span class="o">=</span> <span class="n">MonFunc</span><span class="o">.</span><span class="n">MON_TRACK</span>  <span class="c1"># Tracking MON window</span>
+    <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;monitors&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">monitors</span>
+
+    <span class="c1"># Get the catalog and do a sparkles review</span>
+    <span class="n">aca_mon</span> <span class="o">=</span> <span class="n">_get_aca_catalog</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">aca_mon</span><span class="o">.</span><span class="n">call_args</span> <span class="o">=</span> <span class="n">kwargs_orig</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>  <span class="c1"># Needed for roll optimization, see #364</span>
+    <span class="n">acar_mon</span> <span class="o">=</span> <span class="n">aca_mon</span><span class="o">.</span><span class="n">get_review_table</span><span class="p">()</span>
+    <span class="n">acar_mon</span><span class="o">.</span><span class="n">run_aca_review</span><span class="p">()</span>
+    <span class="n">crits_mon</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">msg</span><span class="p">[</span><span class="s2">&quot;text&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">msg</span> <span class="ow">in</span> <span class="p">(</span><span class="n">acar_mon</span><span class="o">.</span><span class="n">messages</span> <span class="o">&gt;=</span> <span class="s2">&quot;critical&quot;</span><span class="p">))</span>
+
+    <span class="c1"># Now get the catalog with automon entries scheduled as guide stars</span>
+    <span class="n">monitors</span><span class="p">[</span><span class="s2">&quot;function&quot;</span><span class="p">][</span><span class="n">is_auto</span><span class="p">]</span> <span class="o">=</span> <span class="n">MonFunc</span><span class="o">.</span><span class="n">GUIDE</span>
+    <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;raise_exc&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">aca_gui</span> <span class="o">=</span> <span class="n">_get_aca_catalog</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">aca_gui</span><span class="o">.</span><span class="n">call_args</span> <span class="o">=</span> <span class="n">kwargs_orig</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>  <span class="c1"># Needed for roll optimization, see #364</span>
+    <span class="k">except</span> <span class="n">BadMonitorError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="n">aca_mon</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;unable to convert monitor to guide: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">aca_mon</span>
+
+    <span class="c1"># Get the catalog and do a sparkles review</span>
+    <span class="n">acar_gui</span> <span class="o">=</span> <span class="n">aca_gui</span><span class="o">.</span><span class="n">get_review_table</span><span class="p">()</span>
+    <span class="n">acar_gui</span><span class="o">.</span><span class="n">run_aca_review</span><span class="p">()</span>
+    <span class="n">crits_gui</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">msg</span><span class="p">[</span><span class="s2">&quot;text&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">msg</span> <span class="ow">in</span> <span class="p">(</span><span class="n">acar_gui</span><span class="o">.</span><span class="n">messages</span> <span class="o">&gt;=</span> <span class="s2">&quot;critical&quot;</span><span class="p">))</span>
+
+    <span class="c1"># If there are no new critical messages then schedule as guide star(s).</span>
+    <span class="c1"># This checks that every critical in crit_gui is also in crits_mon.</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">aca_gui</span> <span class="k">if</span> <span class="n">crits_gui</span> <span class="o">&lt;=</span> <span class="n">crits_mon</span> <span class="k">else</span> <span class="n">aca_mon</span>
+
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<div class="viewcode-block" id="get_effective_t_ccd"><a class="viewcode-back" href="../../api.html#proseco.catalog.get_effective_t_ccd">[docs]</a><span class="k">def</span> <span class="nf">get_effective_t_ccd</span><span class="p">(</span><span class="n">t_ccd</span><span class="p">,</span> <span class="n">t_ccd_penalty_limit</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the effective T_ccd used for selection and catalog evaluation.</span>
+
+<span class="sd">    For details see Dynamic ACA limits in baby steps section in:</span>
+<span class="sd">    https://occweb.cfa.harvard.edu/twiki/bin/view/Aspect/StarWorkingGroupMeeting2019x02x13</span>
+
+<span class="sd">    :param t_ccd: float</span>
+<span class="sd">        Actual (predicted) CCD temperature</span>
+<span class="sd">    :param t_ccd_penalty_limit: float, None</span>
+<span class="sd">        ACA penalty limit to use (degC). Default = aca_t_ccd_penalty_limit from</span>
+<span class="sd">        proseco.characteristics.</span>
+<span class="sd">    :returns: t_ccd_eff</span>
+<span class="sd">        Effective CCD temperature (degC) for use in star selection</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">t_limit</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">ACA</span><span class="o">.</span><span class="n">aca_t_ccd_penalty_limit</span>
+        <span class="k">if</span> <span class="n">t_ccd_penalty_limit</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="k">else</span> <span class="n">t_ccd_penalty_limit</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">t_limit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">t_ccd</span> <span class="o">&gt;</span> <span class="n">t_limit</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">t_ccd</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">+</span> <span class="p">(</span><span class="n">t_ccd</span> <span class="o">-</span> <span class="n">t_limit</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">t_ccd</span></div>
+
+
+<div class="viewcode-block" id="ACATable"><a class="viewcode-back" href="../../api.html#proseco.catalog.ACATable">[docs]</a><span class="k">class</span> <span class="nc">ACATable</span><span class="p">(</span><span class="n">ACACatalogTable</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Container ACACatalogTable class that has merged guide / acq / fid catalogs</span>
+<span class="sd">    as attributes and other methods relevant to the merged catalog.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Define base set of allowed keyword args to __init__. Subsequent MetaAttribute</span>
+    <span class="c1"># or AliasAttribute properties will add to this.</span>
+    <span class="n">allowed_kwargs</span> <span class="o">=</span> <span class="n">ACACatalogTable</span><span class="o">.</span><span class="n">allowed_kwargs</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="n">required_attrs</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;att&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;n_fid&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;n_guide&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;man_angle&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;t_ccd_acq&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;t_ccd_guide&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;dither_acq&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;dither_guide&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;date&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;detector&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">optimize</span> <span class="o">=</span> <span class="n">MetaAttribute</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">call_args</span> <span class="o">=</span> <span class="n">MetaAttribute</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{})</span>
+    <span class="n">version</span> <span class="o">=</span> <span class="n">MetaAttribute</span><span class="p">()</span>
+
+    <span class="c1"># For validation with get_aca_catalog(obsid), store the starcheck</span>
+    <span class="c1"># catalog in the ACATable meta.</span>
+    <span class="n">starcheck_catalog</span> <span class="o">=</span> <span class="n">MetaAttribute</span><span class="p">(</span><span class="n">is_kwarg</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="c1"># Observation information</span>
+    <span class="n">duration</span> <span class="o">=</span> <span class="n">MetaAttribute</span><span class="p">()</span>
+    <span class="n">target_name</span> <span class="o">=</span> <span class="n">MetaAttribute</span><span class="p">()</span>
+
+    <span class="c1"># Effective T_ccd used for dynamic ACA limits (see updates_for_t_ccd_effective()</span>
+    <span class="c1"># method below).</span>
+    <span class="n">t_ccd_eff_acq</span> <span class="o">=</span> <span class="n">MetaAttribute</span><span class="p">()</span>
+    <span class="n">t_ccd_eff_guide</span> <span class="o">=</span> <span class="n">MetaAttribute</span><span class="p">()</span>
+    <span class="n">t_ccd_penalty_limit</span> <span class="o">=</span> <span class="n">MetaAttribute</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__copy__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Astropy Table now does a light key-only copy of the `meta` dict, so</span>
+        <span class="c1"># copy.copy(aca) does not copy the underlying table attributes.  Force</span>
+        <span class="c1"># a deepcopy instead.</span>
+        <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">t_ccd</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># For top-level ACATable object use the guide temperature, which is always</span>
+        <span class="c1"># greater than or equal to the acq temperature.</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_ccd_guide</span>
+
+    <span class="nd">@t_ccd</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">t_ccd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">t_ccd_guide</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">t_ccd_acq</span> <span class="o">=</span> <span class="n">value</span>
+
+<div class="viewcode-block" id="ACATable.empty"><a class="viewcode-back" href="../../api.html#proseco.catalog.ACATable.empty">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">empty</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">empty</span><span class="p">()</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">acqs</span> <span class="o">=</span> <span class="n">AcqTable</span><span class="o">.</span><span class="n">empty</span><span class="p">()</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">fids</span> <span class="o">=</span> <span class="n">FidTable</span><span class="o">.</span><span class="n">empty</span><span class="p">()</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">guides</span> <span class="o">=</span> <span class="n">GuideTable</span><span class="o">.</span><span class="n">empty</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">out</span></div>
+
+<div class="viewcode-block" id="ACATable.set_attrs_from_kwargs"><a class="viewcode-back" href="../../api.html#proseco.catalog.ACATable.set_attrs_from_kwargs">[docs]</a>    <span class="k">def</span> <span class="nf">set_attrs_from_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set object attributes from kwargs.</span>
+
+<span class="sd">        After calling the base class method which does all the real work, then</span>
+<span class="sd">        compute the effective T_ccd temperatures.</span>
+
+<span class="sd">        In this ACATable object:</span>
+
+<span class="sd">        - t_ccd_eff_{acq,guide} are the effective T_ccd values which are adjusted</span>
+<span class="sd">          if the actual t_ccd{acq,guide} values are above ACA.aca_t_ccd_penalty_limit.</span>
+<span class="sd">        - t_ccd_{acq,guide} are the actual (or predicted) values from the call</span>
+
+<span class="sd">        The downstream AcqTable, GuideTable, and FidTable are initialized with the</span>
+<span class="sd">        *effective* values as t_ccd.  Those classes do not have the concept of effective</span>
+<span class="sd">        temperature.</span>
+
+<span class="sd">        :param kwargs: dict of input kwargs</span>
+<span class="sd">        :return: dict</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">set_attrs_from_kwargs</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_ccd_penalty_limit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">t_ccd_penalty_limit</span> <span class="o">=</span> <span class="n">ACA</span><span class="o">.</span><span class="n">aca_t_ccd_penalty_limit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">t_ccd_eff_acq</span> <span class="o">=</span> <span class="n">get_effective_t_ccd</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">t_ccd_acq</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_ccd_penalty_limit</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">t_ccd_eff_guide</span> <span class="o">=</span> <span class="n">get_effective_t_ccd</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">t_ccd_guide</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_ccd_penalty_limit</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="o">=</span> <span class="n">VERSION</span></div>
+
+<div class="viewcode-block" id="ACATable.get_review_table"><a class="viewcode-back" href="../../api.html#proseco.catalog.ACATable.get_review_table">[docs]</a>    <span class="k">def</span> <span class="nf">get_review_table</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get ACAReviewTable object based on self.</span>
+
+<span class="sd">        :returns: ACAReviewTable object</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">sparkles.core</span> <span class="kn">import</span> <span class="n">ACAReviewTable</span>
+
+        <span class="k">return</span> <span class="n">ACAReviewTable</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ACATable.get_candidates_mask"><a class="viewcode-back" href="../../api.html#proseco.catalog.ACATable.get_candidates_mask">[docs]</a>    <span class="k">def</span> <span class="nf">get_candidates_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stars</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a boolean mask indicating which ``stars`` are acceptable candidates</span>
+<span class="sd">        for the parent class.</span>
+
+<span class="sd">        For ACATable this is the logical OR of the guide and acq values,</span>
+<span class="sd">        i.e. for ACA a candidate is shown as OK if it is OK for either guide or</span>
+<span class="sd">        acq.  This is just used for plotting.</span>
+
+<span class="sd">        :param stars: StarsTable of stars</span>
+<span class="sd">        :returns: bool mask</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ok</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">acqs</span><span class="o">.</span><span class="n">get_candidates_mask</span><span class="p">(</span><span class="n">stars</span><span class="p">)</span> <span class="o">|</span> <span class="bp">self</span><span class="o">.</span><span class="n">guides</span><span class="o">.</span><span class="n">get_candidates_mask</span><span class="p">(</span>
+            <span class="n">stars</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">ok</span></div>
+
+<div class="viewcode-block" id="ACATable.make_report"><a class="viewcode-back" href="../../api.html#proseco.catalog.ACATable.make_report">[docs]</a>    <span class="k">def</span> <span class="nf">make_report</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rootdir</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Make summary HTML report for acq and guide selection process and outputs.</span>
+
+<span class="sd">        Outputs are in ``&lt;rootdir&gt;/obs&lt;obsid&gt;/{acq,guide}/index.html`` plus related</span>
+<span class="sd">        images in that directory.</span>
+
+<span class="sd">        :param rootdir: root directory for outputs</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">acqs</span><span class="o">.</span><span class="n">make_report</span><span class="p">(</span><span class="n">rootdir</span><span class="o">=</span><span class="n">rootdir</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">guides</span><span class="o">.</span><span class="n">make_report</span><span class="p">(</span><span class="n">rootdir</span><span class="o">=</span><span class="n">rootdir</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ACATable.optimize_acqs_fids"><a class="viewcode-back" href="../../api.html#proseco.catalog.ACATable.optimize_acqs_fids">[docs]</a>    <span class="k">def</span> <span class="nf">optimize_acqs_fids</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Concurrently optimize acqs and fids in the case where there is not</span>
+<span class="sd">        already a good (no spoilers) fid set available.</span>
+
+<span class="sd">        This updates the acqs and fids tables in place.</span>
+
+<span class="sd">        :param acqs: AcqTable object</span>
+<span class="sd">        :param fids: FidTable object</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">acqs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">acqs</span>
+        <span class="n">fids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fids</span>
+
+        <span class="c1"># IF get_fid_catalog returned a good catalog,</span>
+        <span class="c1">#    OR no fids were requested,</span>
+        <span class="c1">#    OR no candidate fids are available,</span>
+        <span class="c1">#    OR no candidate fid sets are available</span>
+        <span class="c1"># THEN no optimization action required here.</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fids</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_fid</span> <span class="o">==</span> <span class="mi">0</span>
+            <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fids</span><span class="o">.</span><span class="n">cand_fids</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
+            <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fids</span><span class="o">.</span><span class="n">cand_fid_sets</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
+        <span class="p">):</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Start with the no-fids optimum catalog and save required info to restore</span>
+        <span class="n">opt_P2</span> <span class="o">=</span> <span class="o">-</span><span class="n">acqs</span><span class="o">.</span><span class="n">get_log_p_2_or_fewer</span><span class="p">()</span>
+        <span class="n">orig_acq_idxs</span> <span class="o">=</span> <span class="n">acqs</span><span class="p">[</span><span class="s2">&quot;idx&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="n">orig_acq_halfws</span> <span class="o">=</span> <span class="n">acqs</span><span class="p">[</span><span class="s2">&quot;halfw&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Starting opt_P2=</span><span class="si">{</span><span class="n">opt_P2</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">: ids=</span><span class="si">{</span><span class="n">orig_acq_idxs</span><span class="si">}</span><span class="s2"> halfws=</span><span class="si">{</span><span class="n">orig_acq_halfws</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+        <span class="c1"># If not at least 2 fids then punt on optimization.</span>
+        <span class="n">cand_fids</span> <span class="o">=</span> <span class="n">fids</span><span class="o">.</span><span class="n">cand_fids</span>
+
+        <span class="c1"># Get list of fid_sets that are consistent with candidate fids. These</span>
+        <span class="c1"># fid sets are the combinations of 3 (or 2) fid lights in preferred</span>
+        <span class="c1"># order.</span>
+        <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">fid_set</span> <span class="ow">in</span> <span class="n">fids</span><span class="o">.</span><span class="n">cand_fid_sets</span><span class="p">:</span>
+            <span class="n">spoiler_score</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+                <span class="n">cand_fids</span><span class="o">.</span><span class="n">get_id</span><span class="p">(</span><span class="n">fid_id</span><span class="p">)[</span><span class="s2">&quot;spoiler_score&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">fid_id</span> <span class="ow">in</span> <span class="n">fid_set</span>
+            <span class="p">)</span>
+            <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">fid_set</span><span class="p">,</span> <span class="n">spoiler_score</span><span class="p">))</span>
+
+        <span class="c1"># Make a table to keep track of candidate fid_sets along with the</span>
+        <span class="c1"># ranking metric P2 and the acq catalog info halfws and star ids.</span>
+        <span class="n">fid_sets</span> <span class="o">=</span> <span class="n">Table</span><span class="p">(</span><span class="n">rows</span><span class="o">=</span><span class="n">rows</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;fid_ids&quot;</span><span class="p">,</span> <span class="s2">&quot;spoiler_score&quot;</span><span class="p">))</span>
+        <span class="n">fid_sets</span><span class="p">[</span><span class="s2">&quot;P2&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">99.0</span>  <span class="c1"># Marker for unfilled values</span>
+        <span class="n">fid_sets</span><span class="p">[</span><span class="s2">&quot;acq_halfws&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">fid_sets</span><span class="p">[</span><span class="s2">&quot;acq_idxs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># Group the table into groups by spoiler score.  This preserves the</span>
+        <span class="c1"># original fid set ordering within a group.</span>
+        <span class="n">fid_sets</span> <span class="o">=</span> <span class="n">fid_sets</span><span class="o">.</span><span class="n">group_by</span><span class="p">(</span><span class="s2">&quot;spoiler_score&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Iterate through each spoiler_score group and then within that iterate</span>
+        <span class="c1"># over each fid set.</span>
+        <span class="k">for</span> <span class="n">fid_set_group</span> <span class="ow">in</span> <span class="n">fid_sets</span><span class="o">.</span><span class="n">groups</span><span class="p">:</span>
+            <span class="n">spoiler_score</span> <span class="o">=</span> <span class="n">fid_set_group</span><span class="p">[</span><span class="s2">&quot;spoiler_score&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Checking fid sets with spoiler_score=</span><span class="si">{</span><span class="n">spoiler_score</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">fid_set</span> <span class="ow">in</span> <span class="n">fid_set_group</span><span class="p">:</span>
+                <span class="c1"># Set the internal acqs fid set.  This does validation of the set</span>
+                <span class="c1"># and also calls update_p_acq_column().</span>
+                <span class="n">acqs</span><span class="o">.</span><span class="n">fid_set</span> <span class="o">=</span> <span class="n">fid_set</span><span class="p">[</span><span class="s2">&quot;fid_ids&quot;</span><span class="p">]</span>
+
+                <span class="c1"># If P2 is effectively unchanged after updating the fid set,</span>
+                <span class="c1"># that means there are no fids spoiling an acq star in the</span>
+                <span class="c1"># optimum (no-fid) acq catalog, and there is no need to</span>
+                <span class="c1"># re-optimize.  Furthermore this fid set is guaranteed to meet</span>
+                <span class="c1"># the stage_min_P2 acceptance so no need to check any other fid</span>
+                <span class="c1"># sets.  Only optimize if P2 decreased by at least 0.001,</span>
+                <span class="c1"># remembering P2 is the -log10(prob).</span>
+                <span class="n">fid_set_P2</span> <span class="o">=</span> <span class="o">-</span><span class="n">acqs</span><span class="o">.</span><span class="n">get_log_p_2_or_fewer</span><span class="p">()</span>
+                <span class="n">found_good_set</span> <span class="o">=</span> <span class="n">fid_set_P2</span> <span class="o">-</span> <span class="n">opt_P2</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mf">0.001</span>
+                <span class="k">if</span> <span class="n">found_good_set</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;No change in P2 for fid set </span><span class="si">{</span><span class="n">acqs</span><span class="o">.</span><span class="n">fid_set</span><span class="si">}</span><span class="s2">, &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;skipping optimization&quot;</span>
+                    <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># Re-optimize the catalog with the fid set selected and get new probs.</span>
+                    <span class="n">acqs</span><span class="o">.</span><span class="n">optimize_catalog</span><span class="p">()</span>
+                    <span class="n">acqs</span><span class="o">.</span><span class="n">update_p_acq_column</span><span class="p">(</span><span class="n">acqs</span><span class="p">)</span>  <span class="c1"># Needed for get_log_p_2_or_fewer</span>
+
+                <span class="c1"># Store optimization results</span>
+                <span class="n">fid_set</span><span class="p">[</span><span class="s2">&quot;P2&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">acqs</span><span class="o">.</span><span class="n">get_log_p_2_or_fewer</span><span class="p">()</span>
+                <span class="n">fid_set</span><span class="p">[</span><span class="s2">&quot;acq_idxs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">acqs</span><span class="p">[</span><span class="s2">&quot;idx&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+                <span class="n">fid_set</span><span class="p">[</span><span class="s2">&quot;acq_halfws&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">acqs</span><span class="p">[</span><span class="s2">&quot;halfw&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Fid set </span><span class="si">{</span><span class="n">fid_set</span><span class="p">[</span><span class="s1">&#39;fid_ids&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">: P2=</span><span class="si">{</span><span class="n">fid_set</span><span class="p">[</span><span class="s1">&#39;P2&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;acq_idxs=</span><span class="si">{</span><span class="n">fid_set</span><span class="p">[</span><span class="s1">&#39;acq_idxs&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> halfws=</span><span class="si">{</span><span class="n">fid_set</span><span class="p">[</span><span class="s1">&#39;acq_halfws&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">level</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+                <span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">found_good_set</span><span class="p">:</span>
+                    <span class="k">break</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># Put the catalog back to the original no-fid optimum and continue</span>
+                    <span class="c1"># trying remaining fid sets.</span>
+                    <span class="n">acqs</span><span class="o">.</span><span class="n">update_idxs_halfws</span><span class="p">(</span><span class="n">orig_acq_idxs</span><span class="p">,</span> <span class="n">orig_acq_halfws</span><span class="p">)</span>
+
+            <span class="c1"># Get the best fid set / acq catalog configuration so far.  Fid sets not</span>
+            <span class="c1"># yet considered have P2 = -99.</span>
+            <span class="n">best_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">fid_sets</span><span class="p">[</span><span class="s2">&quot;P2&quot;</span><span class="p">])</span>
+            <span class="n">best_P2</span> <span class="o">=</span> <span class="n">fid_sets</span><span class="p">[</span><span class="s2">&quot;P2&quot;</span><span class="p">][</span><span class="n">best_idx</span><span class="p">]</span>
+
+            <span class="c1"># Get the row of the fid / acq stages table to determine the required minimum</span>
+            <span class="c1"># P2 given the fid spoiler score.</span>
+            <span class="n">stage</span> <span class="o">=</span> <span class="n">ACQ</span><span class="o">.</span><span class="n">fid_acq_stages</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">spoiler_score</span><span class="p">]</span>
+            <span class="n">stage_min_P2</span> <span class="o">=</span> <span class="n">stage</span><span class="p">[</span><span class="s2">&quot;min_P2&quot;</span><span class="p">](</span><span class="n">opt_P2</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Best P2=</span><span class="si">{</span><span class="n">best_P2</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> at idx=</span><span class="si">{</span><span class="n">best_idx</span><span class="si">}</span><span class="s2"> vs. &quot;</span>
+                <span class="s2">&quot;stage_min_P2=</span><span class="si">{stage_min_P2:.2f}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">level</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="c1"># If we have a winner then use that.</span>
+            <span class="k">if</span> <span class="n">best_P2</span> <span class="o">&gt;=</span> <span class="n">stage_min_P2</span><span class="p">:</span>
+                <span class="k">break</span>
+
+        <span class="c1"># Set the acqs table to the best catalog</span>
+        <span class="n">best_acq_idxs</span> <span class="o">=</span> <span class="n">fid_sets</span><span class="p">[</span><span class="s2">&quot;acq_idxs&quot;</span><span class="p">][</span><span class="n">best_idx</span><span class="p">]</span>
+        <span class="n">best_acq_halfws</span> <span class="o">=</span> <span class="n">fid_sets</span><span class="p">[</span><span class="s2">&quot;acq_halfws&quot;</span><span class="p">][</span><span class="n">best_idx</span><span class="p">]</span>
+        <span class="n">acqs</span><span class="o">.</span><span class="n">update_idxs_halfws</span><span class="p">(</span><span class="n">best_acq_idxs</span><span class="p">,</span> <span class="n">best_acq_halfws</span><span class="p">)</span>
+        <span class="n">acqs</span><span class="o">.</span><span class="n">fid_set</span> <span class="o">=</span> <span class="n">fid_sets</span><span class="p">[</span><span class="s2">&quot;fid_ids&quot;</span><span class="p">][</span><span class="n">best_idx</span><span class="p">]</span>
+
+        <span class="c1"># Finally set the fids table to the desired fid set</span>
+        <span class="n">fids</span><span class="o">.</span><span class="n">set_fid_set</span><span class="p">(</span><span class="n">acqs</span><span class="o">.</span><span class="n">fid_set</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Best acq-fid set: P2=</span><span class="si">{</span><span class="n">best_P2</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;acq_idxs=</span><span class="si">{</span><span class="n">best_acq_idxs</span><span class="si">}</span><span class="s2"> halfws=</span><span class="si">{</span><span class="n">best_acq_halfws</span><span class="si">}</span><span class="s2"> fid_ids=</span><span class="si">{</span><span class="n">acqs</span><span class="o">.</span><span class="n">fid_set</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">best_P2</span> <span class="o">&lt;</span> <span class="n">stage_min_P2</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
+                <span class="s2">&quot;No acq-fid combination was found that met stage requirements&quot;</span><span class="p">,</span>
+                <span class="n">warning</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="ObcCat"><a class="viewcode-back" href="../../api.html#proseco.catalog.ObcCat">[docs]</a><span class="k">class</span> <span class="nc">ObcCat</span><span class="p">(</span><span class="nb">list</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Slot-based catalog corresponding to OBC 8-element acq and guide catalogs.</span>
+
+<span class="sd">    Each row is a catalog object (acq, guide, fid, mon) with a dict-like</span>
+<span class="sd">    interface (dict or Table Row). This class is a list subclass with special</span>
+<span class="sd">    properties:</span>
+
+<span class="sd">    - Initialized as a length 8 list of dict {&#39;id&#39;: None, &#39;type&#39;: None}</span>
+<span class="sd">    - Each of the 8 items correspond to that ACA slot.</span>
+<span class="sd">    - The default value corresponds to a &quot;empty&quot; slot.</span>
+<span class="sd">    - Setting an entry in a slot that is occupied raises an exception.</span>
+<span class="sd">    - Allows adding an entry to the first/last available slot, doing nothing if</span>
+<span class="sd">      the ``id`` is already in the catalog.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">debug</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;debug&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">})</span>
+
+    <span class="k">def</span> <span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set list ``item`` to ``value``</span>
+
+<span class="sd">        Raises an exception if row ``item`` already has a non-default value.</span>
+
+<span class="sd">        :param item: int</span>
+<span class="sd">            List item to set</span>
+<span class="sd">        :param value: dict, Row</span>
+<span class="sd">            Value to set</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="p">[</span><span class="n">item</span><span class="p">][</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;slot </span><span class="si">{</span><span class="n">item</span><span class="si">}</span><span class="s2"> is already set =&gt; program logic error&quot;</span><span class="p">)</span>
+        <span class="n">value</span><span class="p">[</span><span class="s2">&quot;slot&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">item</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__setitem__</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">debug</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ObcCat.add"><a class="viewcode-back" href="../../api.html#proseco.catalog.ObcCat.add">[docs]</a>    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">descending</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add ``value`` to catalog in first/last empty slot, returning the slot.</span>
+
+<span class="sd">        If ``value[&#39;id&#39;]`` is already in the catalog then return that slot.</span>
+
+<span class="sd">        If the catalog already has 8 entries then an IndexError is raised.</span>
+
+<span class="sd">        :param value: dict, Row</span>
+<span class="sd">            Catalog entry to add</span>
+<span class="sd">        :param descending: bool</span>
+<span class="sd">            Direction in which to find the first empty slot (starting from</span>
+<span class="sd">            beginning or end of catalog)</span>
+<span class="sd">        :returns: int</span>
+<span class="sd">            Slot in which ``value`` was placed</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># First check if item is already there, if so then return that slot</span>
+        <span class="k">for</span> <span class="n">slot</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="p">[</span><span class="n">slot</span><span class="p">][</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">value</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]:</span>
+                <span class="k">return</span> <span class="n">slot</span>
+
+        <span class="c1"># Else fill in the next available slot</span>
+        <span class="n">slots</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="n">descending</span> <span class="k">else</span> <span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">slot</span> <span class="ow">in</span> <span class="n">slots</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="p">[</span><span class="n">slot</span><span class="p">][</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="p">[</span><span class="n">slot</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+                <span class="k">return</span> <span class="n">slot</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;catalog is full&quot;</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">as_table</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">colnames</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">ACA_CATALOG_DTYPES</span><span class="p">)</span>
+        <span class="n">colnames</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s2">&quot;idx&quot;</span><span class="p">)</span>
+        <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">ACA_CATALOG_DTYPES</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">out</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+                <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                    <span class="k">pass</span>
+            <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ACACatalogTable</span><span class="p">(</span><span class="n">rows</span><span class="p">)[</span><span class="n">colnames</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">as_table</span><span class="p">()),</span> <span class="s2">&quot;&quot;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">out</span></div>
+
+
+<span class="k">def</span> <span class="nf">_merge_cats_debug</span><span class="p">(</span><span class="n">cat_debug</span><span class="p">,</span> <span class="n">tbl</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">cat_debug</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">tbl</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;*&quot;</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Adding </span><span class="si">{</span><span class="n">message</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;*&quot;</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="merge_cats"><a class="viewcode-back" href="../../api.html#proseco.catalog.merge_cats">[docs]</a><span class="k">def</span> <span class="nf">merge_cats</span><span class="p">(</span><span class="n">fids</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">guides</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">acqs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mons</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Merge ``fids``, ``guides``, and ``acqs`` catalogs into one catalog.</span>
+
+<span class="sd">    The output of this function is a catalog which corresponds to the final</span>
+<span class="sd">    &quot;flight&quot; catalog that can be translated directly to appropriate OBC</span>
+<span class="sd">    spacecraft commanding, e.g. a DOT ACQ command. The ordering of entries</span>
+<span class="sd">    is intended to match the legacy behavior of MATLAB tools.</span>
+
+<span class="sd">    :param fids: FidTable, None (optional)</span>
+<span class="sd">        Table of fids</span>
+<span class="sd">    :param guides: GuideTable, None (optional)</span>
+<span class="sd">        Table of guide stars</span>
+<span class="sd">    :param acqs: AcqTable, None (optional)</span>
+<span class="sd">        Table of acquisition stars</span>
+<span class="sd">    :returns: ACACatalogTable</span>
+<span class="sd">        Merged catalog</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Make an empty (zero-length) catalog with the right columns. This is used</span>
+    <span class="c1"># just below to replace any missing catalogs.</span>
+    <span class="k">for</span> <span class="n">cat</span> <span class="ow">in</span> <span class="p">(</span><span class="n">acqs</span><span class="p">,</span> <span class="n">guides</span><span class="p">,</span> <span class="n">fids</span><span class="p">,</span> <span class="n">mons</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">cat</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">empty</span> <span class="o">=</span> <span class="n">cat</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">break</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;cannot call merge_cats with no catalog inputs&quot;</span><span class="p">)</span>
+
+    <span class="n">fids</span> <span class="o">=</span> <span class="n">empty</span> <span class="k">if</span> <span class="n">fids</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">fids</span>
+    <span class="n">guides</span> <span class="o">=</span> <span class="n">empty</span> <span class="k">if</span> <span class="n">guides</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">guides</span>
+    <span class="n">acqs</span> <span class="o">=</span> <span class="n">empty</span> <span class="k">if</span> <span class="n">acqs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">acqs</span>
+    <span class="n">mons</span> <span class="o">=</span> <span class="n">empty</span> <span class="k">if</span> <span class="n">mons</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">mons</span>
+    <span class="n">gfms</span> <span class="o">=</span> <span class="n">empty</span>  <span class="c1"># Guide converted from monitor (must be 8x8)</span>
+
+    <span class="c1"># Columns in the final merged catalog, except we leave out idx since that</span>
+    <span class="c1"># is included just at the end.</span>
+    <span class="n">colnames</span> <span class="o">=</span> <span class="p">[</span><span class="n">key</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">ACA_CATALOG_DTYPES</span> <span class="k">if</span> <span class="n">key</span> <span class="o">!=</span> <span class="s2">&quot;idx&quot;</span><span class="p">]</span>
+
+    <span class="c1"># First add or modify columns for the fids, guides, and acqs tables so that</span>
+    <span class="c1"># they are all consistent and ready for merging into a single final catalog.</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">fids</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">fids</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;FID&quot;</span>
+        <span class="n">fids</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">7.0</span>
+        <span class="n">fids</span><span class="p">[</span><span class="s2">&quot;maxmag&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">8.0</span>
+        <span class="n">fids</span><span class="p">[</span><span class="s2">&quot;halfw&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">25</span>
+        <span class="n">fids</span><span class="p">[</span><span class="s2">&quot;dim&quot;</span><span class="p">],</span> <span class="n">fids</span><span class="p">[</span><span class="s2">&quot;res&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_dim_res</span><span class="p">(</span><span class="n">fids</span><span class="p">[</span><span class="s2">&quot;halfw&quot;</span><span class="p">])</span>
+        <span class="n">fids</span><span class="p">[</span><span class="s2">&quot;p_acq&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">fids</span><span class="p">[</span><span class="s2">&quot;sz&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;8x8&quot;</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">guides</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">guides</span><span class="p">[</span><span class="s2">&quot;slot&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># Filled in later</span>
+        <span class="n">guides</span><span class="p">[</span><span class="s2">&quot;p_acq&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+        <span class="c1"># Guides table can include three sub-types: GUI (plain guide star), MON</span>
+        <span class="c1"># (monitor window), and GFM (guide from monitor, required to be sz=8x8</span>
+        <span class="c1"># and fill from slot 7 down).</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">ok</span> <span class="o">:=</span> <span class="p">(</span><span class="n">guides</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;GUI&quot;</span><span class="p">)):</span>
+            <span class="c1"># Monitor windows MFX = MON fixed, MTR = Mon tracked</span>
+            <span class="n">gfms</span> <span class="o">=</span> <span class="n">guides</span><span class="p">[</span><span class="n">guides</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;GFM&quot;</span><span class="p">]</span>  <span class="c1"># Guide From Mon</span>
+            <span class="n">guides</span> <span class="o">=</span> <span class="n">guides</span><span class="p">[</span><span class="n">ok</span><span class="p">]</span>  <span class="c1"># &quot;Normal&quot; guide stars</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">acqs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="c1"># TODO: move these into acq.py where possible</span>
+        <span class="n">img_size</span> <span class="o">=</span> <span class="n">guides</span><span class="o">.</span><span class="n">img_size</span> <span class="ow">or</span> <span class="n">get_img_size</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">fids</span><span class="p">))</span>
+        <span class="n">acqs</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;ACQ&quot;</span>
+
+        <span class="c1"># Set maxmag for acqs. Start w/ legacy version corresponding to behavior</span>
+        <span class="c1"># prior to using the search_hits &lt; 50 constraint.</span>
+        <span class="n">maxmags_legacy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span>
+            <span class="n">acqs</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">ACA</span><span class="o">.</span><span class="n">max_delta_maxmag</span><span class="p">,</span> <span class="n">a_min</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">a_max</span><span class="o">=</span><span class="mf">11.2</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;PROSECO_IGNORE_MAXMAGS_CONSTRAINTS&quot;</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">:</span>
+            <span class="c1"># Use the legacy version</span>
+            <span class="n">acqs</span><span class="p">[</span><span class="s2">&quot;maxmag&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">maxmags_legacy</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Use the min of the legacy and search hits &lt; 50 limits</span>
+            <span class="n">maxmags_search</span> <span class="o">=</span> <span class="p">[</span><span class="n">get_maxmag</span><span class="p">(</span><span class="n">acq</span><span class="p">[</span><span class="s2">&quot;halfw&quot;</span><span class="p">],</span> <span class="n">acqs</span><span class="o">.</span><span class="n">t_ccd</span><span class="p">)</span> <span class="k">for</span> <span class="n">acq</span> <span class="ow">in</span> <span class="n">acqs</span><span class="p">]</span>
+            <span class="n">acqs</span><span class="p">[</span><span class="s2">&quot;maxmag&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">maxmags_legacy</span><span class="p">,</span> <span class="n">maxmags_search</span><span class="p">)</span>
+
+        <span class="n">acqs</span><span class="p">[</span><span class="s2">&quot;dim&quot;</span><span class="p">],</span> <span class="n">acqs</span><span class="p">[</span><span class="s2">&quot;res&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_dim_res</span><span class="p">(</span><span class="n">acqs</span><span class="p">[</span><span class="s2">&quot;halfw&quot;</span><span class="p">])</span>
+        <span class="n">acqs</span><span class="p">[</span><span class="s2">&quot;sz&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_size</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">img_size</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">acqs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">8</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;catalog has too many acq entries: &quot;</span> <span class="sa">f</span><span class="s2">&quot;n_acq=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">acqs</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">guides</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">mons</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">gfms</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">fids</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">8</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;catalog has too many guide entries: &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;n_guide=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">guides</span><span class="p">)</span><span class="si">}</span><span class="s2"> n_fid=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">fids</span><span class="p">)</span><span class="si">}</span><span class="s2"> &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;n_mon=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">mons</span><span class="p">)</span><span class="si">}</span><span class="s2"> n_gfm=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">gfms</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Create two 8-slot tables where all slots are initially empty. These</span>
+    <span class="c1"># correspond to the OBC acquisition and guide tables. The guide table</span>
+    <span class="c1"># includes fids and guides. This includes a special debug flag to print</span>
+    <span class="c1"># the catalog each time an entry is added.</span>
+    <span class="n">cat_debug</span> <span class="o">=</span> <span class="s2">&quot;PROSECO_PRINT_OBC_CAT&quot;</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span>
+    <span class="n">cat_acqs</span> <span class="o">=</span> <span class="n">ObcCat</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Acquisition catalog&quot;</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="n">cat_debug</span><span class="p">)</span>
+    <span class="n">cat_guides</span> <span class="o">=</span> <span class="n">ObcCat</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Fid/guide/mon catalog&quot;</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="n">cat_debug</span><span class="p">)</span>
+
+    <span class="c1"># Fill in the acq and guide tables in a specific order:</span>
+    <span class="c1"># - GUI from MON (GFM) in descending slot order (starting from 7)</span>
+    <span class="c1"># - MON in descending slot order</span>
+    <span class="c1"># - FID in ascending slot order (starting from 0)</span>
+    <span class="c1"># - BOT in ascending slot order</span>
+    <span class="c1"># - GUI-only in ascending slot order</span>
+    <span class="c1"># - ACQ-only in ascending slot order</span>
+
+    <span class="c1"># Guide from Monitors (descending from slot 7)</span>
+    <span class="n">_merge_cats_debug</span><span class="p">(</span><span class="n">cat_debug</span><span class="p">,</span> <span class="n">gfms</span><span class="p">,</span> <span class="s2">&quot;Guide from Monitors (GFM)&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">gfm</span> <span class="ow">in</span> <span class="n">gfms</span><span class="p">:</span>
+        <span class="n">gfm</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;GUI&quot;</span>
+        <span class="n">slot</span> <span class="o">=</span> <span class="n">cat_guides</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">gfm</span><span class="p">,</span> <span class="n">descending</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># If the GFM is also an acq then add to same slot</span>
+        <span class="c1"># TODO: probably don&#39;t need the len(acqs) &gt; 0 check.</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">acqs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">gfm</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">acqs</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]:</span>
+            <span class="n">acq</span> <span class="o">=</span> <span class="n">acqs</span><span class="o">.</span><span class="n">get_id</span><span class="p">(</span><span class="n">gfm</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">])</span>
+            <span class="n">acq</span><span class="p">[</span><span class="s2">&quot;sz&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gfm</span><span class="p">[</span><span class="s2">&quot;sz&quot;</span><span class="p">]</span>  <span class="c1"># Set acq size to 8x8</span>
+            <span class="n">cat_acqs</span><span class="p">[</span><span class="n">slot</span><span class="p">]</span> <span class="o">=</span> <span class="n">acq</span>
+
+    <span class="c1"># Monitors (descending from slot 7)</span>
+    <span class="n">_merge_cats_debug</span><span class="p">(</span><span class="n">cat_debug</span><span class="p">,</span> <span class="n">mons</span><span class="p">,</span> <span class="s2">&quot;Monitors (MON)&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">mon</span> <span class="ow">in</span> <span class="n">mons</span><span class="p">:</span>
+        <span class="n">cat_guides</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">mon</span><span class="p">,</span> <span class="n">descending</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Now do fids (ascending from slot 0)</span>
+    <span class="n">_merge_cats_debug</span><span class="p">(</span><span class="n">cat_debug</span><span class="p">,</span> <span class="n">fids</span><span class="p">,</span> <span class="s2">&quot;Fids (FID)&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">fid</span> <span class="ow">in</span> <span class="n">fids</span><span class="p">:</span>
+        <span class="c1"># TODO: why is this fid[colnames], unlike guides and acqs?</span>
+        <span class="n">cat_guides</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">fid</span><span class="p">[</span><span class="n">colnames</span><span class="p">])</span>
+
+    <span class="c1"># BOT stars, ascending in slot</span>
+    <span class="n">_merge_cats_debug</span><span class="p">(</span><span class="n">cat_debug</span><span class="p">,</span> <span class="n">gfms</span><span class="p">,</span> <span class="s2">&quot;Both stars (BOT)&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">acq_id</span> <span class="ow">in</span> <span class="n">acqs</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">acq_id</span> <span class="ow">in</span> <span class="n">guides</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]:</span>
+            <span class="n">acq</span> <span class="o">=</span> <span class="n">acqs</span><span class="o">.</span><span class="n">get_id</span><span class="p">(</span><span class="n">acq_id</span><span class="p">)</span>
+            <span class="n">guide</span> <span class="o">=</span> <span class="n">guides</span><span class="o">.</span><span class="n">get_id</span><span class="p">(</span><span class="n">acq_id</span><span class="p">)</span>
+            <span class="n">acq</span><span class="p">[</span><span class="s2">&quot;sz&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">guide</span><span class="p">[</span><span class="s2">&quot;sz&quot;</span><span class="p">]</span>
+            <span class="n">slot</span> <span class="o">=</span> <span class="n">cat_guides</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">guide</span><span class="p">)</span>
+            <span class="n">cat_acqs</span><span class="p">[</span><span class="n">slot</span><span class="p">]</span> <span class="o">=</span> <span class="n">acq</span>
+
+    <span class="c1"># Fill in the rest of the guides (ascending from slot 0). Any pre-existing</span>
+    <span class="c1"># ones are ignored.</span>
+    <span class="n">_merge_cats_debug</span><span class="p">(</span><span class="n">cat_debug</span><span class="p">,</span> <span class="n">gfms</span><span class="p">,</span> <span class="s2">&quot;Guide-only stars (GUI)&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">guide</span> <span class="ow">in</span> <span class="n">guides</span><span class="p">:</span>
+        <span class="n">cat_guides</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">guide</span><span class="p">)</span>
+
+    <span class="c1"># Fill in the rest of the acqs (ascending from slot 0). Any pre-existing</span>
+    <span class="c1"># ones are ignored.</span>
+    <span class="n">_merge_cats_debug</span><span class="p">(</span><span class="n">cat_debug</span><span class="p">,</span> <span class="n">gfms</span><span class="p">,</span> <span class="s2">&quot;Acq-only stars (ACQ)&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">acq</span> <span class="ow">in</span> <span class="n">acqs</span><span class="p">:</span>
+        <span class="n">cat_acqs</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">acq</span><span class="p">)</span>
+
+    <span class="c1"># Accumulate a list of star/fid entries in the specific order FID, BOT, GUI,</span>
+    <span class="c1"># MON, ACQ, to be assembled into the final table.</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># Fids</span>
+    <span class="k">for</span> <span class="n">guide</span> <span class="ow">in</span> <span class="n">cat_guides</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">guide</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;FID&quot;</span><span class="p">:</span>
+            <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">guide</span><span class="p">[</span><span class="n">colnames</span><span class="p">])</span>
+
+    <span class="c1"># Add BOT stars</span>
+    <span class="k">for</span> <span class="n">guide</span><span class="p">,</span> <span class="n">acq</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">cat_guides</span><span class="p">,</span> <span class="n">cat_acqs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">guide</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;GUI&quot;</span> <span class="ow">and</span> <span class="n">guide</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">acq</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]:</span>
+            <span class="n">guide</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;BOT&quot;</span>
+            <span class="n">acq</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;BOT&quot;</span>
+            <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">acq</span><span class="p">[</span><span class="n">colnames</span><span class="p">])</span>
+
+    <span class="c1"># Guide only</span>
+    <span class="k">for</span> <span class="n">guide</span><span class="p">,</span> <span class="n">acq</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">cat_guides</span><span class="p">,</span> <span class="n">cat_acqs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">guide</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;GUI&quot;</span> <span class="ow">and</span> <span class="n">guide</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">acq</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]:</span>
+            <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">guide</span><span class="p">[</span><span class="n">colnames</span><span class="p">])</span>
+
+    <span class="c1"># Monitor stars</span>
+    <span class="k">for</span> <span class="n">guide</span> <span class="ow">in</span> <span class="n">cat_guides</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">guide</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;MTR&quot;</span><span class="p">,</span> <span class="s2">&quot;MFX&quot;</span><span class="p">):</span>
+            <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">guide</span><span class="p">[</span><span class="n">colnames</span><span class="p">])</span>
+
+    <span class="c1"># Acq only</span>
+    <span class="k">for</span> <span class="n">guide</span><span class="p">,</span> <span class="n">acq</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">cat_guides</span><span class="p">,</span> <span class="n">cat_acqs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">acq</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">guide</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">acq</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]:</span>
+            <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">acq</span><span class="p">[</span><span class="n">colnames</span><span class="p">])</span>
+
+    <span class="c1"># Create final table and assign idx</span>
+    <span class="n">aca</span> <span class="o">=</span> <span class="n">ACACatalogTable</span><span class="p">(</span>
+        <span class="n">rows</span><span class="o">=</span><span class="n">rows</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="n">colnames</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="p">[</span><span class="n">ACA_CATALOG_DTYPES</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">colnames</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">aca</span><span class="o">.</span><span class="n">add_column</span><span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">aca</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">ACA_CATALOG_DTYPES</span><span class="p">[</span><span class="s2">&quot;idx&quot;</span><span class="p">]),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;idx&quot;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="mi">1</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Finally, fix up the monitor window designated track slots (DIM/DTS)</span>
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">aca</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;MTR&quot;</span><span class="p">,</span> <span class="s2">&quot;MFX&quot;</span><span class="p">):</span>
+            <span class="k">continue</span>
+
+        <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;MTR&quot;</span><span class="p">:</span>
+            <span class="c1"># Find the slot of the brightest guide star</span>
+            <span class="n">guides</span> <span class="o">=</span> <span class="n">aca</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">aca</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">],</span> <span class="p">[</span><span class="s2">&quot;GUI&quot;</span><span class="p">,</span> <span class="s2">&quot;BOT&quot;</span><span class="p">])]</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">guides</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">])</span>
+            <span class="n">aca_id</span> <span class="o">=</span> <span class="n">guides</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">][</span><span class="n">idx</span><span class="p">]</span>
+            <span class="n">row</span><span class="p">[</span><span class="s2">&quot;dim&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">aca</span><span class="o">.</span><span class="n">get_id</span><span class="p">(</span><span class="n">aca_id</span><span class="p">)[</span><span class="s2">&quot;slot&quot;</span><span class="p">]</span>  <span class="c1"># Mon window tracks this slot</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">row</span><span class="p">[</span><span class="s2">&quot;dim&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;slot&quot;</span><span class="p">]</span>  <span class="c1"># Fixed (desig track slot is self slot)</span>
+        <span class="c1"># Change type to standard MON</span>
+        <span class="n">row</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;MON&quot;</span>
+
+    <span class="k">if</span> <span class="n">cat_debug</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;*&quot;</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Final catalogs&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;*&quot;</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">cat_acqs</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">cat_guides</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">aca</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><h3>Page Contents</h3>
+
+
+<form action="../../search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+<footer class="footer">
+  <p class="pull-right"> &nbsp;
+    <a href="#">Back to Top</a></p>
+  <p>
+    &copy; Copyright 2018, Tom Aldcroft, Jean Connelly.<br/>
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 6.1.3. &nbsp;
+  </p>
+</footer>
+  </body>
+</html>

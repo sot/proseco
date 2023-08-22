@@ -1,18 +1,17 @@
 
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>proseco.guide &#8212; proseco 5.9.0 documentation</title>
+    <title>proseco.guide &#8212; proseco 5.10.1.dev3+g18daf21 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/bootstrap-astropy.css" />
     
     <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
     <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
     <script type="text/javascript" src="../../_static/sidebar.js"></script>
     <script type="text/javascript" src="../../_static/copybutton.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
@@ -46,7 +45,7 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../index.html">proseco 5.9.0 documentation</a>
+	<a href="../../index.html">proseco 5.10.1.dev3+g18daf21 documentation</a>
 	 &#187;
       </li>
       <li><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
@@ -95,7 +94,7 @@
 
 
 <div class="viewcode-block" id="get_guide_catalog"><a class="viewcode-back" href="../../api.html#proseco.guide.get_guide_catalog">[docs]</a><span class="k">def</span> <span class="nf">get_guide_catalog</span><span class="p">(</span><span class="n">obsid</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Get a catalog of guide stars</span>
 
 <span class="sd">    If ``obsid`` corresponds to an already-scheduled obsid then the parameters</span>
@@ -192,7 +191,7 @@
     <span class="n">img_size</span> <span class="o">=</span> <span class="n">ImgSizeMetaAttribute</span><span class="p">()</span>
 
 <div class="viewcode-block" id="GuideTable.reject"><a class="viewcode-back" href="../../api.html#proseco.guide.GuideTable.reject">[docs]</a>    <span class="k">def</span> <span class="nf">reject</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reject</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add a reject dict to self.reject_info</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">reject_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reject_info</span>
@@ -239,7 +238,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">include_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">monitor</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">])</span>
 
 <div class="viewcode-block" id="GuideTable.process_monitors_post"><a class="viewcode-back" href="../../api.html#proseco.guide.GuideTable.process_monitors_post">[docs]</a>    <span class="k">def</span> <span class="nf">process_monitors_post</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Post-processing of monitor windows.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Post-processing of monitor windows.</span>
 
 <span class="sd">        - Clean up fake stars from stars and cand_guides</span>
 <span class="sd">        - Restore the dark current map</span>
@@ -264,7 +263,7 @@
                 <span class="n">row</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;GFM&quot;</span>  <span class="c1"># Guide From Monitor, changed in merge_catalog</span></div>
 
 <div class="viewcode-block" id="GuideTable.get_img_size"><a class="viewcode-back" href="../../api.html#proseco.guide.GuideTable.get_img_size">[docs]</a>    <span class="k">def</span> <span class="nf">get_img_size</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_fids</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get guide image readout size from ``img_size`` and ``n_fids``.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get guide image readout size from ``img_size`` and ``n_fids``.</span>
 
 <span class="sd">        If img_size is None (typical case) then this uses the default rules</span>
 <span class="sd">        defined in ``core.get_img_size()``, namely 8x8 for all guide stars</span>
@@ -295,7 +294,7 @@
         <span class="k">return</span> <span class="n">img_size</span></div>
 
 <div class="viewcode-block" id="GuideTable.make_report"><a class="viewcode-back" href="../../api.html#proseco.guide.GuideTable.make_report">[docs]</a>    <span class="k">def</span> <span class="nf">make_report</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rootdir</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Make summary HTML report for guide selection process and outputs.</span>
 
 <span class="sd">        Output is in ``&lt;rootdir&gt;/obs&lt;obsid&gt;/guide/index.html`` plus related images</span>
@@ -309,7 +308,7 @@
         <span class="n">make_report</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rootdir</span><span class="o">=</span><span class="n">rootdir</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="GuideTable.run_search_stages"><a class="viewcode-back" href="../../api.html#proseco.guide.GuideTable.run_search_stages">[docs]</a>    <span class="k">def</span> <span class="nf">run_search_stages</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Run search stages as necessary to select up to the requested number of guide stars.</span>
 
 <span class="sd">        This routine first force selects any guide stars supplied as ``include_ids``, marking</span>
@@ -355,7 +354,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">stage_selected</span><span class="si">}</span><span class="s2"> stars selected in stage </span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Quitting after stage </span><span class="si">{</span><span class="n">idx</span> <span class="o">-</span> <span class="mi">1</span><span class="si">}</span><span class="s2"> with </span><span class="si">{</span><span class="n">already_selected</span><span class="si">}</span><span class="s2"> stars&quot;</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">&quot;Quitting after stage </span><span class="si">{</span><span class="n">idx</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2"> with </span><span class="si">{</span><span class="n">already_selected</span><span class="si">}</span><span class="s2"> stars&quot;</span><span class="p">,</span>
                     <span class="n">level</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="k">break</span>
@@ -375,7 +374,7 @@
         <span class="k">return</span> <span class="n">guides</span></div>
 
 <div class="viewcode-block" id="GuideTable.drop_excess_bonus_stars"><a class="viewcode-back" href="../../api.html#proseco.guide.GuideTable.drop_excess_bonus_stars">[docs]</a>    <span class="k">def</span> <span class="nf">drop_excess_bonus_stars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">guides</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Drop excess dynamic background faint &quot;bonus&quot; stars if necessary.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Drop excess dynamic background faint &quot;bonus&quot; stars if necessary.</span>
 
 <span class="sd">        For dyn bgd with dyn_bgd_n_faint &gt; 0, candidates fainter then the</span>
 <span class="sd">        nominal faint limit can be selected. However, only at most</span>
@@ -405,7 +404,7 @@
             <span class="n">guides</span><span class="o">.</span><span class="n">remove_rows</span><span class="p">(</span><span class="n">idxs_drop</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="GuideTable.exclude_overlaps"><a class="viewcode-back" href="../../api.html#proseco.guide.GuideTable.exclude_overlaps">[docs]</a>    <span class="k">def</span> <span class="nf">exclude_overlaps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stage_cands</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Review the stars selected at any stage and exclude stars that overlap in</span>
 <span class="sd">        tracking space with another. Overlap is defined as being within 12 pixels.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -441,7 +440,7 @@
         <span class="k">return</span> <span class="n">stage_cands</span><span class="p">[</span><span class="o">~</span><span class="n">nok</span><span class="p">]</span></div>
 
 <div class="viewcode-block" id="GuideTable.select_catalog"><a class="viewcode-back" href="../../api.html#proseco.guide.GuideTable.select_catalog">[docs]</a>    <span class="k">def</span> <span class="nf">select_catalog</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stage_cands</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        For the candidates selected at any stage (stage-assigned candidates?) select the</span>
 <span class="sd">        first combination that satisfies the most number of extra tests.</span>
 <span class="sd">        Here the extra tests are just the 3 checks for guide stars that are</span>
@@ -496,7 +495,7 @@
         <span class="k">return</span> <span class="n">select_results</span><span class="p">[</span><span class="n">max_n_pass</span><span class="p">]</span></div>
 
 <div class="viewcode-block" id="GuideTable.search_stage"><a class="viewcode-back" href="../../api.html#proseco.guide.GuideTable.search_stage">[docs]</a>    <span class="k">def</span> <span class="nf">search_stage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stage</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Review the candidates with the criteria defined in ``stage`` and return a mask that</span>
 <span class="sd">        marks the candidates that are &quot;ok&quot; for this search stage.  This is used to then</span>
 <span class="sd">        annotate the candidate table when called from run_search_stages to mark the stars that could</span>
@@ -727,7 +726,7 @@
         <span class="k">return</span> <span class="n">ok</span></div>
 
 <div class="viewcode-block" id="GuideTable.process_include_ids"><a class="viewcode-back" href="../../api.html#proseco.guide.GuideTable.process_include_ids">[docs]</a>    <span class="k">def</span> <span class="nf">process_include_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cand_guides</span><span class="p">,</span> <span class="n">stars</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Ensure that the cand_guides table has stars that were forced to be included.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Ensure that the cand_guides table has stars that were forced to be included.</span>
 
 <span class="sd">        :param cand_guides: candidate guide stars table</span>
 <span class="sd">        :param stars: stars table</span>
@@ -741,7 +740,7 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">process_include_ids</span><span class="p">(</span><span class="n">cand_guides</span><span class="p">,</span> <span class="n">stars</span><span class="p">[</span><span class="n">ok</span><span class="p">])</span></div>
 
 <div class="viewcode-block" id="GuideTable.get_candidates_mask"><a class="viewcode-back" href="../../api.html#proseco.guide.GuideTable.get_candidates_mask">[docs]</a>    <span class="k">def</span> <span class="nf">get_candidates_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stars</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get base filter for acceptable candidates.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get base filter for acceptable candidates.</span>
 
 <span class="sd">        This does not include spatial filtering.</span>
 
@@ -781,7 +780,7 @@
         <span class="k">return</span> <span class="n">ok</span></div>
 
 <div class="viewcode-block" id="GuideTable.get_initial_guide_candidates"><a class="viewcode-back" href="../../api.html#proseco.guide.GuideTable.get_initial_guide_candidates">[docs]</a>    <span class="k">def</span> <span class="nf">get_initial_guide_candidates</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create a candidate list from the available stars in the field.</span>
 
 <span class="sd">        As the initial list of candidates is created this:</span>
@@ -937,7 +936,7 @@
         <span class="k">return</span> <span class="n">cand_guides</span></div>
 
 <div class="viewcode-block" id="GuideTable.in_bad_star_list"><a class="viewcode-back" href="../../api.html#proseco.guide.GuideTable.in_bad_star_list">[docs]</a>    <span class="k">def</span> <span class="nf">in_bad_star_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cand_guides</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Mark star bad if candidate AGASC ID in bad star list.</span>
 
 <span class="sd">        :param cand_guides: Table of candidate stars</span>
@@ -954,7 +953,7 @@
 
 
 <div class="viewcode-block" id="check_fid_trap"><a class="viewcode-back" href="../../api.html#proseco.guide.check_fid_trap">[docs]</a><span class="k">def</span> <span class="nf">check_fid_trap</span><span class="p">(</span><span class="n">cand_stars</span><span class="p">,</span> <span class="n">fids</span><span class="p">,</span> <span class="n">dither</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Search for guide stars that would cause the fid trap issue and mark as spoilers.</span>
 
 <span class="sd">    :param cand_stars: candidate star Table</span>
@@ -1001,7 +1000,7 @@
 
 
 <div class="viewcode-block" id="check_spoil_contrib"><a class="viewcode-back" href="../../api.html#proseco.guide.check_spoil_contrib">[docs]</a><span class="k">def</span> <span class="nf">check_spoil_contrib</span><span class="p">(</span><span class="n">cand_stars</span><span class="p">,</span> <span class="n">ok</span><span class="p">,</span> <span class="n">stars</span><span class="p">,</span> <span class="n">regfrac</span><span class="p">,</span> <span class="n">bgthresh</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Check that there are no spoiler stars contributing more than a fraction</span>
 <span class="sd">    of the candidate star to the candidate star&#39;s 8x8 pixel region or more than bgthresh</span>
 <span class="sd">    to any of the background pixels.</span>
@@ -1093,7 +1092,7 @@
 
 
 <div class="viewcode-block" id="check_mag_spoilers"><a class="viewcode-back" href="../../api.html#proseco.guide.check_mag_spoilers">[docs]</a><span class="k">def</span> <span class="nf">check_mag_spoilers</span><span class="p">(</span><span class="n">cand_stars</span><span class="p">,</span> <span class="n">ok</span><span class="p">,</span> <span class="n">stars</span><span class="p">,</span> <span class="n">n_sigma</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Use the slope-intercept mag-spoiler relationship to exclude all</span>
 <span class="sd">    stars that have a &quot;mag spoiler&quot;.  This is basically equivalent to the</span>
 <span class="sd">    &quot;direct catalog search&quot; for spoilers in SAUSAGE, but does not forbid</span>
@@ -1168,7 +1167,7 @@
 
 
 <div class="viewcode-block" id="check_column_spoilers"><a class="viewcode-back" href="../../api.html#proseco.guide.check_column_spoilers">[docs]</a><span class="k">def</span> <span class="nf">check_column_spoilers</span><span class="p">(</span><span class="n">cand_stars</span><span class="p">,</span> <span class="n">ok</span><span class="p">,</span> <span class="n">stars</span><span class="p">,</span> <span class="n">n_sigma</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    For each candidate, check for stars &#39;MagDiff&#39; brighter and within &#39;Separation&#39; columns</span>
 <span class="sd">    between the star and the readout register, i.e. Column Spoilers.</span>
 
@@ -1228,7 +1227,7 @@
 
 
 <div class="viewcode-block" id="get_ax_range"><a class="viewcode-back" href="../../api.html#proseco.guide.get_ax_range">[docs]</a><span class="k">def</span> <span class="nf">get_ax_range</span><span class="p">(</span><span class="n">rc</span><span class="p">,</span> <span class="n">extent</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Given a float pixel row or col value and an &quot;extent&quot; in float pixels,</span>
 <span class="sd">    generally 4 + 1.6 for 8&quot; dither and 4 + 5.0 for 20&quot; dither,</span>
 <span class="sd">    return a range for the row or col that is divisible by 2 and contains</span>
@@ -1252,7 +1251,7 @@
 
 
 <div class="viewcode-block" id="get_imposter_mags"><a class="viewcode-back" href="../../api.html#proseco.guide.get_imposter_mags">[docs]</a><span class="k">def</span> <span class="nf">get_imposter_mags</span><span class="p">(</span><span class="n">cand_stars</span><span class="p">,</span> <span class="n">dark</span><span class="p">,</span> <span class="n">dither</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Get &quot;pseudo-mag&quot; of max pixel value in each candidate star region</span>
 
 <span class="sd">    :param cand_stars: Table of candidate stars</span>
@@ -1298,7 +1297,7 @@
 
 
 <div class="viewcode-block" id="get_pixmag_for_offset"><a class="viewcode-back" href="../../api.html#proseco.guide.get_pixmag_for_offset">[docs]</a><span class="k">def</span> <span class="nf">get_pixmag_for_offset</span><span class="p">(</span><span class="n">cand_mag</span><span class="p">,</span> <span class="n">offset</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Determine the magnitude an individual bad pixel would need to spoil the centroid of</span>
 <span class="sd">    the candidate star by ``offset``.  This just constructs the worst case as the bad pixel</span>
 <span class="sd">    3 pixels away (edge of box).  The offset in this case would be</span>
@@ -1316,7 +1315,7 @@
 
 
 <div class="viewcode-block" id="has_spoiler_in_box"><a class="viewcode-back" href="../../api.html#proseco.guide.has_spoiler_in_box">[docs]</a><span class="k">def</span> <span class="nf">has_spoiler_in_box</span><span class="p">(</span><span class="n">cand_guides</span><span class="p">,</span> <span class="n">stars</span><span class="p">,</span> <span class="n">halfbox</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">magdiff</span><span class="o">=-</span><span class="mi">4</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Check each candidate star for spoilers that would fall in a box centered on the star.</span>
 <span class="sd">    Mark candidate spoiled if there&#39;s a spoiler in the box and brighter than magdiff fainter</span>
 <span class="sd">    than the candidate&#39;s mag.</span>
@@ -1361,7 +1360,7 @@
 
 
 <div class="viewcode-block" id="spoiled_by_bad_pixel"><a class="viewcode-back" href="../../api.html#proseco.guide.spoiled_by_bad_pixel">[docs]</a><span class="k">def</span> <span class="nf">spoiled_by_bad_pixel</span><span class="p">(</span><span class="n">cand_guides</span><span class="p">,</span> <span class="n">dither</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Mark star bad if spoiled by a bad pixel in the bad pixel list (not hot)</span>
 
 <span class="sd">    :param cand_guides: Table of candidate stars</span>
@@ -1414,7 +1413,7 @@
                     <span class="s2">&quot;n_bad&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">bps</span><span class="p">),</span>
                     <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="p">(</span>
                         <span class="sa">f</span><span class="s1">&#39;Cand </span><span class="si">{</span><span class="n">cand</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1"> spoiled by </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">bps</span><span class="p">)</span><span class="si">}</span><span class="s1"> bad pixels &#39;</span>
-                        <span class="sa">f</span><span class="s2">&quot;including </span><span class="si">{</span><span class="p">(</span><span class="n">bp_row</span><span class="p">[</span><span class="n">bps</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">bp_col</span><span class="p">[</span><span class="n">bps</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;including </span><span class="si">{</span><span class="p">(</span><span class="n">bp_row</span><span class="p">[</span><span class="n">bps</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span><span class="w"> </span><span class="n">bp_col</span><span class="p">[</span><span class="n">bps</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span>
                     <span class="p">),</span>
                 <span class="p">}</span>
             <span class="p">)</span>
@@ -1422,7 +1421,7 @@
 
 
 <div class="viewcode-block" id="dist2"><a class="viewcode-back" href="../../api.html#proseco.guide.dist2">[docs]</a><span class="k">def</span> <span class="nf">dist2</span><span class="p">(</span><span class="n">g1</span><span class="p">,</span> <span class="n">g2</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Calculate squared distance between a pair of stars in a star table.</span>
 
 <span class="sd">    This local version of the method uses a cache.</span>
@@ -1435,7 +1434,7 @@
 
 
 <div class="viewcode-block" id="check_single_cluster"><a class="viewcode-back" href="../../api.html#proseco.guide.check_single_cluster">[docs]</a><span class="k">def</span> <span class="nf">check_single_cluster</span><span class="p">(</span><span class="n">cand_guide_set</span><span class="p">,</span> <span class="n">threshold</span><span class="p">,</span> <span class="n">n_minus</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Confirm that a set of stars satisfies the minimum separation threshold when n_minus</span>
 <span class="sd">    stars are removed from the set.  For example, for a threshold of 1000, n_minus of 1,</span>
 <span class="sd">    and an input set of candidates stars with 5 candidates, confirm that, for any 4 of</span>
@@ -1458,7 +1457,7 @@
 
 
 <div class="viewcode-block" id="run_select_checks"><a class="viewcode-back" href="../../api.html#proseco.guide.run_select_checks">[docs]</a><span class="k">def</span> <span class="nf">run_select_checks</span><span class="p">(</span><span class="n">cand_guide_set</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Run boolean checks on a combination of candidate guide stars.</span>
 <span class="sd">    Returns a sum of the status of the checks and the number of checks run.</span>
 
@@ -1500,7 +1499,7 @@
     <a href="#">Back to Top</a></p>
   <p>
     &copy; Copyright 2018, Tom Aldcroft, Jean Connelly.<br/>
-    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 4.2.0. &nbsp;
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 6.1.3. &nbsp;
   </p>
 </footer>
   </body>
