@@ -1158,8 +1158,13 @@ class StarsTable(BaseCatalogTable):
     @classmethod
     def from_agasc(cls, att, date=None, radius=1.2, logger=None):
         """
-        Get AGASC stars in the ACA FOV.  This uses the mini-AGASC, so only stars
-        within 3-sigma of 11.5 mag.
+        Get AGASC stars in the ACA FOV.  This uses the proseco-AGASC, so only stars
+        within 3-sigma of 11.5 mag or those nearby a potential guide/acq star are
+        included.
+
+        This uses an AGASC file path defined by the AGASC_HDF_FILE env var or the latest
+        version of proseco_agasc in the default AGASC directory. The AGASC directory can
+        be set with the AGASC_DIR env var.
 
         :param att: any Quat-compatible attitude
         :param date: DateTime compatible date for star proper motion (default=NOW)
@@ -1169,7 +1174,7 @@ class StarsTable(BaseCatalogTable):
         :returns: StarsTable of stars
         """
         q_att = Quat(att)
-        agasc_file = Path(os.environ["SKA"], "data", "agasc", "proseco_agasc_1p7.h5")
+        agasc_file = Path(os.environ.get("AGASC_HDF5_FILE", "proseco_agasc"))
         agasc_stars = agasc.get_agasc_cone(
             q_att.ra, q_att.dec, radius=radius, date=date, agasc_file=agasc_file
         )
