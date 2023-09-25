@@ -1174,9 +1174,11 @@ class StarsTable(BaseCatalogTable):
         :returns: StarsTable of stars
         """
         q_att = Quat(att)
-        agasc_file = Path(os.environ.get("AGASC_HDF5_FILE", "proseco_agasc"))
+        # The AGASC file being used is delegated to the agasc module default, which
+        # is the latest proseco_agasc file unless overridden by the  AGASC_HDF5_FILE.
+        # The AGASC_DIR env vars controls where the AGASC files are located.
         agasc_stars = agasc.get_agasc_cone(
-            q_att.ra, q_att.dec, radius=radius, date=date, agasc_file=agasc_file
+            q_att.ra, q_att.dec, radius=radius, date=date
         )
         stars = StarsTable.from_stars(att, agasc_stars, copy=False)
 
