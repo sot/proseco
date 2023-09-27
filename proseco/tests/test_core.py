@@ -6,7 +6,9 @@ from pathlib import Path
 import agasc
 import numpy as np
 import pytest
+import tables
 from astropy.io import ascii
+from packaging.version import Version
 
 from proseco import get_aca_catalog
 
@@ -22,10 +24,13 @@ from ..core import (
 from ..guide import GuideTable
 
 
-def test_agasc_gt_1p7():
+def test_agasc_1p8_or_later():
     """Check that AGASC 1.8 or later (including RC's) is being used."""
     agasc_file = agasc.get_agasc_filename()
-    assert Path(agasc_file).name.startswith("proseco_agasc_1p8")
+    with tables.open_file(agasc_file) as h5:
+        version = Version(h5.root.data.attrs["version"].replace("p", "."))
+    assert version.major == 1
+    assert version.minor >= 8
 
 
 def test_agasc_1p7(miniagasc_1p7):
