@@ -88,7 +88,7 @@ def test_get_aca_catalog_20603_with_supplement():
 
 
 @pytest.mark.skipif(not HAS_SC_ARCHIVE, reason="Test requires starcheck archive")
-def test_get_aca_catalog_20603():
+def test_get_aca_catalog_20603(proseco_agasc_1p7):
     """Put it all together.  Regression test for selected stars."""
     # Force not using a bright star so there is a GUI-only (not BOT) star
     aca = get_aca_catalog(
@@ -132,7 +132,7 @@ def test_get_aca_catalog_20603():
 
 
 @pytest.mark.skipif(not HAS_SC_ARCHIVE, reason="Test requires starcheck archive")
-def test_get_aca_catalog_20259():
+def test_get_aca_catalog_20259(proseco_agasc_1p7):
     """
     Test obsid 20259 which has two spoiled fids: HRC-2 is yellow and HRC-4 is red.
     Expectation is to choose fids 1, 2, 3 (not 4).
@@ -750,7 +750,7 @@ def test_dark_property():
     assert aca.dark.mean() > aca.acqs.dark.mean()
 
 
-def test_dense_star_field_regress():
+def test_dense_star_field_regress(proseco_agasc_1p7):
     """
     Test getting stars at the most dense star field in the sky.  Taken from:
 
@@ -867,7 +867,7 @@ def test_report_from_objects(tmpdir):
         assert len(list(outdir.glob("*.png"))) > 0
 
 
-def test_force_catalog_from_starcheck():
+def test_force_catalog_from_starcheck(proseco_agasc_1p7):
     """
     Test forcing a catalog from starcheck output.
     """

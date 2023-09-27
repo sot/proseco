@@ -1,6 +1,7 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 import pickle
+from pathlib import Path
 
 import agasc
 import numpy as np
@@ -21,7 +22,13 @@ from ..core import (
 from ..guide import GuideTable
 
 
-def test_agasc_1p7():
+def test_agasc_gt_1p7():
+    """Check that AGASC 1.8 or later (including RC's) is being used."""
+    agasc_file = agasc.get_agasc_filename()
+    assert Path(agasc_file).name.startswith("proseco_agasc_1p8")
+
+
+def test_agasc_1p7(miniagasc_1p7):
     """
     Ensure that AGASC 1.7 is being used.
     """
@@ -128,7 +135,7 @@ def test_box_greater():
     assert not box1 > (11, 16)
 
 
-def test_get_kwargs_from_starcheck_text():
+def test_get_kwargs_from_starcheck_text(proseco_agasc_1p7):
     text = """
     OBSID: 21071  Kapteyn's Star         ACIS-S SIM Z offset:0     (0.00mm) Grating: NONE
     RA, Dec, Roll (deg):    77.976747   -45.066796    85.007351

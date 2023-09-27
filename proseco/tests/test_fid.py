@@ -159,7 +159,7 @@ def test_fid_spoiling_acq(dither_z):
     assert repr(fids5.cand_fids).splitlines() == exp
 
 
-def test_fid_mult_spoilers():
+def test_fid_mult_spoilers(proseco_agasc_1p7):
     """
     Test of fix for bug #54.  19605 and 20144 were previous crashing.
     """

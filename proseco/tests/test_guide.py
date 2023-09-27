@@ -34,7 +34,7 @@ HAS_SC_ARCHIVE = Path(mica.starcheck.starcheck.FILES["data_root"]).exists()
 os.environ[agasc.SUPPLEMENT_ENABLED_ENV] = "False"
 
 
-def test_select():
+def test_select(proseco_agasc_1p7):
     """
     Regression test that 5 expected agasc ids are selected at an arbitrary ra/dec/roll .
     """
@@ -46,7 +46,7 @@ def test_select():
 
 
 @pytest.mark.skipif(not HAS_SC_ARCHIVE, reason="Test requires starcheck archive")
-def test_obsid_19461():
+def test_obsid_19461(proseco_agasc_1p7):
     """
     Regression tests that 5 expected agasc ids are selected in a poor star field
     corresponding to obsid 19461.
@@ -131,7 +131,7 @@ def test_box_mag_spoiler():
     assert 688523960 not in selected2["id"]
 
 
-def test_region_contrib():
+def test_region_contrib(proseco_agasc_1p7):
     """Regression test of stars rejected by contributing starlight to readout region.
 
     Scenario test for too much light contribution by a spoiler star unto the

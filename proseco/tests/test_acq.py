@@ -431,7 +431,7 @@ def test_calc_p_on_ccd_asymmetric_dither():
         assert np.isclose(p_in_box, exp)
 
 
-def test_get_acq_catalog_19387():
+def test_get_acq_catalog_19387(proseco_agasc_1p7):
     """Put it all together.  Regression test for selected stars.  This obsid
     actually changes out one of the initial catalog candidates.
 
@@ -466,7 +466,7 @@ def test_get_acq_catalog_19387():
     assert repr(acqs.cand_acqs[TEST_COLS]).splitlines() == exp
 
 
-def test_get_acq_catalog_21007():
+def test_get_acq_catalog_21007(proseco_agasc_1p7):
     """Put it all together.  Regression test for selected stars.
 
     Also test that the acq prob model info dict is correctly set.
@@ -544,7 +544,7 @@ def test_get_acq_catalog_21007():
     assert info == exp
 
 
-def test_box_strategy_20603():
+def test_box_strategy_20603(proseco_agasc_1p7):
     """Test for PR #32 that doesn't allow p_acq to be reduced below 0.1.
 
     The idx=8 (mag=10.50) star was previously selected with 160 arsec box.
