@@ -19,8 +19,6 @@ Guide
 
 .. automodule:: proseco.guide
    :members:
-.. autoclass:: GuideTable
-   :members:
 
 Fid
 ---

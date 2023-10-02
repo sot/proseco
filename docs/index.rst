@@ -303,8 +303,12 @@ Environment Variables
 
 The following environment variables are used by proseco:
 
+- ``AGASC_DIR``: path to AGASC directory for getting AGASC star data. This
+  overrides the default value of ``$SKA/data/agasc``.
 - ``AGASC_HDF5_FILE``: path to AGASC HDF5 file for getting AGASC star data. This
-  overrides the default value of ``$SKA/data/agasc/proseco_agasc_<latest>.h5``.
+  overrides the default value of ``<default_agasc_dir>/proseco_agasc_<latest>.h5``,
+  where ``<default_agasc_dir> = $AGASC_DIR or $SKA/data/agasc``.
+  If this is a relative path then it is relative to ``<default_agasc_dir>``.
 - ``AGASC_SUPPLEMENT_ENABLED``: set to ``"False"`` to disable using the AGASC
    supplement. This is for testing and should not be used in production.
 - ``PROSECO_IGNORE_MAXAGS_CONSTRAINTS``: if set then do not update ``maxmag`` in the
