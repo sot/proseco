@@ -1305,6 +1305,8 @@ class StarsTable(BaseCatalogTable):
         :returns: StarsTable of stars (empty)
         """
         stars = cls.from_agasc(att, radius=-1)
+        # Remove "agasc_file" meta key since it does not apply for a synthetic table.
+        del stars.meta["agasc_file"]
         stars.att = att
 
         return stars
