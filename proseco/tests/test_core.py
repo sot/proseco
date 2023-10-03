@@ -1,11 +1,14 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 import pickle
+from pathlib import Path
 
 import agasc
 import numpy as np
 import pytest
+import tables
 from astropy.io import ascii
+from packaging.version import Version
 
 from proseco import get_aca_catalog
 
@@ -21,7 +24,16 @@ from ..core import (
 from ..guide import GuideTable
 
 
-def test_agasc_1p7():
+def test_agasc_1p8_or_later():
+    """Check that AGASC 1.8 or later (including RC's) is being used."""
+    agasc_file = agasc.get_agasc_filename()
+    with tables.open_file(agasc_file) as h5:
+        version = Version(h5.root.data.attrs["version"].replace("p", "."))
+    assert version.major == 1
+    assert version.minor >= 8
+
+
+def test_agasc_1p7(miniagasc_1p7):
     """
     Ensure that AGASC 1.7 is being used.
     """
@@ -128,7 +140,7 @@ def test_box_greater():
     assert not box1 > (11, 16)
 
 
-def test_get_kwargs_from_starcheck_text():
+def test_get_kwargs_from_starcheck_text(proseco_agasc_1p7):
     text = """
     OBSID: 21071  Kapteyn's Star         ACIS-S SIM Z offset:0     (0.00mm) Grating: NONE
     RA, Dec, Roll (deg):    77.976747   -45.066796    85.007351

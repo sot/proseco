@@ -124,7 +124,10 @@ def _get_aca_catalog(**kwargs):
     # Get stars (typically from AGASC) and do not filter for stars near
     # the ACA FOV.  This leaves the full radial selection available for
     # later roll optimization.  Use aca.stars or aca.acqs.stars from here.
+    # Set the agasc_file MetaAttribute if it is available in the stars table meta.
     aca.set_stars(filter_near_fov=False)
+    if "agasc_file" in aca.stars.meta:
+        aca.agasc_file = aca.stars.meta["agasc_file"]
 
     aca.log("Starting get_acq_catalog")
     aca.acqs = get_acq_catalog(stars=aca.stars, **kwargs)
@@ -302,6 +305,7 @@ class ACATable(ACACatalogTable):
     optimize = MetaAttribute(default=True)
     call_args = MetaAttribute(default={})
     version = MetaAttribute()
+    agasc_file = MetaAttribute(is_kwarg=False)
 
     # For validation with get_aca_catalog(obsid), store the starcheck
     # catalog in the ACATable meta.
