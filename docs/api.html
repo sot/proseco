@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>API documentation &#8212; proseco 5.10.0 documentation</title>
+    <title>API documentation &#8212; proseco 5.11.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/bootstrap-astropy.css" />
     
@@ -59,7 +59,7 @@
 	 |
       </li>
       <li>
-	<a href="index.html">proseco 5.10.0 documentation</a>
+	<a href="index.html">proseco 5.11.0 documentation</a>
 	 &#187;
       </li>
       
@@ -731,7 +731,7 @@ of the CCD.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="proseco.acq.filter_box_sizes_for_maxmag">
-<span class="sig-prename descclassname"><span class="pre">proseco.acq.</span></span><span class="sig-name descname"><span class="pre">filter_box_sizes_for_maxmag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_err</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">box_sizes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_ccd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/proseco/acq.html#filter_box_sizes_for_maxmag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.acq.filter_box_sizes_for_maxmag" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">proseco.acq.</span></span><span class="sig-name descname"><span class="pre">filter_box_sizes_for_maxmag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_err</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">box_sizes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_ccd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/proseco/acq.html#filter_box_sizes_for_maxmag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.acq.filter_box_sizes_for_maxmag" title="Permalink to this definition">¶</a></dt>
 <dd><p>Filter the list of box sizes</p>
 <p>First compute the smallest allowed value of MAXMAG for this star, which is
 the star mag + 3 times the star mag error (clipped to be within 0.5 to 1.5
@@ -843,7 +843,7 @@ If not already in acq then call <code class="docutils literal notranslate"><span
 
 <dl class="py function">
 <dt class="sig sig-object py" id="proseco.acq.get_maxmag">
-<span class="sig-prename descclassname"><span class="pre">proseco.acq.</span></span><span class="sig-name descname"><span class="pre">get_maxmag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">box_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_ccd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></span></span><a class="reference internal" href="_modules/proseco/acq.html#get_maxmag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.acq.get_maxmag" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">proseco.acq.</span></span><span class="sig-name descname"><span class="pre">get_maxmag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">box_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_ccd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></span></span><a class="reference internal" href="_modules/proseco/acq.html#get_maxmag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.acq.get_maxmag" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get maxmag for given box_size and t_ccd.</p>
 <p>This corresponds to the MAXMAG that results in exactly 50 search hits. See
 <a class="reference external" href="https://occweb.cfa.harvard.edu/twiki/bin/view/Aspect/PeaMaxMagTesting">https://occweb.cfa.harvard.edu/twiki/bin/view/Aspect/PeaMaxMagTesting</a>.</p>
@@ -914,7 +914,7 @@ background subtraction and warm pixel corruption of background.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="proseco.acq.load_maxmags">
-<span class="sig-prename descclassname"><span class="pre">proseco.acq.</span></span><span class="sig-name descname"><span class="pre">load_maxmags</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><span class="pre">dict</span></a></span></span><a class="reference internal" href="_modules/proseco/acq.html#load_maxmags"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.acq.load_maxmags" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">proseco.acq.</span></span><span class="sig-name descname"><span class="pre">load_maxmags</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.12)"><span class="pre">dict</span></a></span></span><a class="reference internal" href="_modules/proseco/acq.html#load_maxmags"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.acq.load_maxmags" title="Permalink to this definition">¶</a></dt>
 <dd><p>Load maxmags from disk.</p>
 <p>Maxmag data made with analysis/interpolate-maxmags-contour-plot.ipynb</p>
 </dd></dl>
@@ -1456,287 +1456,6 @@ list of dicts of reject debug info</p>
 </dl>
 </dd></dl>
 
-<dl class="py class">
-<dt class="sig sig-object py" id="id0">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">proseco.guide.</span></span><span class="sig-name descname"><span class="pre">GuideTable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/guide.html#GuideTable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id0" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="py method">
-<dt class="sig sig-object py" id="id1">
-<span class="sig-name descname"><span class="pre">drop_excess_bonus_stars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">guides</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/guide.html#GuideTable.drop_excess_bonus_stars"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id1" title="Permalink to this definition">¶</a></dt>
-<dd><p>Drop excess dynamic background faint “bonus” stars if necessary.</p>
-<p>For dyn bgd with dyn_bgd_n_faint &gt; 0, candidates fainter then the
-nominal faint limit can be selected. However, only at most
-dyn_bgd_n_faint of these bonus faint stars are allowed in the final
-catalog.</p>
-<p>This method removes faint bonus stars (in-place within <code class="docutils literal notranslate"><span class="pre">guides</span></code>) in
-excess of the allowed dyn_bgd_n_faint number. It is assumed that the
-catalog order is by star preference (‘stage’, ‘mag’), so bonus stars
-that come first are kept.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>guides</strong> – Table of guide stars</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="id2">
-<span class="sig-name descname"><span class="pre">exclude_overlaps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stage_cands</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/guide.html#GuideTable.exclude_overlaps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id2" title="Permalink to this definition">¶</a></dt>
-<dd><p>Review the stars selected at any stage and exclude stars that overlap in
-tracking space with another. Overlap is defined as being within 12 pixels.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="id3">
-<span class="sig-name descname"><span class="pre">get_candidates_mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stars</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/guide.html#GuideTable.get_candidates_mask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id3" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get base filter for acceptable candidates.</p>
-<p>This does not include spatial filtering.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>stars</strong> – StarsTable</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>bool mask of acceptable stars</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="id4">
-<span class="sig-name descname"><span class="pre">get_img_size</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_fids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/guide.html#GuideTable.get_img_size"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id4" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get guide image readout size from <code class="docutils literal notranslate"><span class="pre">img_size</span></code> and <code class="docutils literal notranslate"><span class="pre">n_fids</span></code>.</p>
-<p>If img_size is None (typical case) then this uses the default rules
-defined in <code class="docutils literal notranslate"><span class="pre">core.get_img_size()</span></code>, namely 8x8 for all guide stars
-unless overridden by the PROSECO_OR_IMAGE_SIZE environment variable.</p>
-<p>This requires that the <code class="docutils literal notranslate"><span class="pre">fids</span></code> attribute has been set, normally by
-providing the table as an arg to <code class="docutils literal notranslate"><span class="pre">get_guide_catalog()</span></code>.</p>
-<section id="id5">
-<h3>Parameters<a class="headerlink" href="#id5" title="Permalink to this heading">¶</a></h3>
-<dl class="simple">
-<dt>n_fids<span class="classifier">int or None</span></dt><dd><p>Number of fids in the catalog</p>
-</dd>
-</dl>
-</section>
-<section id="id6">
-<h3>Returns<a class="headerlink" href="#id6" title="Permalink to this heading">¶</a></h3>
-<dl class="simple">
-<dt>int</dt><dd><p>Guide star image readout size to be used in a catalog</p>
-</dd>
-</dl>
-</section>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="id7">
-<span class="sig-name descname"><span class="pre">get_initial_guide_candidates</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/guide.html#GuideTable.get_initial_guide_candidates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id7" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a candidate list from the available stars in the field.</p>
-<p>As the initial list of candidates is created this:</p>
-<p>1. Runs get_candidate_mask to limit the “ok” mask to the list of candidates to only those
-that at least mee the minimum filter (based fields of the AGASC).</p>
-<p>2. Sets the “ok” mask to limit to stars that are on the CCD (with minimum edge padding
-but no dither padding)</p>
-<p>3. Adds a column (‘offchip’) to the table of all stars to mark those that aren’t on the
-CCD at all (offchip = True).</p>
-<p>4. Makes one more position filter of the possible candidate stars that limits to those
-stars that are on the CCD with edge minimum padding, readout window padding, and padding
-for dither.</p>
-<p>5. Filters the supplied star table (self.stars) using the filters in 1), 2) and 4), to
-produce a candidate list.</p>
-<ol class="arabic simple" start="6">
-<li><p>Filters the candidate list to remove any that are spoiled by bad pixel.</p></li>
-<li><p>Filters the candidate list to remove any that are in the bad stars list.</p></li>
-</ol>
-<p>8. Filters the candidates to remove any that have a spoiler in a NxN box centered
-on the star brighter than M magnitudes fainter than the candidate (N is 5 and M is -4
-from the box_spoiler section of guide characteristics).  This check uses the
-<cite>has_spoiler_in_box</cite> method and is the first of many spoiler checks.  This spoiler
-check is not stage dependent.</p>
-<p>9. Filters the candidates to remova any that are spoiled by the fid trap (using
-<cite>check_fid_trap</cite> method).</p>
-<p>10. Puts any force include candidates from the include_ids parameter back in the candidate
-list if they were filtered out by an earlier filter in this routine.</p>
-<ol class="arabic simple" start="11">
-<li><p>Filters/removes any candidates that are force excluded (in exclude_ids).</p></li>
-</ol>
-<p>12. Uses the local dark current around each candidate to calculate an “imposter mag”
-describing the brightest 2x2 in the region the star would dither over.  This is
-saved to the candidate star table.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="id8">
-<span class="sig-name descname"><span class="pre">in_bad_star_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cand_guides</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/guide.html#GuideTable.in_bad_star_list"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id8" title="Permalink to this definition">¶</a></dt>
-<dd><p>Mark star bad if candidate AGASC ID in bad star list.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>cand_guides</strong> – Table of candidate stars</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>boolean mask where True means star is in bad star list</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="id9">
-<span class="sig-name descname"><span class="pre">make_report</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rootdir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/guide.html#GuideTable.make_report"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id9" title="Permalink to this definition">¶</a></dt>
-<dd><p>Make summary HTML report for guide selection process and outputs.</p>
-<p>Output is in <code class="docutils literal notranslate"><span class="pre">&lt;rootdir&gt;/obs&lt;obsid&gt;/guide/index.html</span></code> plus related images
-in that directory.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>rootdir</strong> – root directory for outputs</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="id10">
-<span class="sig-name descname"><span class="pre">process_include_ids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cand_guides</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stars</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/guide.html#GuideTable.process_include_ids"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id10" title="Permalink to this definition">¶</a></dt>
-<dd><p>Ensure that the cand_guides table has stars that were forced to be included.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>cand_guides</strong> – candidate guide stars table</p></li>
-<li><p><strong>stars</strong> – stars table</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="id11">
-<span class="sig-name descname"><span class="pre">process_monitors_post</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/guide.html#GuideTable.process_monitors_post"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id11" title="Permalink to this definition">¶</a></dt>
-<dd><p>Post-processing of monitor windows.</p>
-<ul class="simple">
-<li><p>Clean up fake stars from stars and cand_guides</p></li>
-<li><p>Restore the dark current map</p></li>
-<li><p>Set type, sz, res, dim columns for relevant entries to reflect
-status as monitor or guide-from-monitor in the guides catalog.</p></li>
-</ul>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="id12">
-<span class="sig-name descname"><span class="pre">reject</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reject</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/guide.html#GuideTable.reject"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id12" title="Permalink to this definition">¶</a></dt>
-<dd><p>Add a reject dict to self.reject_info</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="id13">
-<span class="sig-name descname"><span class="pre">run_search_stages</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/guide.html#GuideTable.run_search_stages"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id13" title="Permalink to this definition">¶</a></dt>
-<dd><p>Run search stages as necessary to select up to the requested number of guide stars.</p>
-<p>This routine first force selects any guide stars supplied as <code class="docutils literal notranslate"><span class="pre">include_ids</span></code>, marking
-these as selected in stage 0 in the ‘stage’ column in the candidate table, and then
-runs search stages.</p>
-<p>In each “search stage”, checks are run on each candidate to exclude candidates that
-do not meet the selection criteria in the stage.  Candidates that satisfy the
-stage requirements are marked with the allowed stage of selection (by its integer id)
-in the ‘stage’ column in the candidate table.</p>
-<p>The run_search_stages method loops over the search stages until at least the
-<code class="docutils literal notranslate"><span class="pre">n_guide</span></code> requested stars are marked with a stage &gt;= 0 or until all stage checks have
-been exhausted.  This run_search_stages routine then sorts the candidates by
-selected stage and magnitude and returns up to the n requested guide stars as
-the selected stars.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="id14">
-<span class="sig-name descname"><span class="pre">search_stage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stage</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/guide.html#GuideTable.search_stage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id14" title="Permalink to this definition">¶</a></dt>
-<dd><p>Review the candidates with the criteria defined in <code class="docutils literal notranslate"><span class="pre">stage</span></code> and return a mask that
-marks the candidates that are “ok” for this search stage.  This is used to then
-annotate the candidate table when called from run_search_stages to mark the stars that could
-be selected in a stage.  As candidate stars are “rejected” in the stage, details
-of that rejection are also added to self.reject_info .</p>
-<p>Additionally, candidate stars that do not pass a check in the stage get their error
-bitmask in ‘stat_{n_stage}’ marked up with the error.</p>
-<p>Candidates are not removed from the tble in this routine; the length of the candidate
-table should not change after get_initial_guide_candidates (called before this routine).
-Instead, as mentioned, this routine marks up informational columns in the table and returns
-a mask of the “ok” stars in the stage.</p>
-<p><strong>Details</strong>:</p>
-<p>In each stage, the dictionary of characteristics for the stage is used to run the checks to
-see which candidates would be allowed. For example, the Stage 1 dictionary looks like:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s2">&quot;Stage&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
-  <span class="s2">&quot;SigErrMultiplier&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
-  <span class="s2">&quot;ASPQ1Lim&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
-  <span class="s2">&quot;MagLimit&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">5.6</span><span class="p">,</span> <span class="mf">10.2</span><span class="p">],</span>
-  <span class="s2">&quot;DoBminusVcheck&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
-  <span class="s2">&quot;Spoiler&quot;</span><span class="p">:</span> <span class="p">{</span>
-   <span class="s2">&quot;BgPixThresh&quot;</span><span class="p">:</span> <span class="mi">25</span><span class="p">,</span>
-   <span class="s2">&quot;RegionFrac&quot;</span><span class="p">:</span> <span class="mf">.05</span><span class="p">,</span>
-   <span class="p">},</span>
-  <span class="s2">&quot;Imposter&quot;</span><span class="p">:</span> <span class="p">{</span>
-   <span class="s2">&quot;CentroidOffsetLim&quot;</span><span class="p">:</span> <span class="mf">.2</span><span class="p">,</span>
-   <span class="p">}}</span>
-</pre></div>
-</div>
-<p>In each stage these checks are run:</p>
-<p>1. Candidate star magnitude is checked to see if it is within the range plus error.
-For stage 1 for example , each candidate star is checked to see if it is within the
-5.6 to 10.2 mag range, minus padding for error (SigErrMultiplier * cand[‘mag_err’]).</p>
-<ol class="arabic simple" start="2">
-<li><p>Candidates with ASPQ1 &gt; stage ASPQ1Lim are marked for exclusion.</p></li>
-</ol>
-<p>3. Candidates with local dark current that suggests that the candidate centroid could
-be shifted more that CentroidOffsetLim (in arcsecs) are marked for exclusion.  The value of
-the local dark current was previously saved during “get_initial_guide_candidates” as
-“imp_mag”.</p>
-<p>4. check_mag_spoilers is used to mark candidate stars that have spoilers that are too
-close for the magnitude delta to the candidate as defined by the “line” used by that check.
-The “line” basically works as a check that requires a minimum position separation for
-a delta magnitude.  A candidate star with a spoiler of the same magnitude would require
-that spoiler star to be Intercept (9 pixels) away.  A candidate star with a spoiler with
-no separation would require the spoiler to be 18 mags fainter:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="mi">9</span> <span class="n">pixels</span> <span class="o">+</span>
-<span class="p">(</span><span class="n">cand</span><span class="p">[</span><span class="s1">&#39;mag&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">spoiler</span><span class="p">[</span><span class="s1">&#39;mag&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">SigErrMultiplier</span> <span class="o">*</span> <span class="n">mag_err_sum</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.5</span> <span class="n">pix</span> <span class="o">/</span> <span class="n">dmag</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>The parameters of the check are not stage dependent, but the mag err there is defined as
-SigErrMultiplier * mag_err_sum (MAG_ACA_ERR of candidate and spoiler added in quadrature).</p>
-<p>5. check_spoil_contrib is used to mark candidate stars that have spoilers that contribute
-too much light onto either the the 8x8 image window or to the 8 background pixels.  “Too
-much” is defined by the Spoiler parameters of the stage, where in stage 1 a candidate
-star will be excluded if either:</p>
-<blockquote>
-<div><ul class="simple">
-<li><dl class="simple">
-<dt>the sum of the light from spoiler stars in the 8x8 contribute more than</dt><dd><p>(candidate star magnitude in counts) * (RegionFrac).</p>
-</dd>
-</dl>
-</li>
-<li><p>the sum of the light from spoiler stars on any background pixel is greater
-that the BgPixThresh percentile of the current dark current.</p></li>
-</ul>
-</div></blockquote>
-<p>6. check_column_spoilers marks candidates for exclusion if they have column spoilers
-defined as spoilers between the candidate and the readout register, within
-characterstics.col_spoiler_pix_sep (10 columns), and 4.5 mags brighter (minus error)
-than the candidate.  The error is the stage-dependent term where it is set as
-SigErrMultiplier * (the candidate MAG_ACA_ERR and the spoiler MAG_ACA_ERR added in
-quadrature).</p>
-<p>7. Candidates are then screened for “bad” color (COLOR1 == 0.700) if DoBMinusVCheck
-is set for the stage.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>stage</strong> – dictionary of search stage parameters</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>bool mask of the length of self.meta.cand_guides with true set for “ok” stars</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="id15">
-<span class="sig-name descname"><span class="pre">select_catalog</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stage_cands</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/guide.html#GuideTable.select_catalog"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id15" title="Permalink to this definition">¶</a></dt>
-<dd><p>For the candidates selected at any stage (stage-assigned candidates?) select the
-first combination that satisfies the most number of extra tests.
-Here the extra tests are just the 3 checks for guide stars that are
-too tightly clustered.</p>
-</dd></dl>
-
-</dd></dl>
-
 </section>
 <section id="module-proseco.fid">
 <span id="fid"></span><h2>Fid<a class="headerlink" href="#module-proseco.fid" title="Permalink to this heading">¶</a></h2>
@@ -2031,8 +1750,8 @@ applied.</p>
 <code class="docutils literal notranslate"><span class="pre">astropy.conf.max_width</span></code>.</p>
 </dd>
 </dl>
-<section id="id16">
-<h3>Parameters<a class="headerlink" href="#id16" title="Permalink to this heading">¶</a></h3>
+<section id="id1">
+<h3>Parameters<a class="headerlink" href="#id1" title="Permalink to this heading">¶</a></h3>
 <dl class="simple">
 <dt>max_lines<span class="classifier">int or None</span></dt><dd><p>Maximum number of rows to output</p>
 </dd>
@@ -2063,8 +1782,8 @@ None.</p>
 </dd>
 </dl>
 </section>
-<section id="id17">
-<h3>Returns<a class="headerlink" href="#id17" title="Permalink to this heading">¶</a></h3>
+<section id="id2">
+<h3>Returns<a class="headerlink" href="#id2" title="Permalink to this heading">¶</a></h3>
 <dl class="simple">
 <dt>lines<span class="classifier">list</span></dt><dd><p>Formatted table as a list of strings.</p>
 </dd>
@@ -2100,8 +1819,8 @@ applied.</p>
 <p>The same applies for max_width except the configuration item is
 <code class="docutils literal notranslate"><span class="pre">astropy.conf.max_width</span></code>.</p>
 </div></blockquote>
-<section id="id18">
-<h3>Parameters<a class="headerlink" href="#id18" title="Permalink to this heading">¶</a></h3>
+<section id="id3">
+<h3>Parameters<a class="headerlink" href="#id3" title="Permalink to this heading">¶</a></h3>
 <dl class="simple">
 <dt>max_lines<span class="classifier">int or None</span></dt><dd><p>Maximum number of lines in table output.</p>
 </dd>
@@ -2142,7 +1861,7 @@ columns.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="proseco.core.ACACatalogTable.set_stars">
-<span class="sig-name descname"><span class="pre">set_stars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acqs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_near_fov</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><span class="pre">None</span></a></span></span><a class="reference internal" href="_modules/proseco/core.html#ACACatalogTable.set_stars"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.ACACatalogTable.set_stars" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">set_stars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acqs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_near_fov</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.12)"><span class="pre">None</span></a></span></span><a class="reference internal" href="_modules/proseco/core.html#ACACatalogTable.set_stars"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.ACACatalogTable.set_stars" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set the object <code class="docutils literal notranslate"><span class="pre">stars</span></code> attribute to an appropriate StarsTable object.</p>
 <p>If <code class="docutils literal notranslate"><span class="pre">acqs</span></code> is defined that will be a previously computed AcqTable with
 <code class="docutils literal notranslate"><span class="pre">stars</span></code> already available, so use that.</p>
@@ -2391,8 +2110,12 @@ to default “good”” values that will preclude initial exclusion of the star
 <dl class="py method">
 <dt class="sig sig-object py" id="proseco.core.StarsTable.from_agasc">
 <em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_agasc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">att</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radius</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/core.html#StarsTable.from_agasc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.StarsTable.from_agasc" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get AGASC stars in the ACA FOV.  This uses the mini-AGASC, so only stars
-within 3-sigma of 11.5 mag.</p>
+<dd><p>Get AGASC stars in the ACA FOV.  This uses the proseco-AGASC, so only stars
+within 3-sigma of 11.5 mag or those nearby a potential guide/acq star are
+included.</p>
+<p>This uses an AGASC file path defined by the AGASC_HDF_FILE env var or the latest
+version of proseco_agasc in the default AGASC directory. The AGASC directory can
+be set with the AGASC_DIR env var.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -2555,15 +2278,15 @@ image size.</p>
 overridden by setting the <code class="docutils literal notranslate"><span class="pre">PROSECO_OR_IMAGE_SIZE</span></code> environment
 variable to “4”, “6” or “8”. As a reminder the <code class="docutils literal notranslate"><span class="pre">img_size_guide</span></code> parameter
 of <code class="docutils literal notranslate"><span class="pre">get_aca_catalog</span></code> can also be set.</p>
-<section id="id19">
-<h3>Parameters<a class="headerlink" href="#id19" title="Permalink to this heading">¶</a></h3>
+<section id="id4">
+<h3>Parameters<a class="headerlink" href="#id4" title="Permalink to this heading">¶</a></h3>
 <dl class="simple">
 <dt>n_fids<span class="classifier">int</span></dt><dd><p>Number of fids in the catalog</p>
 </dd>
 </dl>
 </section>
-<section id="id20">
-<h3>Returns<a class="headerlink" href="#id20" title="Permalink to this heading">¶</a></h3>
+<section id="id5">
+<h3>Returns<a class="headerlink" href="#id5" title="Permalink to this heading">¶</a></h3>
 <dl class="simple">
 <dt>int</dt><dd><p>Guide star image readout size to be used in a catalog (6 or 8)</p>
 </dd>
@@ -2837,22 +2560,6 @@ Dict of column names and format specifiers</p></li>
 <li><a class="reference internal" href="#proseco.guide.has_spoiler_in_box"><code class="docutils literal notranslate"><span class="pre">has_spoiler_in_box()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.guide.run_select_checks"><code class="docutils literal notranslate"><span class="pre">run_select_checks()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.guide.spoiled_by_bad_pixel"><code class="docutils literal notranslate"><span class="pre">spoiled_by_bad_pixel()</span></code></a></li>
-<li><a class="reference internal" href="#id0"><code class="docutils literal notranslate"><span class="pre">GuideTable</span></code></a><ul>
-<li><a class="reference internal" href="#id1"><code class="docutils literal notranslate"><span class="pre">GuideTable.drop_excess_bonus_stars()</span></code></a></li>
-<li><a class="reference internal" href="#id2"><code class="docutils literal notranslate"><span class="pre">GuideTable.exclude_overlaps()</span></code></a></li>
-<li><a class="reference internal" href="#id3"><code class="docutils literal notranslate"><span class="pre">GuideTable.get_candidates_mask()</span></code></a></li>
-<li><a class="reference internal" href="#id4"><code class="docutils literal notranslate"><span class="pre">GuideTable.get_img_size()</span></code></a></li>
-<li><a class="reference internal" href="#id7"><code class="docutils literal notranslate"><span class="pre">GuideTable.get_initial_guide_candidates()</span></code></a></li>
-<li><a class="reference internal" href="#id8"><code class="docutils literal notranslate"><span class="pre">GuideTable.in_bad_star_list()</span></code></a></li>
-<li><a class="reference internal" href="#id9"><code class="docutils literal notranslate"><span class="pre">GuideTable.make_report()</span></code></a></li>
-<li><a class="reference internal" href="#id10"><code class="docutils literal notranslate"><span class="pre">GuideTable.process_include_ids()</span></code></a></li>
-<li><a class="reference internal" href="#id11"><code class="docutils literal notranslate"><span class="pre">GuideTable.process_monitors_post()</span></code></a></li>
-<li><a class="reference internal" href="#id12"><code class="docutils literal notranslate"><span class="pre">GuideTable.reject()</span></code></a></li>
-<li><a class="reference internal" href="#id13"><code class="docutils literal notranslate"><span class="pre">GuideTable.run_search_stages()</span></code></a></li>
-<li><a class="reference internal" href="#id14"><code class="docutils literal notranslate"><span class="pre">GuideTable.search_stage()</span></code></a></li>
-<li><a class="reference internal" href="#id15"><code class="docutils literal notranslate"><span class="pre">GuideTable.select_catalog()</span></code></a></li>
-</ul>
-</li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-proseco.fid">Fid</a><ul>

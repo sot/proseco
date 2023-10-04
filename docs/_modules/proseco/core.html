@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>proseco.core &#8212; proseco 5.10.0 documentation</title>
+    <title>proseco.core &#8212; proseco 5.11.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/bootstrap-astropy.css" />
     
@@ -45,7 +45,7 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../index.html">proseco 5.10.0 documentation</a>
+	<a href="../../index.html">proseco 5.11.0 documentation</a>
 	 &#187;
       </li>
       <li><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
@@ -1221,8 +1221,13 @@
 <div class="viewcode-block" id="StarsTable.from_agasc"><a class="viewcode-back" href="../../api.html#proseco.core.StarsTable.from_agasc">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">from_agasc</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">att</span><span class="p">,</span> <span class="n">date</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">radius</span><span class="o">=</span><span class="mf">1.2</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Get AGASC stars in the ACA FOV.  This uses the mini-AGASC, so only stars</span>
-<span class="sd">        within 3-sigma of 11.5 mag.</span>
+<span class="sd">        Get AGASC stars in the ACA FOV.  This uses the proseco-AGASC, so only stars</span>
+<span class="sd">        within 3-sigma of 11.5 mag or those nearby a potential guide/acq star are</span>
+<span class="sd">        included.</span>
+
+<span class="sd">        This uses an AGASC file path defined by the AGASC_HDF_FILE env var or the latest</span>
+<span class="sd">        version of proseco_agasc in the default AGASC directory. The AGASC directory can</span>
+<span class="sd">        be set with the AGASC_DIR env var.</span>
 
 <span class="sd">        :param att: any Quat-compatible attitude</span>
 <span class="sd">        :param date: DateTime compatible date for star proper motion (default=NOW)</span>
@@ -1232,9 +1237,11 @@
 <span class="sd">        :returns: StarsTable of stars</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">q_att</span> <span class="o">=</span> <span class="n">Quat</span><span class="p">(</span><span class="n">att</span><span class="p">)</span>
-        <span class="n">agasc_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;SKA&quot;</span><span class="p">],</span> <span class="s2">&quot;data&quot;</span><span class="p">,</span> <span class="s2">&quot;agasc&quot;</span><span class="p">,</span> <span class="s2">&quot;proseco_agasc_1p7.h5&quot;</span><span class="p">)</span>
+        <span class="c1"># The AGASC file being used is delegated to the agasc module default, which</span>
+        <span class="c1"># is the latest proseco_agasc file unless overridden by the  AGASC_HDF5_FILE.</span>
+        <span class="c1"># The AGASC_DIR env vars controls where the AGASC files are located.</span>
         <span class="n">agasc_stars</span> <span class="o">=</span> <span class="n">agasc</span><span class="o">.</span><span class="n">get_agasc_cone</span><span class="p">(</span>
-            <span class="n">q_att</span><span class="o">.</span><span class="n">ra</span><span class="p">,</span> <span class="n">q_att</span><span class="o">.</span><span class="n">dec</span><span class="p">,</span> <span class="n">radius</span><span class="o">=</span><span class="n">radius</span><span class="p">,</span> <span class="n">date</span><span class="o">=</span><span class="n">date</span><span class="p">,</span> <span class="n">agasc_file</span><span class="o">=</span><span class="n">agasc_file</span>
+            <span class="n">q_att</span><span class="o">.</span><span class="n">ra</span><span class="p">,</span> <span class="n">q_att</span><span class="o">.</span><span class="n">dec</span><span class="p">,</span> <span class="n">radius</span><span class="o">=</span><span class="n">radius</span><span class="p">,</span> <span class="n">date</span><span class="o">=</span><span class="n">date</span>
         <span class="p">)</span>
         <span class="n">stars</span> <span class="o">=</span> <span class="n">StarsTable</span><span class="o">.</span><span class="n">from_stars</span><span class="p">(</span><span class="n">att</span><span class="p">,</span> <span class="n">agasc_stars</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
@@ -1361,6 +1368,8 @@
 <span class="sd">        :returns: StarsTable of stars (empty)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">stars</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">from_agasc</span><span class="p">(</span><span class="n">att</span><span class="p">,</span> <span class="n">radius</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="c1"># Remove &quot;agasc_file&quot; meta key since it does not apply for a synthetic table.</span>
+        <span class="k">del</span> <span class="n">stars</span><span class="o">.</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;agasc_file&quot;</span><span class="p">]</span>
         <span class="n">stars</span><span class="o">.</span><span class="n">att</span> <span class="o">=</span> <span class="n">att</span>
 
         <span class="k">return</span> <span class="n">stars</span></div>

@@ -283,7 +283,7 @@ Required data files are:
 
 ::
 
-  $SKA/data/agasc/proseco_agasc_1p7.h5
+  $SKA/data/agasc/proseco_agasc_<latest>.h5
   $SKA/data/mica/archive/aca_dark/<YYYYddd>/image.fits
   $SKA/data/mica/archive/aca_dark/<YYYYddd>/properties.json
 
@@ -297,6 +297,27 @@ See `Syncing Ska data
 <https://github.com/sot/skare3/wiki/Ska3-runtime-environment-for-users#ska-data>`_
 for details on automatically syncing these files for a standalone linux or Mac
 environment.  For Matlab tools on Windows a separate mechanism will be provided.
+
+Environment Variables
+---------------------
+
+The following environment variables are used by proseco:
+
+- ``AGASC_DIR``: path to AGASC directory for getting AGASC star data. This
+  overrides the default value of ``$SKA/data/agasc``.
+- ``AGASC_HDF5_FILE``: path to AGASC HDF5 file for getting AGASC star data. This
+  overrides the default value of ``<default_agasc_dir>/proseco_agasc_<latest>.h5``,
+  where ``<default_agasc_dir> = $AGASC_DIR or $SKA/data/agasc``.
+  If this is a relative path then it is relative to ``<default_agasc_dir>``.
+- ``AGASC_SUPPLEMENT_ENABLED``: set to ``"False"`` to disable using the AGASC
+   supplement. This is for testing and should not be used in production.
+- ``PROSECO_IGNORE_MAXAGS_CONSTRAINTS``: if set then do not update ``maxmag`` in the
+  catalog to prevent search hits clipping.
+- ``PROSECO_OR_IMAGE_SIZE``: override the default OR image size of 8x8. Can be one of
+  "4", "6", or "8".
+- ``PROSECO_PRINT_OBC_CAT``: if set then create and print a debug catalog while doing
+  catalog merging.
+- ``SKA``: root directory for Ska3 runtime environment
 
 API docs
 --------

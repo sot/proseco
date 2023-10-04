@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Unit tests &#8212; proseco 5.10.0 documentation</title>
+    <title>Unit tests &#8212; proseco 5.11.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/bootstrap-astropy.css" />
     
@@ -53,7 +53,7 @@
 	
       </li>
       <li>
-	<a href="index.html">proseco 5.10.0 documentation</a>
+	<a href="index.html">proseco 5.11.0 documentation</a>
 	 &#187;
       </li>
       
@@ -158,7 +158,7 @@ actually the same object.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="proseco.tests.test_catalog.test_dense_star_field_regress">
-<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_catalog.</span></span><span class="sig-name descname"><span class="pre">test_dense_star_field_regress</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_catalog.html#test_dense_star_field_regress"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_catalog.test_dense_star_field_regress" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_catalog.</span></span><span class="sig-name descname"><span class="pre">test_dense_star_field_regress</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">proseco_agasc_1p7</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_catalog.html#test_dense_star_field_regress"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_catalog.test_dense_star_field_regress" title="Permalink to this definition">¶</a></dt>
 <dd><p>Test getting stars at the most dense star field in the sky.  Taken from:</p>
 <p><a class="reference external" href="https://github.com/sot/skanb/blob/master/star_selection/dense_sparse_cats.ipynb">https://github.com/sot/skanb/blob/master/star_selection/dense_sparse_cats.ipynb</a></p>
 </dd></dl>
@@ -179,13 +179,13 @@ actually the same object.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="proseco.tests.test_catalog.test_force_catalog_from_starcheck">
-<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_catalog.</span></span><span class="sig-name descname"><span class="pre">test_force_catalog_from_starcheck</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_catalog.html#test_force_catalog_from_starcheck"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_catalog.test_force_catalog_from_starcheck" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_catalog.</span></span><span class="sig-name descname"><span class="pre">test_force_catalog_from_starcheck</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">proseco_agasc_1p7</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_catalog.html#test_force_catalog_from_starcheck"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_catalog.test_force_catalog_from_starcheck" title="Permalink to this definition">¶</a></dt>
 <dd><p>Test forcing a catalog from starcheck output.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="proseco.tests.test_catalog.test_get_aca_catalog_20259">
-<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_catalog.</span></span><span class="sig-name descname"><span class="pre">test_get_aca_catalog_20259</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_catalog.html#test_get_aca_catalog_20259"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_catalog.test_get_aca_catalog_20259" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_catalog.</span></span><span class="sig-name descname"><span class="pre">test_get_aca_catalog_20259</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">proseco_agasc_1p7</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_catalog.html#test_get_aca_catalog_20259"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_catalog.test_get_aca_catalog_20259" title="Permalink to this definition">¶</a></dt>
 <dd><p>Test obsid 20259 which has two spoiled fids: HRC-2 is yellow and HRC-4 is red.
 Expectation is to choose fids 1, 2, 3 (not 4).</p>
 <p>Also do a test that set_stars() processing is behaving as expected.</p>
@@ -193,7 +193,7 @@ Expectation is to choose fids 1, 2, 3 (not 4).</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="proseco.tests.test_catalog.test_get_aca_catalog_20603">
-<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_catalog.</span></span><span class="sig-name descname"><span class="pre">test_get_aca_catalog_20603</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_catalog.html#test_get_aca_catalog_20603"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_catalog.test_get_aca_catalog_20603" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_catalog.</span></span><span class="sig-name descname"><span class="pre">test_get_aca_catalog_20603</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">proseco_agasc_1p7</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_catalog.html#test_get_aca_catalog_20603"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_catalog.test_get_aca_catalog_20603" title="Permalink to this definition">¶</a></dt>
 <dd><p>Put it all together.  Regression test for selected stars.</p>
 </dd></dl>
 
@@ -468,7 +468,7 @@ bright acq stars with a strong spoiler are included.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="proseco.tests.test_acq.test_box_strategy_20603">
-<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_acq.</span></span><span class="sig-name descname"><span class="pre">test_box_strategy_20603</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_acq.html#test_box_strategy_20603"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_acq.test_box_strategy_20603" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_acq.</span></span><span class="sig-name descname"><span class="pre">test_box_strategy_20603</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">proseco_agasc_1p7</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_acq.html#test_box_strategy_20603"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_acq.test_box_strategy_20603" title="Permalink to this definition">¶</a></dt>
 <dd><p>Test for PR #32 that doesn’t allow p_acq to be reduced below 0.1.</p>
 <p>The idx=8 (mag=10.50) star was previously selected with 160 arsec box.</p>
 </dd></dl>
@@ -538,7 +538,7 @@ gives the expected response.  (Basically that it still returns a catalog).</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="proseco.tests.test_acq.test_get_acq_catalog_19387">
-<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_acq.</span></span><span class="sig-name descname"><span class="pre">test_get_acq_catalog_19387</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_acq.html#test_get_acq_catalog_19387"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_acq.test_get_acq_catalog_19387" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_acq.</span></span><span class="sig-name descname"><span class="pre">test_get_acq_catalog_19387</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">proseco_agasc_1p7</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_acq.html#test_get_acq_catalog_19387"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_acq.test_get_acq_catalog_19387" title="Permalink to this definition">¶</a></dt>
 <dd><p>Put it all together.  Regression test for selected stars.  This obsid
 actually changes out one of the initial catalog candidates.</p>
 <p>From ipython:
@@ -550,7 +550,7 @@ actually changes out one of the initial catalog candidates.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="proseco.tests.test_acq.test_get_acq_catalog_21007">
-<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_acq.</span></span><span class="sig-name descname"><span class="pre">test_get_acq_catalog_21007</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_acq.html#test_get_acq_catalog_21007"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_acq.test_get_acq_catalog_21007" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_acq.</span></span><span class="sig-name descname"><span class="pre">test_get_acq_catalog_21007</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">proseco_agasc_1p7</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_acq.html#test_get_acq_catalog_21007"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_acq.test_get_acq_catalog_21007" title="Permalink to this definition">¶</a></dt>
 <dd><p>Put it all together.  Regression test for selected stars.</p>
 <p>Also test that the acq prob model info dict is correctly set.</p>
 <p>From ipython:</p>
@@ -765,7 +765,7 @@ to test handling of that in report (after passing through pickle).</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="proseco.tests.test_guide.test_obsid_19461">
-<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_guide.</span></span><span class="sig-name descname"><span class="pre">test_obsid_19461</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_guide.html#test_obsid_19461"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_guide.test_obsid_19461" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_guide.</span></span><span class="sig-name descname"><span class="pre">test_obsid_19461</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">proseco_agasc_1p7</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_guide.html#test_obsid_19461"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_guide.test_obsid_19461" title="Permalink to this definition">¶</a></dt>
 <dd><p>Regression tests that 5 expected agasc ids are selected in a poor star field
 corresponding to obsid 19461.</p>
 </dd></dl>
@@ -793,7 +793,7 @@ result in that star not being selected.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="proseco.tests.test_guide.test_region_contrib">
-<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_guide.</span></span><span class="sig-name descname"><span class="pre">test_region_contrib</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_guide.html#test_region_contrib"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_guide.test_region_contrib" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_guide.</span></span><span class="sig-name descname"><span class="pre">test_region_contrib</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">proseco_agasc_1p7</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_guide.html#test_region_contrib"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_guide.test_region_contrib" title="Permalink to this definition">¶</a></dt>
 <dd><p>Regression test of stars rejected by contributing starlight to readout region.</p>
 <p>Scenario test for too much light contribution by a spoiler star unto the
 region of a candidate star… by excluding and then including the spoiler
@@ -803,7 +803,7 @@ is not selected when the spoiler star is included.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="proseco.tests.test_guide.test_select">
-<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_guide.</span></span><span class="sig-name descname"><span class="pre">test_select</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_guide.html#test_select"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_guide.test_select" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_guide.</span></span><span class="sig-name descname"><span class="pre">test_select</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">proseco_agasc_1p7</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_guide.html#test_select"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_guide.test_select" title="Permalink to this definition">¶</a></dt>
 <dd><p>Regression test that 5 expected agasc ids are selected at an arbitrary ra/dec/roll .</p>
 </dd></dl>
 
@@ -838,7 +838,7 @@ gives the expected response.  (Basically that it still returns a catalog).</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="proseco.tests.test_fid.test_fid_mult_spoilers">
-<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_fid.</span></span><span class="sig-name descname"><span class="pre">test_fid_mult_spoilers</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_fid.html#test_fid_mult_spoilers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_fid.test_fid_mult_spoilers" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_fid.</span></span><span class="sig-name descname"><span class="pre">test_fid_mult_spoilers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">proseco_agasc_1p7</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_fid.html#test_fid_mult_spoilers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_fid.test_fid_mult_spoilers" title="Permalink to this definition">¶</a></dt>
 <dd><p>Test of fix for bug #54.  19605 and 20144 were previous crashing.</p>
 </dd></dl>
 
@@ -902,8 +902,14 @@ Only ACIS-S-5 is allowed, so we end up with the first fid set using
 <span id="core"></span><h2>Core<a class="headerlink" href="#module-proseco.tests.test_core" title="Permalink to this heading">¶</a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="proseco.tests.test_core.test_agasc_1p7">
-<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_core.</span></span><span class="sig-name descname"><span class="pre">test_agasc_1p7</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_core.html#test_agasc_1p7"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_core.test_agasc_1p7" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_core.</span></span><span class="sig-name descname"><span class="pre">test_agasc_1p7</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">miniagasc_1p7</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_core.html#test_agasc_1p7"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_core.test_agasc_1p7" title="Permalink to this definition">¶</a></dt>
 <dd><p>Ensure that AGASC 1.7 is being used.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="proseco.tests.test_core.test_agasc_1p8_or_later">
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_core.</span></span><span class="sig-name descname"><span class="pre">test_agasc_1p8_or_later</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_core.html#test_agasc_1p8_or_later"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_core.test_agasc_1p8_or_later" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check that AGASC 1.8 or later (including RC’s) is being used.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -1105,6 +1111,7 @@ different (not OK).</p>
 </li>
 <li><a class="reference internal" href="#module-proseco.tests.test_core">Core</a><ul>
 <li><a class="reference internal" href="#proseco.tests.test_core.test_agasc_1p7"><code class="docutils literal notranslate"><span class="pre">test_agasc_1p7()</span></code></a></li>
+<li><a class="reference internal" href="#proseco.tests.test_core.test_agasc_1p8_or_later"><code class="docutils literal notranslate"><span class="pre">test_agasc_1p8_or_later()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.tests.test_core.test_alias_attributes"><code class="docutils literal notranslate"><span class="pre">test_alias_attributes()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.tests.test_core.test_box_add"><code class="docutils literal notranslate"><span class="pre">test_box_add()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.tests.test_core.test_box_eq"><code class="docutils literal notranslate"><span class="pre">test_box_eq()</span></code></a></li>

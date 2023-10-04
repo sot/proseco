@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Proseco &#8212; proseco 5.10.0 documentation</title>
+    <title>Proseco &#8212; proseco 5.11.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/bootstrap-astropy.css" />
     
@@ -52,7 +52,7 @@
 	</a>
       </li>
       <li>
-	<a href="#">proseco 5.10.0 documentation</a>
+	<a href="#">proseco 5.11.0 documentation</a>
 	 &#187;
       </li>
       
@@ -431,7 +431,7 @@ variability that is different from the AGASC (e.g. fainter or more variable).</p
 <section id="data-requirements">
 <h2>Data requirements<a class="headerlink" href="#data-requirements" title="Permalink to this heading">¶</a></h2>
 <p>Required data files are:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$SKA/data/agasc/proseco_agasc_1p7.h5
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$SKA/data/agasc/proseco_agasc_&lt;latest&gt;.h5
 $SKA/data/mica/archive/aca_dark/&lt;YYYYddd&gt;/image.fits
 $SKA/data/mica/archive/aca_dark/&lt;YYYYddd&gt;/properties.json
 </pre></div>
@@ -445,6 +445,30 @@ $SKA/data/mica/archive/starcheck/starcheck.db3
 <p>See <a class="reference external" href="https://github.com/sot/skare3/wiki/Ska3-runtime-environment-for-users#ska-data">Syncing Ska data</a>
 for details on automatically syncing these files for a standalone linux or Mac
 environment.  For Matlab tools on Windows a separate mechanism will be provided.</p>
+</section>
+<section id="environment-variables">
+<h2>Environment Variables<a class="headerlink" href="#environment-variables" title="Permalink to this heading">¶</a></h2>
+<p>The following environment variables are used by proseco:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">AGASC_DIR</span></code>: path to AGASC directory for getting AGASC star data. This
+overrides the default value of <code class="docutils literal notranslate"><span class="pre">$SKA/data/agasc</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">AGASC_HDF5_FILE</span></code>: path to AGASC HDF5 file for getting AGASC star data. This
+overrides the default value of <code class="docutils literal notranslate"><span class="pre">&lt;default_agasc_dir&gt;/proseco_agasc_&lt;latest&gt;.h5</span></code>,
+where <code class="docutils literal notranslate"><span class="pre">&lt;default_agasc_dir&gt;</span> <span class="pre">=</span> <span class="pre">$AGASC_DIR</span> <span class="pre">or</span> <span class="pre">$SKA/data/agasc</span></code>.
+If this is a relative path then it is relative to <code class="docutils literal notranslate"><span class="pre">&lt;default_agasc_dir&gt;</span></code>.</p></li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">AGASC_SUPPLEMENT_ENABLED</span></code>: set to <code class="docutils literal notranslate"><span class="pre">&quot;False&quot;</span></code> to disable using the AGASC</dt><dd><p>supplement. This is for testing and should not be used in production.</p>
+</dd>
+</dl>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PROSECO_IGNORE_MAXAGS_CONSTRAINTS</span></code>: if set then do not update <code class="docutils literal notranslate"><span class="pre">maxmag</span></code> in the
+catalog to prevent search hits clipping.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PROSECO_OR_IMAGE_SIZE</span></code>: override the default OR image size of 8x8. Can be one of
+“4”, “6”, or “8”.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PROSECO_PRINT_OBC_CAT</span></code>: if set then create and print a debug catalog while doing
+catalog merging.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SKA</span></code>: root directory for Ska3 runtime environment</p></li>
+</ul>
 </section>
 <section id="api-docs">
 <h2>API docs<a class="headerlink" href="#api-docs" title="Permalink to this heading">¶</a></h2>
@@ -488,7 +512,6 @@ environment.  For Matlab tools on Windows a separate mechanism will be provided.
 <li class="toctree-l3"><a class="reference internal" href="api.html#proseco.guide.has_spoiler_in_box"><code class="docutils literal notranslate"><span class="pre">has_spoiler_in_box()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="api.html#proseco.guide.run_select_checks"><code class="docutils literal notranslate"><span class="pre">run_select_checks()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="api.html#proseco.guide.spoiled_by_bad_pixel"><code class="docutils literal notranslate"><span class="pre">spoiled_by_bad_pixel()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="api.html#id0"><code class="docutils literal notranslate"><span class="pre">GuideTable</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#module-proseco.fid">Fid</a><ul>
@@ -641,6 +664,7 @@ environment.  For Matlab tools on Windows a separate mechanism will be provided.
 </li>
 <li class="toctree-l2"><a class="reference internal" href="unit_tests.html#module-proseco.tests.test_core">Core</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_core.test_agasc_1p7"><code class="docutils literal notranslate"><span class="pre">test_agasc_1p7()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_core.test_agasc_1p8_or_later"><code class="docutils literal notranslate"><span class="pre">test_agasc_1p8_or_later()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_core.test_alias_attributes"><code class="docutils literal notranslate"><span class="pre">test_alias_attributes()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_core.test_box_add"><code class="docutils literal notranslate"><span class="pre">test_box_add()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_core.test_box_eq"><code class="docutils literal notranslate"><span class="pre">test_box_eq()</span></code></a></li>
@@ -680,6 +704,7 @@ environment.  For Matlab tools on Windows a separate mechanism will be provided.
 </li>
 <li><a class="reference internal" href="#monitor-stars">Monitor stars</a></li>
 <li><a class="reference internal" href="#data-requirements">Data requirements</a></li>
+<li><a class="reference internal" href="#environment-variables">Environment Variables</a></li>
 <li><a class="reference internal" href="#api-docs">API docs</a></li>
 <li><a class="reference internal" href="#unit-testing">Unit Testing</a></li>
 </ul>

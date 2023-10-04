@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>proseco.tests.test_acq &#8212; proseco 5.10.0 documentation</title>
+    <title>proseco.tests.test_acq &#8212; proseco 5.11.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/bootstrap-astropy.css" />
     
@@ -45,7 +45,7 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../../index.html">proseco 5.10.0 documentation</a>
+	<a href="../../../index.html">proseco 5.11.0 documentation</a>
 	 &#187;
       </li>
       <li><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
@@ -494,7 +494,7 @@
         <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">p_in_box</span><span class="p">,</span> <span class="n">exp</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="test_get_acq_catalog_19387"><a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.test_get_acq_catalog_19387">[docs]</a><span class="k">def</span> <span class="nf">test_get_acq_catalog_19387</span><span class="p">():</span>
+<div class="viewcode-block" id="test_get_acq_catalog_19387"><a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.test_get_acq_catalog_19387">[docs]</a><span class="k">def</span> <span class="nf">test_get_acq_catalog_19387</span><span class="p">(</span><span class="n">proseco_agasc_1p7</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Put it all together.  Regression test for selected stars.  This obsid</span>
 <span class="sd">    actually changes out one of the initial catalog candidates.</span>
 
@@ -529,7 +529,7 @@
     <span class="k">assert</span> <span class="nb">repr</span><span class="p">(</span><span class="n">acqs</span><span class="o">.</span><span class="n">cand_acqs</span><span class="p">[</span><span class="n">TEST_COLS</span><span class="p">])</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span> <span class="o">==</span> <span class="n">exp</span></div>
 
 
-<div class="viewcode-block" id="test_get_acq_catalog_21007"><a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.test_get_acq_catalog_21007">[docs]</a><span class="k">def</span> <span class="nf">test_get_acq_catalog_21007</span><span class="p">():</span>
+<div class="viewcode-block" id="test_get_acq_catalog_21007"><a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.test_get_acq_catalog_21007">[docs]</a><span class="k">def</span> <span class="nf">test_get_acq_catalog_21007</span><span class="p">(</span><span class="n">proseco_agasc_1p7</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Put it all together.  Regression test for selected stars.</span>
 
 <span class="sd">    Also test that the acq prob model info dict is correctly set.</span>
@@ -607,7 +607,7 @@
     <span class="k">assert</span> <span class="n">info</span> <span class="o">==</span> <span class="n">exp</span></div>
 
 
-<div class="viewcode-block" id="test_box_strategy_20603"><a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.test_box_strategy_20603">[docs]</a><span class="k">def</span> <span class="nf">test_box_strategy_20603</span><span class="p">():</span>
+<div class="viewcode-block" id="test_box_strategy_20603"><a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.test_box_strategy_20603">[docs]</a><span class="k">def</span> <span class="nf">test_box_strategy_20603</span><span class="p">(</span><span class="n">proseco_agasc_1p7</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Test for PR #32 that doesn&#39;t allow p_acq to be reduced below 0.1.</span>
 
 <span class="sd">    The idx=8 (mag=10.50) star was previously selected with 160 arsec box.</span>
