@@ -7,6 +7,11 @@ def use_fixed_chandra_models(monkeypatch):
     monkeypatch.setenv("CHANDRA_MODELS_DEFAULT_VERSION", "3.48")
 
 
+@pytest.fixture(autouse=True)
+def disable_fid_drift(monkeypatch):
+    monkeypatch.setenv("PROSECO_ENABLE_FID_DRIFT", "False")
+
+
 # By default test with the latest AGASC version available including release candidates
 @pytest.fixture(autouse=True)
 def proseco_agasc_rc(monkeypatch):

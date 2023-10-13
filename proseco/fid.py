@@ -5,10 +5,13 @@
 Get a catalog of fid lights.
 """
 
+import os
 import weakref
 
 import numpy as np
+from chandra_aca.fid_drift import get_drift
 from chandra_aca.transform import yagzag_to_pixels
+from cxotime import CxoTime
 
 from . import characteristics as ACA
 from . import characteristics_acq as ACQ
@@ -316,7 +319,7 @@ class FidTable(ACACatalogTable):
         Result is updating self.cand_fids.
         """
         yang, zang = get_fid_positions(
-            self.detector, self.focus_offset, self.sim_offset
+            self.detector, self.focus_offset, self.sim_offset, self.t_ccd_acq, self.date
         )
         row, col = yagzag_to_pixels(yang, zang, allow_bad=True)
         ids = np.arange(len(yang), dtype=np.int64) + 1  # E.g. 1 to 6 for ACIS
@@ -472,7 +475,7 @@ class FidTable(ACACatalogTable):
                 )
 
 
-def get_fid_positions(detector, focus_offset, sim_offset):
+def get_fid_positions(detector, focus_offset, sim_offset, t_ccd_acq=None, date=None):
     """Calculate the fid light positions for all fids for ``detector``.
 
     This is adapted from the Matlab
@@ -517,5 +520,23 @@ def get_fid_positions(detector, focus_offset, sim_offset):
     zfid = -zpos / (FID.focal_length[detector] - xshift)
 
     yang, zang = np.degrees(yfid) * 3600, np.degrees(zfid) * 3600
+
+    # Apply fid drift
+    enable_fid_drift_env = os.environ.get("PROSECO_ENABLE_FID_DRIFT", "True")
+    if enable_fid_drift_env not in ("True", "False"):
+        raise ValueError(
+            f'PROSECO_ENABLE_FID_DRIFT env var must be either "True" or "False" '
+            f"got {enable_fid_drift}"
+        )
+
+    # The env var is still just a string so do a string equals on it
+    if enable_fid_drift_env == "True":
+        if t_ccd_acq is None or date is None:
+            raise ValueError(
+                "t_ccd_acq and date must be provided if fid drift is enabled"
+            )
+        dy, dz = get_drift(date, t_ccd_acq)
+        yang += dy
+        zang += dz
 
     return yang, zang

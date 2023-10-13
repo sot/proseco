@@ -10,14 +10,16 @@ from ..core import StarsTable
 from ..fid import get_fid_catalog, get_fid_positions
 from .test_common import DARK40, OBS_INFO, STD_INFO, mod_std_info
 
-# Reference fid positions for spoiling tests
+# Reference fid positions for spoiling tests.  Because this is done outside
+# a test the fixture to generally disable fid drift is not in effect.
+os.environ["PROSECO_ENABLE_FID_DRIFT"] = "False"
 FIDS = get_fid_catalog(stars=StarsTable.empty(), **STD_INFO)
 
 # Do not use the AGASC supplement in testing by default since mags can change
 os.environ[agasc.SUPPLEMENT_ENABLED_ENV] = "False"
 
 
-def test_get_fid_position():
+def test_get_fid_position(monkeypatch):
     """
     Compare computed fid positions to flight values from starcheck reports.
     """
@@ -47,6 +49,20 @@ def test_get_fid_position():
     fidset = [0, 1, 2]
     assert np.allclose(yang[fidset], [-1174, 1224, -1177], rtol=0, atol=1.1)
     assert np.allclose(zang[fidset], [-468, -460, 561], rtol=0, atol=1.1)
+
+    yang1, zang1 = get_fid_positions("ACIS-S", focus_offset=0.0, sim_offset=0.0)
+    monkeypatch.setenv("CHANDRA_MODELS_DEFAULT_VERSION", "fid-drift")
+    monkeypatch.setenv("PROSECO_ENABLE_FID_DRIFT", "True")
+    yang2, zang2 = get_fid_positions(
+        "ACIS-S", focus_offset=0.0, sim_offset=0.0, date="2023:235", t_ccd_acq=-13.65
+    )
+    yang3, zang3 = get_fid_positions(
+        "ACIS-S", focus_offset=0.0, sim_offset=0.0, date="2019:001", t_ccd_acq=-13.65
+    )
+    assert np.allclose(yang1, yang3, rtol=0, atol=0.1)
+    assert np.allclose(zang1, zang3, rtol=0, atol=0.1)
+    assert np.allclose(yang1 - yang2, -36.35, rtol=0, atol=0.1)
+    assert np.allclose(zang1 - zang2, -11.83, rtol=0, atol=0.1)
 
 
 def test_get_initial_catalog():
