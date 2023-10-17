@@ -9,7 +9,7 @@ import os
 import weakref
 
 import numpy as np
-from chandra_aca.fid_drift import get_drift
+from chandra_aca.drift import get_fid_offset
 from chandra_aca.transform import yagzag_to_pixels
 from cxotime import CxoTime
 
@@ -521,21 +521,21 @@ def get_fid_positions(detector, focus_offset, sim_offset, t_ccd_acq=None, date=N
 
     yang, zang = np.degrees(yfid) * 3600, np.degrees(zfid) * 3600
 
-    # Apply fid drift
-    enable_fid_drift_env = os.environ.get("PROSECO_ENABLE_FID_DRIFT", "True")
-    if enable_fid_drift_env not in ("True", "False"):
+    # Apply fid offset
+    enable_fid_offset_env = os.environ.get("PROSECO_ENABLE_FID_OFFSET", "True")
+    if enable_fid_offset_env not in ("True", "False"):
         raise ValueError(
-            f'PROSECO_ENABLE_FID_DRIFT env var must be either "True" or "False" '
-            f"got {enable_fid_drift}"
+            f'PROSECO_ENABLE_FID_OFFSET env var must be either "True" or "False" '
+            f"got {enable_fid_offset_env}"
         )
 
     # The env var is still just a string so do a string equals on it
-    if enable_fid_drift_env == "True":
+    if enable_fid_offset_env == "True":
         if t_ccd_acq is None or date is None:
             raise ValueError(
-                "t_ccd_acq and date must be provided if fid drift is enabled"
+                "t_ccd_acq and date must be provided if fid offset is enabled"
             )
-        dy, dz = get_drift(date, t_ccd_acq)
+        dy, dz = get_fid_offset(date, t_ccd_acq)
         yang += dy
         zang += dz
 
