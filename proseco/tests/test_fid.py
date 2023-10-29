@@ -50,13 +50,55 @@ def test_get_fid_position(monkeypatch):
     assert np.allclose(yang[fidset], [-1174, 1224, -1177], rtol=0, atol=1.1)
     assert np.allclose(zang[fidset], [-468, -460, 561], rtol=0, atol=1.1)
 
+
+def test_get_fid_pos_with_offsets(monkeypatch):
+    # Confirm that if env var is set to 'False' then no offset is applied.
+    # Env var is set to false in the fixture.
     yang1, zang1 = get_fid_positions("ACIS-S", focus_offset=0.0, sim_offset=0.0)
+
+    # Confirm that if env var is set to 'True' and t_ccd and date are specified, then
+    # offset is applied.
     monkeypatch.setenv("PROSECO_ENABLE_FID_OFFSET", "True")
     yang2, zang2 = get_fid_positions(
-        "ACIS-S", focus_offset=0.0, sim_offset=0.0, date="2023:235", t_ccd_acq=-13.65
+        "ACIS-S", focus_offset=0.0, sim_offset=0.0, date="2023:235", t_ccd=-13.65
     )
-    assert np.allclose(yang1 - yang2, -33.16, rtol=0, atol=0.1)
-    assert np.allclose(zang1 - zang2, -9.83, rtol=0, atol=0.1)
+    assert np.allclose(yang1 - yang2, -32.47, rtol=0, atol=0.1)
+    assert np.allclose(zang1 - zang2, -9.63, rtol=0, atol=0.1)
+
+    # Confirm that if env var is not set and t_ccd and date are specified, then
+    # offset is applied.
+    monkeypatch.delenv("PROSECO_ENABLE_FID_OFFSET", raising=False)
+    yang3, zang3 = get_fid_positions(
+        "ACIS-S", focus_offset=0.0, sim_offset=0.0, date="2023:235", t_ccd=-13.65
+    )
+    assert np.allclose(yang2, yang3, rtol=0, atol=0.1)
+    assert np.allclose(zang2, zang3, rtol=0, atol=0.1)
+
+    # Confirm that if env var is not set and t_ccd and date not specified, then
+    # no offset is applied.
+    monkeypatch.delenv("PROSECO_ENABLE_FID_OFFSET", raising=False)
+    yang4, zang4 = get_fid_positions(
+        "ACIS-S",
+        focus_offset=0.0,
+        sim_offset=0.0,
+    )
+    assert np.allclose(yang1, yang4, rtol=0, atol=0.1)
+    assert np.allclose(zang1, zang4, rtol=0, atol=0.1)
+
+    # Confirm if env var is set to 'True' and t_ccd and date not specified, then
+    # there's an error.
+    monkeypatch.setenv("PROSECO_ENABLE_FID_OFFSET", "True")
+    with pytest.raises(ValueError, match="t_ccd_acq and date must be provided"):
+        get_fid_positions("ACIS-S", focus_offset=0.0, sim_offset=0.0)
+
+    # Confirm an error if env var set to not-allowed value
+    monkeypatch.setenv("PROSECO_ENABLE_FID_OFFSET", "foo")
+    with pytest.raises(
+        ValueError, match='env var must be either "True", "False", or None,'
+    ):
+        get_fid_positions(
+            "ACIS-S", focus_offset=0.0, sim_offset=0.0, t_ccd=-13.65, date="2023:235"
+        )
 
 
 def test_get_initial_catalog():
