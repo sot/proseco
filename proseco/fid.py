@@ -548,7 +548,7 @@ def get_fid_positions(
         # Require that t_ccd and date are provided if fid offset is enabled
         if enable_fid_offset_env == "True" and (t_ccd is None or date is None):
             raise ValueError(
-                "t_ccd_acq and date must be provided if fid offset is enabled"
+                "t_ccd_acq and date must be provided if PROSECO_ENABLE_FID_OFFSET is 'True'"
             )
 
         if t_ccd is not None and date is not None:
