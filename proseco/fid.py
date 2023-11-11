@@ -551,6 +551,8 @@ def get_fid_positions(
                 "t_ccd_acq and date must be provided if PROSECO_ENABLE_FID_OFFSET is 'True'"
             )
 
+        # Apply fid offset if t_ccd and date are provided
+        # (this is an "if" the case when enable_fid_offset_env is None)
         if t_ccd is not None and date is not None:
             dy, dz = get_fid_offset(date, t_ccd)
             yang += dy
