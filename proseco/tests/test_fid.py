@@ -19,7 +19,7 @@ FIDS = get_fid_catalog(stars=StarsTable.empty(), **STD_INFO)
 os.environ[agasc.SUPPLEMENT_ENABLED_ENV] = "False"
 
 
-def test_get_fid_position(monkeypatch):
+def test_get_fid_position():
     """
     Compare computed fid positions to flight values from starcheck reports.
     """
