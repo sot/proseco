@@ -317,7 +317,13 @@ The following environment variables are used by proseco:
   "4", "6", or "8".
 - ``PROSECO_PRINT_OBC_CAT``: if set then create and print a debug catalog while doing
   catalog merging.
-- ``SKA``: root directory for Ska3 runtime environment
+- ``PROSECO_ENABLE_FID_OFFSET``: controls application of time and temperature dependent fid
+  light positions offsets.  These are conditionally applied in `proseco.fid.get_fid_positions`.
+  If var set to ``"False"`` then do not apply the time and temperature to the catalog positions
+  (should not be used in production).  If set to ``"True"`` `get_fid_positions` will apply offsets
+  and throw an error if the time and temperature are not available.  If set to `None`, the default,
+  then `get_fid_positions` will apply offsets if the time and temperature are available.
+- ``SKA``: root directory that contains 'data' directory
 
 API docs
 --------
