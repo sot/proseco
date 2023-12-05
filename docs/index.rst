@@ -318,11 +318,11 @@ The following environment variables are used by proseco:
 - ``PROSECO_PRINT_OBC_CAT``: if set then create and print a debug catalog while doing
   catalog merging.
 - ``PROSECO_ENABLE_FID_OFFSET``: controls application of time and temperature dependent fid
-  light positions offsets.  These are conditionally applied in `proseco.fid.get_fid_positions`.
-  If var set to ``"False"`` then do not apply the time and temperature to the catalog positions
-  (should not be used in production).  If set to ``"True"`` `get_fid_positions` will apply offsets
-  and throw an error if the time and temperature are not available.  If set to `None`, the default,
-  then `get_fid_positions` will apply offsets if the time and temperature are available.
+  light position offsets (from the ACA drift model) in :ref:`~proseco.fid.get_fid_positions`:
+  - Not set: apply offsets if time and temperature are provided (as is done in ``proseco`` fid 
+    selection since version 5.12.0)
+  - ``"True"``: require that time and temperature be provided and apply offsets.
+  - ``"False"``: do not apply offsets (typically used in regression testing not production).
 - ``SKA``: root directory that contains 'data' directory
 
 API docs
