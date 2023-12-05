@@ -539,7 +539,7 @@ def get_fid_positions(
     enable_fid_offset_env = os.environ.get("PROSECO_ENABLE_FID_OFFSET")
     if enable_fid_offset_env not in ("True", "False", None):
         raise ValueError(
-            f'PROSECO_ENABLE_FID_OFFSET env var must be either "True", "False", or None, '
+            f'PROSECO_ENABLE_FID_OFFSET env var must be either "True", "False", or not set, '
             f"got {enable_fid_offset_env}"
         )
 
