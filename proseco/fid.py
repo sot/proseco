@@ -543,19 +543,16 @@ def get_fid_positions(
             f"got {enable_fid_offset_env}"
         )
 
-    # If enable_fid_offset_env is None or True then try to apply an offset
-    if not enable_fid_offset_env or enable_fid_offset_env == "True":
-        # Require that t_ccd and date are provided if fid offset is enabled
-        if enable_fid_offset_env == "True" and (t_ccd is None or date is None):
-            raise ValueError(
-                "t_ccd_acq and date must be provided if PROSECO_ENABLE_FID_OFFSET is 'True'"
-            )
+    has_tccd_and_date = t_ccd is not None and date is not None
 
-        # Apply fid offset if t_ccd and date are provided
-        # (this is an "if" the case when enable_fid_offset_env is None)
-        if t_ccd is not None and date is not None:
-            dy, dz = get_fid_offset(date, t_ccd)
-            yang += dy
-            zang += dz
+    if enable_fid_offset_env == "True" and not has_tccd_and_date:
+        raise ValueError(
+            "t_ccd_acq and date must be provided if PROSECO_ENABLE_FID_OFFSET is 'True'"
+        )
+
+    if has_tccd_and_date and enable_fid_offset_env != "False":
+        dy, dz = get_fid_offset(date, t_ccd)
+        yang += dy
+        zang += dz
 
     return yang, zang
