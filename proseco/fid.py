@@ -505,7 +505,7 @@ def get_fid_positions(
       yfid=-SIfield.fidpos(:,1)/(SIfield.focallength-xshift);
       zfid=-zshift/(SIfield.focallength-xshift);
 
-    This function also applies a temperature-dependent fid offset if t_ccd and date
+    This function also applies a temperature-dependent fid offset if ``t_ccd`` and ``date``
     are supplied and the PROSECO_ENABLE_FID_OFFSET env var is 'True' or None.
 
     :param detector: 'ACIS-S' | 'ACIS-I' | 'HRC-S' | 'HRC-I'
