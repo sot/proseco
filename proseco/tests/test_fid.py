@@ -68,8 +68,8 @@ def test_get_fid_pos_with_offsets(monkeypatch):
     yang3, zang3 = get_fid_positions(
         "ACIS-S", focus_offset=0.0, sim_offset=0.0, date="2023:235", t_ccd=-13.65
     )
-    assert np.allclose(yang2, yang3, rtol=0, atol=0.1)
-    assert np.allclose(zang2, zang3, rtol=0, atol=0.1)
+    assert np.all(yang2 == yang3)
+    assert np.all(zang2 == zang3)
 
     # Confirm that if env var is not set and t_ccd and date not specified, then
     # no offset is applied.
@@ -79,8 +79,8 @@ def test_get_fid_pos_with_offsets(monkeypatch):
         focus_offset=0.0,
         sim_offset=0.0,
     )
-    assert np.allclose(yang1, yang4, rtol=0, atol=0.1)
-    assert np.allclose(zang1, zang4, rtol=0, atol=0.1)
+    assert np.all(yang1 == yang4)
+    assert np.all(zang1 == zang4)
 
 
 def test_get_fid_pos_errors(monkeypatch):
