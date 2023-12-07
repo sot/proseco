@@ -15,9 +15,6 @@ from .test_common import DARK40, OBS_INFO, STD_INFO, mod_std_info
 os.environ["PROSECO_ENABLE_FID_OFFSET"] = "False"
 FIDS = get_fid_catalog(stars=StarsTable.empty(), **STD_INFO)
 
-# Do not use the AGASC supplement in testing by default since mags can change
-os.environ[agasc.SUPPLEMENT_ENABLED_ENV] = "False"
-
 
 def test_get_fid_position():
     """

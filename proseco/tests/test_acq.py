@@ -34,9 +34,6 @@ ATT = [10, 20, 3]  # Arbitrary test attitude
 CACHE = {}  # Cache stuff for speed
 TEST_COLS = ("idx", "slot", "id", "yang", "zang", "halfw")
 
-# Do not use the AGASC supplement in testing by default since mags can change
-os.environ[agasc.SUPPLEMENT_ENABLED_ENV] = "False"
-
 
 def calc_p_brightest(acq, box_size, stars, dark, man_err=0, dither=20, bgd=0):
     """

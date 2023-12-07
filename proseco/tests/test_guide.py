@@ -30,9 +30,6 @@ from .test_common import DARK40, OBS_INFO, STD_INFO, mod_std_info
 
 HAS_SC_ARCHIVE = Path(mica.starcheck.starcheck.FILES["data_root"]).exists()
 
-# Do not use the AGASC supplement in testing by default since mags can change
-os.environ[agasc.SUPPLEMENT_ENABLED_ENV] = "False"
-
 
 def test_select(proseco_agasc_1p7):
     """

@@ -24,9 +24,6 @@ matplotlib.pyplot.switch_backend("agg")
 HAS_SC_ARCHIVE = Path(mica.starcheck.starcheck.FILES["data_root"]).exists()
 TEST_COLS = "slot idx id type sz yang zang dim res halfw".split()
 
-# Do not use the AGASC supplement in testing by default since mags can change
-os.environ[agasc.SUPPLEMENT_ENABLED_ENV] = "False"
-
 HAS_MAG_SUPPLEMENT = len(agasc.get_supplement_table("mags")) > 0
 
 

@@ -18,9 +18,6 @@ from .test_common import mod_std_info
 HAS_SC_ARCHIVE = Path(mica.starcheck.starcheck.FILES["data_root"]).exists()
 TEST_COLS = "slot idx id type sz yang zang dim res halfw".split()
 
-# Do not use the AGASC supplement in testing by default since mags can change
-os.environ[agasc.SUPPLEMENT_ENABLED_ENV] = "False"
-
 
 @pytest.fixture
 def stars():
