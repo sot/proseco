@@ -91,7 +91,7 @@ def test_get_fid_pos_with_offsets(monkeypatch):
     # Confirm an error if env var set to not-allowed value
     monkeypatch.setenv("PROSECO_ENABLE_FID_OFFSET", "foo")
     with pytest.raises(
-        ValueError, match='env var must be either "True", "False", or None,'
+        ValueError, match='env var must be either "True", "False", or not set,'
     ):
         get_fid_positions(
             "ACIS-S", focus_offset=0.0, sim_offset=0.0, t_ccd=-13.65, date="2023:235"
