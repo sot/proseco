@@ -50,7 +50,7 @@ def test_get_fid_position():
 
 def test_get_fid_pos_with_offsets(monkeypatch):
     # Confirm that if env var is set to 'False' then no offset is applied.
-    # Env var is set to false in the fixture.
+    monkeypatch.setenv("PROSECO_ENABLE_FID_OFFSET", "False")
     yang1, zang1 = get_fid_positions("ACIS-S", focus_offset=0.0, sim_offset=0.0)
 
     # Confirm that if env var is set to 'True' and t_ccd and date are specified, then
