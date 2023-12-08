@@ -97,12 +97,13 @@ def test_get_aca_catalog_20603(proseco_agasc_1p7):
         img_size_guide=6,
         raise_exc=True,
     )
+
     # Expected 2 fids, 4 guide, 7 acq
     exp = [
         "slot idx     id    type  sz   yang     zang   dim res halfw",
         "---- --- --------- ---- --- -------- -------- --- --- -----",
-        "   0   1         4  FID 8x8  2140.23   166.63   1   1    25",
-        "   1   2         5  FID 8x8 -1826.28   160.17   1   1    25",
+        "   0   1         4  FID 8x8  2136.87   163.42   1   1    25",
+        "   1   2         5  FID 8x8 -1829.63   156.96   1   1    25",
         "   2   3 116791824  BOT 6x6   622.00  -953.60  28   1   160",
         "   3   4  40114416  BOT 6x6   394.22  1204.43  24   1   140",
         "   4   5  40112304  BOT 6x6 -1644.35  2032.47  12   1    80",
@@ -142,9 +143,9 @@ def test_get_aca_catalog_20259(proseco_agasc_1p7):
     exp = [
         "slot idx     id    type  sz   yang     zang   dim res halfw",
         "---- --- --------- ---- --- -------- -------- --- --- -----",
-        "   0   1         1  FID 8x8 -1175.03  -468.23   1   1    25",
-        "   1   2         2  FID 8x8  1224.70  -460.93   1   1    25",
-        "   2   3         3  FID 8x8 -1177.69   561.30   1   1    25",
+        "   0   1         1  FID 8x8 -1176.88  -470.85   1   1    25",
+        "   1   2         2  FID 8x8  1222.86  -463.55   1   1    25",
+        "   2   3         3  FID 8x8 -1179.54   558.68   1   1    25",
         "   3   4 896009152  BOT 6x6  1693.39   217.92  16   1   100",
         "   4   5 897712576  BOT 6x6 -1099.95  2140.23  12   1    80",
         "   5   6 897717296  BOT 6x6   932.58  1227.48  12   1    80",
@@ -565,7 +566,8 @@ def test_call_args_attr():
         "obsid": 0,
         "optimize": False,
         "sim_offset": 0,
-        "t_ccd": -11,
+        "t_ccd_acq": -11,
+        "t_ccd_guide": -11,
     }
 
 
@@ -731,8 +733,8 @@ def test_reject_column_spoilers():
 
 def test_dark_property():
     """
-    Test that in the case of a common t_ccd, all the dark current maps are
-    actually the same object.
+    Test that appropriate temperatures are applied to acq, fid, guide
+    dark maps.
 
     :return: None
     """
@@ -741,7 +743,6 @@ def test_dark_property():
         assert aca.dark is getattr(aca, attr).dark
 
     kwargs = STD_INFO.copy()
-    del kwargs["t_ccd"]
     kwargs["t_ccd_acq"] = -12.5
     kwargs["t_ccd_guide"] = -11.5
     aca = get_aca_catalog(**kwargs)
@@ -763,9 +764,9 @@ def test_dense_star_field_regress(proseco_agasc_1p7):
     exp = [
         "slot idx     id     type  sz   yang     zang   dim res halfw  mag ",
         "---- --- ---------- ---- --- -------- -------- --- --- ----- -----",
-        "   0   1          3  FID 8x8    40.01 -1871.10   1   1    25  7.00",
-        "   1   2          4  FID 8x8  2140.23   166.63   1   1    25  7.00",
-        "   2   3          5  FID 8x8 -1826.28   160.17   1   1    25  7.00",
+        "   0   1          3  FID 8x8    35.52 -1874.72   1   1    25  7.00",
+        "   1   2          4  FID 8x8  2135.73   163.01   1   1    25  7.00",
+        "   2   3          5  FID 8x8 -1830.77   156.55   1   1    25  7.00",
         "   3   4 1130899056  BOT 8x8  2386.83 -1808.51  28   1   160  6.24",
         "   4   5 1130889232  BOT 8x8  -251.98 -1971.97  28   1   160  6.99",
         "   5   6 1130893664  BOT 8x8  1530.07 -2149.38  28   1   160  7.62",
