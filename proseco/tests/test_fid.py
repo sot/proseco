@@ -1,6 +1,3 @@
-import os
-
-import agasc
 import numpy as np
 import pytest
 
