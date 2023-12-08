@@ -11,7 +11,8 @@ STD_INFO = dict(
     date="2018:001",
     n_guide=5,
     n_fid=3,
-    t_ccd=-11,
+    t_ccd_acq=-11,
+    t_ccd_guide=-11,
     man_angle=90,
     dither=8.0,
 )
