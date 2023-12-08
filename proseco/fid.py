@@ -97,6 +97,7 @@ class FidTable(ACACatalogTable):
         "detector",
         "sim_offset",
         "focus_offset",
+        "t_ccd_acq",
         "t_ccd_guide",
         "date",
         "dither_acq",
@@ -125,7 +126,7 @@ class FidTable(ACACatalogTable):
 
     @property
     def t_ccd(self):
-        # For fids use the guide CCD temperature
+        # For fids use the guide CCD temperature to scale the dark map
         return self.t_ccd_guide
 
     @t_ccd.setter
