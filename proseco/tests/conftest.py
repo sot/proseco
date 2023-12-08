@@ -9,10 +9,6 @@ def use_fixed_chandra_models(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
-def disable_fid_drift(monkeypatch):
-    monkeypatch.setenv("PROSECO_ENABLE_FID_OFFSET", "False")
-
-@pytest.fixture(autouse=True)
 def disable_agasc_supplement(monkeypatch):
     monkeypatch.setenv(agasc.SUPPLEMENT_ENABLED_ENV, "False")
 
