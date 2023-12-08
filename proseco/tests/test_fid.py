@@ -7,8 +7,11 @@ from ..core import StarsTable
 from ..fid import get_fid_catalog, get_fid_positions
 from .test_common import DARK40, OBS_INFO, STD_INFO, mod_std_info
 
-# Reference fid positions for spoiling tests.
-FIDS = get_fid_catalog(stars=StarsTable.empty(), **STD_INFO)
+
+# Reference fid positions for tests.
+@pytest.fixture(scope="module")
+def FIDS():
+    return get_fid_catalog(stars=StarsTable.empty(), **STD_INFO)
 
 
 def test_get_fid_position():
@@ -95,7 +98,7 @@ def test_get_fid_pos_errors(monkeypatch):
         )
 
 
-def test_get_initial_catalog():
+def test_get_initial_catalog(FIDS):
     """Test basic catalog with no stars in field using standard 2-4-5 config."""
     exp = [
         "<FidTable length=6>",
@@ -155,7 +158,7 @@ def test_n_fid():
 
 
 @pytest.mark.parametrize("dither_z", [8, 64])
-def test_fid_spoiling_acq(dither_z):
+def test_fid_spoiling_acq(dither_z, FIDS):
     """Test fid spoiling acq.
 
     Check fid spoiling acq:
@@ -230,7 +233,7 @@ def test_dither_as_sequence():
     assert fids.dither_guide == (8, 22)
 
 
-def test_fid_spoiler_score():
+def test_fid_spoiler_score(FIDS):
     """Test computing the fid spoiler score."""
     dither_y = 8
     dither_z = 64
@@ -257,7 +260,7 @@ def test_big_sim_offset():
     assert all(name in fids.colnames for name in names)
 
 
-def test_fid_hot_pixel_reject():
+def test_fid_hot_pixel_reject(FIDS):
     """Test hot pixel rejecting a fid"""
     lim = FID.hot_pixel_spoiler_limit
     dark = DARK40.copy()
