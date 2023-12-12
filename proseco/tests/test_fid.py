@@ -98,6 +98,32 @@ def test_get_fid_pos_errors(monkeypatch):
         )
 
 
+def test_fid_catalog_t_ccd():
+    """
+    Test that t_ccd vs t_ccd_acq/guide is applied to get_fid_catalog
+    """
+    aca_args1 = STD_INFO.copy()
+    for key in ["t_ccd_acq", "t_ccd_guide", "t_ccd"]:
+        if key in aca_args1:
+            del aca_args1[key]
+    aca_args1["t_ccd"] = -14
+    fids1 = get_fid_catalog(**aca_args1)
+
+    aca_args2 = STD_INFO.copy()
+    for key in ["t_ccd_acq", "t_ccd_guide", "t_ccd"]:
+        if key in aca_args2:
+            del aca_args2[key]
+    aca_args2["t_ccd_acq"] = -14
+    aca_args2["t_ccd_guide"] = 5
+    fids2 = get_fid_catalog(**aca_args2)
+
+    assert fids1.t_ccd_acq == fids2.t_ccd_acq
+    assert fids1.t_ccd_guide != fids2.t_ccd_guide
+    assert fids1.t_ccd != fids2.t_ccd
+    assert np.all(fids1["yang"] == fids2["yang"])
+    assert np.all(fids1["zang"] == fids2["zang"])
+
+
 def test_get_initial_catalog(FIDS):
     """Test basic catalog with no stars in field using standard 2-4-5 config."""
     exp = [

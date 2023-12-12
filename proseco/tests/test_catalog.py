@@ -570,6 +570,79 @@ def test_call_args_attr():
     }
 
 
+def test_t_ccd_attr():
+    """
+    Test that a t_ccd kwarg is set to all of the ACACatalogTable attrs
+    """
+
+    aca_args = STD_INFO.copy()
+    for kw in ["t_ccd", "t_ccd_acq", "t_ccd_guide"]:
+        if kw in aca_args:
+            del aca_args[kw]
+
+    t_ccd = -11
+    aca_args["t_ccd"] = t_ccd
+    aca = get_aca_catalog(**aca_args)
+    assert aca.t_ccd_acq == t_ccd
+    assert aca.t_ccd_guide == t_ccd
+    assert aca.acqs.t_ccd == t_ccd
+    assert aca.guides.t_ccd == t_ccd
+    assert aca.fids.t_ccd == t_ccd
+    assert aca.fids.t_ccd_acq == t_ccd
+    assert aca.fids.t_ccd_guide == t_ccd
+
+
+def test_t_ccd_acq_attr():
+    """
+    Test that a t_ccd and t_ccd_acq kwarg are set to all of the expected ACACatalogTable attrs
+    """
+
+    aca_args = STD_INFO.copy()
+    for kw in ["t_ccd", "t_ccd_acq", "t_ccd_guide"]:
+        if kw in aca_args:
+            del aca_args[kw]
+
+    t_ccd = -11
+    t_ccd_acq = -16
+    aca_args["t_ccd"] = t_ccd
+    aca_args["t_ccd_acq"] = t_ccd_acq
+    aca = get_aca_catalog(**aca_args)
+    assert aca.t_ccd_acq == t_ccd_acq
+    assert aca.t_ccd_guide == t_ccd
+    assert aca.acqs.t_ccd == t_ccd_acq
+    assert aca.guides.t_ccd == t_ccd
+    assert aca.fids.t_ccd == t_ccd
+    assert aca.fids.t_ccd_acq == t_ccd_acq
+    assert aca.fids.t_ccd_guide == t_ccd
+
+
+def test_t_ccd_multi_attr():
+    """
+    Test assignments if t_ccd, t_ccd_acq, and t_ccd_guide supplied as kwargs
+    """
+
+    aca_args = STD_INFO.copy()
+    for kw in ["t_ccd", "t_ccd_acq", "t_ccd_guide"]:
+        if kw in aca_args:
+            del aca_args[kw]
+
+    t_ccd = -11
+    t_ccd_acq = -16
+    t_ccd_guide = -6
+    aca_args["t_ccd"] = t_ccd
+    aca_args["t_ccd_acq"] = t_ccd_acq
+    aca_args["t_ccd_guide"] = t_ccd_guide
+    aca = get_aca_catalog(**aca_args)
+    assert aca.t_ccd == t_ccd_guide
+    assert aca.t_ccd_acq == t_ccd_acq
+    assert aca.t_ccd_guide == t_ccd_guide
+    assert aca.acqs.t_ccd == t_ccd_acq
+    assert aca.guides.t_ccd == t_ccd_guide
+    assert aca.fids.t_ccd == t_ccd_guide
+    assert aca.fids.t_ccd_acq == t_ccd_acq
+    assert aca.fids.t_ccd_guide == t_ccd_guide
+
+
 def test_bad_obsid():
     # Expects this to be starcheck catalog
     aca = get_aca_catalog(obsid="blah blah", raise_exc=False)
