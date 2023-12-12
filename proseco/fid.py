@@ -125,7 +125,7 @@ class FidTable(ACACatalogTable):
 
     @property
     def t_ccd(self):
-        # For fids use the guide CCD temperature to scale the dark map
+        # For fids use the guide CCD temperature
         return self.t_ccd_guide
 
     @t_ccd.setter
