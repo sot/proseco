@@ -843,15 +843,11 @@ def get_dark_stars_simple(box_size_thresh, dither):
     return dark, stars
 
 
-def test_acq_fid_catalog_probs_low_level(monkeypatch):
+def test_acq_fid_catalog_probs_low_level(monkeypatch, disable_fid_offsets):
     """
     Low-level tests of machinery to handle different fid light sets within
     acquisition probabilities.
     """
-
-    # Disable fid offsets for this specific test which has been set up to spoil
-    # fids at not-offset-corrected positions
-    monkeypatch.setenv("PROSECO_ENABLE_FID_OFFSET", "False")
 
     # Put an acq star at an offset from fid light id=2 such that for a search
     # box size larger than box_size_thresh, that star will be spoiled.  This
