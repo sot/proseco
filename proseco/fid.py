@@ -59,7 +59,6 @@ def get_fid_catalog(obsid=0, **kwargs):
         return empty_fids
 
     fids.set_stars(acqs=fids.acqs)
-
     fids.cand_fids = fids.get_fid_candidates()
 
     # Set list of available fid_set's, accounting for n_fid and cand_fids.
@@ -132,6 +131,7 @@ class FidTable(ACACatalogTable):
     @t_ccd.setter
     def t_ccd(self, value):
         self.t_ccd_guide = value
+        self.t_ccd_acq = value
 
     def set_fid_set(self, fid_ids):
         if len(self) > 0:
