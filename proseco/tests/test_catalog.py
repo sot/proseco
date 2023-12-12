@@ -677,7 +677,7 @@ def test_monitors_and_target_offset_args():
     assert aca.target_offset is target_offset
 
 
-def test_reject_column_spoilers():
+def test_reject_column_spoilers(disable_fid_offsets):
     """
     Test that column spoiler handling is correct for guide, acq and fid selection.
     Also tests not selecting stars that are too bright.
