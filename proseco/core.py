@@ -1487,8 +1487,7 @@ class StarsTable(BaseCatalogTable):
                 detector=detector,
                 sim_offset=sim_offset,
                 focus_offset=0,
-                t_ccd_guide=-10.0,
-                t_ccd_acq=-10.0,
+                t_ccd=-10.0,
                 date="2018:001",
                 dither=8.0,
             )
