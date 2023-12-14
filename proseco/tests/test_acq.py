@@ -3,7 +3,6 @@
 import os
 from pathlib import Path
 
-import agasc
 import numpy as np
 import pytest
 from chandra_aca import star_probs
@@ -843,7 +842,7 @@ def get_dark_stars_simple(box_size_thresh, dither):
     return dark, stars
 
 
-def test_acq_fid_catalog_probs_low_level(monkeypatch, disable_fid_offsets):
+def test_acq_fid_catalog_probs_low_level(disable_fid_offsets):
     """
     Low-level tests of machinery to handle different fid light sets within
     acquisition probabilities.

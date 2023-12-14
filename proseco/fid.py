@@ -11,7 +11,7 @@ import weakref
 import numpy as np
 from chandra_aca.drift import get_fid_offset
 from chandra_aca.transform import yagzag_to_pixels
-from cxotime import CxoTime, CxoTimeLike
+from cxotime import CxoTimeLike
 
 from . import characteristics as ACA
 from . import characteristics_acq as ACQ

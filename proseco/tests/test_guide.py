@@ -1,10 +1,8 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 import itertools
-import os
 from pathlib import Path
 
-import agasc
 import mica.starcheck
 import numpy as np
 import pytest
