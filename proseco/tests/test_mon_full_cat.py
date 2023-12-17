@@ -1,8 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-import os
 from pathlib import Path
 
-import agasc
 import mica.starcheck
 import numpy as np
 import pytest
@@ -17,9 +15,6 @@ from .test_common import mod_std_info
 
 HAS_SC_ARCHIVE = Path(mica.starcheck.starcheck.FILES["data_root"]).exists()
 TEST_COLS = "slot idx id type sz yang zang dim res halfw".split()
-
-# Do not use the AGASC supplement in testing by default since mags can change
-os.environ[agasc.SUPPLEMENT_ENABLED_ENV] = "False"
 
 
 @pytest.fixture
@@ -78,8 +73,8 @@ def test_monitor_mon_fixed_auto(proseco_agasc_1p7):
     exp = [
         "slot idx     id    type  sz   yang     zang   dim res halfw",
         "---- --- --------- ---- --- -------- -------- --- --- -----",
-        "   0   1         4  FID 8x8  2140.23   166.63   1   1    25",
-        "   1   2         5  FID 8x8 -1826.28   160.17   1   1    25",
+        "   0   1         4  FID 8x8  2135.73   163.01   1   1    25",
+        "   1   2         5  FID 8x8 -1830.77   156.55   1   1    25",
         "   2   3 611190016  BOT 8x8   175.44 -1297.92  28   1   160",
         "   3   4    139192  BOT 8x8   587.27   802.49  28   1   160",
         "   7   5 611192384  BOT 8x8  1053.38  -275.16  28   1   160",
@@ -141,7 +136,7 @@ def test_full_catalog():
     exp = [
         "slot idx   id   type  sz   yang     zang   dim res halfw  mag ",
         "---- --- ------ ---- --- -------- -------- --- --- ----- -----",
-        "   0   1      1  FID 8x8   922.59 -1737.89   1   1    25  7.00",
+        "   0   1      1  FID 8x8   918.09 -1741.51   1   1    25  7.00",
         "   1   2 100007  BOT 8x8  -750.00  -750.00  28   1   160  7.00",
         "   2   3 100006  BOT 8x8  -750.00   750.00  28   1   160  7.50",
         "   3   4 100005  BOT 8x8   750.00  -750.00  28   1   160  8.00",

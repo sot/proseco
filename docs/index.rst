@@ -311,13 +311,19 @@ The following environment variables are used by proseco:
   If this is a relative path then it is relative to ``<default_agasc_dir>``.
 - ``AGASC_SUPPLEMENT_ENABLED``: set to ``"False"`` to disable using the AGASC
    supplement. This is for testing and should not be used in production.
+- ``PROSECO_ENABLE_FID_OFFSET``: controls application of time and temperature dependent fid
+  light position offsets (from the ACA drift model) in :ref:`~proseco.fid.get_fid_positions`:
+  - Not set: apply offsets if time and temperature are provided (as is done in ``proseco`` fid
+    selection since version 5.12.0)
+  - ``"True"``: require that time and temperature be provided and apply offsets.
+  - ``"False"``: do not apply offsets (typically used in regression testing not production).
 - ``PROSECO_IGNORE_MAXAGS_CONSTRAINTS``: if set then do not update ``maxmag`` in the
   catalog to prevent search hits clipping.
 - ``PROSECO_OR_IMAGE_SIZE``: override the default OR image size of 8x8. Can be one of
   "4", "6", or "8".
 - ``PROSECO_PRINT_OBC_CAT``: if set then create and print a debug catalog while doing
   catalog merging.
-- ``SKA``: root directory for Ska3 runtime environment
+- ``SKA``: root directory that contains 'data' directory
 
 API docs
 --------

@@ -3,7 +3,6 @@
 import os
 from pathlib import Path
 
-import agasc
 import numpy as np
 import pytest
 from chandra_aca import star_probs
@@ -33,9 +32,6 @@ TEST_DATE = "2018:144"  # Fixed date for doing tests
 ATT = [10, 20, 3]  # Arbitrary test attitude
 CACHE = {}  # Cache stuff for speed
 TEST_COLS = ("idx", "slot", "id", "yang", "zang", "halfw")
-
-# Do not use the AGASC supplement in testing by default since mags can change
-os.environ[agasc.SUPPLEMENT_ENABLED_ENV] = "False"
 
 
 def calc_p_brightest(acq, box_size, stars, dark, man_err=0, dither=20, bgd=0):
@@ -846,11 +842,12 @@ def get_dark_stars_simple(box_size_thresh, dither):
     return dark, stars
 
 
-def test_acq_fid_catalog_probs_low_level():
+def test_acq_fid_catalog_probs_low_level(disable_fid_offsets):
     """
     Low-level tests of machinery to handle different fid light sets within
     acquisition probabilities.
     """
+
     # Put an acq star at an offset from fid light id=2 such that for a search
     # box size larger than box_size_thresh, that star will be spoiled.  This
     # uses the equation in FidTable.spoils().

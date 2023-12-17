@@ -5,10 +5,13 @@
 Get a catalog of fid lights.
 """
 
+import os
 import weakref
 
 import numpy as np
+from chandra_aca.drift import get_fid_offset
 from chandra_aca.transform import yagzag_to_pixels
+from cxotime import CxoTimeLike
 
 from . import characteristics as ACA
 from . import characteristics_acq as ACQ
@@ -56,7 +59,6 @@ def get_fid_catalog(obsid=0, **kwargs):
         return empty_fids
 
     fids.set_stars(acqs=fids.acqs)
-
     fids.cand_fids = fids.get_fid_candidates()
 
     # Set list of available fid_set's, accounting for n_fid and cand_fids.
@@ -94,6 +96,7 @@ class FidTable(ACACatalogTable):
         "detector",
         "sim_offset",
         "focus_offset",
+        "t_ccd_acq",
         "t_ccd_guide",
         "date",
         "dither_acq",
@@ -128,6 +131,7 @@ class FidTable(ACACatalogTable):
     @t_ccd.setter
     def t_ccd(self, value):
         self.t_ccd_guide = value
+        self.t_ccd_acq = value
 
     def set_fid_set(self, fid_ids):
         if len(self) > 0:
@@ -316,7 +320,11 @@ class FidTable(ACACatalogTable):
         Result is updating self.cand_fids.
         """
         yang, zang = get_fid_positions(
-            self.detector, self.focus_offset, self.sim_offset
+            self.detector,
+            self.focus_offset,
+            self.sim_offset,
+            t_ccd=self.t_ccd_acq,
+            date=self.date,
         )
         row, col = yagzag_to_pixels(yang, zang, allow_bad=True)
         ids = np.arange(len(yang), dtype=np.int64) + 1  # E.g. 1 to 6 for ACIS
@@ -472,7 +480,13 @@ class FidTable(ACACatalogTable):
                 )
 
 
-def get_fid_positions(detector, focus_offset, sim_offset):
+def get_fid_positions(
+    detector: str,
+    focus_offset: float,
+    sim_offset: float,
+    t_ccd: float | None = None,
+    date: CxoTimeLike | None = None,
+) -> tuple:
     """Calculate the fid light positions for all fids for ``detector``.
 
     This is adapted from the Matlab
@@ -492,9 +506,14 @@ def get_fid_positions(detector, focus_offset, sim_offset):
       yfid=-SIfield.fidpos(:,1)/(SIfield.focallength-xshift);
       zfid=-zshift/(SIfield.focallength-xshift);
 
+    This function also applies a temperature-dependent fid offset if ``t_ccd`` and ``date``
+    are supplied and the ``PROSECO_ENABLE_FID_OFFSET`` env var is ``"True"`` or not set.
+
     :param detector: 'ACIS-S' | 'ACIS-I' | 'HRC-S' | 'HRC-I'
     :param focus_offset: SIM focus offset [steps]
     :param sim_offset: SIM translation offset from nominal [steps]
+    :param t_ccd: CCD temperature (C)
+    :param date: date (CxoTime compatible)
 
     :returns: yang, zang where each is a np.array of angles [arcsec]
     """
@@ -517,5 +536,24 @@ def get_fid_positions(detector, focus_offset, sim_offset):
     zfid = -zpos / (FID.focal_length[detector] - xshift)
 
     yang, zang = np.degrees(yfid) * 3600, np.degrees(zfid) * 3600
+
+    enable_fid_offset_env = os.environ.get("PROSECO_ENABLE_FID_OFFSET")
+    if enable_fid_offset_env not in ("True", "False", None):
+        raise ValueError(
+            f'PROSECO_ENABLE_FID_OFFSET env var must be either "True", "False", or not set, '
+            f"got {enable_fid_offset_env}"
+        )
+
+    has_tccd_and_date = t_ccd is not None and date is not None
+
+    if enable_fid_offset_env == "True" and not has_tccd_and_date:
+        raise ValueError(
+            "t_ccd_acq and date must be provided if PROSECO_ENABLE_FID_OFFSET is 'True'"
+        )
+
+    if has_tccd_and_date and enable_fid_offset_env != "False":
+        dy, dz = get_fid_offset(date, t_ccd)
+        yang += dy
+        zang += dz
 
     return yang, zang

@@ -1,6 +1,3 @@
-import os
-
-import agasc
 import numpy as np
 import pytest
 
@@ -10,11 +7,11 @@ from ..core import StarsTable
 from ..fid import get_fid_catalog, get_fid_positions
 from .test_common import DARK40, OBS_INFO, STD_INFO, mod_std_info
 
-# Reference fid positions for spoiling tests
-FIDS = get_fid_catalog(stars=StarsTable.empty(), **STD_INFO)
 
-# Do not use the AGASC supplement in testing by default since mags can change
-os.environ[agasc.SUPPLEMENT_ENABLED_ENV] = "False"
+# Reference fid positions for tests.
+@pytest.fixture(scope="module")
+def FIDS():
+    return get_fid_catalog(stars=StarsTable.empty(), **STD_INFO)
 
 
 def test_get_fid_position():
@@ -49,19 +46,97 @@ def test_get_fid_position():
     assert np.allclose(zang[fidset], [-468, -460, 561], rtol=0, atol=1.1)
 
 
-def test_get_initial_catalog():
+def test_get_fid_pos_with_offsets(monkeypatch):
+    # Confirm that if env var is set to 'False' then no offset is applied.
+    monkeypatch.setenv("PROSECO_ENABLE_FID_OFFSET", "False")
+    yang1, zang1 = get_fid_positions("ACIS-S", focus_offset=0.0, sim_offset=0.0)
+
+    # Confirm that if env var is set to 'True' and t_ccd and date are specified, then
+    # offset is applied.
+    monkeypatch.setenv("PROSECO_ENABLE_FID_OFFSET", "True")
+    yang2, zang2 = get_fid_positions(
+        "ACIS-S", focus_offset=0.0, sim_offset=0.0, date="2023:235", t_ccd=-13.65
+    )
+    assert np.allclose(yang1 - yang2, -32.47, rtol=0, atol=0.1)
+    assert np.allclose(zang1 - zang2, -9.63, rtol=0, atol=0.1)
+
+    # Confirm that if env var is not set and t_ccd and date are specified, then
+    # offset is applied.
+    monkeypatch.delenv("PROSECO_ENABLE_FID_OFFSET", raising=False)
+    yang3, zang3 = get_fid_positions(
+        "ACIS-S", focus_offset=0.0, sim_offset=0.0, date="2023:235", t_ccd=-13.65
+    )
+    assert np.all(yang2 == yang3)
+    assert np.all(zang2 == zang3)
+
+    # Confirm that if env var is not set and t_ccd and date not specified, then
+    # no offset is applied.
+    monkeypatch.delenv("PROSECO_ENABLE_FID_OFFSET", raising=False)
+    yang4, zang4 = get_fid_positions(
+        "ACIS-S",
+        focus_offset=0.0,
+        sim_offset=0.0,
+    )
+    assert np.all(yang1 == yang4)
+    assert np.all(zang1 == zang4)
+
+
+def test_get_fid_pos_errors(monkeypatch):
+    # Confirm if env var is set to 'True' and t_ccd and date not specified, then
+    # there's an error.
+    monkeypatch.setenv("PROSECO_ENABLE_FID_OFFSET", "True")
+    with pytest.raises(ValueError, match="t_ccd_acq and date must be provided"):
+        get_fid_positions("ACIS-S", focus_offset=0.0, sim_offset=0.0)
+
+    # Confirm an error if env var set to not-allowed value
+    monkeypatch.setenv("PROSECO_ENABLE_FID_OFFSET", "foo")
+    with pytest.raises(
+        ValueError, match='env var must be either "True", "False", or not set,'
+    ):
+        get_fid_positions(
+            "ACIS-S", focus_offset=0.0, sim_offset=0.0, t_ccd=-13.65, date="2023:235"
+        )
+
+
+def test_fid_catalog_t_ccd():
+    """
+    Test that t_ccd vs t_ccd_acq/guide is applied to get_fid_catalog
+    """
+    aca_args1 = STD_INFO.copy()
+    for key in ["t_ccd_acq", "t_ccd_guide", "t_ccd"]:
+        if key in aca_args1:
+            del aca_args1[key]
+    aca_args1["t_ccd"] = -14
+    fids1 = get_fid_catalog(**aca_args1)
+
+    aca_args2 = STD_INFO.copy()
+    for key in ["t_ccd_acq", "t_ccd_guide", "t_ccd"]:
+        if key in aca_args2:
+            del aca_args2[key]
+    aca_args2["t_ccd_acq"] = -14
+    aca_args2["t_ccd_guide"] = 5
+    fids2 = get_fid_catalog(**aca_args2)
+
+    assert fids1.t_ccd_acq == fids2.t_ccd_acq
+    assert fids1.t_ccd_guide != fids2.t_ccd_guide
+    assert fids1.t_ccd != fids2.t_ccd
+    assert np.all(fids1["yang"] == fids2["yang"])
+    assert np.all(fids1["zang"] == fids2["zang"])
+
+
+def test_get_initial_catalog(FIDS):
     """Test basic catalog with no stars in field using standard 2-4-5 config."""
     exp = [
         "<FidTable length=6>",
         "  id    yang     zang     row     col     mag   spoiler_score  idx   slot",
         "int64 float64  float64  float64 float64 float64     int64     int64 int64",
         "----- -------- -------- ------- ------- ------- ------------- ----- -----",
-        "    1   922.59 -1737.89 -180.05 -344.10    7.00             0     0   -99",
-        "    2  -773.20 -1742.03  160.79 -345.35    7.00             0     1     0",
-        "    3    40.01 -1871.10   -2.67 -371.00    7.00             0     2   -99",
-        "    4  2140.23   166.63 -424.51   39.13    7.00             0     3     1",
-        "    5 -1826.28   160.17  372.97   36.47    7.00             0     4     2",
-        "    6   388.59   803.75  -71.49  166.10    7.00             0     5   -99",
+        "    1   918.09 -1741.51 -179.15 -344.83    7.00             0     0   -99",
+        "    2  -777.70 -1745.65  161.69 -346.09    7.00             0     1     0",
+        "    3    35.52 -1874.72   -1.77 -371.73    7.00             0     2   -99",
+        "    4  2135.73   163.01 -423.60   38.40    7.00             0     3     1",
+        "    5 -1830.77   156.55  373.88   35.74    7.00             0     4     2",
+        "    6   384.10   800.13  -70.59  165.37    7.00             0     5   -99",
     ]
     assert repr(FIDS.cand_fids).splitlines() == exp
     assert np.all(FIDS["id"] == [2, 4, 5])
@@ -81,12 +156,12 @@ def test_get_initial_catalog():
         "  id    yang     zang     row     col     mag   spoiler_score  idx   slot",
         "int64 float64  float64  float64 float64 float64     int64     int64 int64",
         "----- -------- -------- ------- ------- ------- ------------- ----- -----",
-        "    1   922.59 -1737.89 -180.05 -344.10    7.00             4     0   -99",
-        "    2  -773.20 -1742.03  160.79 -345.35    7.00             4     1   -99",
-        "    3    40.01 -1871.10   -2.67 -371.00    7.00             0     2     0",
-        "    4  2140.23   166.63 -424.51   39.13    7.00             0     3     1",
-        "    5 -1826.28   160.17  372.97   36.47    7.00             0     4     2",
-        "    6   388.59   803.75  -71.49  166.10    7.00             0     5   -99",
+        "    1   918.09 -1741.51 -179.15 -344.83    7.00             4     0   -99",
+        "    2  -777.70 -1745.65  161.69 -346.09    7.00             4     1   -99",
+        "    3    35.52 -1874.72   -1.77 -371.73    7.00             0     2     0",
+        "    4  2135.73   163.01 -423.60   38.40    7.00             0     3     1",
+        "    5 -1830.77   156.55  373.88   35.74    7.00             0     4     2",
+        "    6   384.10   800.13  -70.59  165.37    7.00             0     5   -99",
     ]
     assert repr(fids2.cand_fids).splitlines() == exp
     assert np.all(fids2["id"] == [3, 4, 5])
@@ -109,7 +184,7 @@ def test_n_fid():
 
 
 @pytest.mark.parametrize("dither_z", [8, 64])
-def test_fid_spoiling_acq(dither_z):
+def test_fid_spoiling_acq(dither_z, FIDS):
     """Test fid spoiling acq.
 
     Check fid spoiling acq:
@@ -148,18 +223,18 @@ def test_fid_spoiling_acq(dither_z):
         "  id    yang     zang     row     col     mag   spoiler_score  idx   slot",
         "int64 float64  float64  float64 float64 float64     int64     int64 int64",
         "----- -------- -------- ------- ------- ------- ------------- ----- -----",
-        "    1   922.59 -1737.89 -180.05 -344.10    7.00             0     0     0",
-        "    2  -773.20 -1742.03  160.79 -345.35    7.00             0     1   -99",
-        "    3    40.01 -1871.10   -2.67 -371.00    7.00             0     2   -99",
-        "    4  2140.23   166.63 -424.51   39.13    7.00             0     3   -99",
-        "    5 -1826.28   160.17  372.97   36.47    7.00             0     4     1",
-        "    6   388.59   803.75  -71.49  166.10    7.00             0     5     2",
+        "    1   918.09 -1741.51 -179.15 -344.83    7.00             0     0     0",
+        "    2  -777.70 -1745.65  161.69 -346.09    7.00             0     1   -99",
+        "    3    35.52 -1874.72   -1.77 -371.73    7.00             0     2   -99",
+        "    4  2135.73   163.01 -423.60   38.40    7.00             0     3   -99",
+        "    5 -1830.77   156.55  373.88   35.74    7.00             0     4     1",
+        "    6   384.10   800.13  -70.59  165.37    7.00             0     5     2",
     ]
 
     assert repr(fids5.cand_fids).splitlines() == exp
 
 
-def test_fid_mult_spoilers(proseco_agasc_1p7):
+def test_fid_mult_spoilers(disable_fid_offsets, proseco_agasc_1p7):
     """
     Test of fix for bug #54.  19605 and 20144 were previous crashing.
     """
@@ -184,7 +259,7 @@ def test_dither_as_sequence():
     assert fids.dither_guide == (8, 22)
 
 
-def test_fid_spoiler_score():
+def test_fid_spoiler_score(FIDS):
     """Test computing the fid spoiler score."""
     dither_y = 8
     dither_z = 64
@@ -211,7 +286,7 @@ def test_big_sim_offset():
     assert all(name in fids.colnames for name in names)
 
 
-def test_fid_hot_pixel_reject():
+def test_fid_hot_pixel_reject(FIDS):
     """Test hot pixel rejecting a fid"""
     lim = FID.hot_pixel_spoiler_limit
     dark = DARK40.copy()

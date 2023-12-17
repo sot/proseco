@@ -1,10 +1,8 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 import itertools
-import os
 from pathlib import Path
 
-import agasc
 import mica.starcheck
 import numpy as np
 import pytest
@@ -29,9 +27,6 @@ from ..report_guide import make_report
 from .test_common import DARK40, OBS_INFO, STD_INFO, mod_std_info
 
 HAS_SC_ARCHIVE = Path(mica.starcheck.starcheck.FILES["data_root"]).exists()
-
-# Do not use the AGASC supplement in testing by default since mags can change
-os.environ[agasc.SUPPLEMENT_ENABLED_ENV] = "False"
 
 
 def test_select(proseco_agasc_1p7):

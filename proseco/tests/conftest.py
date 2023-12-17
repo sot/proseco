@@ -1,10 +1,21 @@
 import pytest
+import agasc
 from agasc import get_agasc_filename
+
+
+@pytest.fixture()
+def disable_fid_offsets(monkeypatch):
+    monkeypatch.setenv("PROSECO_ENABLE_FID_OFFSET", "False")
 
 
 @pytest.fixture(autouse=True)
 def use_fixed_chandra_models(monkeypatch):
     monkeypatch.setenv("CHANDRA_MODELS_DEFAULT_VERSION", "3.48")
+
+
+@pytest.fixture(autouse=True)
+def disable_agasc_supplement(monkeypatch):
+    monkeypatch.setenv(agasc.SUPPLEMENT_ENABLED_ENV, "False")
 
 
 # By default test with the latest AGASC version available including release candidates
