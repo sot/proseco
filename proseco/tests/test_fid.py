@@ -81,7 +81,7 @@ def test_get_fid_pos_with_offsets(monkeypatch):
     assert np.all(zang1 == zang4)
 
 
-def test_get_fid_pos_errors(monkeypatch):
+def test_get_fid_pos_errs(monkeypatch):
     # Confirm if env var is set to 'True' and t_ccd and date not specified, then
     # there's an error.
     monkeypatch.setenv("PROSECO_ENABLE_FID_OFFSET", "True")
