@@ -10,10 +10,11 @@ import time
 import warnings
 from copy import copy
 from pathlib import Path
+from typing import TypeAlias
 
 import agasc
 import numpy as np
-from astropy.table import Column, Table
+from astropy.table import Column, Row, Table
 from chandra_aca.aca_image import AcaPsfLibrary
 from chandra_aca.transform import (
     count_rate_to_mag,
@@ -49,6 +50,9 @@ def to_python(val):
 # Row and column indices of ACA image background pixels
 _ROWB = np.array([0, 0, 0, 0, 7, 7, 7, 7])
 _COLB = np.array([0, 1, 6, 7, 0, 1, 6, 7])
+
+CatalogRow: TypeAlias = Row
+StarTableRow: TypeAlias = Row
 
 
 def table_to_html(tbl):
