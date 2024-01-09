@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>proseco.fid &#8212; proseco 5.11.0 documentation</title>
+    <title>proseco.fid &#8212; proseco 5.12.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/bootstrap-astropy.css" />
     
@@ -45,7 +45,7 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../index.html">proseco 5.11.0 documentation</a>
+	<a href="../../index.html">proseco 5.12.0 documentation</a>
 	 &#187;
       </li>
       <li><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
@@ -68,10 +68,13 @@
 <span class="sd">Get a catalog of fid lights.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
+<span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">weakref</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">chandra_aca.drift</span> <span class="kn">import</span> <span class="n">get_fid_offset</span>
 <span class="kn">from</span> <span class="nn">chandra_aca.transform</span> <span class="kn">import</span> <span class="n">yagzag_to_pixels</span>
+<span class="kn">from</span> <span class="nn">cxotime</span> <span class="kn">import</span> <span class="n">CxoTimeLike</span>
 
 <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">characteristics</span> <span class="k">as</span> <span class="n">ACA</span>
 <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">characteristics_acq</span> <span class="k">as</span> <span class="n">ACQ</span>
@@ -119,7 +122,6 @@
         <span class="k">return</span> <span class="n">empty_fids</span>
 
     <span class="n">fids</span><span class="o">.</span><span class="n">set_stars</span><span class="p">(</span><span class="n">acqs</span><span class="o">=</span><span class="n">fids</span><span class="o">.</span><span class="n">acqs</span><span class="p">)</span>
-
     <span class="n">fids</span><span class="o">.</span><span class="n">cand_fids</span> <span class="o">=</span> <span class="n">fids</span><span class="o">.</span><span class="n">get_fid_candidates</span><span class="p">()</span>
 
     <span class="c1"># Set list of available fid_set&#39;s, accounting for n_fid and cand_fids.</span>
@@ -157,6 +159,7 @@
         <span class="s2">&quot;detector&quot;</span><span class="p">,</span>
         <span class="s2">&quot;sim_offset&quot;</span><span class="p">,</span>
         <span class="s2">&quot;focus_offset&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;t_ccd_acq&quot;</span><span class="p">,</span>
         <span class="s2">&quot;t_ccd_guide&quot;</span><span class="p">,</span>
         <span class="s2">&quot;date&quot;</span><span class="p">,</span>
         <span class="s2">&quot;dither_acq&quot;</span><span class="p">,</span>
@@ -191,6 +194,7 @@
     <span class="nd">@t_ccd</span><span class="o">.</span><span class="n">setter</span>
     <span class="k">def</span> <span class="nf">t_ccd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">t_ccd_guide</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">t_ccd_acq</span> <span class="o">=</span> <span class="n">value</span>
 
     <span class="k">def</span> <span class="nf">set_fid_set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fid_ids</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
@@ -379,7 +383,11 @@
 <span class="sd">        Result is updating self.cand_fids.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">yang</span><span class="p">,</span> <span class="n">zang</span> <span class="o">=</span> <span class="n">get_fid_positions</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">detector</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">focus_offset</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sim_offset</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">detector</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">focus_offset</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sim_offset</span><span class="p">,</span>
+            <span class="n">t_ccd</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">t_ccd_acq</span><span class="p">,</span>
+            <span class="n">date</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">date</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">row</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="n">yagzag_to_pixels</span><span class="p">(</span><span class="n">yang</span><span class="p">,</span> <span class="n">zang</span><span class="p">,</span> <span class="n">allow_bad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">ids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">yang</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>  <span class="c1"># E.g. 1 to 6 for ACIS</span>
@@ -535,7 +543,13 @@
                 <span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="get_fid_positions"><a class="viewcode-back" href="../../api.html#proseco.fid.get_fid_positions">[docs]</a><span class="k">def</span> <span class="nf">get_fid_positions</span><span class="p">(</span><span class="n">detector</span><span class="p">,</span> <span class="n">focus_offset</span><span class="p">,</span> <span class="n">sim_offset</span><span class="p">):</span>
+<div class="viewcode-block" id="get_fid_positions"><a class="viewcode-back" href="../../api.html#proseco.fid.get_fid_positions">[docs]</a><span class="k">def</span> <span class="nf">get_fid_positions</span><span class="p">(</span>
+    <span class="n">detector</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">focus_offset</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">sim_offset</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">t_ccd</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">date</span><span class="p">:</span> <span class="n">CxoTimeLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate the fid light positions for all fids for ``detector``.</span>
 
 <span class="sd">    This is adapted from the Matlab</span>
@@ -555,9 +569,14 @@
 <span class="sd">      yfid=-SIfield.fidpos(:,1)/(SIfield.focallength-xshift);</span>
 <span class="sd">      zfid=-zshift/(SIfield.focallength-xshift);</span>
 
+<span class="sd">    This function also applies a temperature-dependent fid offset if ``t_ccd`` and ``date``</span>
+<span class="sd">    are supplied and the ``PROSECO_ENABLE_FID_OFFSET`` env var is ``&quot;True&quot;`` or not set.</span>
+
 <span class="sd">    :param detector: &#39;ACIS-S&#39; | &#39;ACIS-I&#39; | &#39;HRC-S&#39; | &#39;HRC-I&#39;</span>
 <span class="sd">    :param focus_offset: SIM focus offset [steps]</span>
 <span class="sd">    :param sim_offset: SIM translation offset from nominal [steps]</span>
+<span class="sd">    :param t_ccd: CCD temperature (C)</span>
+<span class="sd">    :param date: date (CxoTime compatible)</span>
 
 <span class="sd">    :returns: yang, zang where each is a np.array of angles [arcsec]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -580,6 +599,25 @@
     <span class="n">zfid</span> <span class="o">=</span> <span class="o">-</span><span class="n">zpos</span> <span class="o">/</span> <span class="p">(</span><span class="n">FID</span><span class="o">.</span><span class="n">focal_length</span><span class="p">[</span><span class="n">detector</span><span class="p">]</span> <span class="o">-</span> <span class="n">xshift</span><span class="p">)</span>
 
     <span class="n">yang</span><span class="p">,</span> <span class="n">zang</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">degrees</span><span class="p">(</span><span class="n">yfid</span><span class="p">)</span> <span class="o">*</span> <span class="mi">3600</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">degrees</span><span class="p">(</span><span class="n">zfid</span><span class="p">)</span> <span class="o">*</span> <span class="mi">3600</span>
+
+    <span class="n">enable_fid_offset_env</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;PROSECO_ENABLE_FID_OFFSET&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">enable_fid_offset_env</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;True&quot;</span><span class="p">,</span> <span class="s2">&quot;False&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;PROSECO_ENABLE_FID_OFFSET env var must be either &quot;True&quot;, &quot;False&quot;, or not set, &#39;</span>
+            <span class="sa">f</span><span class="s2">&quot;got </span><span class="si">{</span><span class="n">enable_fid_offset_env</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">has_tccd_and_date</span> <span class="o">=</span> <span class="n">t_ccd</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">date</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="n">enable_fid_offset_env</span> <span class="o">==</span> <span class="s2">&quot;True&quot;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">has_tccd_and_date</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;t_ccd_acq and date must be provided if PROSECO_ENABLE_FID_OFFSET is &#39;True&#39;&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">has_tccd_and_date</span> <span class="ow">and</span> <span class="n">enable_fid_offset_env</span> <span class="o">!=</span> <span class="s2">&quot;False&quot;</span><span class="p">:</span>
+        <span class="n">dy</span><span class="p">,</span> <span class="n">dz</span> <span class="o">=</span> <span class="n">get_fid_offset</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="n">t_ccd</span><span class="p">)</span>
+        <span class="n">yang</span> <span class="o">+=</span> <span class="n">dy</span>
+        <span class="n">zang</span> <span class="o">+=</span> <span class="n">dz</span>
 
     <span class="k">return</span> <span class="n">yang</span><span class="p">,</span> <span class="n">zang</span></div>
 </pre></div>

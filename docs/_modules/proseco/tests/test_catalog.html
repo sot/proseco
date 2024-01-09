@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>proseco.tests.test_catalog &#8212; proseco 5.11.0 documentation</title>
+    <title>proseco.tests.test_catalog &#8212; proseco 5.12.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/bootstrap-astropy.css" />
     
@@ -45,7 +45,7 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../../index.html">proseco 5.11.0 documentation</a>
+	<a href="../../../index.html">proseco 5.12.0 documentation</a>
 	 &#187;
       </li>
       <li><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
@@ -63,7 +63,6 @@
   <h1>Source code for proseco.tests.test_catalog</h1><div class="highlight"><pre>
 <span></span><span class="c1"># Licensed under a 3-clause BSD style license - see LICENSE.rst</span>
 <span class="kn">import</span> <span class="nn">copy</span>
-<span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">pickle</span>
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
 
@@ -86,9 +85,6 @@
 
 <span class="n">HAS_SC_ARCHIVE</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">mica</span><span class="o">.</span><span class="n">starcheck</span><span class="o">.</span><span class="n">starcheck</span><span class="o">.</span><span class="n">FILES</span><span class="p">[</span><span class="s2">&quot;data_root&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
 <span class="n">TEST_COLS</span> <span class="o">=</span> <span class="s2">&quot;slot idx id type sz yang zang dim res halfw&quot;</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
-
-<span class="c1"># Do not use the AGASC supplement in testing by default since mags can change</span>
-<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="n">agasc</span><span class="o">.</span><span class="n">SUPPLEMENT_ENABLED_ENV</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;False&quot;</span>
 
 <span class="n">HAS_MAG_SUPPLEMENT</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">agasc</span><span class="o">.</span><span class="n">get_supplement_table</span><span class="p">(</span><span class="s2">&quot;mags&quot;</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">0</span>
 
@@ -163,12 +159,13 @@
         <span class="n">img_size_guide</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span>
         <span class="n">raise_exc</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
+
     <span class="c1"># Expected 2 fids, 4 guide, 7 acq</span>
     <span class="n">exp</span> <span class="o">=</span> <span class="p">[</span>
         <span class="s2">&quot;slot idx     id    type  sz   yang     zang   dim res halfw&quot;</span><span class="p">,</span>
         <span class="s2">&quot;---- --- --------- ---- --- -------- -------- --- --- -----&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;   0   1         4  FID 8x8  2140.23   166.63   1   1    25&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;   1   2         5  FID 8x8 -1826.28   160.17   1   1    25&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;   0   1         4  FID 8x8  2136.87   163.42   1   1    25&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;   1   2         5  FID 8x8 -1829.63   156.96   1   1    25&quot;</span><span class="p">,</span>
         <span class="s2">&quot;   2   3 116791824  BOT 6x6   622.00  -953.60  28   1   160&quot;</span><span class="p">,</span>
         <span class="s2">&quot;   3   4  40114416  BOT 6x6   394.22  1204.43  24   1   140&quot;</span><span class="p">,</span>
         <span class="s2">&quot;   4   5  40112304  BOT 6x6 -1644.35  2032.47  12   1    80&quot;</span><span class="p">,</span>
@@ -208,9 +205,9 @@
     <span class="n">exp</span> <span class="o">=</span> <span class="p">[</span>
         <span class="s2">&quot;slot idx     id    type  sz   yang     zang   dim res halfw&quot;</span><span class="p">,</span>
         <span class="s2">&quot;---- --- --------- ---- --- -------- -------- --- --- -----&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;   0   1         1  FID 8x8 -1175.03  -468.23   1   1    25&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;   1   2         2  FID 8x8  1224.70  -460.93   1   1    25&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;   2   3         3  FID 8x8 -1177.69   561.30   1   1    25&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;   0   1         1  FID 8x8 -1176.88  -470.85   1   1    25&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;   1   2         2  FID 8x8  1222.86  -463.55   1   1    25&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;   2   3         3  FID 8x8 -1179.54   558.68   1   1    25&quot;</span><span class="p">,</span>
         <span class="s2">&quot;   3   4 896009152  BOT 6x6  1693.39   217.92  16   1   100&quot;</span><span class="p">,</span>
         <span class="s2">&quot;   4   5 897712576  BOT 6x6 -1099.95  2140.23  12   1    80&quot;</span><span class="p">,</span>
         <span class="s2">&quot;   5   6 897717296  BOT 6x6   932.58  1227.48  12   1    80&quot;</span><span class="p">,</span>
@@ -631,8 +628,82 @@
         <span class="s2">&quot;obsid&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
         <span class="s2">&quot;optimize&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
         <span class="s2">&quot;sim_offset&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
-        <span class="s2">&quot;t_ccd&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mi">11</span><span class="p">,</span>
+        <span class="s2">&quot;t_ccd_acq&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mi">11</span><span class="p">,</span>
+        <span class="s2">&quot;t_ccd_guide&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mi">11</span><span class="p">,</span>
     <span class="p">}</span>
+
+
+<div class="viewcode-block" id="test_t_ccd_attr"><a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_catalog.test_t_ccd_attr">[docs]</a><span class="k">def</span> <span class="nf">test_t_ccd_attr</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Test that a t_ccd kwarg is set to all of the ACACatalogTable attrs</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">aca_args</span> <span class="o">=</span> <span class="n">STD_INFO</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">kw</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;t_ccd&quot;</span><span class="p">,</span> <span class="s2">&quot;t_ccd_acq&quot;</span><span class="p">,</span> <span class="s2">&quot;t_ccd_guide&quot;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">kw</span> <span class="ow">in</span> <span class="n">aca_args</span><span class="p">:</span>
+            <span class="k">del</span> <span class="n">aca_args</span><span class="p">[</span><span class="n">kw</span><span class="p">]</span>
+
+    <span class="n">t_ccd</span> <span class="o">=</span> <span class="o">-</span><span class="mi">11</span>
+    <span class="n">aca_args</span><span class="p">[</span><span class="s2">&quot;t_ccd&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">t_ccd</span>
+    <span class="n">aca</span> <span class="o">=</span> <span class="n">get_aca_catalog</span><span class="p">(</span><span class="o">**</span><span class="n">aca_args</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">aca</span><span class="o">.</span><span class="n">t_ccd_acq</span> <span class="o">==</span> <span class="n">t_ccd</span>
+    <span class="k">assert</span> <span class="n">aca</span><span class="o">.</span><span class="n">t_ccd_guide</span> <span class="o">==</span> <span class="n">t_ccd</span>
+    <span class="k">assert</span> <span class="n">aca</span><span class="o">.</span><span class="n">acqs</span><span class="o">.</span><span class="n">t_ccd</span> <span class="o">==</span> <span class="n">t_ccd</span>
+    <span class="k">assert</span> <span class="n">aca</span><span class="o">.</span><span class="n">guides</span><span class="o">.</span><span class="n">t_ccd</span> <span class="o">==</span> <span class="n">t_ccd</span>
+    <span class="k">assert</span> <span class="n">aca</span><span class="o">.</span><span class="n">fids</span><span class="o">.</span><span class="n">t_ccd</span> <span class="o">==</span> <span class="n">t_ccd</span>
+    <span class="k">assert</span> <span class="n">aca</span><span class="o">.</span><span class="n">fids</span><span class="o">.</span><span class="n">t_ccd_acq</span> <span class="o">==</span> <span class="n">t_ccd</span>
+    <span class="k">assert</span> <span class="n">aca</span><span class="o">.</span><span class="n">fids</span><span class="o">.</span><span class="n">t_ccd_guide</span> <span class="o">==</span> <span class="n">t_ccd</span></div>
+
+
+<div class="viewcode-block" id="test_t_ccd_acq_attr"><a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_catalog.test_t_ccd_acq_attr">[docs]</a><span class="k">def</span> <span class="nf">test_t_ccd_acq_attr</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Test that a t_ccd and t_ccd_acq kwarg are set to all of the expected ACACatalogTable attrs</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">aca_args</span> <span class="o">=</span> <span class="n">STD_INFO</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">kw</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;t_ccd&quot;</span><span class="p">,</span> <span class="s2">&quot;t_ccd_acq&quot;</span><span class="p">,</span> <span class="s2">&quot;t_ccd_guide&quot;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">kw</span> <span class="ow">in</span> <span class="n">aca_args</span><span class="p">:</span>
+            <span class="k">del</span> <span class="n">aca_args</span><span class="p">[</span><span class="n">kw</span><span class="p">]</span>
+
+    <span class="n">t_ccd</span> <span class="o">=</span> <span class="o">-</span><span class="mi">11</span>
+    <span class="n">t_ccd_acq</span> <span class="o">=</span> <span class="o">-</span><span class="mi">16</span>
+    <span class="n">aca_args</span><span class="p">[</span><span class="s2">&quot;t_ccd&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">t_ccd</span>
+    <span class="n">aca_args</span><span class="p">[</span><span class="s2">&quot;t_ccd_acq&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">t_ccd_acq</span>
+    <span class="n">aca</span> <span class="o">=</span> <span class="n">get_aca_catalog</span><span class="p">(</span><span class="o">**</span><span class="n">aca_args</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">aca</span><span class="o">.</span><span class="n">t_ccd_acq</span> <span class="o">==</span> <span class="n">t_ccd_acq</span>
+    <span class="k">assert</span> <span class="n">aca</span><span class="o">.</span><span class="n">t_ccd_guide</span> <span class="o">==</span> <span class="n">t_ccd</span>
+    <span class="k">assert</span> <span class="n">aca</span><span class="o">.</span><span class="n">acqs</span><span class="o">.</span><span class="n">t_ccd</span> <span class="o">==</span> <span class="n">t_ccd_acq</span>
+    <span class="k">assert</span> <span class="n">aca</span><span class="o">.</span><span class="n">guides</span><span class="o">.</span><span class="n">t_ccd</span> <span class="o">==</span> <span class="n">t_ccd</span>
+    <span class="k">assert</span> <span class="n">aca</span><span class="o">.</span><span class="n">fids</span><span class="o">.</span><span class="n">t_ccd</span> <span class="o">==</span> <span class="n">t_ccd</span>
+    <span class="k">assert</span> <span class="n">aca</span><span class="o">.</span><span class="n">fids</span><span class="o">.</span><span class="n">t_ccd_acq</span> <span class="o">==</span> <span class="n">t_ccd_acq</span>
+    <span class="k">assert</span> <span class="n">aca</span><span class="o">.</span><span class="n">fids</span><span class="o">.</span><span class="n">t_ccd_guide</span> <span class="o">==</span> <span class="n">t_ccd</span></div>
+
+
+<div class="viewcode-block" id="test_t_ccd_multi_attr"><a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_catalog.test_t_ccd_multi_attr">[docs]</a><span class="k">def</span> <span class="nf">test_t_ccd_multi_attr</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Test assignments if t_ccd, t_ccd_acq, and t_ccd_guide supplied as kwargs</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">aca_args</span> <span class="o">=</span> <span class="n">STD_INFO</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">kw</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;t_ccd&quot;</span><span class="p">,</span> <span class="s2">&quot;t_ccd_acq&quot;</span><span class="p">,</span> <span class="s2">&quot;t_ccd_guide&quot;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">kw</span> <span class="ow">in</span> <span class="n">aca_args</span><span class="p">:</span>
+            <span class="k">del</span> <span class="n">aca_args</span><span class="p">[</span><span class="n">kw</span><span class="p">]</span>
+
+    <span class="n">t_ccd</span> <span class="o">=</span> <span class="o">-</span><span class="mi">11</span>
+    <span class="n">t_ccd_acq</span> <span class="o">=</span> <span class="o">-</span><span class="mi">16</span>
+    <span class="n">t_ccd_guide</span> <span class="o">=</span> <span class="o">-</span><span class="mi">6</span>
+    <span class="n">aca_args</span><span class="p">[</span><span class="s2">&quot;t_ccd&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">t_ccd</span>
+    <span class="n">aca_args</span><span class="p">[</span><span class="s2">&quot;t_ccd_acq&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">t_ccd_acq</span>
+    <span class="n">aca_args</span><span class="p">[</span><span class="s2">&quot;t_ccd_guide&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">t_ccd_guide</span>
+    <span class="n">aca</span> <span class="o">=</span> <span class="n">get_aca_catalog</span><span class="p">(</span><span class="o">**</span><span class="n">aca_args</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">aca</span><span class="o">.</span><span class="n">t_ccd</span> <span class="o">==</span> <span class="n">t_ccd_guide</span>
+    <span class="k">assert</span> <span class="n">aca</span><span class="o">.</span><span class="n">t_ccd_acq</span> <span class="o">==</span> <span class="n">t_ccd_acq</span>
+    <span class="k">assert</span> <span class="n">aca</span><span class="o">.</span><span class="n">t_ccd_guide</span> <span class="o">==</span> <span class="n">t_ccd_guide</span>
+    <span class="k">assert</span> <span class="n">aca</span><span class="o">.</span><span class="n">acqs</span><span class="o">.</span><span class="n">t_ccd</span> <span class="o">==</span> <span class="n">t_ccd_acq</span>
+    <span class="k">assert</span> <span class="n">aca</span><span class="o">.</span><span class="n">guides</span><span class="o">.</span><span class="n">t_ccd</span> <span class="o">==</span> <span class="n">t_ccd_guide</span>
+    <span class="k">assert</span> <span class="n">aca</span><span class="o">.</span><span class="n">fids</span><span class="o">.</span><span class="n">t_ccd</span> <span class="o">==</span> <span class="n">t_ccd_guide</span>
+    <span class="k">assert</span> <span class="n">aca</span><span class="o">.</span><span class="n">fids</span><span class="o">.</span><span class="n">t_ccd_acq</span> <span class="o">==</span> <span class="n">t_ccd_acq</span>
+    <span class="k">assert</span> <span class="n">aca</span><span class="o">.</span><span class="n">fids</span><span class="o">.</span><span class="n">t_ccd_guide</span> <span class="o">==</span> <span class="n">t_ccd_guide</span></div>
 
 
 <span class="k">def</span> <span class="nf">test_bad_obsid</span><span class="p">():</span>
@@ -742,7 +813,7 @@
     <span class="k">assert</span> <span class="n">aca</span><span class="o">.</span><span class="n">target_offset</span> <span class="ow">is</span> <span class="n">target_offset</span></div>
 
 
-<div class="viewcode-block" id="test_reject_column_spoilers"><a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_catalog.test_reject_column_spoilers">[docs]</a><span class="k">def</span> <span class="nf">test_reject_column_spoilers</span><span class="p">():</span>
+<div class="viewcode-block" id="test_reject_column_spoilers"><a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_catalog.test_reject_column_spoilers">[docs]</a><span class="k">def</span> <span class="nf">test_reject_column_spoilers</span><span class="p">(</span><span class="n">disable_fid_offsets</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test that column spoiler handling is correct for guide, acq and fid selection.</span>
 <span class="sd">    Also tests not selecting stars that are too bright.</span>
@@ -797,8 +868,8 @@
 
 <div class="viewcode-block" id="test_dark_property"><a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_catalog.test_dark_property">[docs]</a><span class="k">def</span> <span class="nf">test_dark_property</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Test that in the case of a common t_ccd, all the dark current maps are</span>
-<span class="sd">    actually the same object.</span>
+<span class="sd">    Test that appropriate temperatures are applied to acq, fid, guide</span>
+<span class="sd">    dark maps.</span>
 
 <span class="sd">    :return: None</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -807,7 +878,6 @@
         <span class="k">assert</span> <span class="n">aca</span><span class="o">.</span><span class="n">dark</span> <span class="ow">is</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">aca</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span><span class="o">.</span><span class="n">dark</span>
 
     <span class="n">kwargs</span> <span class="o">=</span> <span class="n">STD_INFO</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-    <span class="k">del</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;t_ccd&quot;</span><span class="p">]</span>
     <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;t_ccd_acq&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">12.5</span>
     <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;t_ccd_guide&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">11.5</span>
     <span class="n">aca</span> <span class="o">=</span> <span class="n">get_aca_catalog</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -829,9 +899,9 @@
     <span class="n">exp</span> <span class="o">=</span> <span class="p">[</span>
         <span class="s2">&quot;slot idx     id     type  sz   yang     zang   dim res halfw  mag &quot;</span><span class="p">,</span>
         <span class="s2">&quot;---- --- ---------- ---- --- -------- -------- --- --- ----- -----&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;   0   1          3  FID 8x8    40.01 -1871.10   1   1    25  7.00&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;   1   2          4  FID 8x8  2140.23   166.63   1   1    25  7.00&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;   2   3          5  FID 8x8 -1826.28   160.17   1   1    25  7.00&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;   0   1          3  FID 8x8    35.52 -1874.72   1   1    25  7.00&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;   1   2          4  FID 8x8  2135.73   163.01   1   1    25  7.00&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;   2   3          5  FID 8x8 -1830.77   156.55   1   1    25  7.00&quot;</span><span class="p">,</span>
         <span class="s2">&quot;   3   4 1130899056  BOT 8x8  2386.83 -1808.51  28   1   160  6.24&quot;</span><span class="p">,</span>
         <span class="s2">&quot;   4   5 1130889232  BOT 8x8  -251.98 -1971.97  28   1   160  6.99&quot;</span><span class="p">,</span>
         <span class="s2">&quot;   5   6 1130893664  BOT 8x8  1530.07 -2149.38  28   1   160  7.62&quot;</span><span class="p">,</span>

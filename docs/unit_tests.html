@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Unit tests &#8212; proseco 5.11.0 documentation</title>
+    <title>Unit tests &#8212; proseco 5.12.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/bootstrap-astropy.css" />
     
@@ -53,7 +53,7 @@
 	
       </li>
       <li>
-	<a href="index.html">proseco 5.11.0 documentation</a>
+	<a href="index.html">proseco 5.12.0 documentation</a>
 	 &#187;
       </li>
       
@@ -147,8 +147,8 @@ is independent of the original (where expected).</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="proseco.tests.test_catalog.test_dark_property">
 <span class="sig-prename descclassname"><span class="pre">proseco.tests.test_catalog.</span></span><span class="sig-name descname"><span class="pre">test_dark_property</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_catalog.html#test_dark_property"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_catalog.test_dark_property" title="Permalink to this definition">¶</a></dt>
-<dd><p>Test that in the case of a common t_ccd, all the dark current maps are
-actually the same object.</p>
+<dd><p>Test that appropriate temperatures are applied to acq, fid, guide
+dark maps.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
@@ -259,7 +259,7 @@ handles <code class="docutils literal notranslate"><span class="pre">stars</span
 
 <dl class="py function">
 <dt class="sig sig-object py" id="proseco.tests.test_catalog.test_reject_column_spoilers">
-<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_catalog.</span></span><span class="sig-name descname"><span class="pre">test_reject_column_spoilers</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_catalog.html#test_reject_column_spoilers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_catalog.test_reject_column_spoilers" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_catalog.</span></span><span class="sig-name descname"><span class="pre">test_reject_column_spoilers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">disable_fid_offsets</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_catalog.html#test_reject_column_spoilers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_catalog.test_reject_column_spoilers" title="Permalink to this definition">¶</a></dt>
 <dd><p>Test that column spoiler handling is correct for guide, acq and fid selection.
 Also tests not selecting stars that are too bright.</p>
 </dd></dl>
@@ -274,6 +274,18 @@ and test_acq.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="proseco.tests.test_catalog.test_t_ccd_acq_attr">
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_catalog.</span></span><span class="sig-name descname"><span class="pre">test_t_ccd_acq_attr</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_catalog.html#test_t_ccd_acq_attr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_catalog.test_t_ccd_acq_attr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test that a t_ccd and t_ccd_acq kwarg are set to all of the expected ACACatalogTable attrs</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="proseco.tests.test_catalog.test_t_ccd_attr">
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_catalog.</span></span><span class="sig-name descname"><span class="pre">test_t_ccd_attr</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_catalog.html#test_t_ccd_attr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_catalog.test_t_ccd_attr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test that a t_ccd kwarg is set to all of the ACACatalogTable attrs</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="proseco.tests.test_catalog.test_t_ccd_effective_acq_guide">
 <span class="sig-prename descclassname"><span class="pre">proseco.tests.test_catalog.</span></span><span class="sig-name descname"><span class="pre">test_t_ccd_effective_acq_guide</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_ccd_case</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_catalog.html#test_t_ccd_effective_acq_guide"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_catalog.test_t_ccd_effective_acq_guide" title="Permalink to this definition">¶</a></dt>
 <dd><p>Test setting of effective T_ccd temperatures for cases above and
@@ -285,6 +297,12 @@ below the penalty limit.</p>
 <span class="sig-prename descclassname"><span class="pre">proseco.tests.test_catalog.</span></span><span class="sig-name descname"><span class="pre">test_t_ccd_effective_acq_guide_via_kwarg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_ccd_case</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_catalog.html#test_t_ccd_effective_acq_guide_via_kwarg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_catalog.test_t_ccd_effective_acq_guide_via_kwarg" title="Permalink to this definition">¶</a></dt>
 <dd><p>Test setting of effective T_ccd temperatures for cases above and
 below a manually specified limit</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="proseco.tests.test_catalog.test_t_ccd_multi_attr">
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_catalog.</span></span><span class="sig-name descname"><span class="pre">test_t_ccd_multi_attr</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_catalog.html#test_t_ccd_multi_attr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_catalog.test_t_ccd_multi_attr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test assignments if t_ccd, t_ccd_acq, and t_ccd_guide supplied as kwargs</p>
 </dd></dl>
 
 </section>
@@ -394,7 +412,7 @@ In that case the best available is selected with a warning.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="proseco.tests.test_acq.test_acq_fid_catalog_probs_low_level">
-<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_acq.</span></span><span class="sig-name descname"><span class="pre">test_acq_fid_catalog_probs_low_level</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_acq.html#test_acq_fid_catalog_probs_low_level"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_acq.test_acq_fid_catalog_probs_low_level" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_acq.</span></span><span class="sig-name descname"><span class="pre">test_acq_fid_catalog_probs_low_level</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">disable_fid_offsets</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_acq.html#test_acq_fid_catalog_probs_low_level"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_acq.test_acq_fid_catalog_probs_low_level" title="Permalink to this definition">¶</a></dt>
 <dd><p>Low-level tests of machinery to handle different fid light sets within
 acquisition probabilities.</p>
 </dd></dl>
@@ -831,26 +849,32 @@ gives the expected response.  (Basically that it still returns a catalog).</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="proseco.tests.test_fid.test_fid_catalog_t_ccd">
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_fid.</span></span><span class="sig-name descname"><span class="pre">test_fid_catalog_t_ccd</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_fid.html#test_fid_catalog_t_ccd"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_fid.test_fid_catalog_t_ccd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test that t_ccd vs t_ccd_acq/guide is applied to get_fid_catalog</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="proseco.tests.test_fid.test_fid_hot_pixel_reject">
-<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_fid.</span></span><span class="sig-name descname"><span class="pre">test_fid_hot_pixel_reject</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_fid.html#test_fid_hot_pixel_reject"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_fid.test_fid_hot_pixel_reject" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_fid.</span></span><span class="sig-name descname"><span class="pre">test_fid_hot_pixel_reject</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">FIDS</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_fid.html#test_fid_hot_pixel_reject"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_fid.test_fid_hot_pixel_reject" title="Permalink to this definition">¶</a></dt>
 <dd><p>Test hot pixel rejecting a fid</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="proseco.tests.test_fid.test_fid_mult_spoilers">
-<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_fid.</span></span><span class="sig-name descname"><span class="pre">test_fid_mult_spoilers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">proseco_agasc_1p7</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_fid.html#test_fid_mult_spoilers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_fid.test_fid_mult_spoilers" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_fid.</span></span><span class="sig-name descname"><span class="pre">test_fid_mult_spoilers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">disable_fid_offsets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">proseco_agasc_1p7</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_fid.html#test_fid_mult_spoilers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_fid.test_fid_mult_spoilers" title="Permalink to this definition">¶</a></dt>
 <dd><p>Test of fix for bug #54.  19605 and 20144 were previous crashing.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="proseco.tests.test_fid.test_fid_spoiler_score">
-<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_fid.</span></span><span class="sig-name descname"><span class="pre">test_fid_spoiler_score</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_fid.html#test_fid_spoiler_score"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_fid.test_fid_spoiler_score" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_fid.</span></span><span class="sig-name descname"><span class="pre">test_fid_spoiler_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">FIDS</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_fid.html#test_fid_spoiler_score"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_fid.test_fid_spoiler_score" title="Permalink to this definition">¶</a></dt>
 <dd><p>Test computing the fid spoiler score.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="proseco.tests.test_fid.test_fid_spoiling_acq">
-<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_fid.</span></span><span class="sig-name descname"><span class="pre">test_fid_spoiling_acq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dither_z</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_fid.html#test_fid_spoiling_acq"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_fid.test_fid_spoiling_acq" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_fid.</span></span><span class="sig-name descname"><span class="pre">test_fid_spoiling_acq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dither_z</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">FIDS</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_fid.html#test_fid_spoiling_acq"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_fid.test_fid_spoiling_acq" title="Permalink to this definition">¶</a></dt>
 <dd><p>Test fid spoiling acq.</p>
 <p>Check fid spoiling acq:</p>
 <ul class="simple">
@@ -887,7 +911,7 @@ Only ACIS-S-5 is allowed, so we end up with the first fid set using
 
 <dl class="py function">
 <dt class="sig sig-object py" id="proseco.tests.test_fid.test_get_initial_catalog">
-<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_fid.</span></span><span class="sig-name descname"><span class="pre">test_get_initial_catalog</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_fid.html#test_get_initial_catalog"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_fid.test_get_initial_catalog" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_fid.</span></span><span class="sig-name descname"><span class="pre">test_get_initial_catalog</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">FIDS</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_fid.html#test_get_initial_catalog"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_fid.test_get_initial_catalog" title="Permalink to this definition">¶</a></dt>
 <dd><p>Test basic catalog with no stars in field using standard 2-4-5 config.</p>
 </dd></dl>
 
@@ -1026,8 +1050,11 @@ different (not OK).</p>
 <li><a class="reference internal" href="#proseco.tests.test_catalog.test_pickle"><code class="docutils literal notranslate"><span class="pre">test_pickle()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.tests.test_catalog.test_reject_column_spoilers"><code class="docutils literal notranslate"><span class="pre">test_reject_column_spoilers()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.tests.test_catalog.test_report_from_objects"><code class="docutils literal notranslate"><span class="pre">test_report_from_objects()</span></code></a></li>
+<li><a class="reference internal" href="#proseco.tests.test_catalog.test_t_ccd_acq_attr"><code class="docutils literal notranslate"><span class="pre">test_t_ccd_acq_attr()</span></code></a></li>
+<li><a class="reference internal" href="#proseco.tests.test_catalog.test_t_ccd_attr"><code class="docutils literal notranslate"><span class="pre">test_t_ccd_attr()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.tests.test_catalog.test_t_ccd_effective_acq_guide"><code class="docutils literal notranslate"><span class="pre">test_t_ccd_effective_acq_guide()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.tests.test_catalog.test_t_ccd_effective_acq_guide_via_kwarg"><code class="docutils literal notranslate"><span class="pre">test_t_ccd_effective_acq_guide_via_kwarg()</span></code></a></li>
+<li><a class="reference internal" href="#proseco.tests.test_catalog.test_t_ccd_multi_attr"><code class="docutils literal notranslate"><span class="pre">test_t_ccd_multi_attr()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-proseco.tests.test_acq">Acquisition</a><ul>
@@ -1098,6 +1125,7 @@ different (not OK).</p>
 <li><a class="reference internal" href="#module-proseco.tests.test_fid">Fid</a><ul>
 <li><a class="reference internal" href="#proseco.tests.test_fid.test_big_sim_offset"><code class="docutils literal notranslate"><span class="pre">test_big_sim_offset()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.tests.test_fid.test_dither_as_sequence"><code class="docutils literal notranslate"><span class="pre">test_dither_as_sequence()</span></code></a></li>
+<li><a class="reference internal" href="#proseco.tests.test_fid.test_fid_catalog_t_ccd"><code class="docutils literal notranslate"><span class="pre">test_fid_catalog_t_ccd()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.tests.test_fid.test_fid_hot_pixel_reject"><code class="docutils literal notranslate"><span class="pre">test_fid_hot_pixel_reject()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.tests.test_fid.test_fid_mult_spoilers"><code class="docutils literal notranslate"><span class="pre">test_fid_mult_spoilers()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.tests.test_fid.test_fid_spoiler_score"><code class="docutils literal notranslate"><span class="pre">test_fid_spoiler_score()</span></code></a></li>

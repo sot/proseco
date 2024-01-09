@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>proseco.tests.test_fid &#8212; proseco 5.11.0 documentation</title>
+    <title>proseco.tests.test_fid &#8212; proseco 5.12.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/bootstrap-astropy.css" />
     
@@ -45,7 +45,7 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../../index.html">proseco 5.11.0 documentation</a>
+	<a href="../../../index.html">proseco 5.12.0 documentation</a>
 	 &#187;
       </li>
       <li><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
@@ -61,10 +61,7 @@
           <div class="body" role="main">
             
   <h1>Source code for proseco.tests.test_fid</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">os</span>
-
-<span class="kn">import</span> <span class="nn">agasc</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pytest</span>
 
 <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">characteristics_fid</span> <span class="k">as</span> <span class="n">FID</span>
@@ -73,11 +70,11 @@
 <span class="kn">from</span> <span class="nn">..fid</span> <span class="kn">import</span> <span class="n">get_fid_catalog</span><span class="p">,</span> <span class="n">get_fid_positions</span>
 <span class="kn">from</span> <span class="nn">.test_common</span> <span class="kn">import</span> <span class="n">DARK40</span><span class="p">,</span> <span class="n">OBS_INFO</span><span class="p">,</span> <span class="n">STD_INFO</span><span class="p">,</span> <span class="n">mod_std_info</span>
 
-<span class="c1"># Reference fid positions for spoiling tests</span>
-<span class="n">FIDS</span> <span class="o">=</span> <span class="n">get_fid_catalog</span><span class="p">(</span><span class="n">stars</span><span class="o">=</span><span class="n">StarsTable</span><span class="o">.</span><span class="n">empty</span><span class="p">(),</span> <span class="o">**</span><span class="n">STD_INFO</span><span class="p">)</span>
 
-<span class="c1"># Do not use the AGASC supplement in testing by default since mags can change</span>
-<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="n">agasc</span><span class="o">.</span><span class="n">SUPPLEMENT_ENABLED_ENV</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;False&quot;</span>
+<span class="c1"># Reference fid positions for tests.</span>
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">(</span><span class="n">scope</span><span class="o">=</span><span class="s2">&quot;module&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">FIDS</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">get_fid_catalog</span><span class="p">(</span><span class="n">stars</span><span class="o">=</span><span class="n">StarsTable</span><span class="o">.</span><span class="n">empty</span><span class="p">(),</span> <span class="o">**</span><span class="n">STD_INFO</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="test_get_fid_position"><a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_fid.test_get_fid_position">[docs]</a><span class="k">def</span> <span class="nf">test_get_fid_position</span><span class="p">():</span>
@@ -112,19 +109,97 @@
     <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">zang</span><span class="p">[</span><span class="n">fidset</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mi">468</span><span class="p">,</span> <span class="o">-</span><span class="mi">460</span><span class="p">,</span> <span class="mi">561</span><span class="p">],</span> <span class="n">rtol</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1.1</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="test_get_initial_catalog"><a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_fid.test_get_initial_catalog">[docs]</a><span class="k">def</span> <span class="nf">test_get_initial_catalog</span><span class="p">():</span>
+<span class="k">def</span> <span class="nf">test_get_fid_pos_with_offsets</span><span class="p">(</span><span class="n">monkeypatch</span><span class="p">):</span>
+    <span class="c1"># Confirm that if env var is set to &#39;False&#39; then no offset is applied.</span>
+    <span class="n">monkeypatch</span><span class="o">.</span><span class="n">setenv</span><span class="p">(</span><span class="s2">&quot;PROSECO_ENABLE_FID_OFFSET&quot;</span><span class="p">,</span> <span class="s2">&quot;False&quot;</span><span class="p">)</span>
+    <span class="n">yang1</span><span class="p">,</span> <span class="n">zang1</span> <span class="o">=</span> <span class="n">get_fid_positions</span><span class="p">(</span><span class="s2">&quot;ACIS-S&quot;</span><span class="p">,</span> <span class="n">focus_offset</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">sim_offset</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+
+    <span class="c1"># Confirm that if env var is set to &#39;True&#39; and t_ccd and date are specified, then</span>
+    <span class="c1"># offset is applied.</span>
+    <span class="n">monkeypatch</span><span class="o">.</span><span class="n">setenv</span><span class="p">(</span><span class="s2">&quot;PROSECO_ENABLE_FID_OFFSET&quot;</span><span class="p">,</span> <span class="s2">&quot;True&quot;</span><span class="p">)</span>
+    <span class="n">yang2</span><span class="p">,</span> <span class="n">zang2</span> <span class="o">=</span> <span class="n">get_fid_positions</span><span class="p">(</span>
+        <span class="s2">&quot;ACIS-S&quot;</span><span class="p">,</span> <span class="n">focus_offset</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">sim_offset</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">date</span><span class="o">=</span><span class="s2">&quot;2023:235&quot;</span><span class="p">,</span> <span class="n">t_ccd</span><span class="o">=-</span><span class="mf">13.65</span>
+    <span class="p">)</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">yang1</span> <span class="o">-</span> <span class="n">yang2</span><span class="p">,</span> <span class="o">-</span><span class="mf">32.47</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">zang1</span> <span class="o">-</span> <span class="n">zang2</span><span class="p">,</span> <span class="o">-</span><span class="mf">9.63</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+
+    <span class="c1"># Confirm that if env var is not set and t_ccd and date are specified, then</span>
+    <span class="c1"># offset is applied.</span>
+    <span class="n">monkeypatch</span><span class="o">.</span><span class="n">delenv</span><span class="p">(</span><span class="s2">&quot;PROSECO_ENABLE_FID_OFFSET&quot;</span><span class="p">,</span> <span class="n">raising</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">yang3</span><span class="p">,</span> <span class="n">zang3</span> <span class="o">=</span> <span class="n">get_fid_positions</span><span class="p">(</span>
+        <span class="s2">&quot;ACIS-S&quot;</span><span class="p">,</span> <span class="n">focus_offset</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">sim_offset</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">date</span><span class="o">=</span><span class="s2">&quot;2023:235&quot;</span><span class="p">,</span> <span class="n">t_ccd</span><span class="o">=-</span><span class="mf">13.65</span>
+    <span class="p">)</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">yang2</span> <span class="o">==</span> <span class="n">yang3</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">zang2</span> <span class="o">==</span> <span class="n">zang3</span><span class="p">)</span>
+
+    <span class="c1"># Confirm that if env var is not set and t_ccd and date not specified, then</span>
+    <span class="c1"># no offset is applied.</span>
+    <span class="n">monkeypatch</span><span class="o">.</span><span class="n">delenv</span><span class="p">(</span><span class="s2">&quot;PROSECO_ENABLE_FID_OFFSET&quot;</span><span class="p">,</span> <span class="n">raising</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">yang4</span><span class="p">,</span> <span class="n">zang4</span> <span class="o">=</span> <span class="n">get_fid_positions</span><span class="p">(</span>
+        <span class="s2">&quot;ACIS-S&quot;</span><span class="p">,</span>
+        <span class="n">focus_offset</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">sim_offset</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">yang1</span> <span class="o">==</span> <span class="n">yang4</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">zang1</span> <span class="o">==</span> <span class="n">zang4</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">test_get_fid_pos_errs</span><span class="p">(</span><span class="n">monkeypatch</span><span class="p">):</span>
+    <span class="c1"># Confirm if env var is set to &#39;True&#39; and t_ccd and date not specified, then</span>
+    <span class="c1"># there&#39;s an error.</span>
+    <span class="n">monkeypatch</span><span class="o">.</span><span class="n">setenv</span><span class="p">(</span><span class="s2">&quot;PROSECO_ENABLE_FID_OFFSET&quot;</span><span class="p">,</span> <span class="s2">&quot;True&quot;</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">pytest</span><span class="o">.</span><span class="n">raises</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="n">match</span><span class="o">=</span><span class="s2">&quot;t_ccd_acq and date must be provided&quot;</span><span class="p">):</span>
+        <span class="n">get_fid_positions</span><span class="p">(</span><span class="s2">&quot;ACIS-S&quot;</span><span class="p">,</span> <span class="n">focus_offset</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">sim_offset</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+
+    <span class="c1"># Confirm an error if env var set to not-allowed value</span>
+    <span class="n">monkeypatch</span><span class="o">.</span><span class="n">setenv</span><span class="p">(</span><span class="s2">&quot;PROSECO_ENABLE_FID_OFFSET&quot;</span><span class="p">,</span> <span class="s2">&quot;foo&quot;</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">pytest</span><span class="o">.</span><span class="n">raises</span><span class="p">(</span>
+        <span class="ne">ValueError</span><span class="p">,</span> <span class="n">match</span><span class="o">=</span><span class="s1">&#39;env var must be either &quot;True&quot;, &quot;False&quot;, or not set,&#39;</span>
+    <span class="p">):</span>
+        <span class="n">get_fid_positions</span><span class="p">(</span>
+            <span class="s2">&quot;ACIS-S&quot;</span><span class="p">,</span> <span class="n">focus_offset</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">sim_offset</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">t_ccd</span><span class="o">=-</span><span class="mf">13.65</span><span class="p">,</span> <span class="n">date</span><span class="o">=</span><span class="s2">&quot;2023:235&quot;</span>
+        <span class="p">)</span>
+
+
+<div class="viewcode-block" id="test_fid_catalog_t_ccd"><a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_fid.test_fid_catalog_t_ccd">[docs]</a><span class="k">def</span> <span class="nf">test_fid_catalog_t_ccd</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Test that t_ccd vs t_ccd_acq/guide is applied to get_fid_catalog</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">aca_args1</span> <span class="o">=</span> <span class="n">STD_INFO</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;t_ccd_acq&quot;</span><span class="p">,</span> <span class="s2">&quot;t_ccd_guide&quot;</span><span class="p">,</span> <span class="s2">&quot;t_ccd&quot;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">aca_args1</span><span class="p">:</span>
+            <span class="k">del</span> <span class="n">aca_args1</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+    <span class="n">aca_args1</span><span class="p">[</span><span class="s2">&quot;t_ccd&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">14</span>
+    <span class="n">fids1</span> <span class="o">=</span> <span class="n">get_fid_catalog</span><span class="p">(</span><span class="o">**</span><span class="n">aca_args1</span><span class="p">)</span>
+
+    <span class="n">aca_args2</span> <span class="o">=</span> <span class="n">STD_INFO</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;t_ccd_acq&quot;</span><span class="p">,</span> <span class="s2">&quot;t_ccd_guide&quot;</span><span class="p">,</span> <span class="s2">&quot;t_ccd&quot;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">aca_args2</span><span class="p">:</span>
+            <span class="k">del</span> <span class="n">aca_args2</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+    <span class="n">aca_args2</span><span class="p">[</span><span class="s2">&quot;t_ccd_acq&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">14</span>
+    <span class="n">aca_args2</span><span class="p">[</span><span class="s2">&quot;t_ccd_guide&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">5</span>
+    <span class="n">fids2</span> <span class="o">=</span> <span class="n">get_fid_catalog</span><span class="p">(</span><span class="o">**</span><span class="n">aca_args2</span><span class="p">)</span>
+
+    <span class="k">assert</span> <span class="n">fids1</span><span class="o">.</span><span class="n">t_ccd_acq</span> <span class="o">==</span> <span class="n">fids2</span><span class="o">.</span><span class="n">t_ccd_acq</span>
+    <span class="k">assert</span> <span class="n">fids1</span><span class="o">.</span><span class="n">t_ccd_guide</span> <span class="o">!=</span> <span class="n">fids2</span><span class="o">.</span><span class="n">t_ccd_guide</span>
+    <span class="k">assert</span> <span class="n">fids1</span><span class="o">.</span><span class="n">t_ccd</span> <span class="o">!=</span> <span class="n">fids2</span><span class="o">.</span><span class="n">t_ccd</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">fids1</span><span class="p">[</span><span class="s2">&quot;yang&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">fids2</span><span class="p">[</span><span class="s2">&quot;yang&quot;</span><span class="p">])</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">fids1</span><span class="p">[</span><span class="s2">&quot;zang&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">fids2</span><span class="p">[</span><span class="s2">&quot;zang&quot;</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="test_get_initial_catalog"><a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_fid.test_get_initial_catalog">[docs]</a><span class="k">def</span> <span class="nf">test_get_initial_catalog</span><span class="p">(</span><span class="n">FIDS</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Test basic catalog with no stars in field using standard 2-4-5 config.&quot;&quot;&quot;</span>
     <span class="n">exp</span> <span class="o">=</span> <span class="p">[</span>
         <span class="s2">&quot;&lt;FidTable length=6&gt;&quot;</span><span class="p">,</span>
         <span class="s2">&quot;  id    yang     zang     row     col     mag   spoiler_score  idx   slot&quot;</span><span class="p">,</span>
         <span class="s2">&quot;int64 float64  float64  float64 float64 float64     int64     int64 int64&quot;</span><span class="p">,</span>
         <span class="s2">&quot;----- -------- -------- ------- ------- ------- ------------- ----- -----&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;    1   922.59 -1737.89 -180.05 -344.10    7.00             0     0   -99&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;    2  -773.20 -1742.03  160.79 -345.35    7.00             0     1     0&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;    3    40.01 -1871.10   -2.67 -371.00    7.00             0     2   -99&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;    4  2140.23   166.63 -424.51   39.13    7.00             0     3     1&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;    5 -1826.28   160.17  372.97   36.47    7.00             0     4     2&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;    6   388.59   803.75  -71.49  166.10    7.00             0     5   -99&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;    1   918.09 -1741.51 -179.15 -344.83    7.00             0     0   -99&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;    2  -777.70 -1745.65  161.69 -346.09    7.00             0     1     0&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;    3    35.52 -1874.72   -1.77 -371.73    7.00             0     2   -99&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;    4  2135.73   163.01 -423.60   38.40    7.00             0     3     1&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;    5 -1830.77   156.55  373.88   35.74    7.00             0     4     2&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;    6   384.10   800.13  -70.59  165.37    7.00             0     5   -99&quot;</span><span class="p">,</span>
     <span class="p">]</span>
     <span class="k">assert</span> <span class="nb">repr</span><span class="p">(</span><span class="n">FIDS</span><span class="o">.</span><span class="n">cand_fids</span><span class="p">)</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span> <span class="o">==</span> <span class="n">exp</span>
     <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">FIDS</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">])</span>
@@ -144,12 +219,12 @@
         <span class="s2">&quot;  id    yang     zang     row     col     mag   spoiler_score  idx   slot&quot;</span><span class="p">,</span>
         <span class="s2">&quot;int64 float64  float64  float64 float64 float64     int64     int64 int64&quot;</span><span class="p">,</span>
         <span class="s2">&quot;----- -------- -------- ------- ------- ------- ------------- ----- -----&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;    1   922.59 -1737.89 -180.05 -344.10    7.00             4     0   -99&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;    2  -773.20 -1742.03  160.79 -345.35    7.00             4     1   -99&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;    3    40.01 -1871.10   -2.67 -371.00    7.00             0     2     0&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;    4  2140.23   166.63 -424.51   39.13    7.00             0     3     1&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;    5 -1826.28   160.17  372.97   36.47    7.00             0     4     2&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;    6   388.59   803.75  -71.49  166.10    7.00             0     5   -99&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;    1   918.09 -1741.51 -179.15 -344.83    7.00             4     0   -99&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;    2  -777.70 -1745.65  161.69 -346.09    7.00             4     1   -99&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;    3    35.52 -1874.72   -1.77 -371.73    7.00             0     2     0&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;    4  2135.73   163.01 -423.60   38.40    7.00             0     3     1&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;    5 -1830.77   156.55  373.88   35.74    7.00             0     4     2&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;    6   384.10   800.13  -70.59  165.37    7.00             0     5   -99&quot;</span><span class="p">,</span>
     <span class="p">]</span>
     <span class="k">assert</span> <span class="nb">repr</span><span class="p">(</span><span class="n">fids2</span><span class="o">.</span><span class="n">cand_fids</span><span class="p">)</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span> <span class="o">==</span> <span class="n">exp</span>
     <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">fids2</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">])</span>
@@ -172,7 +247,7 @@
 
 
 <div class="viewcode-block" id="test_fid_spoiling_acq"><a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_fid.test_fid_spoiling_acq">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span><span class="s2">&quot;dither_z&quot;</span><span class="p">,</span> <span class="p">[</span><span class="mi">8</span><span class="p">,</span> <span class="mi">64</span><span class="p">])</span>
-<span class="k">def</span> <span class="nf">test_fid_spoiling_acq</span><span class="p">(</span><span class="n">dither_z</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">test_fid_spoiling_acq</span><span class="p">(</span><span class="n">dither_z</span><span class="p">,</span> <span class="n">FIDS</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Test fid spoiling acq.</span>
 
 <span class="sd">    Check fid spoiling acq:</span>
@@ -211,18 +286,18 @@
         <span class="s2">&quot;  id    yang     zang     row     col     mag   spoiler_score  idx   slot&quot;</span><span class="p">,</span>
         <span class="s2">&quot;int64 float64  float64  float64 float64 float64     int64     int64 int64&quot;</span><span class="p">,</span>
         <span class="s2">&quot;----- -------- -------- ------- ------- ------- ------------- ----- -----&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;    1   922.59 -1737.89 -180.05 -344.10    7.00             0     0     0&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;    2  -773.20 -1742.03  160.79 -345.35    7.00             0     1   -99&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;    3    40.01 -1871.10   -2.67 -371.00    7.00             0     2   -99&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;    4  2140.23   166.63 -424.51   39.13    7.00             0     3   -99&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;    5 -1826.28   160.17  372.97   36.47    7.00             0     4     1&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;    6   388.59   803.75  -71.49  166.10    7.00             0     5     2&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;    1   918.09 -1741.51 -179.15 -344.83    7.00             0     0     0&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;    2  -777.70 -1745.65  161.69 -346.09    7.00             0     1   -99&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;    3    35.52 -1874.72   -1.77 -371.73    7.00             0     2   -99&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;    4  2135.73   163.01 -423.60   38.40    7.00             0     3   -99&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;    5 -1830.77   156.55  373.88   35.74    7.00             0     4     1&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;    6   384.10   800.13  -70.59  165.37    7.00             0     5     2&quot;</span><span class="p">,</span>
     <span class="p">]</span>
 
     <span class="k">assert</span> <span class="nb">repr</span><span class="p">(</span><span class="n">fids5</span><span class="o">.</span><span class="n">cand_fids</span><span class="p">)</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span> <span class="o">==</span> <span class="n">exp</span></div>
 
 
-<div class="viewcode-block" id="test_fid_mult_spoilers"><a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_fid.test_fid_mult_spoilers">[docs]</a><span class="k">def</span> <span class="nf">test_fid_mult_spoilers</span><span class="p">(</span><span class="n">proseco_agasc_1p7</span><span class="p">):</span>
+<div class="viewcode-block" id="test_fid_mult_spoilers"><a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_fid.test_fid_mult_spoilers">[docs]</a><span class="k">def</span> <span class="nf">test_fid_mult_spoilers</span><span class="p">(</span><span class="n">disable_fid_offsets</span><span class="p">,</span> <span class="n">proseco_agasc_1p7</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test of fix for bug #54.  19605 and 20144 were previous crashing.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -247,7 +322,7 @@
     <span class="k">assert</span> <span class="n">fids</span><span class="o">.</span><span class="n">dither_guide</span> <span class="o">==</span> <span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">22</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="test_fid_spoiler_score"><a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_fid.test_fid_spoiler_score">[docs]</a><span class="k">def</span> <span class="nf">test_fid_spoiler_score</span><span class="p">():</span>
+<div class="viewcode-block" id="test_fid_spoiler_score"><a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_fid.test_fid_spoiler_score">[docs]</a><span class="k">def</span> <span class="nf">test_fid_spoiler_score</span><span class="p">(</span><span class="n">FIDS</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Test computing the fid spoiler score.&quot;&quot;&quot;</span>
     <span class="n">dither_y</span> <span class="o">=</span> <span class="mi">8</span>
     <span class="n">dither_z</span> <span class="o">=</span> <span class="mi">64</span>
@@ -274,7 +349,7 @@
     <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="n">name</span> <span class="ow">in</span> <span class="n">fids</span><span class="o">.</span><span class="n">colnames</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="test_fid_hot_pixel_reject"><a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_fid.test_fid_hot_pixel_reject">[docs]</a><span class="k">def</span> <span class="nf">test_fid_hot_pixel_reject</span><span class="p">():</span>
+<div class="viewcode-block" id="test_fid_hot_pixel_reject"><a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_fid.test_fid_hot_pixel_reject">[docs]</a><span class="k">def</span> <span class="nf">test_fid_hot_pixel_reject</span><span class="p">(</span><span class="n">FIDS</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Test hot pixel rejecting a fid&quot;&quot;&quot;</span>
     <span class="n">lim</span> <span class="o">=</span> <span class="n">FID</span><span class="o">.</span><span class="n">hot_pixel_spoiler_limit</span>
     <span class="n">dark</span> <span class="o">=</span> <span class="n">DARK40</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>

@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>proseco.tests.test_acq &#8212; proseco 5.11.0 documentation</title>
+    <title>proseco.tests.test_acq &#8212; proseco 5.12.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/bootstrap-astropy.css" />
     
@@ -45,7 +45,7 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../../index.html">proseco 5.11.0 documentation</a>
+	<a href="../../../index.html">proseco 5.12.0 documentation</a>
 	 &#187;
       </li>
       <li><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
@@ -66,7 +66,6 @@
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
 
-<span class="kn">import</span> <span class="nn">agasc</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pytest</span>
 <span class="kn">from</span> <span class="nn">chandra_aca</span> <span class="kn">import</span> <span class="n">star_probs</span>
@@ -96,9 +95,6 @@
 <span class="n">ATT</span> <span class="o">=</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>  <span class="c1"># Arbitrary test attitude</span>
 <span class="n">CACHE</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># Cache stuff for speed</span>
 <span class="n">TEST_COLS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;idx&quot;</span><span class="p">,</span> <span class="s2">&quot;slot&quot;</span><span class="p">,</span> <span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;yang&quot;</span><span class="p">,</span> <span class="s2">&quot;zang&quot;</span><span class="p">,</span> <span class="s2">&quot;halfw&quot;</span><span class="p">)</span>
-
-<span class="c1"># Do not use the AGASC supplement in testing by default since mags can change</span>
-<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="n">agasc</span><span class="o">.</span><span class="n">SUPPLEMENT_ENABLED_ENV</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;False&quot;</span>
 
 
 <div class="viewcode-block" id="calc_p_brightest"><a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.calc_p_brightest">[docs]</a><span class="k">def</span> <span class="nf">calc_p_brightest</span><span class="p">(</span><span class="n">acq</span><span class="p">,</span> <span class="n">box_size</span><span class="p">,</span> <span class="n">stars</span><span class="p">,</span> <span class="n">dark</span><span class="p">,</span> <span class="n">man_err</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">dither</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">bgd</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
@@ -909,11 +905,12 @@
     <span class="k">return</span> <span class="n">dark</span><span class="p">,</span> <span class="n">stars</span></div>
 
 
-<div class="viewcode-block" id="test_acq_fid_catalog_probs_low_level"><a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.test_acq_fid_catalog_probs_low_level">[docs]</a><span class="k">def</span> <span class="nf">test_acq_fid_catalog_probs_low_level</span><span class="p">():</span>
+<div class="viewcode-block" id="test_acq_fid_catalog_probs_low_level"><a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.test_acq_fid_catalog_probs_low_level">[docs]</a><span class="k">def</span> <span class="nf">test_acq_fid_catalog_probs_low_level</span><span class="p">(</span><span class="n">disable_fid_offsets</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Low-level tests of machinery to handle different fid light sets within</span>
 <span class="sd">    acquisition probabilities.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="c1"># Put an acq star at an offset from fid light id=2 such that for a search</span>
     <span class="c1"># box size larger than box_size_thresh, that star will be spoiled.  This</span>
     <span class="c1"># uses the equation in FidTable.spoils().</span>

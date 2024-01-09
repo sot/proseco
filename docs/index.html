@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Proseco &#8212; proseco 5.11.0 documentation</title>
+    <title>Proseco &#8212; proseco 5.12.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/bootstrap-astropy.css" />
     
@@ -52,7 +52,7 @@
 	</a>
       </li>
       <li>
-	<a href="#">proseco 5.11.0 documentation</a>
+	<a href="#">proseco 5.12.0 documentation</a>
 	 &#187;
       </li>
       
@@ -449,7 +449,7 @@ environment.  For Matlab tools on Windows a separate mechanism will be provided.
 <section id="environment-variables">
 <h2>Environment Variables<a class="headerlink" href="#environment-variables" title="Permalink to this heading">¶</a></h2>
 <p>The following environment variables are used by proseco:</p>
-<ul class="simple">
+<ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">AGASC_DIR</span></code>: path to AGASC directory for getting AGASC star data. This
 overrides the default value of <code class="docutils literal notranslate"><span class="pre">$SKA/data/agasc</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">AGASC_HDF5_FILE</span></code>: path to AGASC HDF5 file for getting AGASC star data. This
@@ -461,13 +461,24 @@ If this is a relative path then it is relative to <code class="docutils literal 
 </dd>
 </dl>
 </li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PROSECO_ENABLE_FID_OFFSET</span></code>: controls application of time and temperature dependent fid
+light position offsets (from the ACA drift model) in <span class="xref std std-ref">~proseco.fid.get_fid_positions</span>:
+- Not set: apply offsets if time and temperature are provided (as is done in <code class="docutils literal notranslate"><span class="pre">proseco</span></code> fid</p>
+<blockquote>
+<div><p>selection since version 5.12.0)</p>
+</div></blockquote>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;True&quot;</span></code>: require that time and temperature be provided and apply offsets.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;False&quot;</span></code>: do not apply offsets (typically used in regression testing not production).</p></li>
+</ul>
+</li>
 <li><p><code class="docutils literal notranslate"><span class="pre">PROSECO_IGNORE_MAXAGS_CONSTRAINTS</span></code>: if set then do not update <code class="docutils literal notranslate"><span class="pre">maxmag</span></code> in the
 catalog to prevent search hits clipping.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">PROSECO_OR_IMAGE_SIZE</span></code>: override the default OR image size of 8x8. Can be one of
 “4”, “6”, or “8”.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">PROSECO_PRINT_OBC_CAT</span></code>: if set then create and print a debug catalog while doing
 catalog merging.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">SKA</span></code>: root directory for Ska3 runtime environment</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SKA</span></code>: root directory that contains ‘data’ directory</p></li>
 </ul>
 </section>
 <section id="api-docs">
@@ -579,8 +590,11 @@ catalog merging.</p></li>
 <li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_catalog.test_pickle"><code class="docutils literal notranslate"><span class="pre">test_pickle()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_catalog.test_reject_column_spoilers"><code class="docutils literal notranslate"><span class="pre">test_reject_column_spoilers()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_catalog.test_report_from_objects"><code class="docutils literal notranslate"><span class="pre">test_report_from_objects()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_catalog.test_t_ccd_acq_attr"><code class="docutils literal notranslate"><span class="pre">test_t_ccd_acq_attr()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_catalog.test_t_ccd_attr"><code class="docutils literal notranslate"><span class="pre">test_t_ccd_attr()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_catalog.test_t_ccd_effective_acq_guide"><code class="docutils literal notranslate"><span class="pre">test_t_ccd_effective_acq_guide()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_catalog.test_t_ccd_effective_acq_guide_via_kwarg"><code class="docutils literal notranslate"><span class="pre">test_t_ccd_effective_acq_guide_via_kwarg()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_catalog.test_t_ccd_multi_attr"><code class="docutils literal notranslate"><span class="pre">test_t_ccd_multi_attr()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="unit_tests.html#module-proseco.tests.test_acq">Acquisition</a><ul>
@@ -651,6 +665,7 @@ catalog merging.</p></li>
 <li class="toctree-l2"><a class="reference internal" href="unit_tests.html#module-proseco.tests.test_fid">Fid</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_fid.test_big_sim_offset"><code class="docutils literal notranslate"><span class="pre">test_big_sim_offset()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_fid.test_dither_as_sequence"><code class="docutils literal notranslate"><span class="pre">test_dither_as_sequence()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_fid.test_fid_catalog_t_ccd"><code class="docutils literal notranslate"><span class="pre">test_fid_catalog_t_ccd()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_fid.test_fid_hot_pixel_reject"><code class="docutils literal notranslate"><span class="pre">test_fid_hot_pixel_reject()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_fid.test_fid_mult_spoilers"><code class="docutils literal notranslate"><span class="pre">test_fid_mult_spoilers()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_fid.test_fid_spoiler_score"><code class="docutils literal notranslate"><span class="pre">test_fid_spoiler_score()</span></code></a></li>
