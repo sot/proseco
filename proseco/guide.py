@@ -627,7 +627,9 @@ class GuideTable(ACACatalogTable):
 
         # Check for star spoilers (by light) background and edge
         if stage["ASPQ1Lim"] > 0:
-            bg_pix_thresh = np.percentile(dark, stage["Spoiler"]["BgPixThresh"])
+            bg_pix_thresh = np.percentile(
+                np.asarray(dark), stage["Spoiler"]["BgPixThresh"]
+            )
             reg_frac = stage["Spoiler"]["RegionFrac"]
             bg_spoil, reg_spoil, light_rej = check_spoil_contrib(
                 cand_guides, ok, stars, reg_frac, bg_pix_thresh
