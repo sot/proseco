@@ -35,6 +35,10 @@ from .core import (
     pea_reject_image,
 )
 
+OVERLAP_P_ACQ_PENALTY = 0.5  # p_acq multiplier for search box overlap
+OVERLAP_MAG_DEADBAND = 0.2  # overlap penalty applies for mag difference > deadband
+OVERLAP_PAD = 20  # arcsec, extra padding for overlap check
+
 
 def load_maxmags() -> dict:
     """
@@ -848,6 +852,34 @@ class AcqTable(ACACatalogTable):
 
         return prob
 
+    def get_overlap_penalties(self):
+        """
+        Get the penalties for overlapping boxes.
+
+        :returns: list of penalties (float)
+        """
+        n_acq = len(self)
+        penalties = np.ones(n_acq)
+        if os.environ.get("PROSECO_DISABLE_OVERLAP_PENALTY") == "False":
+            return penalties
+
+        for idx1 in range(n_acq):
+            acq1 = self[idx1]
+            for idx2 in range(idx1 + 1, n_acq):
+                acq2 = self[idx2]
+                overlap_threshold = acq1["halfw"] + acq2["halfw"] + OVERLAP_PAD
+                if (
+                    abs(acq1["yang"] - acq2["yang"]) < overlap_threshold
+                    and abs(acq1["zang"] - acq2["zang"]) < overlap_threshold
+                ):
+                    if acq1["mag"] + OVERLAP_MAG_DEADBAND < acq2["mag"]:
+                        # Star 1 is at least 0.2 mag brighter than star 2
+                        penalties[idx1] = OVERLAP_P_ACQ_PENALTY
+                    elif acq2["mag"] + OVERLAP_MAG_DEADBAND < acq1["mag"]:
+                        penalties[idx2] = OVERLAP_P_ACQ_PENALTY
+
+        return penalties
+
     def calc_p_safe(self, verbose=False):
         """
         Calculate the probability of a safing action resulting from failure
@@ -873,8 +905,10 @@ class AcqTable(ACACatalogTable):
                 continue
 
             p_acqs = [
-                prob.p_acqs(halfw, man_err, self)
-                for halfw, prob in zip(self_halfws, self_probs)
+                prob.p_acqs(halfw, man_err, self) * overlap_penalty
+                for halfw, prob, overlap_penalty in zip(
+                    self_halfws, self_probs, self.get_overlap_penalties()
+                )
             ]
 
             p_n_cum = prob_n_acq(p_acqs)[1]  # This returns (p_n, p_n_cum)
