@@ -20,6 +20,7 @@ from chandra_aca.transform import mag_to_count_rate, pixels_to_yagzag, snr_mag_f
 from scipy import ndimage, stats
 from scipy.interpolate import interp1d
 from ska_helpers.utils import LazyDict
+from functools import lru_cache
 
 from . import characteristics as ACA
 from . import characteristics_acq as ACQ
@@ -116,6 +117,26 @@ def filter_box_sizes_for_maxmag(
 
     return out
 
+
+@lru_cache
+def box_overlap(y1, z1, halfw1, y2, z2, halfw2, overlap_pad=10):
+    """
+    Check for overlap of two boxes.
+
+    :param y1: y centroid of first box (float, arcsec)
+    :param z1: z centroid of first box (float, arcsec)
+    :param halfw1: half width of first box (float, arcsec)
+    :param y2: y centroid of second box (float, arcsec)
+    :param z2: z centroid of second box (float, arcsec)
+    :param halfw2: half width of second box (float, arcsec)
+    :param overlap_pad: extra padding for overlap (float, arcsec)
+
+    :returns: True if boxes overlap, False otherwise
+    """
+    return (
+        abs(y1 - y2) < halfw1 + halfw2 + overlap_pad
+        and abs(z1 - z2) < halfw1 + halfw2 + overlap_pad
+    )
 
 def get_acq_catalog(obsid=0, **kwargs):
     """
@@ -851,6 +872,26 @@ class AcqTable(ACACatalogTable):
 
         return prob
 
+    def get_overlap_penalties(self):
+        """
+        Get the penalties for overlapping boxes.
+
+        :returns: list of penalties (float)
+        """
+        n_acq = len(self)
+        penalties = np.zeros(n_acq)
+
+        for idx1 in range(n_acq):
+            acq1 = self[idx1]
+            y1, z1, halfw1 = acq1["yang"], acq1["zang"], acq1["halfw"]
+            for idx2 in range(idx1 + 1, n_acq):
+                acq2 = self[idx2]
+                y2, z2, halfw2 = acq2["yang"], acq2["zang"], acq2["halfw"]
+                if box_overlap(y1, z1, halfw1, y2, z2, halfw2):
+                    penalties[idx1] = 1.0
+                    penalties[idx2] = 1.0
+        return penalties
+
     def calc_p_safe(self, verbose=False):
         """
         Calculate the probability of a safing action resulting from failure
@@ -879,6 +920,13 @@ class AcqTable(ACACatalogTable):
                 prob.p_acqs(halfw, man_err, self)
                 for halfw, prob in zip(self_halfws, self_probs)
             ]
+
+            # Check for overlapping boxes and if so, reduce the probability of
+            # acquiring the star.
+            if (("PROSECO_ACQ_OVERLAP_PENALTY" in os.environ)
+                & (os.environ["PROSECO_ACQ_OVERLAP_PENALTY"] == "True")):
+                    penalties = self.get_overlap_penalties()
+                    p_acqs = [p_acq * (1 - penalty) for p_acq, penalty in zip(p_acqs, penalties)]
 
             p_n_cum = prob_n_acq(p_acqs)[1]  # This returns (p_n, p_n_cum)
 
