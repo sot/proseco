@@ -692,22 +692,24 @@ class AcqTable(ACACatalogTable):
 
                 # If this box size could overlap with the box of an already selected star
                 # then skip it.
-                has_overlap = False
-                for other_idx, halfw2 in zip(acq_indices, box_sizes):
-                    other_acq = cand_acqs[other_idx]
-                    overlap_pad = 20
-                    halfw1 = box_size
-                    y1, z1 = acq["yang"], acq["zang"]
-                    y2, z2 = other_acq["yang"], other_acq["zang"]
-                    if (abs(y1 - y2) < halfw1 + halfw2 + overlap_pad
-                        and abs(z1 - z2) < halfw1 + halfw2 + overlap_pad):
-                            self.log(f"Skipping Star {acq_idx:2d} box {box_size:3d}, "
-                                 "possible overlap with already selected star "
-                                f"{other_acq['id']}", level=2)
-                            has_overlap = True
-                            break
-                if has_overlap:
-                    continue
+                if (("PROSECO_ACQ_OVERLAP_PENALTY" in os.environ)
+                    & (os.environ["PROSECO_ACQ_OVERLAP_PENALTY"] == "True")):
+                    has_overlap = False
+                    for other_idx, halfw2 in zip(acq_indices, box_sizes):
+                        other_acq = cand_acqs[other_idx]
+                        overlap_pad = 20
+                        halfw1 = box_size
+                        y1, z1 = acq["yang"], acq["zang"]
+                        y2, z2 = other_acq["yang"], other_acq["zang"]
+                        if (abs(y1 - y2) < halfw1 + halfw2 + overlap_pad
+                            and abs(z1 - z2) < halfw1 + halfw2 + overlap_pad):
+                                self.log(f"Skipping Star {acq_idx:2d} box {box_size:3d}, "
+                                    "possible overlap with already selected star "
+                                    f"{other_acq['id']}", level=2)
+                                has_overlap = True
+                                break
+                    if has_overlap:
+                        continue
 
                 p_acq = p_acqs_for_box[acq_idx]
                 accepted = p_acq > min_p_acq
