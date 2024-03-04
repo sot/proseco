@@ -1120,6 +1120,32 @@ class AcqTable(ACACatalogTable):
 
             idx = self.get_id_idx(acqs_id_ok[idx_worst])
 
+            # Does the candidate overlap with any of the selected stars (except
+            # the worst one?
+            if os.environ.get("PROSECO_ACQ_OVERLAP_PENALTY") == "True":
+                has_overlap = False
+                for selected_id in acqs_id_ok:
+                    if selected_id == acqs_id_ok[idx_worst]:
+                        continue
+                    selected_star = self.get_id(selected_id)
+                    if box_overlap(
+                        cand_acq["yang"],
+                        cand_acq["zang"],
+                        180,
+                        selected_star["yang"],
+                        selected_star["zang"],
+                        180,
+                    ):
+                        has_overlap = True
+                        break
+
+                if has_overlap:
+                    self.log(
+                        f"Skipping candidate {cand_id} due to overlap with already selected star",
+                        id=cand_id,
+                    )
+                    continue
+
             self.log(
                 "Trying to use {} mag={:.2f} to replace idx={} with p_acq={:.3f}".format(
                     cand_id, cand_acq["mag"], idx, p_acqs[idx_worst]
