@@ -20,7 +20,6 @@ from chandra_aca.transform import mag_to_count_rate, pixels_to_yagzag, snr_mag_f
 from scipy import ndimage, stats
 from scipy.interpolate import interp1d
 from ska_helpers.utils import LazyDict
-from functools import lru_cache
 
 from . import characteristics as ACA
 from . import characteristics_acq as ACQ
@@ -117,26 +116,6 @@ def filter_box_sizes_for_maxmag(
 
     return out
 
-
-@lru_cache
-def box_overlap(y1, z1, halfw1, y2, z2, halfw2, overlap_pad=10):
-    """
-    Check for overlap of two boxes.
-
-    :param y1: y centroid of first box (float, arcsec)
-    :param z1: z centroid of first box (float, arcsec)
-    :param halfw1: half width of first box (float, arcsec)
-    :param y2: y centroid of second box (float, arcsec)
-    :param z2: z centroid of second box (float, arcsec)
-    :param halfw2: half width of second box (float, arcsec)
-    :param overlap_pad: extra padding for overlap (float, arcsec)
-
-    :returns: True if boxes overlap, False otherwise
-    """
-    return (
-        abs(y1 - y2) < halfw1 + halfw2 + overlap_pad
-        and abs(z1 - z2) < halfw1 + halfw2 + overlap_pad
-    )
 
 def get_acq_catalog(obsid=0, **kwargs):
     """
@@ -881,6 +860,12 @@ class AcqTable(ACACatalogTable):
         n_acq = len(self)
         penalties = np.zeros(n_acq)
 
+        def box_overlap(y1, z1, halfw1, y2, z2, halfw2, overlap_pad=20):
+            return (
+                abs(y1 - y2) < halfw1 + halfw2 + overlap_pad
+                and abs(z1 - z2) < halfw1 + halfw2 + overlap_pad
+            )
+
         for idx1 in range(n_acq):
             acq1 = self[idx1]
             y1, z1, halfw1 = acq1["yang"], acq1["zang"], acq1["halfw"]
@@ -926,7 +911,10 @@ class AcqTable(ACACatalogTable):
             if (("PROSECO_ACQ_OVERLAP_PENALTY" in os.environ)
                 & (os.environ["PROSECO_ACQ_OVERLAP_PENALTY"] == "True")):
                     penalties = self.get_overlap_penalties()
-                    p_acqs = [p_acq * (1 - penalty) for p_acq, penalty in zip(p_acqs, penalties)]
+                    if np.count_nonzero(penalties):
+                        self.log("Overlapping boxes detected, applying penalty", level=1)
+                        self.log(f"{penalties}", level=1)
+                        p_acqs = [p_acq * (1 - penalty) for p_acq, penalty in zip(p_acqs, penalties)]
 
             p_n_cum = prob_n_acq(p_acqs)[1]  # This returns (p_n, p_n_cum)
 
