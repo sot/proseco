@@ -37,6 +37,25 @@ from .core import (
 )
 
 
+def box_overlap(y1, z1, halfw1, y2, z2, halfw2, overlap_pad=20):
+    """
+    Check for overlap of two boxes.
+    :param y1: y centroid of first box (float, arcsec)
+    :param z1: z centroid of first box (float, arcsec)
+    :param halfw1: half width of first box (float, arcsec)
+    :param y2: y centroid of second box (float, arcsec)
+    :param z2: z centroid of second box (float, arcsec)
+    :param halfw2: half width of second box (float, arcsec)
+    :param overlap_pad: extra padding for overlap (float, arcsec)
+    :returns: True if boxes overlap, False otherwise
+    """
+    return (
+        abs(y1 - y2) < halfw1 + halfw2 + overlap_pad
+        and abs(z1 - z2) < halfw1 + halfw2 + overlap_pad
+    )
+
+
+
 def load_maxmags() -> dict:
     """
     Load maxmags from disk.
@@ -696,12 +715,10 @@ class AcqTable(ACACatalogTable):
                     has_overlap = False
                     for other_idx, halfw2 in zip(acq_indices, box_sizes):
                         other_acq = cand_acqs[other_idx]
-                        overlap_pad = 20
                         halfw1 = box_size
                         y1, z1 = acq["yang"], acq["zang"]
                         y2, z2 = other_acq["yang"], other_acq["zang"]
-                        if (abs(y1 - y2) < halfw1 + halfw2 + overlap_pad
-                            and abs(z1 - z2) < halfw1 + halfw2 + overlap_pad):
+                        if box_overlap(y1, z1, halfw1, y2, z2, halfw2):
                                 self.log(f"Skipping Star {acq_idx:2d} box {box_size:3d}, "
                                     "possible overlap with already selected star "
                                     f"{other_acq['id']}", level=2)
@@ -879,12 +896,6 @@ class AcqTable(ACACatalogTable):
         """
         n_acq = len(self)
         penalties = np.zeros(n_acq)
-
-        def box_overlap(y1, z1, halfw1, y2, z2, halfw2, overlap_pad=20):
-            return (
-                abs(y1 - y2) < halfw1 + halfw2 + overlap_pad
-                and abs(z1 - z2) < halfw1 + halfw2 + overlap_pad
-            )
 
         for idx1 in range(n_acq):
             acq1 = self[idx1]
