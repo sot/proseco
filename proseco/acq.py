@@ -55,7 +55,6 @@ def box_overlap(y1, z1, halfw1, y2, z2, halfw2, overlap_pad=20):
     )
 
 
-
 def load_maxmags() -> dict:
     """
     Load maxmags from disk.
@@ -711,7 +710,7 @@ class AcqTable(ACACatalogTable):
 
                 # If this box size could overlap with the box of an already selected star
                 # then skip it.
-                if (os.environ.get("PROSECO_ACQ_OVERLAP_PENALTY") == "True"):
+                if os.environ.get("PROSECO_ACQ_OVERLAP_PENALTY") == "True":
                     has_overlap = False
                     for other_idx, halfw2 in zip(acq_indices, box_sizes):
                         other_acq = cand_acqs[other_idx]
@@ -719,11 +718,14 @@ class AcqTable(ACACatalogTable):
                         y1, z1 = acq["yang"], acq["zang"]
                         y2, z2 = other_acq["yang"], other_acq["zang"]
                         if box_overlap(y1, z1, halfw1, y2, z2, halfw2):
-                                self.log(f"Skipping Star {acq_idx:2d} box {box_size:3d}, "
-                                    "possible overlap with already selected star "
-                                    f"{other_acq['id']}", level=2)
-                                has_overlap = True
-                                break
+                            self.log(
+                                f"Skipping Star {acq_idx:2d} box {box_size:3d}, "
+                                "possible overlap with already selected star "
+                                f"{other_acq['id']}",
+                                level=2,
+                            )
+                            has_overlap = True
+                            break
                     if has_overlap:
                         continue
 
@@ -939,12 +941,15 @@ class AcqTable(ACACatalogTable):
 
             # Check for overlapping boxes and if so, reduce the probability of
             # acquiring the star.
-            if (os.environ.get("PROSECO_ACQ_OVERLAP_PENALTY") == "True"):
-                    penalties = self.get_overlap_penalties()
-                    if np.count_nonzero(penalties):
-                        self.log("Overlapping boxes detected, applying penalty", level=1)
-                        self.log(f"{penalties}", level=1)
-                        p_acqs = [p_acq * (1 - penalty) for p_acq, penalty in zip(p_acqs, penalties)]
+            if os.environ.get("PROSECO_ACQ_OVERLAP_PENALTY") == "True":
+                penalties = self.get_overlap_penalties()
+                if np.count_nonzero(penalties):
+                    self.log("Overlapping boxes detected, applying penalty", level=1)
+                    self.log(f"{penalties}", level=1)
+                    p_acqs = [
+                        p_acq * (1 - penalty)
+                        for p_acq, penalty in zip(p_acqs, penalties)
+                    ]
 
             p_n_cum = prob_n_acq(p_acqs)[1]  # This returns (p_n, p_n_cum)
 

@@ -159,9 +159,9 @@ class GuideTable(ACACatalogTable):
             dr = int(4 + np.ceil(self.dither.row if is_track else 0))
             dc = int(4 + np.ceil(self.dither.col if is_track else 0))
             row, col = int(monitor["row"]) + 512, int(monitor["col"]) + 512
-            self.dark[
-                row - dr : row + dr, col - dc : col + dc
-            ] = ACA.bad_pixel_dark_current  # noqa
+            self.dark[row - dr : row + dr, col - dc : col + dc] = (
+                ACA.bad_pixel_dark_current
+            )  # noqa
 
             # Reduce n_guide for each MON. On input the n_guide arg is the
             # number of GUI + MON, but for guide selection we need to make the
