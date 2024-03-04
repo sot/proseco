@@ -692,8 +692,7 @@ class AcqTable(ACACatalogTable):
 
                 # If this box size could overlap with the box of an already selected star
                 # then skip it.
-                if (("PROSECO_ACQ_OVERLAP_PENALTY" in os.environ)
-                    & (os.environ["PROSECO_ACQ_OVERLAP_PENALTY"] == "True")):
+                if (os.environ.get("PROSECO_ACQ_OVERLAP_PENALTY") == "True"):
                     has_overlap = False
                     for other_idx, halfw2 in zip(acq_indices, box_sizes):
                         other_acq = cand_acqs[other_idx]
@@ -929,8 +928,7 @@ class AcqTable(ACACatalogTable):
 
             # Check for overlapping boxes and if so, reduce the probability of
             # acquiring the star.
-            if (("PROSECO_ACQ_OVERLAP_PENALTY" in os.environ)
-                & (os.environ["PROSECO_ACQ_OVERLAP_PENALTY"] == "True")):
+            if (os.environ.get("PROSECO_ACQ_OVERLAP_PENALTY") == "True"):
                     penalties = self.get_overlap_penalties()
                     if np.count_nonzero(penalties):
                         self.log("Overlapping boxes detected, applying penalty", level=1)
