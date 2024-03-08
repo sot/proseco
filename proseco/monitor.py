@@ -186,9 +186,8 @@ class MonTable(ACACatalogTable):
                     "MFX" if monitor["function"] == MonFunc.MON_FIXED else "MTR"
                 )
                 mon["sz"] = "8x8"
-                mon["dim"] = (
-                    -999
-                )  # Set an obviously bad value for DTS, gets fixed later.
+                # Set an obviously bad value for DTS, gets fixed later.
+                mon["dim"] = -999
                 mon["res"] = 0
                 mon["halfw"] = 20
                 mon["maxmag"] = ACA.monitor_maxmag
