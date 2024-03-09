@@ -18,6 +18,11 @@ def disable_agasc_supplement(monkeypatch):
     monkeypatch.setenv(agasc.SUPPLEMENT_ENABLED_ENV, "False")
 
 
+@pytest.fixture(autouse=True)
+def disable_overlap_penalty(monkeypatch):
+    monkeypatch.setenv("PROSECO_DISABLE_OVERLAP_PENALTY", "True")
+
+
 # By default test with the latest AGASC version available including release candidates
 @pytest.fixture(autouse=True)
 def proseco_agasc_rc(monkeypatch):

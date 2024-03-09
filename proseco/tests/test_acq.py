@@ -462,7 +462,7 @@ def test_get_acq_catalog_19387(proseco_agasc_1p7):
     assert repr(acqs.cand_acqs[TEST_COLS]).splitlines() == exp
 
 
-def test_get_acq_catalog_21007(proseco_agasc_1p7):
+def test_get_acq_catalog_21007(proseco_agasc_1p7, disable_overlap_penalty):
     """Put it all together.  Regression test for selected stars.
 
     Also test that the acq prob model info dict is correctly set.
@@ -540,7 +540,7 @@ def test_get_acq_catalog_21007(proseco_agasc_1p7):
     assert info == exp
 
 
-def test_box_strategy_20603(proseco_agasc_1p7):
+def test_box_strategy_20603(proseco_agasc_1p7, disable_overlap_penalty):
     """Test for PR #32 that doesn't allow p_acq to be reduced below 0.1.
 
     The idx=8 (mag=10.50) star was previously selected with 160 arsec box.

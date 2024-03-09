@@ -120,6 +120,62 @@ def filter_box_sizes_for_maxmag(
     return out
 
 
+def box_overlap(y1, z1, halfw1, y2, z2, halfw2):
+    """Return True if boxes overlap, False otherwise.
+
+    :param y1: y centroid of first box (float, arcsec)
+    :param z1: z centroid of first box (float, arcsec)
+    :param halfw1: half width of first box (float, arcsec)
+    :param y2: y centroid of second box (float, arcsec)
+    :param z2: z centroid of second box (float, arcsec)
+    :param halfw2: half width of second box (float, arcsec)
+
+    :returns: True if boxes overlap, False otherwise
+    """
+    overlap_threshold = halfw1 + halfw2 + OVERLAP_PAD
+    return abs(y1 - y2) < overlap_threshold and abs(z1 - z2) < overlap_threshold
+
+
+def boxes_overlap(
+    y1: float,
+    z1: float,
+    halfw1: float,
+    cand_acqs: "AcqTable",
+    box_sizes: list,
+    acq_indices: list,
+) -> int:
+    """Check if candidate new acq box overlaps with already selected acq boxes.
+
+    This checks for overlaps between the box defined by (y1, z1, halfw1) and the boxes
+    defined by the rows in ``cand_acqs`` (yang and zang) and ``box_sizes`` with indices
+    in ``acq_indices``.
+
+    :param y1: y centroid of first box (float, arcsec)
+    :param z1: z centroid of first box (float, arcsec)
+    :param halfw1: half width of first box (float, arcsec)
+    :param cand_acqs: AcqTable of candidate acquisition stars
+    :param box_sizes: list of box sizes of selected stars
+    :param acq_indices: list of indices into cand_acqs of selected stars
+
+    :returns: AGASC ID of the first overlapping box, or 0 if no overlap
+    """
+    if os.environ.get("PROSECO_DISABLE_OVERLAP_PENALTY") == "True":
+        return 0
+
+    for idx, box_size in zip(acq_indices, box_sizes):
+        if box_overlap(
+            y1,
+            z1,
+            halfw1,
+            cand_acqs["yang"][idx],
+            cand_acqs["zang"][idx],
+            box_size,
+        ):
+            return cand_acqs["id"][idx]
+
+    return 0
+
+
 def get_acq_catalog(obsid=0, **kwargs):
     """
     Get a catalog of acquisition stars using the algorithm described in
@@ -335,8 +391,9 @@ class AcqTable(ACACatalogTable):
         :param acqs:
         :param acqs:
         """
-        for acq in self:
-            acq["p_acq"] = acq["probs"].p_acq_marg(acq["halfw"], acqs)
+        overlap_penalties = self.get_overlap_penalties()
+        for acq, overlap_penalty in zip(self, overlap_penalties, strict=True):
+            acq["p_acq"] = acq["probs"].p_acq_marg(acq["halfw"], acqs) * overlap_penalty
 
     def update_idxs_halfws(self, idxs, halfws):
         """
@@ -635,7 +692,9 @@ class AcqTable(ACACatalogTable):
 
         super().process_include_ids(cand_acqs, stars)
 
-    def select_best_p_acqs(self, cand_acqs, min_p_acq, acq_indices, box_sizes):
+    def select_best_p_acqs(
+        self, cand_acqs, min_p_acq, acq_indices, box_sizes, force=False
+    ):
         """
         Find stars with the highest acquisition probability according to the
         algorithm below.  ``p_acqs`` is the same-named column from candidate
@@ -657,6 +716,7 @@ class AcqTable(ACACatalogTable):
         :param min_p_acq: minimum p_acq to include in this round (float)
         :param acq_indices: list of indices into cand_acqs of selected stars
         :param box_sizes: list of box sizes of selected stars
+        :param force: force-include stars (default=False)
         """
         self.log(f"Find stars with best acq prob for min_p_acq={min_p_acq}")
         self.log(f"Current catalog: acq_indices={acq_indices} box_sizes={box_sizes}")
@@ -689,6 +749,24 @@ class AcqTable(ACACatalogTable):
 
                 # Don't consider any stars in the exclude list
                 if acq["id"] in self.exclude_ids:
+                    continue
+
+                # If acq and box size overlaps box of already selected star then skip.
+                if not force and (
+                    overlap_id := boxes_overlap(
+                        acq["yang"],
+                        acq["zang"],
+                        box_size,
+                        cand_acqs,
+                        box_sizes,
+                        acq_indices,
+                    )
+                ):
+                    self.log(
+                        f"Skipping star {acq_idx:2d} box {box_size:3d}, "
+                        f"overlaps with selected star {overlap_id}",
+                        level=2,
+                    )
                     continue
 
                 p_acq = p_acqs_for_box[acq_idx]
@@ -751,7 +829,11 @@ class AcqTable(ACACatalogTable):
                     # Select candidates meeting min_p_acq, and update
                     # acq_indices, box_sizes in place
                     self.select_best_p_acqs(
-                        cand_acqs[:n_include], min_p_acq, acq_indices, box_sizes
+                        cand_acqs[:n_include],
+                        min_p_acq,
+                        acq_indices,
+                        box_sizes,
+                        force=True,
                     )
 
             # This should never happen but be careful
@@ -860,7 +942,7 @@ class AcqTable(ACACatalogTable):
         """
         n_acq = len(self)
         penalties = np.ones(n_acq)
-        if os.environ.get("PROSECO_DISABLE_OVERLAP_PENALTY") == "False":
+        if os.environ.get("PROSECO_DISABLE_OVERLAP_PENALTY") == "True":
             return penalties
 
         for idx1 in range(n_acq):
