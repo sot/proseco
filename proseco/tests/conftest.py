@@ -1,5 +1,5 @@
-import pytest
 import agasc
+import pytest
 from agasc import get_agasc_filename
 
 

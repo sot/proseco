@@ -1,4 +1,3 @@
-# coding: utf-8
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 from copy import copy
@@ -6,7 +5,7 @@ from pathlib import Path
 
 import matplotlib
 
-matplotlib.use("agg")  # noqa
+matplotlib.use("agg")
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -144,7 +143,7 @@ def make_cand_report(guides, cand_guides, context, obsdir):
         log = reject_info_to_report(guide["id"], guides.reject_info)
         if guide["stage"] != -1:
             if guide["stage"] == 0:
-                log.append(f"FORCE Selected in stage 0")
+                log.append("FORCE Selected in stage 0")
             else:
                 log.append(f"Selected in stage {guide['stage']}")
             if guide["id"] not in guides["id"]:

@@ -1,7 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 import pickle
-from pathlib import Path
 
 import agasc
 import numpy as np
@@ -136,7 +135,7 @@ def test_box_greater():
     assert box1 > (10, 14.9)
 
     assert not box1 > (10, 15)
-    assert not box1 > box1
+    assert not box1 > box1  # noqa:PLR0124
     assert not box1 > (11, 16)
 
 

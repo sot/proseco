@@ -1,4 +1,3 @@
-# coding: utf-8
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 import functools
@@ -669,9 +668,9 @@ class ACACatalogTable(BaseCatalogTable):
         # Set pixel regions from ACA.bad_pixels to have acqs.dark=700000 (5.0 mag
         # star) per pixel.
         for r0, r1, c0, c1 in ACA.bad_pixels:
-            self._dark[
-                r0 + 512 : r1 + 513, c0 + 512 : c1 + 513
-            ] = ACA.bad_pixel_dark_current
+            self._dark[r0 + 512 : r1 + 513, c0 + 512 : c1 + 513] = (
+                ACA.bad_pixel_dark_current
+            )
 
     def set_attrs_from_kwargs(self, **kwargs):
         for name, val in kwargs.items():
@@ -825,11 +824,11 @@ class ACACatalogTable(BaseCatalogTable):
     @property
     def t_ccd(self):
         # Subclasses must implement.
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @t_ccd.setter
     def t_ccd(self, value):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
     def empty(cls):
@@ -1137,7 +1136,7 @@ class StarsTable(BaseCatalogTable):
             return logger
         else:
 
-            def null_logger(*args, **kwargs):
+            def null_logger(*args, **kwargs):  # noqa: ARG001
                 pass
 
             return null_logger
@@ -1257,7 +1256,7 @@ class StarsTable(BaseCatalogTable):
         stars = cls(stars, copy=copy)
         stars.att = att
 
-        logger(f"Updating star columns for attitude and convenience")
+        logger("Updating star columns for attitude and convenience")
 
         stars.meta["q_att"] = q_att
         yag, zag = radec_to_yagzag(stars["RA_PMCORR"], stars["DEC_PMCORR"], q_att)
@@ -1666,7 +1665,7 @@ def get_image_props(ccd_img, c_row, c_col, bgd=None):
     return img, img_sum, mag, row, col
 
 
-def pea_reject_image(img):
+def pea_reject_image(img):  # noqa: ARG001
     """
     Check if PEA would reject image (too narrow, too peaky, etc)
     """

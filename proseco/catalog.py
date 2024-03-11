@@ -1,4 +1,3 @@
-# coding: utf-8
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 import copy
@@ -630,8 +629,8 @@ class ObcCat(list):
             if self[slot]["type"] is None:
                 self[slot] = value
                 return slot
-        else:
-            raise IndexError("catalog is full")
+
+        raise IndexError("catalog is full")
 
     def as_table(self):
         colnames = list(ACA_CATALOG_DTYPES)
@@ -818,7 +817,7 @@ def merge_cats(fids=None, guides=None, acqs=None, mons=None):
     # Fids
     for guide in cat_guides:
         if guide["type"] == "FID":
-            rows.append(guide[colnames])
+            rows.append(guide[colnames])  # noqa: PERF401
 
     # Add BOT stars
     for guide, acq in zip(cat_guides, cat_acqs):
@@ -835,7 +834,7 @@ def merge_cats(fids=None, guides=None, acqs=None, mons=None):
     # Monitor stars
     for guide in cat_guides:
         if guide["type"] in ("MTR", "MFX"):
-            rows.append(guide[colnames])
+            rows.append(guide[colnames])  # noqa: PERF401
 
     # Acq only
     for guide, acq in zip(cat_guides, cat_acqs):

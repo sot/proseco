@@ -9,17 +9,26 @@ extend-exclude = [
 # incrementally fixing code to adhere to these rules, but for practical purposes they
 # can be ignored by uncommenting each one. You can also add to this list as needed.
 lint.extend-ignore = [
-  # "B905", # `zip()` without an explicit `strict=` parameter
+    "D205", # 1 blank line required between summary line and description
+    "B905", # `zip()` without an explicit `strict=` parameter
+    "B904", # Within an `except` clause, raise exceptions with `raise ... from err`
   # "PLC1901", # compare-to-empty-string
   # "PLR0911", # Too many returns
-  # "PLR0912", # Too many branches
-  # "PLR0915", # Too many statements
+   "PLR0912", # Too many branches
+   "PLR0915", # Too many statements
   # "PGH004", # Use specific rule codes when using `noqa`
-  # "C401", # Unnecessary generator (rewrite as a `set` comprehension)
-  # "C402", # Unnecessary generator (rewrite as a dict comprehension)
-  # "C405", # Unnecessary `list` literal (rewrite as a `set` literal)
-  # "C408", # Unnecessary `dict` call (rewrite as a literal)
-  # "C416", # Unnecessary `dict` comprehension (rewrite using `dict()`)
+   "C401", # Unnecessary generator (rewrite as a `set` comprehension)
+   "C402", # Unnecessary generator (rewrite as a dict comprehension)
+   "C405", # Unnecessary `list` literal (rewrite as a `set` literal)
+   "C408", # Unnecessary `dict` call (rewrite as a literal)
+   "C416", # Unnecessary `dict` comprehension (rewrite using `dict()`)
   # "G010", # warn is deprecated in favor of warning
   # "PYI056", # Calling `.append()` on `__all__` may not be supported by all type checkers
+]
+
+[lint.extend-per-file-ignores]
+"**/tests/*.py" = [
+    "TID252", # Prefer absolute imports over relative imports from parent modules
+    "C408", # Unnecessary `dict` call (rewrite as a literal)
+    "B905", # `zip()` without an explicit `strict=` parameter
 ]

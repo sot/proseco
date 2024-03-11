@@ -1050,7 +1050,8 @@ def test_dark_date_warning():
     # Fudge date forward, after the 2018:002 dark cal
     acap.date = "2018:010"
     with pytest.warns(UserWarning) as warns:
-        acap.dark  # Accessing the `dark` property triggers code to read it (and warn)
+        # Accessing the `dark` property triggers code to read it (and warn)
+        acap.dark  # noqa: B018
 
     assert len(warns) == 1
     assert "Unexpected dark_date: dark_id nearest dark_date" in str(warns[0].message)

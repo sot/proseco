@@ -1,4 +1,3 @@
-# coding: utf-8
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 import difflib
@@ -134,7 +133,7 @@ def get_catalog_lines(
     for name in out.colnames:
         col = out[name]
         if col.dtype.kind == "O":
-            col[col == None] = 0  # noqa
+            col[col == None] = 0  # noqa: E711
             out[name] = col.tolist()
 
     # Allow specifying custom formats. For instance starcheck uses 3 digits for
