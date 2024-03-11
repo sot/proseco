@@ -668,9 +668,9 @@ class ACACatalogTable(BaseCatalogTable):
         # Set pixel regions from ACA.bad_pixels to have acqs.dark=700000 (5.0 mag
         # star) per pixel.
         for r0, r1, c0, c1 in ACA.bad_pixels:
-            self._dark[
-                r0 + 512 : r1 + 513, c0 + 512 : c1 + 513
-            ] = ACA.bad_pixel_dark_current
+            self._dark[r0 + 512 : r1 + 513, c0 + 512 : c1 + 513] = (
+                ACA.bad_pixel_dark_current
+            )
 
     def set_attrs_from_kwargs(self, **kwargs):
         for name, val in kwargs.items():
