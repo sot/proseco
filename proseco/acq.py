@@ -981,6 +981,7 @@ class AcqTable(ACACatalogTable):
 
         self_halfws = self["halfw"]
         self_probs = self["probs"]
+        overlap_penalties = self.get_overlap_penalties()
 
         for man_err, p_man_err in zip(ACQ.man_errs, self.p_man_errs):
             if p_man_err == 0.0:
@@ -989,7 +990,7 @@ class AcqTable(ACACatalogTable):
             p_acqs = [
                 prob.p_acqs(halfw, man_err, self) * overlap_penalty
                 for halfw, prob, overlap_penalty in zip(
-                    self_halfws, self_probs, self.get_overlap_penalties()
+                    self_halfws, self_probs, overlap_penalties
                 )
             ]
 
