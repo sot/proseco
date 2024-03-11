@@ -322,7 +322,7 @@ def test_fids_include_exclude():
         dark=DARK40,
         **STD_INFO,
         include_ids=include_ids,
-        exclude_ids=exclude_ids
+        exclude_ids=exclude_ids,
     )
 
     assert fids.include_ids == include_ids
@@ -356,7 +356,7 @@ def test_fids_include_bad():
             dark=DARK40,
             **STD_INFO,
             include_ids=include_ids,
-            exclude_ids=exclude_ids
+            exclude_ids=exclude_ids,
         )
 
     # Set up a scenario with large offset so only two are on the CCD
@@ -369,7 +369,7 @@ def test_fids_include_bad():
     fids = get_fid_catalog(
         **mod_std_info(stars=StarsTable.empty(), sim_offset=80000),
         include_ids=include_ids,
-        exclude_ids=exclude_ids
+        exclude_ids=exclude_ids,
     )
 
     assert np.all(fids["id"] == [1, 2, 4])
