@@ -945,19 +945,31 @@ class AcqTable(ACACatalogTable):
         if os.environ.get("PROSECO_DISABLE_OVERLAP_PENALTY") == "True":
             return penalties
 
+        mags = self["mag"].data
+        halfws = self["halfw"].data
+        yangs = self["yang"].data
+        zangs = self["zang"].data
+
         for idx1 in range(n_acq):
-            acq1 = self[idx1]
+            mag1 = mags[idx1]
+            halfw1 = halfws[idx1]
+            yang1 = yangs[idx1]
+            zang1 = zangs[idx1]
+
             for idx2 in range(idx1 + 1, n_acq):
-                acq2 = self[idx2]
-                overlap_threshold = acq1["halfw"] + acq2["halfw"] + OVERLAP_PAD
+                mag2 = mags[idx2]
+                halfw2 = halfws[idx2]
+                yang2 = yangs[idx2]
+                zang2 = zangs[idx2]
+                overlap_threshold = halfw1 + halfw2 + OVERLAP_PAD
                 if (
-                    abs(acq1["yang"] - acq2["yang"]) < overlap_threshold
-                    and abs(acq1["zang"] - acq2["zang"]) < overlap_threshold
+                    abs(yang1 - yang2) < overlap_threshold
+                    and abs(zang1 - zang2) < overlap_threshold
                 ):
-                    if acq1["mag"] + OVERLAP_MAG_DEADBAND < acq2["mag"]:
+                    if mag1 + OVERLAP_MAG_DEADBAND < mag2:
                         # Star 1 is at least 0.2 mag brighter than star 2
                         penalties[idx1] = OVERLAP_P_ACQ_PENALTY
-                    elif acq2["mag"] + OVERLAP_MAG_DEADBAND < acq1["mag"]:
+                    elif mag2 + OVERLAP_MAG_DEADBAND < mag1:
                         penalties[idx2] = OVERLAP_P_ACQ_PENALTY
 
         return penalties
