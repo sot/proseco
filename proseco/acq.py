@@ -35,7 +35,7 @@ from .core import (
     pea_reject_image,
 )
 
-OVERLAP_P_ACQ_PENALTY = 0.5  # p_acq multiplier for search box overlap
+OVERLAP_P_ACQ_PENALTY = 0.7  # p_acq multiplier for search box overlap
 OVERLAP_MAG_DEADBAND = 0.2  # overlap penalty applies for mag difference > deadband
 OVERLAP_PAD = 20  # arcsec, extra padding for overlap check
 
@@ -171,7 +171,8 @@ def boxes_overlap(
             cand_acqs["zang"][idx],
             box_size,
         ):
-            return cand_acqs["id"][idx]
+            out = cand_acqs["id"][idx]
+            return out
 
     return 0
 
