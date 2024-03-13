@@ -35,6 +35,7 @@ from .core import (
     pea_reject_image,
 )
 
+# See https://github.com/sot/skanb/blob/master/aca-acq/acq-fails-bright-stars.ipynb
 OVERLAP_P_ACQ_PENALTY = 0.7  # p_acq multiplier for search box overlap
 OVERLAP_MAG_DEADBAND = 0.2  # overlap penalty applies for mag difference > deadband
 OVERLAP_PAD = 20  # arcsec, extra padding for overlap check
@@ -937,7 +938,10 @@ class AcqTable(ACACatalogTable):
 
     def get_overlap_penalties(self):
         """
-        Get the penalties for overlapping boxes.
+        Get the probability penalties for overlapping boxes.
+
+        This is returned as a multiplicative factor on the acquisition success
+        probability. No overlap penalty implies a value of 1.0.
 
         :returns: list of penalties (float)
         """

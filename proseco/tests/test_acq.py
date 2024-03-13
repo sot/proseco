@@ -5,6 +5,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+import ska_helpers.utils
 from chandra_aca import star_probs
 from chandra_aca.aca_image import AcaPsfLibrary
 from chandra_aca.transform import mag_to_count_rate, yagzag_to_pixels
@@ -586,6 +587,35 @@ def test_box_strategy_20603(proseco_agasc_1p7, disable_overlap_penalty):
     ]
 
     assert repr(acqs[TEST_COLS]).splitlines() == exp
+
+
+def test_overlap_penalty():
+    # Default setting which is to have overlap penalty
+    stars = StarsTable.empty()
+
+    stars.add_fake_constellation(
+        mag=[7.0, 7.1, 7.2, 7.3, 7.4, 7.5],
+        size=2000,
+        n_stars=6,
+    )
+    stars.add_fake_constellation(
+        mag=[9.0, 9.1],
+        size=1000,
+        n_stars=2,
+    )
+    stars.add_fake_star(yang=stars["yang"][0] - 240, zang=stars["zang"][0], mag=7.4)
+    stars.pprint_all()
+    with ska_helpers.utils.temp_env_var("PROSECO_DISABLE_OVERLAP_PENALTY", "False"):
+        acqs_p = get_acq_catalog(stars=stars, **STD_INFO)
+    print(acqs_p["id", "yang", "zang", "mag", "halfw"])
+    assert np.all(acqs_p.get_overlap_penalties() == 1.0)
+
+    with ska_helpers.utils.temp_env_var("PROSECO_DISABLE_OVERLAP_PENALTY", "True"):
+        acqs_np = get_acq_catalog(stars=stars, **STD_INFO)
+    print(acqs_np["id", "yang", "zang", "mag", "halfw"])
+    assert np.all(
+        acqs_np.get_overlap_penalties() == [0.7, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+    )
 
 
 def test_make_report(tmpdir):
