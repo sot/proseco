@@ -966,11 +966,7 @@ class AcqTable(ACACatalogTable):
                 halfw2 = halfws[idx2]
                 yang2 = yangs[idx2]
                 zang2 = zangs[idx2]
-                overlap_threshold = halfw1 + halfw2 + OVERLAP_PAD
-                if (
-                    abs(yang1 - yang2) < overlap_threshold
-                    and abs(zang1 - zang2) < overlap_threshold
-                ):
+                if box_overlap(yang1, zang1, halfw1, yang2, zang2, halfw2):
                     if mag1 + OVERLAP_MAG_DEADBAND < mag2:
                         # Star 1 is at least 0.2 mag brighter than star 2
                         penalties[idx1] = OVERLAP_P_ACQ_PENALTY
