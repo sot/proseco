@@ -57,7 +57,7 @@ def test_monitor_input_processing_ra_dec(stars):
     assert mon["id"] == 1000
 
 
-def test_monitor_mon_fixed_auto(proseco_agasc_1p7):
+def test_monitor_mon_fixed_auto(proseco_agasc_1p7, disable_overlap_penalty):
     """In this case the MON_TRACK slot is not near a star"""
     monitors = [
         [-1700, 1900, MonCoord.YAGZAG, 7.5, MonFunc.MON_FIXED],

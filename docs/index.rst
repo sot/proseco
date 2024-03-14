@@ -311,6 +311,9 @@ The following environment variables are used by proseco:
   If this is a relative path then it is relative to ``<default_agasc_dir>``.
 - ``AGASC_SUPPLEMENT_ENABLED``: set to ``"False"`` to disable using the AGASC
    supplement. This is for testing and should not be used in production.
+- ``PROSECO_DISABLE_OVERLAP_PENALTY``: if set to ``"True"`` then disable the
+  overlap penalty in the acq star selection. This is for testing and should not
+  be used in production.
 - ``PROSECO_ENABLE_FID_OFFSET``: controls application of time and temperature dependent fid
   light position offsets (from the ACA drift model) in :ref:`~proseco.fid.get_fid_positions`:
   - Not set: apply offsets if time and temperature are provided (as is done in ``proseco`` fid
