@@ -1,4 +1,3 @@
-# coding: utf-8
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 from copy import copy, deepcopy
@@ -6,7 +5,7 @@ from pathlib import Path
 
 import matplotlib
 
-matplotlib.use("agg")  # noqa
+matplotlib.use("agg")
 import matplotlib.pyplot as plt
 import numpy as np
 from astropy.table import Column, Table
@@ -290,7 +289,7 @@ def make_optimize_catalog_report(events, context):
     )
 
 
-def make_obsid_summary(acqs, events, context, obsdir):
+def make_obsid_summary(acqs, events, context, obsdir):  # noqa: ARG001
     acqs_table = acqs[ACQ_COLS]
     acqs_table["id"] = [
         '<a href="#{0}">{0}</a>'.format(acq["id"]) for acq in acqs_table

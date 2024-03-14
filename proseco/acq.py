@@ -1,4 +1,3 @@
-# coding: utf-8
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 """
@@ -674,9 +673,7 @@ class AcqTable(ACACatalogTable):
             self.log(f"Trying search box size {box_size} arcsec", level=1)
 
             if np.all(p_acqs_for_box < min_p_acq):
-                self.log(
-                    f"No acceptable candidates (probably small man angle)", level=2
-                )
+                self.log("No acceptable candidates (probably small man angle)", level=2)
                 continue
 
             indices = np.argsort(-p_acqs_for_box, kind="mergesort")
@@ -755,7 +752,7 @@ class AcqTable(ACACatalogTable):
 
             # This should never happen but be careful
             if len(acq_indices) != n_include:
-                raise RuntimeError(f"failure in force-include")
+                raise RuntimeError("failure in force-include")
 
             # For include stars where the halfw is not going to be optimized
             # then then override the box size that was just found with the
@@ -1352,10 +1349,9 @@ def get_intruders(acq, box_size, name, n_sigma, get_func, kwargs):
             intruders = intruders[ok]
         acq[name] = intruders
 
-    else:
+    elif box_size > acq[name_box]:
         # Ensure cached spoilers cover the current case.
-        if box_size > acq[name_box]:
-            raise ValueError(f"box_size is greater than {name_box}")
+        raise ValueError(f"box_size is greater than {name_box}")
 
     colnames = ["yang", "zang", "mag", "mag_err"]
     if len(intruders) == 0:
