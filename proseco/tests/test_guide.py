@@ -609,6 +609,30 @@ def test_guides_include_bad():
     assert "cannot include star id=20" in str(err)
 
 
+def test_guides_include_close():
+    """
+    Test force include stars where they would not be selected due to
+    clustering.
+    """
+    stars = StarsTable.empty()
+
+    stars.add_fake_constellation(
+        mag=[7.0, 7.0, 7.0, 7.0, 7.0],
+        id=[5, 6, 7, 8, 9],
+        size=2000,
+        n_stars=5)
+
+    stars.add_fake_star(mag=11.0, yang=100, zang=100, id=1)
+    stars.add_fake_star(mag=11.0, yang=-100, zang=-100, id=2)
+    stars.add_fake_star(mag=11.0, yang=100, zang=-100, id=3)
+    stars.add_fake_star(mag=11.0, yang=-100, zang=100, id=4)
+
+    include_ids = [1, 2, 3, 4]
+    guides = get_guide_catalog(**mod_std_info(n_guide=5),
+                               stars=stars, include_ids=include_ids)
+    assert np.all(np.in1d(include_ids, guides["id"]))
+
+
 @pytest.mark.parametrize("dither", dither_cases)
 def test_edge_star(dither):
     """

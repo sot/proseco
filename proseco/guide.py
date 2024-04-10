@@ -385,6 +385,17 @@ class GuideTable(ACACatalogTable):
         """
         self.log(f"Selecting catalog from {len(stage_cands)} stage-selected stars")
 
+        forced = np.in1d(stage_cands["id"], self.include_ids)
+        n_forced = np.count_nonzero(forced)
+        if self.n_guide == n_forced:
+            self.log("All guide stars are force-included")
+            return stage_cands[forced]
+
+
+        # This subtracts the number of unique force-included stars as they are not
+        # part of the combination selection process.
+        choose_m = min(len(stage_cands), self.n_guide) - n_forced
+
         def index_combinations(n, m):
             seen = set()
             for n_tmp in range(m, n + 1):
@@ -393,21 +404,18 @@ class GuideTable(ACACatalogTable):
                         seen.add(comb)
                         yield comb
 
-        # Set a dictionary to save the first combination of that satisfies N tests.
+        # Set a dictionary to save the first combination that satisfies N tests.
         # This will be used if no combination satisfies all the tests.
         select_results = {}
 
-        # I should come back to this and see if the "min" is needed or if the combinations
-        # code runs fine even if we have fewer-than-expected stage_cands to start
-        choose_m = min(len(stage_cands), self.n_guide)
-
         n_tries = 0
+        cands_not_forced = stage_cands[~forced]
         for n_tries, comb in enumerate(
-            index_combinations(len(stage_cands), choose_m), start=1
+            index_combinations(len(cands_not_forced), choose_m), start=1
         ):
-            cands = stage_cands[
-                list(comb)
-            ]  # (note that [(1,2)] is not the same as list((1,2))
+            all_ids = list(self.include_ids) + list(cands_not_forced["id"][list(comb)])
+            cands = stage_cands[np.in1d(stage_cands["id"], all_ids)]
+            # (note that [(1,2)] is not the same as list((1,2))
             n_pass, n_tests = run_select_checks(
                 cands
             )  # This function knows how many tests get run
