@@ -22,6 +22,7 @@ from ..guide import (
     get_ax_range,
     get_guide_catalog,
     get_pixmag_for_offset,
+    run_select_checks,
 )
 from ..report_guide import make_report
 from .test_common import DARK40, OBS_INFO, STD_INFO, mod_std_info
@@ -618,19 +619,36 @@ def test_guides_include_close():
 
     stars.add_fake_constellation(
         mag=[7.0, 7.0, 7.0, 7.0, 7.0],
-        id=[5, 6, 7, 8, 9],
+        id=[25, 26, 27, 28, 29],
         size=2000,
         n_stars=5)
 
-    stars.add_fake_star(mag=11.0, yang=100, zang=100, id=1)
-    stars.add_fake_star(mag=11.0, yang=-100, zang=-100, id=2)
-    stars.add_fake_star(mag=11.0, yang=100, zang=-100, id=3)
-    stars.add_fake_star(mag=11.0, yang=-100, zang=100, id=4)
+    stars.add_fake_star(mag=11.0, yang=100, zang=100, id=21)
+    stars.add_fake_star(mag=11.0, yang=-100, zang=-100, id=22)
+    stars.add_fake_star(mag=11.0, yang=100, zang=-100, id=23)
+    stars.add_fake_star(mag=11.0, yang=-100, zang=100, id=24)
 
-    include_ids = [1, 2, 3, 4]
-    guides = get_guide_catalog(**mod_std_info(n_guide=5),
-                               stars=stars, include_ids=include_ids)
-    assert np.all(np.in1d(include_ids, guides["id"]))
+    cat1 = get_guide_catalog(**mod_std_info(n_guide=5),
+                             stars=stars)
+
+    # Run the cluster checks and confirm all 3 pass
+    cat1_pass, _ = run_select_checks(cat1)
+    assert cat1_pass == 3
+
+    # Confirm that only bright stars are used
+    assert np.count_nonzero(cat1["mag"] == 7.0) == 5
+
+    # Force include the faint 4 stars that are also close together
+    include_ids = [21, 22, 23, 24]
+    cat2 = get_guide_catalog(**mod_std_info(n_guide=5),
+                             stars=stars, include_ids_guide=include_ids)
+
+    # Run the cluster checks and confirm all 3 fail
+    cat2_pass, _ = run_select_checks(cat2)
+    assert cat2_pass == 0
+    assert np.all(np.in1d(include_ids, cat2["id"]))
+    # And confirm that only one of the bright stars is used
+    assert np.count_nonzero(cat2["mag"] == 7.0) == 1
 
 
 @pytest.mark.parametrize("dither", dither_cases)
