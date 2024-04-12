@@ -618,18 +618,15 @@ def test_guides_include_close():
     stars = StarsTable.empty()
 
     stars.add_fake_constellation(
-        mag=[7.0, 7.0, 7.0, 7.0, 7.0],
-        id=[25, 26, 27, 28, 29],
-        size=2000,
-        n_stars=5)
+        mag=[7.0, 7.0, 7.0, 7.0, 7.0], id=[25, 26, 27, 28, 29], size=2000, n_stars=5
+    )
 
     stars.add_fake_star(mag=11.0, yang=100, zang=100, id=21)
     stars.add_fake_star(mag=11.0, yang=-100, zang=-100, id=22)
     stars.add_fake_star(mag=11.0, yang=100, zang=-100, id=23)
     stars.add_fake_star(mag=11.0, yang=-100, zang=100, id=24)
 
-    cat1 = get_guide_catalog(**mod_std_info(n_guide=5),
-                             stars=stars)
+    cat1 = get_guide_catalog(**mod_std_info(n_guide=5), stars=stars)
 
     # Run the cluster checks and confirm all 3 pass
     cat1_pass, _ = run_select_checks(cat1)
@@ -640,8 +637,9 @@ def test_guides_include_close():
 
     # Force include the faint 4 stars that are also close together
     include_ids = [21, 22, 23, 24]
-    cat2 = get_guide_catalog(**mod_std_info(n_guide=5),
-                             stars=stars, include_ids_guide=include_ids)
+    cat2 = get_guide_catalog(
+        **mod_std_info(n_guide=5), stars=stars, include_ids_guide=include_ids
+    )
 
     # Run the cluster checks and confirm all 3 fail
     cat2_pass, _ = run_select_checks(cat2)

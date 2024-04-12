@@ -391,7 +391,6 @@ class GuideTable(ACACatalogTable):
             self.log("All guide stars are force-included")
             return stage_cands[forced]
 
-
         # This subtracts the number of unique force-included stars as they are not
         # part of the combination selection process.
         choose_m = min(len(stage_cands), self.n_guide) - n_forced
