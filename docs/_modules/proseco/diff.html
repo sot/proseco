@@ -1,17 +1,16 @@
-
 <!DOCTYPE html>
 
-<html lang="en">
+<html lang="en" data-content_root="../../">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>proseco.diff &#8212; proseco 5.12.0 documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/bootstrap-astropy.css" />
+    <title>proseco.diff &#8212; proseco 5.13.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/bootstrap-astropy.css?v=f4f7060c" />
     
-    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/doctools.js"></script>
-    <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/documentation_options.js?v=9fc23799"></script>
+    <script src="../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script type="text/javascript" src="../../_static/sidebar.js"></script>
     <script type="text/javascript" src="../../_static/copybutton.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
@@ -45,7 +44,7 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../index.html">proseco 5.12.0 documentation</a>
+	<a href="../../index.html">proseco 5.13.0 documentation</a>
 	 &#187;
       </li>
       <li><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
@@ -61,8 +60,7 @@
           <div class="body" role="main">
             
   <h1>Source code for proseco.diff</h1><div class="highlight"><pre>
-<span></span><span class="c1"># coding: utf-8</span>
-<span class="c1"># Licensed under a 3-clause BSD style license - see LICENSE.rst</span>
+<span></span><span class="c1"># Licensed under a 3-clause BSD style license - see LICENSE.rst</span>
 
 <span class="kn">import</span> <span class="nn">difflib</span>
 <span class="kn">import</span> <span class="nn">os</span>
@@ -124,7 +122,9 @@
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;get_catalog_lines&quot;</span><span class="p">,</span> <span class="s2">&quot;catalog_diff&quot;</span><span class="p">,</span> <span class="s2">&quot;CatalogDiff&quot;</span><span class="p">]</span>
 
 
-<div class="viewcode-block" id="get_catalog_lines"><a class="viewcode-back" href="../../api.html#proseco.diff.get_catalog_lines">[docs]</a><span class="k">def</span> <span class="nf">get_catalog_lines</span><span class="p">(</span>
+<div class="viewcode-block" id="get_catalog_lines">
+<a class="viewcode-back" href="../../api.html#proseco.diff.get_catalog_lines">[docs]</a>
+<span class="k">def</span> <span class="nf">get_catalog_lines</span><span class="p">(</span>
     <span class="n">cat</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">section_lines</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">sort_name</span><span class="o">=</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="n">formats</span><span class="o">=</span><span class="kc">None</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Get list of lines representing catalog suitable for diffing.</span>
@@ -197,7 +197,7 @@
     <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">out</span><span class="o">.</span><span class="n">colnames</span><span class="p">:</span>
         <span class="n">col</span> <span class="o">=</span> <span class="n">out</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;O&quot;</span><span class="p">:</span>
-            <span class="n">col</span><span class="p">[</span><span class="n">col</span> <span class="o">==</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># noqa</span>
+            <span class="n">col</span><span class="p">[</span><span class="n">col</span> <span class="o">==</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># noqa: E711</span>
             <span class="n">out</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">col</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
 
     <span class="c1"># Allow specifying custom formats. For instance starcheck uses 3 digits for</span>
@@ -224,7 +224,10 @@
     <span class="k">return</span> <span class="n">lines</span></div>
 
 
-<div class="viewcode-block" id="CatalogDiff"><a class="viewcode-back" href="../../api.html#proseco.diff.CatalogDiff">[docs]</a><span class="k">class</span> <span class="nc">CatalogDiff</span><span class="p">:</span>
+
+<div class="viewcode-block" id="CatalogDiff">
+<a class="viewcode-back" href="../../api.html#proseco.diff.CatalogDiff">[docs]</a>
+<span class="k">class</span> <span class="nc">CatalogDiff</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Represent an ACA catalog diff as either HTML or plain text&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">is_html</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
@@ -240,17 +243,23 @@
     <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">text</span>
 
-<div class="viewcode-block" id="CatalogDiff.write"><a class="viewcode-back" href="../../api.html#proseco.diff.CatalogDiff.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">out_file</span><span class="p">):</span>
+<div class="viewcode-block" id="CatalogDiff.write">
+<a class="viewcode-back" href="../../api.html#proseco.diff.CatalogDiff.write">[docs]</a>
+    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">out_file</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Write output to ``out_file``</span>
 
 <span class="sd">        :param out_file: str, Path</span>
 <span class="sd">            Output file</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">out_file</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
-            <span class="n">fh</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="p">)</span></div></div>
+            <span class="n">fh</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="catalog_diff"><a class="viewcode-back" href="../../api.html#proseco.diff.catalog_diff">[docs]</a><span class="k">def</span> <span class="nf">catalog_diff</span><span class="p">(</span>
+
+<div class="viewcode-block" id="catalog_diff">
+<a class="viewcode-back" href="../../api.html#proseco.diff.catalog_diff">[docs]</a>
+<span class="k">def</span> <span class="nf">catalog_diff</span><span class="p">(</span>
     <span class="n">cats1</span><span class="p">,</span>
     <span class="n">cats2</span><span class="p">,</span>
     <span class="n">style</span><span class="o">=</span><span class="s2">&quot;html&quot;</span><span class="p">,</span>
@@ -347,6 +356,7 @@
         <span class="n">text_all</span> <span class="o">+=</span> <span class="n">text</span>
 
     <span class="k">return</span> <span class="n">CatalogDiff</span><span class="p">(</span><span class="n">header</span> <span class="o">+</span> <span class="n">text_all</span> <span class="o">+</span> <span class="n">footer</span><span class="p">,</span> <span class="n">is_html</span><span class="o">=</span><span class="p">(</span><span class="n">style</span> <span class="o">==</span> <span class="s2">&quot;html&quot;</span><span class="p">))</span></div>
+
 </pre></div>
 
             <div class="clearer"></div>
@@ -371,7 +381,7 @@
     <a href="#">Back to Top</a></p>
   <p>
     &copy; Copyright 2018, Tom Aldcroft, Jean Connelly.<br/>
-    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 6.1.3. &nbsp;
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 7.2.6. &nbsp;
   </p>
 </footer>
   </body>
