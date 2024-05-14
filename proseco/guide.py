@@ -402,12 +402,18 @@ class GuideTable(ACACatalogTable):
         choose_m = min(len(stage_cands), self.n_guide)
 
         n_tries = 0
-        for n_tries, comb in enumerate(
-            index_combinations(len(stage_cands), choose_m), start=1
-        ):
+        for comb in index_combinations(len(stage_cands), choose_m):
             cands = stage_cands[
                 list(comb)
             ]  # (note that [(1,2)] is not the same as list((1,2))
+
+            # If there are any include_ids, then the selected stars must include them.
+            # If not, skip this combination.
+            if self.include_ids and not set(self.include_ids).issubset(cands["id"]):
+                continue
+
+            n_tries += 1
+
             n_pass, n_tests = run_select_checks(
                 cands
             )  # This function knows how many tests get run
