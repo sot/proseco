@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>proseco.fid &#8212; proseco 5.13.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/bootstrap-astropy.css?v=f4f7060c" />
+    
+    <script src="../../_static/documentation_options.js?v=3bbab380"></script>
+    <script src="../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script type="text/javascript" src="../../_static/sidebar.js"></script>
+    <script type="text/javascript" src="../../_static/copybutton.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,600' rel='stylesheet' type='text/css'/>
+
+  </head><body>
+<div class="topbar">
+  <a class="brand" title="Documentation Home" href="../../index.html"><span id="logotext1">Ska!</span><span id="logotext2">proseco</span><span id="logotext3"></span></a>
+  <ul>
+    
+    <li><a class="home" title="Homepage" href="https://cxc.cfa.harvard.edu/mta/ASPECT/tool_doc">
+        <span id="logotext1">ska</span><span id="logotext2">tools</span>
+    </a></li>
+    <li><a title="General Index" href="../../genindex.html">Index</a></li>
+    <li><a title="Module Index" href="../../py-modindex.html">Modules</a></li>
+    <li>
+      
+      
+<form action="../../search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+      
+    </li>
+  </ul>
+</div>
+
+<div class="related">
+    <h3>Navigation</h3>
+    <ul>
+      <li>
+	<a href="../../index.html">proseco 5.13.1 documentation</a>
+	 &#187;
+      </li>
+      <li><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+      
+       
+    </ul>
+</div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for proseco.fid</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Licensed under a 3-clause BSD style license - see LICENSE.rst</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Get a catalog of fid lights.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">weakref</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">chandra_aca.drift</span> <span class="kn">import</span> <span class="n">get_fid_offset</span>
+<span class="kn">from</span> <span class="nn">chandra_aca.transform</span> <span class="kn">import</span> <span class="n">yagzag_to_pixels</span>
+<span class="kn">from</span> <span class="nn">cxotime</span> <span class="kn">import</span> <span class="n">CxoTimeLike</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">characteristics</span> <span class="k">as</span> <span class="n">ACA</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">characteristics_acq</span> <span class="k">as</span> <span class="n">ACQ</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">characteristics_fid</span> <span class="k">as</span> <span class="n">FID</span>
+<span class="kn">from</span> <span class="nn">.core</span> <span class="kn">import</span> <span class="n">ACACatalogTable</span><span class="p">,</span> <span class="n">AliasAttribute</span><span class="p">,</span> <span class="n">MetaAttribute</span>
+
+
+<div class="viewcode-block" id="get_fid_catalog">
+<a class="viewcode-back" href="../../api.html#proseco.fid.get_fid_catalog">[docs]</a>
+<span class="k">def</span> <span class="nf">get_fid_catalog</span><span class="p">(</span><span class="n">obsid</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get a catalog of fid lights.</span>
+
+<span class="sd">    This is the initial selection and only returns a catalog that is &quot;perfect&quot;:</span>
+
+<span class="sd">    - No fids are spoiled by a star</span>
+<span class="sd">    - No fids spoil an acq star (via ``acqs``)</span>
+
+<span class="sd">    If no such fid catalog is available this function returns a zero-length</span>
+<span class="sd">    FidTable.  In this case a subsequent concurrent optimization of fid lights</span>
+<span class="sd">    and acq stars is peformed.</span>
+
+<span class="sd">    :param detector: &#39;ACIS-S&#39; | &#39;ACIS-I&#39; | &#39;HRC-S&#39; | &#39;HRC-I&#39;</span>
+<span class="sd">    :param focus_offset: SIM focus offset [steps] (default=0)</span>
+<span class="sd">    :param sim_offset: SIM translation offset from nominal [steps] (default=0)</span>
+<span class="sd">    :param acqs: AcqTable catalog.  Optional but needed for actual fid selection.</span>
+<span class="sd">    :param stars: stars table.  Defaults to acqs.stars if available.</span>
+<span class="sd">    :param dither_acq: acq dither size (2-element sequence (y, z), arcsec)</span>
+<span class="sd">    :param dither_guide: guide dither size (2-element sequence (y, z), arcsec)</span>
+<span class="sd">    :param include_ids: fid ids to force include. If no possible sets of fids include</span>
+<span class="sd">                        the id (aka index), no fids will be selected.</span>
+<span class="sd">    :param exclude_ids: fid ids to exclude</span>
+<span class="sd">    :param n_fid: number of desired fid lights</span>
+<span class="sd">    :param print_log: print log to stdout (default=False)</span>
+
+<span class="sd">    :returns: fid catalog (FidTable)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># If no fids are requested then just initialize an empty table</span>
+    <span class="c1"># here, set the attributes and return the table.  No need to go</span>
+    <span class="c1"># through the trouble of getting candidate fids.</span>
+    <span class="n">fids</span> <span class="o">=</span> <span class="n">FidTable</span><span class="p">()</span>
+    <span class="n">fids</span><span class="o">.</span><span class="n">set_attrs_from_kwargs</span><span class="p">(</span><span class="n">obsid</span><span class="o">=</span><span class="n">obsid</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">fids</span><span class="o">.</span><span class="n">n_fid</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">empty_fids</span> <span class="o">=</span> <span class="n">FidTable</span><span class="o">.</span><span class="n">empty</span><span class="p">()</span>
+        <span class="n">empty_fids</span><span class="o">.</span><span class="n">meta</span> <span class="o">=</span> <span class="n">fids</span><span class="o">.</span><span class="n">meta</span>
+        <span class="k">return</span> <span class="n">empty_fids</span>
+
+    <span class="n">fids</span><span class="o">.</span><span class="n">set_stars</span><span class="p">(</span><span class="n">acqs</span><span class="o">=</span><span class="n">fids</span><span class="o">.</span><span class="n">acqs</span><span class="p">)</span>
+    <span class="n">fids</span><span class="o">.</span><span class="n">cand_fids</span> <span class="o">=</span> <span class="n">fids</span><span class="o">.</span><span class="n">get_fid_candidates</span><span class="p">()</span>
+
+    <span class="c1"># Set list of available fid_set&#39;s, accounting for n_fid and cand_fids.</span>
+    <span class="n">fids</span><span class="o">.</span><span class="n">cand_fid_sets</span> <span class="o">=</span> <span class="n">fids</span><span class="o">.</span><span class="n">get_cand_fid_sets</span><span class="p">()</span>
+
+    <span class="c1"># Set initial fid catalog if possible to a set for which no field stars</span>
+    <span class="c1"># spoiler any of the fid lights and no fid lights is a search spoilers for</span>
+    <span class="c1"># any current acq star.  If not possible then the table is still zero</span>
+    <span class="c1"># length and we need to fall through to the optimization process.</span>
+    <span class="n">fids</span><span class="o">.</span><span class="n">set_initial_catalog</span><span class="p">()</span>
+
+    <span class="c1"># Add a `slot` column that makes sense</span>
+    <span class="n">fids</span><span class="o">.</span><span class="n">set_slot_column</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">fids</span></div>
+
+
+
+<div class="viewcode-block" id="FidTable">
+<a class="viewcode-back" href="../../api.html#proseco.fid.FidTable">[docs]</a>
+<span class="k">class</span> <span class="nc">FidTable</span><span class="p">(</span><span class="n">ACACatalogTable</span><span class="p">):</span>
+    <span class="c1"># Define base set of allowed keyword args to __init__. Subsequent MetaAttribute</span>
+    <span class="c1"># or AliasAttribute properties will add to this.</span>
+    <span class="n">allowed_kwargs</span> <span class="o">=</span> <span class="n">ACACatalogTable</span><span class="o">.</span><span class="n">allowed_kwargs</span> <span class="o">|</span> <span class="nb">set</span><span class="p">([</span><span class="s2">&quot;acqs&quot;</span><span class="p">])</span>
+
+    <span class="c1"># Catalog type when plotting (None | &#39;FID&#39; | &#39;ACQ&#39; | &#39;GUI&#39;)</span>
+    <span class="n">catalog_type</span> <span class="o">=</span> <span class="s2">&quot;FID&quot;</span>
+
+    <span class="c1"># Name of table.  Use to define default file names where applicable.</span>
+    <span class="c1"># (e.g. `obs19387/fids.pkl`).</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;fids&quot;</span>
+
+    <span class="n">cand_fids</span> <span class="o">=</span> <span class="n">MetaAttribute</span><span class="p">(</span><span class="n">is_kwarg</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">cand_fid_sets</span> <span class="o">=</span> <span class="n">MetaAttribute</span><span class="p">(</span><span class="n">is_kwarg</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="n">required_attrs</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;att&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;detector&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;sim_offset&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;focus_offset&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;t_ccd_acq&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;t_ccd_guide&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;date&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;dither_acq&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;dither_guide&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">include_ids</span> <span class="o">=</span> <span class="n">AliasAttribute</span><span class="p">()</span>
+    <span class="n">exclude_ids</span> <span class="o">=</span> <span class="n">AliasAttribute</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">acqs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_acqs</span><span class="p">()</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_acqs&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+
+    <span class="nd">@acqs</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">acqs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Note some subtlety here - this is using a standard __dict__ attribute</span>
+<span class="sd">        ``_acqs`` instead of a MetaAttribute, and thus the weakref here is</span>
+<span class="sd">        ignored in pickling because Table does not pickle the __dict__, it only</span>
+<span class="sd">        pickles the columns and the ``meta`` attribute.</span>
+
+<span class="sd">        This overrides the base class definition which *does* store the value in</span>
+<span class="sd">        ``.meta`` so it gets into the pickle.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_acqs</span> <span class="o">=</span> <span class="n">weakref</span><span class="o">.</span><span class="n">ref</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">t_ccd</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># For fids use the guide CCD temperature</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_ccd_guide</span>
+
+    <span class="nd">@t_ccd</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">t_ccd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">t_ccd_guide</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">t_ccd_acq</span> <span class="o">=</span> <span class="n">value</span>
+
+    <span class="k">def</span> <span class="nf">set_fid_set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fid_ids</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">remove_rows</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)))</span>
+        <span class="k">for</span> <span class="n">fid_id</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">fid_ids</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_row</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cand_fids</span><span class="o">.</span><span class="n">get_id</span><span class="p">(</span><span class="n">fid_id</span><span class="p">))</span>
+
+<div class="viewcode-block" id="FidTable.get_cand_fid_sets">
+<a class="viewcode-back" href="../../api.html#proseco.fid.FidTable.get_cand_fid_sets">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_cand_fid_sets</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get a list of candidate fid-sets that can be selected given the list</span>
+<span class="sd">        of candidate fids that are available.  It also ensure that the fid sets</span>
+<span class="sd">        are compatible with the specified n_fid.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cand_fids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cand_fids</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_fid</span> <span class="o">&gt;</span> <span class="mi">3</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_fid</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;number of fids n_fid must be between 0 and 3 inclusive&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Final number of fids is the max of n_fid and the number of candidate fids.</span>
+        <span class="n">actual_n_fid</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_fid</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">cand_fids</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">actual_n_fid</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">cand_fid_sets</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">elif</span> <span class="n">actual_n_fid</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">cand_fid_sets</span> <span class="o">=</span> <span class="p">[</span><span class="nb">set</span><span class="p">([</span><span class="n">fid_id</span><span class="p">])</span> <span class="k">for</span> <span class="n">fid_id</span> <span class="ow">in</span> <span class="n">cand_fids</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]]</span>
+
+        <span class="k">elif</span> <span class="n">actual_n_fid</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="c1"># Make a list of available pairs sorted in order of radial separation</span>
+            <span class="c1"># (largest first).</span>
+            <span class="n">dist2s</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">fid_ids0</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">fid_ids1</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">idx0</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cand_fids</span><span class="p">)):</span>
+                <span class="k">for</span> <span class="n">idx1</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">idx0</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">cand_fids</span><span class="p">)):</span>
+                    <span class="n">fid0</span> <span class="o">=</span> <span class="n">cand_fids</span><span class="p">[</span><span class="n">idx0</span><span class="p">]</span>
+                    <span class="n">fid1</span> <span class="o">=</span> <span class="n">cand_fids</span><span class="p">[</span><span class="n">idx1</span><span class="p">]</span>
+                    <span class="n">dist2</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span>
+                        <span class="p">(</span><span class="n">fid0</span><span class="p">[</span><span class="s2">&quot;yang&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">fid1</span><span class="p">[</span><span class="s2">&quot;yang&quot;</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span>
+                        <span class="o">+</span> <span class="p">(</span><span class="n">fid0</span><span class="p">[</span><span class="s2">&quot;zang&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">fid1</span><span class="p">[</span><span class="s2">&quot;zang&quot;</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span>
+                    <span class="p">)</span>
+                    <span class="n">fid_ids0</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fid0</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">])</span>
+                    <span class="n">fid_ids1</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fid1</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">])</span>
+                    <span class="n">dist2s</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dist2</span><span class="p">)</span>
+
+            <span class="n">sort_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">dist2s</span><span class="p">)</span>
+            <span class="n">fid_ids0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">fid_ids0</span><span class="p">)[</span><span class="n">sort_idx</span><span class="p">]</span>
+            <span class="n">fid_ids1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">fid_ids1</span><span class="p">)[</span><span class="n">sort_idx</span><span class="p">]</span>
+
+            <span class="n">cand_fid_sets</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="nb">set</span><span class="p">([</span><span class="n">fid_id0</span><span class="p">,</span> <span class="n">fid_id1</span><span class="p">])</span> <span class="k">for</span> <span class="n">fid_id0</span><span class="p">,</span> <span class="n">fid_id1</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">fid_ids0</span><span class="p">,</span> <span class="n">fid_ids1</span><span class="p">)</span>
+            <span class="p">]</span>
+
+        <span class="k">elif</span> <span class="n">actual_n_fid</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">cand_fids_ids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">cand_fids</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">])</span>
+            <span class="n">cand_fid_sets</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">fid_set</span>
+                <span class="k">for</span> <span class="n">fid_set</span> <span class="ow">in</span> <span class="n">FID</span><span class="o">.</span><span class="n">fid_sets</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">detector</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">fid_set</span> <span class="o">&lt;=</span> <span class="n">cand_fids_ids</span>
+            <span class="p">]</span>
+
+        <span class="c1"># Restrict candidate fid sets to those that entirely contain the include_ids_set</span>
+        <span class="n">include_ids_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">include_ids_fid</span><span class="p">)</span>
+        <span class="n">cand_fid_sets</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">fid_set</span> <span class="k">for</span> <span class="n">fid_set</span> <span class="ow">in</span> <span class="n">cand_fid_sets</span> <span class="k">if</span> <span class="n">fid_set</span> <span class="o">&gt;=</span> <span class="n">include_ids_set</span>
+        <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Reducing fid sets to those that include fid ids </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">include_ids_fid</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">cand_fid_sets</span></div>
+
+
+<div class="viewcode-block" id="FidTable.set_slot_column">
+<a class="viewcode-back" href="../../api.html#proseco.fid.FidTable.set_slot_column">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_slot_column</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the `slot` column.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="p">[</span><span class="s2">&quot;slot&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+
+        <span class="c1"># Add slot to cand_fids table, putting in -99 if not selected as acq.</span>
+        <span class="c1"># This is for convenience in downstream reporting or introspection.</span>
+        <span class="n">cand_fids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cand_fids</span>
+        <span class="n">slots</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_id</span><span class="p">(</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">])[</span><span class="s2">&quot;slot&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="k">else</span> <span class="o">-</span><span class="mi">99</span>
+            <span class="k">for</span> <span class="n">fid</span> <span class="ow">in</span> <span class="n">cand_fids</span>
+        <span class="p">]</span>
+        <span class="n">cand_fids</span><span class="p">[</span><span class="s2">&quot;slot&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">slots</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="FidTable.set_initial_catalog">
+<a class="viewcode-back" href="../../api.html#proseco.fid.FidTable.set_initial_catalog">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_initial_catalog</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set initial fid catalog (fid set) if possible to the first set which is</span>
+<span class="sd">        &quot;perfect&quot;:</span>
+
+<span class="sd">        - No field stars spoiler any of the fid lights</span>
+<span class="sd">        - Fid lights are not search spoilers for any of the current acq stars</span>
+
+<span class="sd">        If not possible then the table is still zero length and we will need to</span>
+<span class="sd">        fall through to the optimization process.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Start by getting the id of every fid that has a zero spoiler score,</span>
+        <span class="c1"># meaning no star spoils the fid as set previously in get_initial_candidates.</span>
+        <span class="n">cand_fids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cand_fids</span>
+        <span class="n">unspoiled_fid_ids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+            <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">fid</span> <span class="ow">in</span> <span class="n">cand_fids</span> <span class="k">if</span> <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;spoiler_score&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Get list of fid_sets that are consistent with candidate fids. These</span>
+        <span class="c1"># fid sets are the combinations of 3 (or 2) fid lights in preferred</span>
+        <span class="c1"># order.</span>
+        <span class="n">ok_fid_sets</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">fid_set</span> <span class="k">for</span> <span class="n">fid_set</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cand_fid_sets</span> <span class="k">if</span> <span class="n">fid_set</span> <span class="o">&lt;=</span> <span class="n">unspoiled_fid_ids</span>
+        <span class="p">]</span>
+
+        <span class="c1"># If no fid_sets are possible, return a zero-length table with correct columns</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">ok_fid_sets</span><span class="p">:</span>
+            <span class="n">fid_set</span> <span class="o">=</span> <span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="s2">&quot;No acceptable fid sets (off-CCD or spoiled by field stars)&quot;</span><span class="p">)</span>
+
+        <span class="c1"># If no acq stars then just pick the first allowed fid set.</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">acqs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fid_set</span> <span class="o">=</span> <span class="n">ok_fid_sets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No acq stars available, using first OK fid set </span><span class="si">{</span><span class="n">fid_set</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">spoils_any_acq</span> <span class="o">=</span> <span class="p">{}</span>
+
+            <span class="k">for</span> <span class="n">fid_set</span> <span class="ow">in</span> <span class="n">ok_fid_sets</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Checking fid set </span><span class="si">{</span><span class="n">fid_set</span><span class="si">}</span><span class="s2"> for acq star spoilers&quot;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">fid_id</span> <span class="ow">in</span> <span class="n">fid_set</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">fid_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">spoils_any_acq</span><span class="p">:</span>
+                        <span class="n">fid</span> <span class="o">=</span> <span class="n">cand_fids</span><span class="o">.</span><span class="n">get_id</span><span class="p">(</span><span class="n">fid_id</span><span class="p">)</span>
+                        <span class="n">spoils_any_acq</span><span class="p">[</span><span class="n">fid_id</span><span class="p">]</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">spoils</span><span class="p">(</span><span class="n">fid</span><span class="p">,</span> <span class="n">acq</span><span class="p">,</span> <span class="n">acq</span><span class="p">[</span><span class="s2">&quot;halfw&quot;</span><span class="p">])</span> <span class="k">for</span> <span class="n">acq</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">acqs</span>
+                        <span class="p">)</span>
+                    <span class="k">if</span> <span class="n">spoils_any_acq</span><span class="p">[</span><span class="n">fid_id</span><span class="p">]:</span>
+                        <span class="c1"># Loser, don&#39;t bother with the rest.</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Fid </span><span class="si">{</span><span class="n">fid_id</span><span class="si">}</span><span class="s2"> spoils an acq star&quot;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+                        <span class="k">break</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># We have a winner, none of the fid_ids in current fid set</span>
+                    <span class="c1"># will spoil any acquisition star.  Break out of loop with</span>
+                    <span class="c1"># fid_set as the winner.</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Fid set </span><span class="si">{</span><span class="n">fid_set</span><span class="si">}</span><span class="s2"> is fine for acq stars&quot;</span><span class="p">)</span>
+                    <span class="k">break</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Tried every set and none were acceptable.</span>
+                <span class="n">fid_set</span> <span class="o">=</span> <span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="s2">&quot;No acceptable fid set found&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Transfer fid set columns to self (which at this point is an empty</span>
+        <span class="c1"># table)</span>
+        <span class="n">idxs</span> <span class="o">=</span> <span class="p">[</span><span class="n">cand_fids</span><span class="o">.</span><span class="n">get_id_idx</span><span class="p">(</span><span class="n">fid_id</span><span class="p">)</span> <span class="k">for</span> <span class="n">fid_id</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">fid_set</span><span class="p">)]</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">cand_fids</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="bp">self</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">col</span><span class="p">[</span><span class="n">idxs</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cand_fids</span> <span class="o">=</span> <span class="n">cand_fids</span></div>
+
+
+<div class="viewcode-block" id="FidTable.spoils">
+<a class="viewcode-back" href="../../api.html#proseco.fid.FidTable.spoils">[docs]</a>
+    <span class="k">def</span> <span class="nf">spoils</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fid</span><span class="p">,</span> <span class="n">acq</span><span class="p">,</span> <span class="n">box_size</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return true if ``fid`` could be within ``acq`` search box.</span>
+
+<span class="sd">        Includes:</span>
+<span class="sd">        - 20&quot; (4 pix) positional err on fid light</span>
+<span class="sd">        - 4 pixel readout halfw for fid light</span>
+<span class="sd">        - 2 pixel PSF of fid light that could creep into search box</span>
+<span class="sd">        - Acq search box half-width</span>
+<span class="sd">        - Dither amplitude (since OBC adjusts search box for dither)</span>
+
+<span class="sd">        :param fid: fid light (FidTable Row)</span>
+<span class="sd">        :param acq: acq star (AcqTable Row)</span>
+<span class="sd">        :param box_size: box size (arcsec)</span>
+
+<span class="sd">        :returns: True if ``fid`` could be within ``acq`` search box</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">spoiler_margin</span> <span class="o">=</span> <span class="n">FID</span><span class="o">.</span><span class="n">spoiler_margin</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dither_acq</span> <span class="o">+</span> <span class="n">box_size</span>
+        <span class="n">dy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;yang&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">acq</span><span class="p">[</span><span class="s2">&quot;yang&quot;</span><span class="p">])</span>
+        <span class="n">dz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;zang&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">acq</span><span class="p">[</span><span class="s2">&quot;zang&quot;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">dy</span> <span class="o">&lt;</span> <span class="n">spoiler_margin</span><span class="o">.</span><span class="n">y</span> <span class="ow">and</span> <span class="n">dz</span> <span class="o">&lt;</span> <span class="n">spoiler_margin</span><span class="o">.</span><span class="n">z</span></div>
+
+
+<div class="viewcode-block" id="FidTable.get_fid_candidates">
+<a class="viewcode-back" href="../../api.html#proseco.fid.FidTable.get_fid_candidates">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_fid_candidates</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get all fids for this detector that are on the CCD (with margin) and are not</span>
+<span class="sd">        impacted by a bad pixel.</span>
+
+<span class="sd">        This also finds fid spoiler stars and computes the spoiler_score.</span>
+
+<span class="sd">        Result is updating self.cand_fids.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">yang</span><span class="p">,</span> <span class="n">zang</span> <span class="o">=</span> <span class="n">get_fid_positions</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">detector</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">focus_offset</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sim_offset</span><span class="p">,</span>
+            <span class="n">t_ccd</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">t_ccd_acq</span><span class="p">,</span>
+            <span class="n">date</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">date</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">row</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="n">yagzag_to_pixels</span><span class="p">(</span><span class="n">yang</span><span class="p">,</span> <span class="n">zang</span><span class="p">,</span> <span class="n">allow_bad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">ids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">yang</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>  <span class="c1"># E.g. 1 to 6 for ACIS</span>
+
+        <span class="c1"># Set up candidate fids table (which copies relevant meta data) and add</span>
+        <span class="c1"># columns.</span>
+        <span class="n">cand_fids</span> <span class="o">=</span> <span class="n">FidTable</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">ids</span><span class="p">,</span> <span class="n">yang</span><span class="p">,</span> <span class="n">zang</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">],</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;yang&quot;</span><span class="p">,</span> <span class="s2">&quot;zang&quot;</span><span class="p">,</span> <span class="s2">&quot;row&quot;</span><span class="p">,</span> <span class="s2">&quot;col&quot;</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cand_fids</span><span class="p">),)</span>
+        <span class="n">cand_fids</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">FID</span><span class="o">.</span><span class="n">fid_mag</span><span class="p">)</span>  <span class="c1"># 7.000</span>
+        <span class="n">cand_fids</span><span class="p">[</span><span class="s2">&quot;spoilers&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>  <span class="c1"># Filled in with Table of spoilers</span>
+        <span class="n">cand_fids</span><span class="p">[</span><span class="s2">&quot;spoiler_score&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Initial candidate fid ids are </span><span class="si">{</span><span class="n">cand_fids</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="c1"># First check that any manually included fid ids are valid by seeing if</span>
+        <span class="c1"># the supplied fid is in the initial ids for this detector.</span>
+        <span class="k">if</span> <span class="n">id_diff</span> <span class="o">:=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">include_ids_fid</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">cand_fids</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;included fid ids </span><span class="si">{</span><span class="n">id_diff</span><span class="si">}</span><span class="s2"> are not valid&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Then reject candidates that are off CCD, have a bad pixel, are spoiled,</span>
+        <span class="c1"># or are manually excluded, unless the candidates are forced/manually included.</span>
+        <span class="c1"># Check for spoilers only against stars that are bright enough and on CCD</span>
+        <span class="c1"># (within dither).</span>
+        <span class="n">idx_bads</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">stars_mask</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">FID</span><span class="o">.</span><span class="n">fid_mag</span> <span class="o">-</span> <span class="n">ACA</span><span class="o">.</span><span class="n">col_spoiler_mag_diff</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;row&quot;</span><span class="p">])</span> <span class="o">&lt;</span> <span class="mi">512</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dither_guide</span><span class="o">.</span><span class="n">row</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">fid</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cand_fids</span><span class="p">):</span>
+            <span class="n">excluded</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">off_ccd</span><span class="p">(</span><span class="n">fid</span><span class="p">)</span>
+                <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">near_hot_or_bad_pixel</span><span class="p">(</span><span class="n">fid</span><span class="p">)</span>
+                <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_column_spoiler</span><span class="p">(</span><span class="n">fid</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stars</span><span class="p">,</span> <span class="n">stars_mask</span><span class="p">)</span>
+                <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_excluded</span><span class="p">(</span><span class="n">fid</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">included</span> <span class="o">=</span> <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_ids_fid</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">included</span> <span class="ow">and</span> <span class="n">excluded</span><span class="p">:</span>
+                <span class="n">idx_bads</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">idx_bads</span><span class="p">:</span>
+            <span class="n">cand_fids</span><span class="o">.</span><span class="n">remove_rows</span><span class="p">(</span><span class="n">idx_bads</span><span class="p">)</span>
+
+        <span class="n">cand_fids</span><span class="p">[</span><span class="s2">&quot;idx&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cand_fids</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+
+        <span class="c1"># If stars are available then find stars that are bad for fid.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stars</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">fid</span> <span class="ow">in</span> <span class="n">cand_fids</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">set_spoilers_score</span><span class="p">(</span><span class="n">fid</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">cand_fids</span></div>
+
+
+<div class="viewcode-block" id="FidTable.off_ccd">
+<a class="viewcode-back" href="../../api.html#proseco.fid.FidTable.off_ccd">[docs]</a>
+    <span class="k">def</span> <span class="nf">off_ccd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fid</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return True if ``fid`` is outside allowed CCD region.</span>
+
+<span class="sd">        :param fid: FidTable Row of candidate fid</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;row&quot;</span><span class="p">])</span> <span class="o">+</span> <span class="n">FID</span><span class="o">.</span><span class="n">ccd_edge_margin</span> <span class="o">&gt;</span> <span class="n">ACA</span><span class="o">.</span><span class="n">max_ccd_row</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;col&quot;</span><span class="p">])</span> <span class="o">+</span> <span class="n">FID</span><span class="o">.</span><span class="n">ccd_edge_margin</span> <span class="o">&gt;</span> <span class="n">ACA</span><span class="o">.</span><span class="n">max_ccd_col</span>
+        <span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;Rejecting fid id=</span><span class="si">{</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1"> row,col=&#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;(</span><span class="si">{</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;row&quot;</span><span class="p">]</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">, </span><span class="si">{</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;col&quot;</span><span class="p">]</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">) off CCD&#39;</span><span class="p">,</span>
+                <span class="n">level</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="FidTable.is_excluded">
+<a class="viewcode-back" href="../../api.html#proseco.fid.FidTable.is_excluded">[docs]</a>
+    <span class="k">def</span> <span class="nf">is_excluded</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fid</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return True if fid id is in exclude_ids_fid manual list</span>
+
+<span class="sd">        :param fid: FidTable Row of candidate fid light</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">exclude_ids_fid</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Rejecting fid </span><span class="si">{</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1">: manually excluded by exclude_ids_fid&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="FidTable.near_hot_or_bad_pixel">
+<a class="viewcode-back" href="../../api.html#proseco.fid.FidTable.near_hot_or_bad_pixel">[docs]</a>
+    <span class="k">def</span> <span class="nf">near_hot_or_bad_pixel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fid</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return True if fid has a bad pixel too close</span>
+
+<span class="sd">        :param fid: FidTable Row of candidate fid light</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dp</span> <span class="o">=</span> <span class="n">FID</span><span class="o">.</span><span class="n">spoiler_margin</span> <span class="o">/</span> <span class="mi">5</span>
+        <span class="n">r0</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;row&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">dp</span><span class="p">)</span>
+        <span class="n">c0</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;col&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">dp</span><span class="p">)</span>
+        <span class="n">r1</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;row&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">dp</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">c1</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;col&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">dp</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">dark</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dark</span><span class="p">[</span><span class="n">r0</span> <span class="o">+</span> <span class="mi">512</span> <span class="p">:</span> <span class="n">r1</span> <span class="o">+</span> <span class="mi">512</span><span class="p">,</span> <span class="n">c0</span> <span class="o">+</span> <span class="mi">512</span> <span class="p">:</span> <span class="n">c1</span> <span class="o">+</span> <span class="mi">512</span><span class="p">]</span>
+
+        <span class="n">bad</span> <span class="o">=</span> <span class="n">dark</span> <span class="o">&gt;</span> <span class="n">FID</span><span class="o">.</span><span class="n">hot_pixel_spoiler_limit</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">bad</span><span class="p">):</span>
+            <span class="n">idxs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">bad</span><span class="p">)</span>
+            <span class="n">rows</span><span class="p">,</span> <span class="n">cols</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unravel_index</span><span class="p">(</span><span class="n">idxs</span><span class="p">,</span> <span class="n">dark</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+            <span class="n">vals</span> <span class="o">=</span> <span class="n">dark</span><span class="p">[</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;Rejecting fid </span><span class="si">{</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1">: near hot or bad pixel(s) &#39;</span>
+                <span class="sa">f</span><span class="s2">&quot;rows=</span><span class="si">{</span><span class="n">rows</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">r0</span><span class="si">}</span><span class="s2"> cols=</span><span class="si">{</span><span class="n">cols</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">c0</span><span class="si">}</span><span class="s2"> vals=</span><span class="si">{</span><span class="n">vals</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="FidTable.set_spoilers_score">
+<a class="viewcode-back" href="../../api.html#proseco.fid.FidTable.set_spoilers_score">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_spoilers_score</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fid</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get stars within FID.spoiler_margin (50 arcsec) + dither.  Starcheck uses</span>
+<span class="sd">        25&quot; but this seems small: 20&quot; (4 pix) positional err + 4 pixel readout</span>
+<span class="sd">        halfw + 2 pixel PSF width of spoiler star.</span>
+
+<span class="sd">        This sets the &#39;spoilers&#39; column value to a table of spoilers stars (usually empty).</span>
+
+<span class="sd">        If also sets the &#39;spoiler_score&#39; to 1 if there is a yellow spoiler</span>
+<span class="sd">        (4 &lt;= star_mag - fid_mag &lt; 5) or 4 for red spoiler (star_mag - fid_mag &lt; 4).</span>
+<span class="sd">        The spoiler score is used later to choose an acceptable set of fids and acq stars.</span>
+
+<span class="sd">        :param fid: fid light (FidTable Row)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">stars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stars</span><span class="p">[</span><span class="n">ACQ</span><span class="o">.</span><span class="n">spoiler_star_cols</span><span class="p">]</span>
+        <span class="n">dither</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dither_guide</span>
+
+        <span class="c1"># Potential spoiler by position</span>
+        <span class="n">spoil</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;yang&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;yang&quot;</span><span class="p">])</span> <span class="o">&lt;</span> <span class="n">FID</span><span class="o">.</span><span class="n">spoiler_margin</span> <span class="o">+</span> <span class="n">dither</span><span class="o">.</span><span class="n">y</span>
+        <span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;zang&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;zang&quot;</span><span class="p">])</span> <span class="o">&lt;</span> <span class="n">FID</span><span class="o">.</span><span class="n">spoiler_margin</span> <span class="o">+</span> <span class="n">dither</span><span class="o">.</span><span class="n">z</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">spoil</span><span class="p">):</span>
+            <span class="c1"># Make an empty table with same columns</span>
+            <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;spoilers&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">stars</span> <span class="o">=</span> <span class="n">stars</span><span class="p">[</span><span class="n">spoil</span><span class="p">]</span>
+
+            <span class="c1"># Now check mags</span>
+            <span class="n">red</span> <span class="o">=</span> <span class="n">stars</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">4.0</span>
+            <span class="n">yellow</span> <span class="o">=</span> <span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mf">4.0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span>
+                <span class="n">stars</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">5.0</span>
+            <span class="p">)</span>
+
+            <span class="n">spoilers</span> <span class="o">=</span> <span class="n">stars</span><span class="p">[</span><span class="n">red</span> <span class="o">|</span> <span class="n">yellow</span><span class="p">]</span>
+            <span class="n">spoilers</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="s2">&quot;mag&quot;</span><span class="p">)</span>
+            <span class="n">spoilers</span><span class="p">[</span><span class="s2">&quot;warn&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">red</span><span class="p">[</span><span class="n">red</span> <span class="o">|</span> <span class="n">yellow</span><span class="p">],</span> <span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="s2">&quot;yellow&quot;</span><span class="p">)</span>
+            <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;spoilers&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">spoilers</span>
+
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">red</span><span class="p">):</span>
+                <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;spoiler_score&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">4</span>
+            <span class="k">elif</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">yellow</span><span class="p">):</span>
+                <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;spoiler_score&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+            <span class="k">if</span> <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;spoiler_score&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;Set fid </span><span class="si">{</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1"> spoiler score to </span><span class="si">{</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;spoiler_score&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
+                    <span class="n">level</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="get_fid_positions">
+<a class="viewcode-back" href="../../api.html#proseco.fid.get_fid_positions">[docs]</a>
+<span class="k">def</span> <span class="nf">get_fid_positions</span><span class="p">(</span>
+    <span class="n">detector</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">focus_offset</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">sim_offset</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">t_ccd</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">date</span><span class="p">:</span> <span class="n">CxoTimeLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate the fid light positions for all fids for ``detector``.</span>
+
+<span class="sd">    This is adapted from the Matlab</span>
+<span class="sd">    MissionScheduling/stars/StarSelector/@StarSelector/private/fidPositions.m::</span>
+
+<span class="sd">      %Convert focus steps to meters</span>
+<span class="sd">      table = characteristics.Science.Sim.focus_table;</span>
+<span class="sd">      xshift = interp1(table(:,1),table(:,2),focus,&#39;*linear&#39;);</span>
+<span class="sd">      if(isnan(xshift))</span>
+<span class="sd">          error(&#39;Focus is out of range&#39;);</span>
+<span class="sd">      end</span>
+
+<span class="sd">      %find translation from sim offset</span>
+<span class="sd">      stepsize = characteristics.Science.Sim.stepsize;</span>
+<span class="sd">      zshift = SIfield.fidpos(:,2)-simoffset*stepsize;</span>
+
+<span class="sd">      yfid=-SIfield.fidpos(:,1)/(SIfield.focallength-xshift);</span>
+<span class="sd">      zfid=-zshift/(SIfield.focallength-xshift);</span>
+
+<span class="sd">    This function also applies a temperature-dependent fid offset if ``t_ccd`` and ``date``</span>
+<span class="sd">    are supplied and the ``PROSECO_ENABLE_FID_OFFSET`` env var is ``&quot;True&quot;`` or not set.</span>
+
+<span class="sd">    :param detector: &#39;ACIS-S&#39; | &#39;ACIS-I&#39; | &#39;HRC-S&#39; | &#39;HRC-I&#39;</span>
+<span class="sd">    :param focus_offset: SIM focus offset [steps]</span>
+<span class="sd">    :param sim_offset: SIM translation offset from nominal [steps]</span>
+<span class="sd">    :param t_ccd: CCD temperature (C)</span>
+<span class="sd">    :param date: date (CxoTime compatible)</span>
+
+<span class="sd">    :returns: yang, zang where each is a np.array of angles [arcsec]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Table of (step, fa_pos [m]) pairs, used to interpolate from FA offset</span>
+    <span class="c1"># in step to FA offset in meters.</span>
+    <span class="n">focus_offset_table</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">FID</span><span class="o">.</span><span class="n">focus_table</span><span class="p">)</span>
+    <span class="n">steps</span> <span class="o">=</span> <span class="n">focus_offset_table</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>  <span class="c1"># Absolute FA step position</span>
+    <span class="n">fa_pos</span> <span class="o">=</span> <span class="n">focus_offset_table</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>  <span class="c1"># Focus offset in meters</span>
+    <span class="n">xshift</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">focus_offset</span><span class="p">,</span> <span class="n">steps</span><span class="p">,</span> <span class="n">fa_pos</span><span class="p">,</span> <span class="n">left</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">xshift</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;focus_offset is out of range&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Y and Z position of fids on focal plane in meters.</span>
+    <span class="c1"># Apply SIM Z translation from sim offset to the nominal Z position.</span>
+    <span class="n">ypos</span> <span class="o">=</span> <span class="n">FID</span><span class="o">.</span><span class="n">fidpos</span><span class="p">[</span><span class="n">detector</span><span class="p">][:,</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">zpos</span> <span class="o">=</span> <span class="n">FID</span><span class="o">.</span><span class="n">fidpos</span><span class="p">[</span><span class="n">detector</span><span class="p">][:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">sim_offset</span> <span class="o">*</span> <span class="n">FID</span><span class="o">.</span><span class="n">tsc_stepsize</span>
+
+    <span class="c1"># Calculate angles.  (Should these be atan2?  Does it matter?)</span>
+    <span class="n">yfid</span> <span class="o">=</span> <span class="o">-</span><span class="n">ypos</span> <span class="o">/</span> <span class="p">(</span><span class="n">FID</span><span class="o">.</span><span class="n">focal_length</span><span class="p">[</span><span class="n">detector</span><span class="p">]</span> <span class="o">-</span> <span class="n">xshift</span><span class="p">)</span>
+    <span class="n">zfid</span> <span class="o">=</span> <span class="o">-</span><span class="n">zpos</span> <span class="o">/</span> <span class="p">(</span><span class="n">FID</span><span class="o">.</span><span class="n">focal_length</span><span class="p">[</span><span class="n">detector</span><span class="p">]</span> <span class="o">-</span> <span class="n">xshift</span><span class="p">)</span>
+
+    <span class="n">yang</span><span class="p">,</span> <span class="n">zang</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">degrees</span><span class="p">(</span><span class="n">yfid</span><span class="p">)</span> <span class="o">*</span> <span class="mi">3600</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">degrees</span><span class="p">(</span><span class="n">zfid</span><span class="p">)</span> <span class="o">*</span> <span class="mi">3600</span>
+
+    <span class="n">enable_fid_offset_env</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;PROSECO_ENABLE_FID_OFFSET&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">enable_fid_offset_env</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;True&quot;</span><span class="p">,</span> <span class="s2">&quot;False&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;PROSECO_ENABLE_FID_OFFSET env var must be either &quot;True&quot;, &quot;False&quot;, or not set, &#39;</span>
+            <span class="sa">f</span><span class="s2">&quot;got </span><span class="si">{</span><span class="n">enable_fid_offset_env</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">has_tccd_and_date</span> <span class="o">=</span> <span class="n">t_ccd</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">date</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="n">enable_fid_offset_env</span> <span class="o">==</span> <span class="s2">&quot;True&quot;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">has_tccd_and_date</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;t_ccd_acq and date must be provided if PROSECO_ENABLE_FID_OFFSET is &#39;True&#39;&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">has_tccd_and_date</span> <span class="ow">and</span> <span class="n">enable_fid_offset_env</span> <span class="o">!=</span> <span class="s2">&quot;False&quot;</span><span class="p">:</span>
+        <span class="n">dy</span><span class="p">,</span> <span class="n">dz</span> <span class="o">=</span> <span class="n">get_fid_offset</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="n">t_ccd</span><span class="p">)</span>
+        <span class="n">yang</span> <span class="o">+=</span> <span class="n">dy</span>
+        <span class="n">zang</span> <span class="o">+=</span> <span class="n">dz</span>
+
+    <span class="k">return</span> <span class="n">yang</span><span class="p">,</span> <span class="n">zang</span></div>
+
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><h3>Page Contents</h3>
+
+
+<form action="../../search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+<footer class="footer">
+  <p class="pull-right"> &nbsp;
+    <a href="#">Back to Top</a></p>
+  <p>
+    &copy; Copyright 2018, Tom Aldcroft, Jean Connelly.<br/>
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 7.2.6. &nbsp;
+  </p>
+</footer>
+  </body>
+</html>

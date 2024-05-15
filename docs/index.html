@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Proseco &#8212; proseco 5.13.0 documentation</title>
+    <title>Proseco &#8212; proseco 5.13.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
     <link rel="stylesheet" type="text/css" href="_static/bootstrap-astropy.css?v=f4f7060c" />
     
-    <script src="_static/documentation_options.js?v=9fc23799"></script>
+    <script src="_static/documentation_options.js?v=3bbab380"></script>
     <script src="_static/doctools.js?v=888ff710"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script type="text/javascript" src="_static/sidebar.js"></script>
@@ -51,7 +51,7 @@
 	</a>
       </li>
       <li>
-	<a href="#">proseco 5.13.0 documentation</a>
+	<a href="#">proseco 5.13.1 documentation</a>
 	 &#187;
       </li>
       
@@ -77,10 +77,10 @@ select optimal stars.</p>
 <section id="getting-started">
 <h2>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading">¶</a></h2>
 <p>From a top-level perspective the main interface into proseco is a single
-function <code class="xref py py-func docutils literal notranslate"><span class="pre">get_aca_catalog()</span></code>.</p>
+function <a class="reference internal" href="api.html#proseco.catalog.get_aca_catalog" title="proseco.catalog.get_aca_catalog"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_aca_catalog()</span></code></a>.</p>
 <section id="arguments">
 <h3>Arguments<a class="headerlink" href="#arguments" title="Link to this heading">¶</a></h3>
-<p>As can be seen from the docstring, <code class="xref py py-func docutils literal notranslate"><span class="pre">get_aca_catalog()</span></code>
+<p>As can be seen from the docstring, <a class="reference internal" href="api.html#proseco.catalog.get_aca_catalog" title="proseco.catalog.get_aca_catalog"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_aca_catalog()</span></code></a>
 takes a long list of arguments which are required to fully specify:</p>
 <p><strong>Required</strong></p>
 <table class="docutils align-default">
@@ -436,7 +436,7 @@ $SKA/data/mica/archive/aca_dark/&lt;YYYYddd&gt;/properties.json
 </pre></div>
 </div>
 <p>The following optional data files are needed for specifying only an
-<code class="docutils literal notranslate"><span class="pre">obsid</span></code> in the call to <code class="xref py py-func docutils literal notranslate"><span class="pre">get_aca_catalog()</span></code>:</p>
+<code class="docutils literal notranslate"><span class="pre">obsid</span></code> in the call to <a class="reference internal" href="api.html#proseco.catalog.get_aca_catalog" title="proseco.catalog.get_aca_catalog"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_aca_catalog()</span></code></a>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$SKA/data/cmd_states/cmd_states.db3
 $SKA/data/mica/archive/starcheck/starcheck.db3
 </pre></div>
@@ -488,11 +488,70 @@ catalog merging.</p></li>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API documentation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api.html#full-catalog">Full catalog</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#acquisition">Acquisition</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#guide">Guide</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#fid">Fid</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#core">Core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-proseco.catalog">Full catalog</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.catalog.ACATable"><code class="docutils literal notranslate"><span class="pre">ACATable</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.catalog.ObcCat"><code class="docutils literal notranslate"><span class="pre">ObcCat</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.catalog.get_aca_catalog"><code class="docutils literal notranslate"><span class="pre">get_aca_catalog()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.catalog.get_effective_t_ccd"><code class="docutils literal notranslate"><span class="pre">get_effective_t_ccd()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.catalog.merge_cats"><code class="docutils literal notranslate"><span class="pre">merge_cats()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-proseco.acq">Acquisition</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.acq.AcqTable"><code class="docutils literal notranslate"><span class="pre">AcqTable</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.acq.box_overlap"><code class="docutils literal notranslate"><span class="pre">box_overlap()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.acq.boxes_overlap"><code class="docutils literal notranslate"><span class="pre">boxes_overlap()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.acq.calc_p_brightest_compare"><code class="docutils literal notranslate"><span class="pre">calc_p_brightest_compare()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.acq.calc_p_on_ccd"><code class="docutils literal notranslate"><span class="pre">calc_p_on_ccd()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.acq.filter_box_sizes_for_maxmag"><code class="docutils literal notranslate"><span class="pre">filter_box_sizes_for_maxmag()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.acq.get_acq_catalog"><code class="docutils literal notranslate"><span class="pre">get_acq_catalog()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.acq.get_imposter_stars"><code class="docutils literal notranslate"><span class="pre">get_imposter_stars()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.acq.get_intruders"><code class="docutils literal notranslate"><span class="pre">get_intruders()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.acq.get_maxmag"><code class="docutils literal notranslate"><span class="pre">get_maxmag()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.acq.get_p_man_err"><code class="docutils literal notranslate"><span class="pre">get_p_man_err()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.acq.get_spoiler_stars"><code class="docutils literal notranslate"><span class="pre">get_spoiler_stars()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.acq.load_maxmags"><code class="docutils literal notranslate"><span class="pre">load_maxmags()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-proseco.guide">Guide</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.guide.GuideTable"><code class="docutils literal notranslate"><span class="pre">GuideTable</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.guide.check_column_spoilers"><code class="docutils literal notranslate"><span class="pre">check_column_spoilers()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.guide.check_fid_trap"><code class="docutils literal notranslate"><span class="pre">check_fid_trap()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.guide.check_mag_spoilers"><code class="docutils literal notranslate"><span class="pre">check_mag_spoilers()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.guide.check_single_cluster"><code class="docutils literal notranslate"><span class="pre">check_single_cluster()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.guide.check_spoil_contrib"><code class="docutils literal notranslate"><span class="pre">check_spoil_contrib()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.guide.dist2"><code class="docutils literal notranslate"><span class="pre">dist2()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.guide.get_ax_range"><code class="docutils literal notranslate"><span class="pre">get_ax_range()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.guide.get_guide_catalog"><code class="docutils literal notranslate"><span class="pre">get_guide_catalog()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.guide.get_imposter_mags"><code class="docutils literal notranslate"><span class="pre">get_imposter_mags()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.guide.get_pixmag_for_offset"><code class="docutils literal notranslate"><span class="pre">get_pixmag_for_offset()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.guide.has_spoiler_in_box"><code class="docutils literal notranslate"><span class="pre">has_spoiler_in_box()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.guide.run_select_checks"><code class="docutils literal notranslate"><span class="pre">run_select_checks()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.guide.spoiled_by_bad_pixel"><code class="docutils literal notranslate"><span class="pre">spoiled_by_bad_pixel()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-proseco.fid">Fid</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.fid.FidTable"><code class="docutils literal notranslate"><span class="pre">FidTable</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.fid.get_fid_catalog"><code class="docutils literal notranslate"><span class="pre">get_fid_catalog()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.fid.get_fid_positions"><code class="docutils literal notranslate"><span class="pre">get_fid_positions()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-proseco.core">Core</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.core.ACACatalogTable"><code class="docutils literal notranslate"><span class="pre">ACACatalogTable</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.core.AliasAttribute"><code class="docutils literal notranslate"><span class="pre">AliasAttribute</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.core.BaseCatalogTable"><code class="docutils literal notranslate"><span class="pre">BaseCatalogTable</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.core.StarsTable"><code class="docutils literal notranslate"><span class="pre">StarsTable</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.core.bin2x2"><code class="docutils literal notranslate"><span class="pre">bin2x2()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.core.calc_spoiler_impact"><code class="docutils literal notranslate"><span class="pre">calc_spoiler_impact()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.core.get_dim_res"><code class="docutils literal notranslate"><span class="pre">get_dim_res()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.core.get_image_props"><code class="docutils literal notranslate"><span class="pre">get_image_props()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.core.get_img_size"><code class="docutils literal notranslate"><span class="pre">get_img_size()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.core.get_kwargs_from_starcheck_text"><code class="docutils literal notranslate"><span class="pre">get_kwargs_from_starcheck_text()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.core.get_monitors"><code class="docutils literal notranslate"><span class="pre">get_monitors()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.core.includes_for_obsid"><code class="docutils literal notranslate"><span class="pre">includes_for_obsid()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.core.pea_reject_image"><code class="docutils literal notranslate"><span class="pre">pea_reject_image()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.core.table_to_html"><code class="docutils literal notranslate"><span class="pre">table_to_html()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#module-proseco.diff">Diff</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="api.html#proseco.diff.CatalogDiff"><code class="docutils literal notranslate"><span class="pre">CatalogDiff</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="api.html#proseco.diff.catalog_diff"><code class="docutils literal notranslate"><span class="pre">catalog_diff()</span></code></a></li>
@@ -509,11 +568,137 @@ catalog merging.</p></li>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="unit_tests.html">Unit tests</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="unit_tests.html#catalog">Catalog</a></li>
-<li class="toctree-l2"><a class="reference internal" href="unit_tests.html#acquisition">Acquisition</a></li>
-<li class="toctree-l2"><a class="reference internal" href="unit_tests.html#guide">Guide</a></li>
-<li class="toctree-l2"><a class="reference internal" href="unit_tests.html#fid">Fid</a></li>
-<li class="toctree-l2"><a class="reference internal" href="unit_tests.html#core">Core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="unit_tests.html#module-proseco.tests.test_catalog">Catalog</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_catalog.test_aca_acqs_include_exclude"><code class="docutils literal notranslate"><span class="pre">test_aca_acqs_include_exclude()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_catalog.test_allowed_kwargs"><code class="docutils literal notranslate"><span class="pre">test_allowed_kwargs()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_catalog.test_bad_pixel_dark_current"><code class="docutils literal notranslate"><span class="pre">test_bad_pixel_dark_current()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_catalog.test_big_dither_from_mica_starcheck"><code class="docutils literal notranslate"><span class="pre">test_big_dither_from_mica_starcheck()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_catalog.test_big_sim_offset"><code class="docutils literal notranslate"><span class="pre">test_big_sim_offset()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_catalog.test_calling_with_t_ccd_acq_guide"><code class="docutils literal notranslate"><span class="pre">test_calling_with_t_ccd_acq_guide()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_catalog.test_clip_maxmag"><code class="docutils literal notranslate"><span class="pre">test_clip_maxmag()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_catalog.test_copy_deepcopy_pickle"><code class="docutils literal notranslate"><span class="pre">test_copy_deepcopy_pickle()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_catalog.test_dark_property"><code class="docutils literal notranslate"><span class="pre">test_dark_property()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_catalog.test_dense_star_field_regress"><code class="docutils literal notranslate"><span class="pre">test_dense_star_field_regress()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_catalog.test_exception_handling"><code class="docutils literal notranslate"><span class="pre">test_exception_handling()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_catalog.test_fid_trap_effect"><code class="docutils literal notranslate"><span class="pre">test_fid_trap_effect()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_catalog.test_force_catalog_from_starcheck"><code class="docutils literal notranslate"><span class="pre">test_force_catalog_from_starcheck()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_catalog.test_get_aca_catalog_20259"><code class="docutils literal notranslate"><span class="pre">test_get_aca_catalog_20259()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_catalog.test_get_aca_catalog_20603"><code class="docutils literal notranslate"><span class="pre">test_get_aca_catalog_20603()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_catalog.test_get_aca_catalog_20603_with_supplement"><code class="docutils literal notranslate"><span class="pre">test_get_aca_catalog_20603_with_supplement()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_catalog.test_get_aca_catalog_49531"><code class="docutils literal notranslate"><span class="pre">test_get_aca_catalog_49531()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_catalog.test_img_size_guide"><code class="docutils literal notranslate"><span class="pre">test_img_size_guide()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_catalog.test_img_size_guide_override_with_env"><code class="docutils literal notranslate"><span class="pre">test_img_size_guide_override_with_env()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_catalog.test_includes_for_obsid"><code class="docutils literal notranslate"><span class="pre">test_includes_for_obsid()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_catalog.test_monitors_and_target_offset_args"><code class="docutils literal notranslate"><span class="pre">test_monitors_and_target_offset_args()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_catalog.test_no_candidates"><code class="docutils literal notranslate"><span class="pre">test_no_candidates()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_catalog.test_pickle"><code class="docutils literal notranslate"><span class="pre">test_pickle()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_catalog.test_reject_column_spoilers"><code class="docutils literal notranslate"><span class="pre">test_reject_column_spoilers()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_catalog.test_report_from_objects"><code class="docutils literal notranslate"><span class="pre">test_report_from_objects()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_catalog.test_t_ccd_acq_attr"><code class="docutils literal notranslate"><span class="pre">test_t_ccd_acq_attr()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_catalog.test_t_ccd_attr"><code class="docutils literal notranslate"><span class="pre">test_t_ccd_attr()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_catalog.test_t_ccd_effective_acq_guide"><code class="docutils literal notranslate"><span class="pre">test_t_ccd_effective_acq_guide()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_catalog.test_t_ccd_effective_acq_guide_via_kwarg"><code class="docutils literal notranslate"><span class="pre">test_t_ccd_effective_acq_guide_via_kwarg()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_catalog.test_t_ccd_multi_attr"><code class="docutils literal notranslate"><span class="pre">test_t_ccd_multi_attr()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="unit_tests.html#module-proseco.tests.test_acq">Acquisition</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_acq.add_imposter"><code class="docutils literal notranslate"><span class="pre">add_imposter()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_acq.add_spoiler"><code class="docutils literal notranslate"><span class="pre">add_spoiler()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_acq.calc_p_brightest"><code class="docutils literal notranslate"><span class="pre">calc_p_brightest()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_acq.get_dark_stars_simple"><code class="docutils literal notranslate"><span class="pre">get_dark_stars_simple()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_acq.setup_get_imposter_stars"><code class="docutils literal notranslate"><span class="pre">setup_get_imposter_stars()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_acq.test_0_5_degree_man_angle_bin"><code class="docutils literal notranslate"><span class="pre">test_0_5_degree_man_angle_bin()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_acq.test_0_5_degree_man_angle_bin_diff_t_ccd"><code class="docutils literal notranslate"><span class="pre">test_0_5_degree_man_angle_bin_diff_t_ccd()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_acq.test_acq_fid_catalog_n_fid"><code class="docutils literal notranslate"><span class="pre">test_acq_fid_catalog_n_fid()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_acq.test_acq_fid_catalog_one_cand_fid"><code class="docutils literal notranslate"><span class="pre">test_acq_fid_catalog_one_cand_fid()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_acq.test_acq_fid_catalog_probs_low_level"><code class="docutils literal notranslate"><span class="pre">test_acq_fid_catalog_probs_low_level()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_acq.test_acq_fid_catalog_two_cand_fid"><code class="docutils literal notranslate"><span class="pre">test_acq_fid_catalog_two_cand_fid()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_acq.test_acq_fid_catalog_zero_cand_fid"><code class="docutils literal notranslate"><span class="pre">test_acq_fid_catalog_zero_cand_fid()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_acq.test_acq_include_ids_all_halfws_full_catalog"><code class="docutils literal notranslate"><span class="pre">test_acq_include_ids_all_halfws_full_catalog()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_acq.test_acq_include_ids_all_halfws_full_catalog_with_spoiler"><code class="docutils literal notranslate"><span class="pre">test_acq_include_ids_all_halfws_full_catalog_with_spoiler()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_acq.test_acq_include_ids_no_halfws"><code class="docutils literal notranslate"><span class="pre">test_acq_include_ids_no_halfws()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_acq.test_acq_include_ids_no_halfws_full_catalog"><code class="docutils literal notranslate"><span class="pre">test_acq_include_ids_no_halfws_full_catalog()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_acq.test_acq_include_optimize_halfw_ids"><code class="docutils literal notranslate"><span class="pre">test_acq_include_optimize_halfw_ids()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_acq.test_bad_star_list"><code class="docutils literal notranslate"><span class="pre">test_bad_star_list()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_acq.test_bin2x2"><code class="docutils literal notranslate"><span class="pre">test_bin2x2()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_acq.test_box_strategy_20603"><code class="docutils literal notranslate"><span class="pre">test_box_strategy_20603()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_acq.test_calc_p_brightest_1mag_brighter"><code class="docutils literal notranslate"><span class="pre">test_calc_p_brightest_1mag_brighter()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_acq.test_calc_p_brightest_same_bright"><code class="docutils literal notranslate"><span class="pre">test_calc_p_brightest_same_bright()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_acq.test_calc_p_brightest_same_bright_asymm_dither"><code class="docutils literal notranslate"><span class="pre">test_calc_p_brightest_same_bright_asymm_dither()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_acq.test_calc_p_on_ccd"><code class="docutils literal notranslate"><span class="pre">test_calc_p_on_ccd()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_acq.test_calc_p_on_ccd_asymmetric_dither"><code class="docutils literal notranslate"><span class="pre">test_calc_p_on_ccd_asymmetric_dither()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_acq.test_cand_acqs_include_exclude"><code class="docutils literal notranslate"><span class="pre">test_cand_acqs_include_exclude()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_acq.test_dither_as_sequence"><code class="docutils literal notranslate"><span class="pre">test_dither_as_sequence()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_acq.test_get_acq_catalog_19387"><code class="docutils literal notranslate"><span class="pre">test_get_acq_catalog_19387()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_acq.test_get_acq_catalog_21007"><code class="docutils literal notranslate"><span class="pre">test_get_acq_catalog_21007()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_acq.test_get_image_props"><code class="docutils literal notranslate"><span class="pre">test_get_image_props()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_acq.test_get_imposters_3500"><code class="docutils literal notranslate"><span class="pre">test_get_imposters_3500()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_acq.test_get_imposters_5000"><code class="docutils literal notranslate"><span class="pre">test_get_imposters_5000()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_acq.test_get_p_man_err"><code class="docutils literal notranslate"><span class="pre">test_get_p_man_err()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_acq.test_make_report"><code class="docutils literal notranslate"><span class="pre">test_make_report()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_acq.test_n_acq"><code class="docutils literal notranslate"><span class="pre">test_n_acq()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_acq.test_no_candidates"><code class="docutils literal notranslate"><span class="pre">test_no_candidates()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_acq.test_warnings"><code class="docutils literal notranslate"><span class="pre">test_warnings()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="unit_tests.html#module-proseco.tests.test_guide">Guide</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_guide.test_avoid_trap"><code class="docutils literal notranslate"><span class="pre">test_avoid_trap()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_guide.test_bad_star_list"><code class="docutils literal notranslate"><span class="pre">test_bad_star_list()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_guide.test_big_dither"><code class="docutils literal notranslate"><span class="pre">test_big_dither()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_guide.test_box_mag_spoiler"><code class="docutils literal notranslate"><span class="pre">test_box_mag_spoiler()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_guide.test_check_mag_spoilers"><code class="docutils literal notranslate"><span class="pre">test_check_mag_spoilers()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_guide.test_check_pixmag_offset"><code class="docutils literal notranslate"><span class="pre">test_check_pixmag_offset()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_guide.test_check_spoil_contrib"><code class="docutils literal notranslate"><span class="pre">test_check_spoil_contrib()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_guide.test_check_spoiler_cases"><code class="docutils literal notranslate"><span class="pre">test_check_spoiler_cases()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_guide.test_common_column"><code class="docutils literal notranslate"><span class="pre">test_common_column()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_guide.test_common_column_obsid_19904"><code class="docutils literal notranslate"><span class="pre">test_common_column_obsid_19904()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_guide.test_edge_star"><code class="docutils literal notranslate"><span class="pre">test_edge_star()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_guide.test_get_ax_range"><code class="docutils literal notranslate"><span class="pre">test_get_ax_range()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_guide.test_guides_include_bad"><code class="docutils literal notranslate"><span class="pre">test_guides_include_bad()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_guide.test_guides_include_close"><code class="docutils literal notranslate"><span class="pre">test_guides_include_close()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_guide.test_guides_include_exclude"><code class="docutils literal notranslate"><span class="pre">test_guides_include_exclude()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_guide.test_make_report_guide"><code class="docutils literal notranslate"><span class="pre">test_make_report_guide()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_guide.test_obsid_19461"><code class="docutils literal notranslate"><span class="pre">test_obsid_19461()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_guide.test_overlap_spoiler"><code class="docutils literal notranslate"><span class="pre">test_overlap_spoiler()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_guide.test_overlap_spoiler_include"><code class="docutils literal notranslate"><span class="pre">test_overlap_spoiler_include()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_guide.test_pix_spoiler"><code class="docutils literal notranslate"><span class="pre">test_pix_spoiler()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_guide.test_region_contrib"><code class="docutils literal notranslate"><span class="pre">test_region_contrib()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_guide.test_select"><code class="docutils literal notranslate"><span class="pre">test_select()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_guide.test_warnings"><code class="docutils literal notranslate"><span class="pre">test_warnings()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="unit_tests.html#module-proseco.tests.test_fid">Fid</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_fid.test_big_sim_offset"><code class="docutils literal notranslate"><span class="pre">test_big_sim_offset()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_fid.test_dither_as_sequence"><code class="docutils literal notranslate"><span class="pre">test_dither_as_sequence()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_fid.test_fid_catalog_t_ccd"><code class="docutils literal notranslate"><span class="pre">test_fid_catalog_t_ccd()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_fid.test_fid_hot_pixel_reject"><code class="docutils literal notranslate"><span class="pre">test_fid_hot_pixel_reject()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_fid.test_fid_mult_spoilers"><code class="docutils literal notranslate"><span class="pre">test_fid_mult_spoilers()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_fid.test_fid_spoiler_score"><code class="docutils literal notranslate"><span class="pre">test_fid_spoiler_score()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_fid.test_fid_spoiling_acq"><code class="docutils literal notranslate"><span class="pre">test_fid_spoiling_acq()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_fid.test_fids_include_bad"><code class="docutils literal notranslate"><span class="pre">test_fids_include_bad()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_fid.test_fids_include_exclude"><code class="docutils literal notranslate"><span class="pre">test_fids_include_exclude()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_fid.test_get_fid_position"><code class="docutils literal notranslate"><span class="pre">test_get_fid_position()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_fid.test_get_initial_catalog"><code class="docutils literal notranslate"><span class="pre">test_get_initial_catalog()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_fid.test_n_fid"><code class="docutils literal notranslate"><span class="pre">test_n_fid()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="unit_tests.html#module-proseco.tests.test_core">Core</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_core.test_agasc_1p7"><code class="docutils literal notranslate"><span class="pre">test_agasc_1p7()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_core.test_agasc_1p8_or_later"><code class="docutils literal notranslate"><span class="pre">test_agasc_1p8_or_later()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_core.test_alias_attributes"><code class="docutils literal notranslate"><span class="pre">test_alias_attributes()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_core.test_box_add"><code class="docutils literal notranslate"><span class="pre">test_box_add()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_core.test_box_eq"><code class="docutils literal notranslate"><span class="pre">test_box_eq()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_core.test_box_greater"><code class="docutils literal notranslate"><span class="pre">test_box_greater()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_core.test_box_init"><code class="docutils literal notranslate"><span class="pre">test_box_init()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_core.test_box_row_col_max"><code class="docutils literal notranslate"><span class="pre">test_box_row_col_max()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_core.test_calc_spoiler_impact"><code class="docutils literal notranslate"><span class="pre">test_calc_spoiler_impact()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_core.test_calc_spoiler_impact_21068"><code class="docutils literal notranslate"><span class="pre">test_calc_spoiler_impact_21068()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_core.test_get_dim_res"><code class="docutils literal notranslate"><span class="pre">test_get_dim_res()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_core.test_mag_err_clip"><code class="docutils literal notranslate"><span class="pre">test_mag_err_clip()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_core.test_pickle_stars"><code class="docutils literal notranslate"><span class="pre">test_pickle_stars()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_core.test_starstable_from_stars"><code class="docutils literal notranslate"><span class="pre">test_starstable_from_stars()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
