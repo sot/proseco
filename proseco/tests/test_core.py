@@ -326,7 +326,7 @@ def test_calc_spoiler_impact_21068():
     assert np.abs(f) > 0.95
 
 
-def test_mag_err_clip():
+def test_mag_err_clip(proseco_agasc_1p7):
     """
     Test clipping magnitudes
     """
