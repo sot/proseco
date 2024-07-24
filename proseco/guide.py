@@ -1,6 +1,7 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 from itertools import combinations
+from typing import TYPE_CHECKING
 
 import chandra_aca.aca_image
 import numpy as np
@@ -23,6 +24,10 @@ from .core import (
     get_dim_res,
     get_img_size,
 )
+
+if TYPE_CHECKING:
+    from astropy.table import Table
+
 
 CCD = ACA.CCD
 APL = AcaPsfLibrary()
@@ -95,6 +100,56 @@ def get_guide_catalog(obsid=0, **kwargs):
     guides["idx"] = np.arange(len(guides))
 
     return guides
+
+
+def get_guide_candidates_mask(
+    stars: "Table",
+    t_ccd: float = -10.0,
+    dyn_bgd: bool = True,
+) -> np.ndarray:
+    """Get filter on ``stars`` for acceptable guide candidates.
+
+    This does not include spatial filtering.
+
+    Parameters
+    ----------
+    stars : Table
+        Table of stars
+
+    Returns
+    -------
+    ok : np.array of bool
+        Mask of acceptable stars
+    """
+    # Scale the reference ACA faint mag limit to the CCD temperature keeping
+    # expected signal-to-noise constant.
+    faint_mag_limit = snr_mag_for_t_ccd(
+        t_ccd, ref_mag=GUIDE.ref_faint_mag, ref_t_ccd=GUIDE.ref_faint_mag_t_ccd
+    )
+
+    # Without dynamic background, ensure faint limit is no larger (fainter)
+    # than ref_faint_mag (10.3 mag).
+    if not dyn_bgd:
+        faint_mag_limit = min(faint_mag_limit, GUIDE.ref_faint_mag)
+
+    # Allow for stars from proseco StarsTable.from_stars() with `mag` and `mag_err`,
+    # or native agasc.get_agasc_cone() stars table.
+    mag = stars["mag"] if "mag" in stars.colnames else stars["MAG_ACA"]
+    mag_err = (
+        stars["mag_err"] if "mag_err" in stars.colnames else stars["MAG_ACA_ERR"] / 100
+    )
+
+    ok = (
+        (stars["CLASS"] == 0)
+        & (mag > 5.2)
+        & (mag < faint_mag_limit)
+        & (mag_err < 1.0)
+        & (stars["ASPQ1"] < 20)  # Mag err < 1.0 mag
+        & (stars["ASPQ2"] == 0)  # Less than 1 arcsec offset from nearby spoiler
+        & (stars["POS_ERR"] < 1250)  # Position error < 1.25 arcsec
+        & ((stars["VAR"] == -9999) | (stars["VAR"] == 5))  # Not known to vary > 0.2 mag
+    )
+    return ok
 
 
 class ImgSizeMetaAttribute(MetaAttribute):
@@ -696,30 +751,8 @@ class GuideTable(ACACatalogTable):
         if self.dyn_bgd_n_faint > 0:
             t_ccd += self.dyn_bgd_dt_ccd
 
-        # Scale the reference ACA faint mag limit to the CCD temperature keeping
-        # expected signal-to-noise constant.
-        faint_mag_limit = snr_mag_for_t_ccd(
-            t_ccd, ref_mag=GUIDE.ref_faint_mag, ref_t_ccd=GUIDE.ref_faint_mag_t_ccd
-        )
-
-        # Without dynamic background, ensure faint limit is no larger (fainter)
-        # than ref_faint_mag (10.3 mag).
-        if self.dyn_bgd_n_faint == 0:
-            faint_mag_limit = min(faint_mag_limit, GUIDE.ref_faint_mag)
-
-        ok = (
-            (stars["CLASS"] == 0)
-            & (stars["mag"] > 5.2)
-            & (stars["mag"] < faint_mag_limit)
-            & (stars["mag_err"] < 1.0)
-            & (stars["ASPQ1"] < 20)  # Mag err < 1.0 mag
-            & (stars["ASPQ2"] == 0)  # Less than 1 arcsec offset from nearby spoiler
-            & (stars["POS_ERR"] < 1250)  # Proper motion less than 0.5 arcsec/yr
-            & (  # Position error < 1.25 arcsec
-                (stars["VAR"] == -9999) | (stars["VAR"] == 5)
-            )  # Not known to vary > 0.2 mag
-        )
-        return ok
+        dyn_bgd = self.dyn_bgd_n_faint > 0
+        return get_guide_candidates_mask(stars, t_ccd, dyn_bgd)
 
     def get_initial_guide_candidates(self):
         """
