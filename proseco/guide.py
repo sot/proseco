@@ -115,6 +115,10 @@ def get_guide_candidates_mask(
     ----------
     stars : Table
         Table of stars
+    t_ccd : float
+        ACA CCD temperature (degC)
+    dyn_bgd : bool
+        Dynamic background enabled flag
 
     Returns
     -------
