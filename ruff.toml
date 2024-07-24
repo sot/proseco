@@ -32,3 +32,6 @@ lint.extend-ignore = [
     "C408", # Unnecessary `dict` call (rewrite as a literal)
     "B905", # `zip()` without an explicit `strict=` parameter
 ]
+"core.py" = [
+    "PLR1704", # Redefining argument with the local name
+]
