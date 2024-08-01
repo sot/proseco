@@ -211,7 +211,7 @@ def get_acq_candidates_mask(stars: "Table") -> np.ndarray:
         & (~np.isclose(stars["COLOR1"], 0.7))
         & (mag_err < 1.0)
         & (stars["ASPQ1"] < 40)  # < 2 arcsec centroid offset due to nearby spoiler
-        & (stars["ASPQ2"] == 0)
+        & (stars["ASPQ2"] == 0)  # Unknown proper motion, or PM < 500 milli-arcsec/year
         & (stars["POS_ERR"] < 3000)  # Position error < 3.0 arcsec
         & ((stars["VAR"] == -9999) | (stars["VAR"] == 5))  # Not known to vary > 0.2 mag
     )
