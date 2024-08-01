@@ -8,6 +8,7 @@ https://docs.google.com/presentation/d/1VtFKAW9he2vWIQAnb6unpK4u1bVAVziIdX9TnqRS
 import os
 import warnings
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 from chandra_aca.star_probs import (
@@ -34,6 +35,10 @@ from .core import (
     get_mag_std,
     pea_reject_image,
 )
+
+if TYPE_CHECKING:
+    from astropy.table import Table
+
 
 # See https://github.com/sot/skanb/blob/master/aca-acq/acq-fails-bright-stars.ipynb
 OVERLAP_P_ACQ_PENALTY = 0.7  # p_acq multiplier for search box overlap
@@ -176,6 +181,41 @@ def boxes_overlap(
             return out
 
     return 0
+
+
+def get_acq_candidates_mask(stars: "Table") -> np.ndarray:
+    """Get filter on ``stars`` for acceptable acquisition star candidates.
+
+    This does not include spatial filtering.
+
+    Parameters
+    ----------
+    stars : Table
+        Table of stars
+
+    Returns
+    -------
+    ok : np.array of bool
+        Mask of acceptable stars
+    """
+    # Allow for stars from proseco StarsTable.from_stars() with `mag` and `mag_err`,
+    # or native agasc.get_agasc_cone() stars table.
+    mag = stars["mag"] if "mag" in stars.colnames else stars["MAG_ACA"]
+    mag_err = (
+        stars["mag_err"] if "mag_err" in stars.colnames else stars["MAG_ACA_ERR"] / 100
+    )
+    ok = (
+        (stars["CLASS"] == 0)
+        & (mag > 5.3)
+        & (mag < 11.0)
+        & (~np.isclose(stars["COLOR1"], 0.7))
+        & (mag_err < 1.0)
+        & (stars["ASPQ1"] < 40)  # < 2 arcsec centroid offset due to nearby spoiler
+        & (stars["ASPQ2"] == 0)  # Unknown proper motion, or PM < 500 milli-arcsec/year
+        & (stars["POS_ERR"] < 3000)  # Position error < 3.0 arcsec
+        & ((stars["VAR"] == -9999) | (stars["VAR"] == 5))  # Not known to vary > 0.2 mag
+    )
+    return ok
 
 
 def get_acq_catalog(obsid=0, **kwargs):
@@ -461,22 +501,7 @@ class AcqTable(ACACatalogTable):
         :returns: bool mask of acceptable stars
 
         """
-        ok = (
-            (stars["CLASS"] == 0)
-            & (stars["mag"] > 5.3)
-            & (stars["mag"] < 11.0)
-            & (~np.isclose(stars["COLOR1"], 0.7))
-            & (stars["mag_err"] < 1.0)
-            & (stars["ASPQ1"] < 40)  # Mag err < 1.0 mag
-            & (  # Less than 2 arcsec centroid offset due to nearby spoiler
-                stars["ASPQ2"] == 0
-            )
-            & (stars["POS_ERR"] < 3000)  # Proper motion less than 0.5 arcsec/yr
-            & (  # Position error < 3.0 arcsec
-                (stars["VAR"] == -9999) | (stars["VAR"] == 5)
-            )  # Not known to vary > 0.2 mag
-        )
-        return ok
+        return get_acq_candidates_mask(stars)
 
     def get_acq_candidates(self, stars, max_candidates=20) -> StarsTable:
         """
