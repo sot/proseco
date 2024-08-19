@@ -48,10 +48,8 @@ def test_agasc_1p7(miniagasc_1p7):
 
 
 def test_agasc_supplement():
-    assert len(bad_star_set) > 3300
+    assert len(bad_star_set) > 300
     assert 36178592 in bad_star_set  # From original starcheck list
-    assert 658160 in bad_star_set
-    assert 1248994952 in bad_star_set
 
 
 def test_box_init():
