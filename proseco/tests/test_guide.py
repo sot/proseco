@@ -179,6 +179,22 @@ def test_bad_star_list():
     assert guides.bad_stars_mask[idx]
 
 
+def test_color1_0p7():
+    """Test that a star with COLOR1=0.7 is not selected"""
+    dark = DARK40.copy()
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(mag=np.linspace(9, 10.3, 4), n_stars=4)
+    # Bright star that would normally be selected but with color=0.7
+    bad_id = 11111111
+    stars.add_fake_star(yang=100, zang=100, mag=6.5, id=bad_id, COLOR1=0.7)
+    kwargs = mod_std_info(stars=stars, dark=dark, n_guide=5)
+    guides = get_guide_catalog(**kwargs)
+    assert bad_id not in guides["id"]
+
+    idx = guides.stars.get_id_idx(bad_id)
+    assert guides.bad_stars_mask[idx]
+
+
 def test_avoid_trap():
     """
     Set up a scenario where a star is selected fine at one roll, and then
