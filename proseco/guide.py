@@ -398,7 +398,10 @@ class GuideTable(ACACatalogTable):
                 n_faint += 1
                 # If we have more than the allowed number of faint bonus stars
                 # and the star is not force-included, mark it for removal.
-                if (n_faint > self.dyn_bgd_n_faint) & (guides["stage"][idx] != 0):
+                if (
+                    n_faint > self.dyn_bgd_n_faint
+                    and guides["id"][idx] not in self.include_ids
+                ):
                     idxs_drop.append(idx)
         if idxs_drop:
             guides.remove_rows(idxs_drop)
