@@ -62,7 +62,7 @@ def get_aca_catalog(*args, **kwargs):
     :param target_offset: (y, z) target offset including dynamical offset
                           (2-element sequence (y, z), deg)
     :param dyn_bgd_n_faint: number of faint stars to apply the dynamic background
-        temperature bonus ``dyn_bgd_dt_ccd`` (default=0)
+        temperature bonus ``dyn_bgd_dt_ccd`` (default=2)
     :param dyn_bgd_dt_ccd: dynamic background T_ccd temperature bonus (default=-4.0, degC)
     :param stars: table of AGASC stars (will be fetched from agasc if None)
     :param include_ids_acq: list of AGASC IDs of stars to include in acq catalog

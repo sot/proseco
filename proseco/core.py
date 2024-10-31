@@ -602,7 +602,7 @@ class ACACatalogTable(BaseCatalogTable):
     sim_offset = MetaAttribute()
     focus_offset = MetaAttribute()
     target_offset = MetaAttribute(default=(0.0, 0.0))
-    dyn_bgd_n_faint = MetaAttribute(default=0)
+    dyn_bgd_n_faint = MetaAttribute(default=2)
     dyn_bgd_dt_ccd = MetaAttribute(default=-4.0)
     stars = MetaAttribute(pickle=False)
     include_ids_acq = IntListMetaAttribute(default=[])
