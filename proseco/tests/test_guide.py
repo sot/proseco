@@ -654,7 +654,9 @@ def test_guides_include_close():
     # Force include the faint 4 stars that are also close together
     include_ids = [21, 22, 23, 24]
     cat2 = get_guide_catalog(
-        **mod_std_info(n_guide=5), stars=stars, include_ids_guide=include_ids,
+        **mod_std_info(n_guide=5),
+        stars=stars,
+        include_ids_guide=include_ids,
     )
 
     # Run the cluster checks and confirm all 3 fail
@@ -788,12 +790,16 @@ def test_guide_faint_mag_limit():
     # Select stars at 0.1 degC colder than reference temperature, use previous default of
     # dyn_bgd_n_faint=0 for this test, expect 5 stars selected
     guides = get_guide_catalog(
-        **mod_std_info(t_ccd=GUIDE.ref_faint_mag_t_ccd - 0.1, dyn_bgd_n_faint=0), stars=stars, dark=DARK40
+        **mod_std_info(t_ccd=GUIDE.ref_faint_mag_t_ccd - 0.1, dyn_bgd_n_faint=0),
+        stars=stars,
+        dark=DARK40,
     )
     assert np.all(guides["id"] == ids)
 
     # Select stars at 0.1 degC warmer than reference temperature, expect 4 stars selected
     guides = get_guide_catalog(
-        **mod_std_info(t_ccd=GUIDE.ref_faint_mag_t_ccd + 0.1, dyn_bgd_n_faint=0), stars=stars, dark=DARK40,
+        **mod_std_info(t_ccd=GUIDE.ref_faint_mag_t_ccd + 0.1, dyn_bgd_n_faint=0),
+        stars=stars,
+        dark=DARK40,
     )
     assert np.all(guides["id"] == [1, 2, 3, 4])
