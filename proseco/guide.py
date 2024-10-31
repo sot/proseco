@@ -376,26 +376,29 @@ class GuideTable(ACACatalogTable):
         For dyn bgd with dyn_bgd_n_faint > 0, candidates fainter then the
         nominal faint limit can be selected. However, only at most
         dyn_bgd_n_faint of these bonus faint stars are allowed in the final
-        catalog.
+        catalog (unless more are force-included).
 
         This method removes faint bonus stars (in-place within ``guides``) in
         excess of the allowed dyn_bgd_n_faint number. It is assumed that the
         catalog order is by star preference ('stage', 'mag'), so bonus stars
         that come first are kept.
 
+        Force included stars are not removed.
+
         :param guides: Table of guide stars
         """
-        n_bonus = 0
-        idx = 0
         # Compute the non-bonus faint_mag_limit
         faint_mag_limit = snr_mag_for_t_ccd(
             self.t_ccd, ref_mag=GUIDE.ref_faint_mag, ref_t_ccd=GUIDE.ref_faint_mag_t_ccd
         )
+        n_faint = 0
         idxs_drop = []
         for idx in range(len(guides)):
             if guides["mag"][idx] > faint_mag_limit:
-                n_bonus += 1
-                if n_bonus > self.dyn_bgd_n_faint:
+                n_faint += 1
+                # If we have more than the allowed number of faint bonus stars
+                # and the star is not force-included, mark it for removal.
+                if (n_faint > self.dyn_bgd_n_faint) & (guides["stage"][idx] != 0):
                     idxs_drop.append(idx)
         if idxs_drop:
             guides.remove_rows(idxs_drop)
