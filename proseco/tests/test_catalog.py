@@ -66,6 +66,7 @@ def test_get_aca_catalog_20603_with_supplement():
     kwargs = dict(
         obsid=20603,
         exclude_ids_acq=[40113544],
+        dyn_bgd_n_faint=0,
         n_fid=2,
         n_guide=6,
         n_acq=7,
@@ -90,6 +91,7 @@ def test_get_aca_catalog_20603(proseco_agasc_1p7):
     aca = get_aca_catalog(
         20603,
         exclude_ids_acq=[40113544],
+        dyn_bgd_n_faint=0,
         n_fid=2,
         n_guide=6,
         n_acq=7,
