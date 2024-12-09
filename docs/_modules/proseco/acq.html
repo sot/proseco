@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>proseco.acq &#8212; proseco 5.13.2 documentation</title>
+    <title>proseco.acq &#8212; proseco 5.16.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
     <link rel="stylesheet" type="text/css" href="../../_static/bootstrap-astropy.css?v=f4f7060c" />
     
-    <script src="../../_static/documentation_options.js?v=0c4239ea"></script>
+    <script src="../../_static/documentation_options.js?v=f23352e5"></script>
     <script src="../../_static/doctools.js?v=888ff710"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script type="text/javascript" src="../../_static/sidebar.js"></script>
@@ -44,7 +44,7 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../index.html">proseco 5.13.2 documentation</a>
+	<a href="../../index.html">proseco 5.16.0 documentation</a>
 	 &#187;
       </li>
       <li><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
@@ -70,6 +70,7 @@
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">chandra_aca.star_probs</span> <span class="kn">import</span> <span class="p">(</span>
@@ -96,6 +97,10 @@
     <span class="n">get_mag_std</span><span class="p">,</span>
     <span class="n">pea_reject_image</span><span class="p">,</span>
 <span class="p">)</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">astropy.table</span> <span class="kn">import</span> <span class="n">Table</span>
+
 
 <span class="c1"># See https://github.com/sot/skanb/blob/master/aca-acq/acq-fails-bright-stars.ipynb</span>
 <span class="n">OVERLAP_P_ACQ_PENALTY</span> <span class="o">=</span> <span class="mf">0.7</span>  <span class="c1"># p_acq multiplier for search box overlap</span>
@@ -252,6 +257,44 @@
             <span class="k">return</span> <span class="n">out</span>
 
     <span class="k">return</span> <span class="mi">0</span></div>
+
+
+
+<div class="viewcode-block" id="get_acq_candidates_mask">
+<a class="viewcode-back" href="../../api.html#proseco.acq.get_acq_candidates_mask">[docs]</a>
+<span class="k">def</span> <span class="nf">get_acq_candidates_mask</span><span class="p">(</span><span class="n">stars</span><span class="p">:</span> <span class="s2">&quot;Table&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get filter on ``stars`` for acceptable acquisition star candidates.</span>
+
+<span class="sd">    This does not include spatial filtering.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    stars : Table</span>
+<span class="sd">        Table of stars</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ok : np.array of bool</span>
+<span class="sd">        Mask of acceptable stars</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Allow for stars from proseco StarsTable.from_stars() with `mag` and `mag_err`,</span>
+    <span class="c1"># or native agasc.get_agasc_cone() stars table.</span>
+    <span class="n">mag</span> <span class="o">=</span> <span class="n">stars</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="s2">&quot;mag&quot;</span> <span class="ow">in</span> <span class="n">stars</span><span class="o">.</span><span class="n">colnames</span> <span class="k">else</span> <span class="n">stars</span><span class="p">[</span><span class="s2">&quot;MAG_ACA&quot;</span><span class="p">]</span>
+    <span class="n">mag_err</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">stars</span><span class="p">[</span><span class="s2">&quot;mag_err&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="s2">&quot;mag_err&quot;</span> <span class="ow">in</span> <span class="n">stars</span><span class="o">.</span><span class="n">colnames</span> <span class="k">else</span> <span class="n">stars</span><span class="p">[</span><span class="s2">&quot;MAG_ACA_ERR&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="mi">100</span>
+    <span class="p">)</span>
+    <span class="n">ok</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;CLASS&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="o">&amp;</span> <span class="p">(</span><span class="n">mag</span> <span class="o">&gt;</span> <span class="mf">5.3</span><span class="p">)</span>
+        <span class="o">&amp;</span> <span class="p">(</span><span class="n">mag</span> <span class="o">&lt;</span> <span class="mf">11.0</span><span class="p">)</span>
+        <span class="o">&amp;</span> <span class="p">(</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;COLOR1&quot;</span><span class="p">],</span> <span class="mf">0.7</span><span class="p">))</span>
+        <span class="o">&amp;</span> <span class="p">(</span><span class="n">mag_err</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="o">&amp;</span> <span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;ASPQ1&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">40</span><span class="p">)</span>  <span class="c1"># &lt; 2 arcsec centroid offset due to nearby spoiler</span>
+        <span class="o">&amp;</span> <span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;ASPQ2&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>  <span class="c1"># Unknown proper motion, or PM &lt; 500 milli-arcsec/year</span>
+        <span class="o">&amp;</span> <span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;POS_ERR&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">3000</span><span class="p">)</span>  <span class="c1"># Position error &lt; 3.0 arcsec</span>
+        <span class="o">&amp;</span> <span class="p">((</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;VAR&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="o">-</span><span class="mi">9999</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;VAR&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">5</span><span class="p">))</span>  <span class="c1"># Not known to vary &gt; 0.2 mag</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">ok</span></div>
 
 
 
@@ -563,22 +606,7 @@
 <span class="sd">        :returns: bool mask of acceptable stars</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">ok</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;CLASS&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
-            <span class="o">&amp;</span> <span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">5.3</span><span class="p">)</span>
-            <span class="o">&amp;</span> <span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">11.0</span><span class="p">)</span>
-            <span class="o">&amp;</span> <span class="p">(</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;COLOR1&quot;</span><span class="p">],</span> <span class="mf">0.7</span><span class="p">))</span>
-            <span class="o">&amp;</span> <span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;mag_err&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">)</span>
-            <span class="o">&amp;</span> <span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;ASPQ1&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">40</span><span class="p">)</span>  <span class="c1"># Mag err &lt; 1.0 mag</span>
-            <span class="o">&amp;</span> <span class="p">(</span>  <span class="c1"># Less than 2 arcsec centroid offset due to nearby spoiler</span>
-                <span class="n">stars</span><span class="p">[</span><span class="s2">&quot;ASPQ2&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span>
-            <span class="p">)</span>
-            <span class="o">&amp;</span> <span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;POS_ERR&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">3000</span><span class="p">)</span>  <span class="c1"># Proper motion less than 0.5 arcsec/yr</span>
-            <span class="o">&amp;</span> <span class="p">(</span>  <span class="c1"># Position error &lt; 3.0 arcsec</span>
-                <span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;VAR&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="o">-</span><span class="mi">9999</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;VAR&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">5</span><span class="p">)</span>
-            <span class="p">)</span>  <span class="c1"># Not known to vary &gt; 0.2 mag</span>
-        <span class="p">)</span>
-        <span class="k">return</span> <span class="n">ok</span></div>
+        <span class="k">return</span> <span class="n">get_acq_candidates_mask</span><span class="p">(</span><span class="n">stars</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="AcqTable.get_acq_candidates">

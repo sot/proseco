@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>API documentation &#8212; proseco 5.13.2 documentation</title>
+    <title>API documentation &#8212; proseco 5.16.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
     <link rel="stylesheet" type="text/css" href="_static/bootstrap-astropy.css?v=f4f7060c" />
     
-    <script src="_static/documentation_options.js?v=0c4239ea"></script>
+    <script src="_static/documentation_options.js?v=f23352e5"></script>
     <script src="_static/doctools.js?v=888ff710"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script type="text/javascript" src="_static/sidebar.js"></script>
@@ -58,7 +58,7 @@
 	 |
       </li>
       <li>
-	<a href="index.html">proseco 5.13.2 documentation</a>
+	<a href="index.html">proseco 5.16.0 documentation</a>
 	 &#187;
       </li>
       
@@ -276,7 +276,7 @@ provided this defaults to value from the ACA xija thermal model.</p></li>
 <li><p><strong>target_offset</strong> – (y, z) target offset including dynamical offset
 (2-element sequence (y, z), deg)</p></li>
 <li><p><strong>dyn_bgd_n_faint</strong> – number of faint stars to apply the dynamic background
-temperature bonus <code class="docutils literal notranslate"><span class="pre">dyn_bgd_dt_ccd</span></code> (default=0)</p></li>
+temperature bonus <code class="docutils literal notranslate"><span class="pre">dyn_bgd_dt_ccd</span></code> (default=2)</p></li>
 <li><p><strong>dyn_bgd_dt_ccd</strong> – dynamic background T_ccd temperature bonus (default=-4.0, degC)</p></li>
 <li><p><strong>stars</strong> – table of AGASC stars (will be fetched from agasc if None)</p></li>
 <li><p><strong>include_ids_acq</strong> – list of AGASC IDs of stars to include in acq catalog</p></li>
@@ -715,7 +715,7 @@ pick up the new fid set.
 
 <dl class="py function">
 <dt class="sig sig-object py" id="proseco.acq.boxes_overlap">
-<span class="sig-prename descclassname"><span class="pre">proseco.acq.</span></span><span class="sig-name descname"><span class="pre">boxes_overlap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">z1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">halfw1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">cand_acqs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#proseco.acq.AcqTable" title="proseco.acq.AcqTable"><span class="pre">AcqTable</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">box_sizes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><span class="pre">list</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">acq_indices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><span class="pre">list</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><span class="pre">int</span></a></span></span><a class="reference internal" href="_modules/proseco/acq.html#boxes_overlap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.acq.boxes_overlap" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">proseco.acq.</span></span><span class="sig-name descname"><span class="pre">boxes_overlap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">z1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">halfw1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">cand_acqs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#proseco.acq.AcqTable" title="proseco.acq.AcqTable"><span class="pre">AcqTable</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">box_sizes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><span class="pre">list</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">acq_indices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><span class="pre">list</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></span></span><a class="reference internal" href="_modules/proseco/acq.html#boxes_overlap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.acq.boxes_overlap" title="Link to this definition">¶</a></dt>
 <dd><p>Check if candidate new acq box overlaps with already selected acq boxes.</p>
 <p>This checks for overlaps between the box defined by (y1, z1, halfw1) and the boxes
 defined by the rows in <code class="docutils literal notranslate"><span class="pre">cand_acqs</span></code> (yang and zang) and <code class="docutils literal notranslate"><span class="pre">box_sizes</span></code> with indices
@@ -789,7 +789,7 @@ of the CCD.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="proseco.acq.filter_box_sizes_for_maxmag">
-<span class="sig-prename descclassname"><span class="pre">proseco.acq.</span></span><span class="sig-name descname"><span class="pre">filter_box_sizes_for_maxmag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_err</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">box_sizes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_ccd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/proseco/acq.html#filter_box_sizes_for_maxmag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.acq.filter_box_sizes_for_maxmag" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">proseco.acq.</span></span><span class="sig-name descname"><span class="pre">filter_box_sizes_for_maxmag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_err</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">box_sizes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_ccd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/proseco/acq.html#filter_box_sizes_for_maxmag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.acq.filter_box_sizes_for_maxmag" title="Link to this definition">¶</a></dt>
 <dd><p>Filter the list of box sizes</p>
 <p>First compute the smallest allowed value of MAXMAG for this star, which is
 the star mag + 3 times the star mag error (clipped to be within 0.5 to 1.5
@@ -810,6 +810,27 @@ minimum MAXMAG.</p>
 <dd class="field-even"><p>ndarray of box sizes (float, arcsec)</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="proseco.acq.get_acq_candidates_mask">
+<span class="sig-prename descclassname"><span class="pre">proseco.acq.</span></span><span class="sig-name descname"><span class="pre">get_acq_candidates_mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stars</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Table</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/proseco/acq.html#get_acq_candidates_mask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.acq.get_acq_candidates_mask" title="Link to this definition">¶</a></dt>
+<dd><p>Get filter on <code class="docutils literal notranslate"><span class="pre">stars</span></code> for acceptable acquisition star candidates.</p>
+<p>This does not include spatial filtering.</p>
+<section id="parameters">
+<h3>Parameters<a class="headerlink" href="#parameters" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>stars<span class="classifier">Table</span></dt><dd><p>Table of stars</p>
+</dd>
+</dl>
+</section>
+<section id="returns">
+<h3>Returns<a class="headerlink" href="#returns" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>ok<span class="classifier">np.array of bool</span></dt><dd><p>Mask of acceptable stars</p>
+</dd>
+</dl>
+</section>
 </dd></dl>
 
 <dl class="py function">
@@ -901,7 +922,7 @@ If not already in acq then call <code class="docutils literal notranslate"><span
 
 <dl class="py function">
 <dt class="sig sig-object py" id="proseco.acq.get_maxmag">
-<span class="sig-prename descclassname"><span class="pre">proseco.acq.</span></span><span class="sig-name descname"><span class="pre">get_maxmag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">box_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_ccd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></span></span><a class="reference internal" href="_modules/proseco/acq.html#get_maxmag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.acq.get_maxmag" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">proseco.acq.</span></span><span class="sig-name descname"><span class="pre">get_maxmag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">box_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_ccd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span></span><a class="reference internal" href="_modules/proseco/acq.html#get_maxmag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.acq.get_maxmag" title="Link to this definition">¶</a></dt>
 <dd><p>Get maxmag for given box_size and t_ccd.</p>
 <p>This corresponds to the MAXMAG that results in exactly 50 search hits. See
 <a class="reference external" href="https://occweb.cfa.harvard.edu/twiki/bin/view/Aspect/PeaMaxMagTesting">https://occweb.cfa.harvard.edu/twiki/bin/view/Aspect/PeaMaxMagTesting</a>.</p>
@@ -972,7 +993,7 @@ background subtraction and warm pixel corruption of background.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="proseco.acq.load_maxmags">
-<span class="sig-prename descclassname"><span class="pre">proseco.acq.</span></span><span class="sig-name descname"><span class="pre">load_maxmags</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.12)"><span class="pre">dict</span></a></span></span><a class="reference internal" href="_modules/proseco/acq.html#load_maxmags"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.acq.load_maxmags" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">proseco.acq.</span></span><span class="sig-name descname"><span class="pre">load_maxmags</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><span class="pre">dict</span></a></span></span><a class="reference internal" href="_modules/proseco/acq.html#load_maxmags"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.acq.load_maxmags" title="Link to this definition">¶</a></dt>
 <dd><p>Load maxmags from disk.</p>
 <p>Maxmag data made with analysis/interpolate-maxmags-contour-plot.ipynb</p>
 </dd></dl>
@@ -990,11 +1011,12 @@ background subtraction and warm pixel corruption of background.</p>
 <p>For dyn bgd with dyn_bgd_n_faint &gt; 0, candidates fainter then the
 nominal faint limit can be selected. However, only at most
 dyn_bgd_n_faint of these bonus faint stars are allowed in the final
-catalog.</p>
+catalog (unless more are force-included).</p>
 <p>This method removes faint bonus stars (in-place within <code class="docutils literal notranslate"><span class="pre">guides</span></code>) in
 excess of the allowed dyn_bgd_n_faint number. It is assumed that the
 catalog order is by star preference (‘stage’, ‘mag’), so bonus stars
 that come first are kept.</p>
+<p>Force included stars are not removed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>guides</strong> – Table of guide stars</p>
@@ -1033,15 +1055,15 @@ defined in <code class="docutils literal notranslate"><span class="pre">core.get
 unless overridden by the PROSECO_OR_IMAGE_SIZE environment variable.</p>
 <p>This requires that the <code class="docutils literal notranslate"><span class="pre">fids</span></code> attribute has been set, normally by
 providing the table as an arg to <code class="docutils literal notranslate"><span class="pre">get_guide_catalog()</span></code>.</p>
-<section id="parameters">
-<h3>Parameters<a class="headerlink" href="#parameters" title="Link to this heading">¶</a></h3>
+<section id="id1">
+<h3>Parameters<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>n_fids<span class="classifier">int or None</span></dt><dd><p>Number of fids in the catalog</p>
 </dd>
 </dl>
 </section>
-<section id="returns">
-<h3>Returns<a class="headerlink" href="#returns" title="Link to this heading">¶</a></h3>
+<section id="id2">
+<h3>Returns<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>int</dt><dd><p>Guide star image readout size to be used in a catalog</p>
 </dd>
@@ -1390,6 +1412,31 @@ at least the requested extent.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="proseco.guide.get_guide_candidates_mask">
+<span class="sig-prename descclassname"><span class="pre">proseco.guide.</span></span><span class="sig-name descname"><span class="pre">get_guide_candidates_mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stars</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Table</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_ccd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-10.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dyn_bgd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/proseco/guide.html#get_guide_candidates_mask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.guide.get_guide_candidates_mask" title="Link to this definition">¶</a></dt>
+<dd><p>Get filter on <code class="docutils literal notranslate"><span class="pre">stars</span></code> for acceptable guide candidates.</p>
+<p>This does not include spatial filtering.</p>
+<section id="id3">
+<h3>Parameters<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>stars<span class="classifier">Table</span></dt><dd><p>Table of stars</p>
+</dd>
+<dt>t_ccd<span class="classifier">float</span></dt><dd><p>ACA CCD temperature (degC)</p>
+</dd>
+<dt>dyn_bgd<span class="classifier">bool</span></dt><dd><p>Dynamic background enabled flag</p>
+</dd>
+</dl>
+</section>
+<section id="id4">
+<h3>Returns<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>ok<span class="classifier">np.array of bool</span></dt><dd><p>Mask of acceptable stars</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="proseco.guide.get_guide_catalog">
 <span class="sig-prename descclassname"><span class="pre">proseco.guide.</span></span><span class="sig-name descname"><span class="pre">get_guide_catalog</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obsid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/guide.html#get_guide_catalog"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.guide.get_guide_catalog" title="Link to this definition">¶</a></dt>
 <dd><p>Get a catalog of guide stars</p>
@@ -1670,7 +1717,7 @@ the id (aka index), no fids will be selected.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="proseco.fid.get_fid_positions">
-<span class="sig-prename descclassname"><span class="pre">proseco.fid.</span></span><span class="sig-name descname"><span class="pre">get_fid_positions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">detector</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">focus_offset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_offset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_ccd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.12)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CxoTime</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">_SupportsArray</span><span class="p"><span class="pre">[</span></span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.12)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">_NestedSequence</span><span class="p"><span class="pre">[</span></span><span class="pre">_SupportsArray</span><span class="p"><span class="pre">[</span></span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.12)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><span class="pre">bool</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#complex" title="(in Python v3.12)"><span class="pre">complex</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes" title="(in Python v3.12)"><span class="pre">bytes</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">_NestedSequence</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><span class="pre">bool</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#complex" title="(in Python v3.12)"><span class="pre">complex</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes" title="(in Python v3.12)"><span class="pre">bytes</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.12)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.12)"><span class="pre">tuple</span></a></span></span><a class="reference internal" href="_modules/proseco/fid.html#get_fid_positions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.fid.get_fid_positions" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">proseco.fid.</span></span><span class="sig-name descname"><span class="pre">get_fid_positions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">detector</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">focus_offset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_offset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_ccd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CxoTime</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">_SupportsArray</span><span class="p"><span class="pre">[</span></span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.13)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">_NestedSequence</span><span class="p"><span class="pre">[</span></span><span class="pre">_SupportsArray</span><span class="p"><span class="pre">[</span></span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.13)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#complex" title="(in Python v3.13)"><span class="pre">complex</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes" title="(in Python v3.13)"><span class="pre">bytes</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">_NestedSequence</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#complex" title="(in Python v3.13)"><span class="pre">complex</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes" title="(in Python v3.13)"><span class="pre">bytes</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.13)"><span class="pre">tuple</span></a></span></span><a class="reference internal" href="_modules/proseco/fid.html#get_fid_positions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.fid.get_fid_positions" title="Link to this definition">¶</a></dt>
 <dd><p>Calculate the fid light positions for all fids for <code class="docutils literal notranslate"><span class="pre">detector</span></code>.</p>
 <p>This is adapted from the Matlab
 <a class="reference external" href="mailto:MissionScheduling/stars/StarSelector/&#37;&#52;&#48;StarSelector/private/fidPositions&#46;m">MissionScheduling/stars/StarSelector/<span>&#64;</span>StarSelector/private/fidPositions<span>&#46;</span>m</a>:</p>
@@ -1812,8 +1859,8 @@ applied.</p>
 <code class="docutils literal notranslate"><span class="pre">astropy.conf.max_width</span></code>.</p>
 </dd>
 </dl>
-<section id="id1">
-<h3>Parameters<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h3>
+<section id="id5">
+<h3>Parameters<a class="headerlink" href="#id5" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>max_lines<span class="classifier">int or None</span></dt><dd><p>Maximum number of rows to output</p>
 </dd>
@@ -1844,8 +1891,8 @@ None.</p>
 </dd>
 </dl>
 </section>
-<section id="id2">
-<h3>Returns<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h3>
+<section id="id6">
+<h3>Returns<a class="headerlink" href="#id6" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>lines<span class="classifier">list</span></dt><dd><p>Formatted table as a list of strings.</p>
 </dd>
@@ -1881,8 +1928,8 @@ applied.</p>
 <p>The same applies for max_width except the configuration item is
 <code class="docutils literal notranslate"><span class="pre">astropy.conf.max_width</span></code>.</p>
 </div></blockquote>
-<section id="id3">
-<h3>Parameters<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h3>
+<section id="id7">
+<h3>Parameters<a class="headerlink" href="#id7" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>max_lines<span class="classifier">int or None</span></dt><dd><p>Maximum number of lines in table output.</p>
 </dd>
@@ -1923,7 +1970,7 @@ columns.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="proseco.core.ACACatalogTable.set_stars">
-<span class="sig-name descname"><span class="pre">set_stars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acqs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_near_fov</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.12)"><span class="pre">None</span></a></span></span><a class="reference internal" href="_modules/proseco/core.html#ACACatalogTable.set_stars"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.ACACatalogTable.set_stars" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">set_stars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acqs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_near_fov</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></span><a class="reference internal" href="_modules/proseco/core.html#ACACatalogTable.set_stars"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.ACACatalogTable.set_stars" title="Link to this definition">¶</a></dt>
 <dd><p>Set the object <code class="docutils literal notranslate"><span class="pre">stars</span></code> attribute to an appropriate StarsTable object.</p>
 <p>If <code class="docutils literal notranslate"><span class="pre">acqs</span></code> is defined that will be a previously computed AcqTable with
 <code class="docutils literal notranslate"><span class="pre">stars</span></code> already available, so use that.</p>
@@ -2340,15 +2387,15 @@ image size.</p>
 overridden by setting the <code class="docutils literal notranslate"><span class="pre">PROSECO_OR_IMAGE_SIZE</span></code> environment
 variable to “4”, “6” or “8”. As a reminder the <code class="docutils literal notranslate"><span class="pre">img_size_guide</span></code> parameter
 of <code class="docutils literal notranslate"><span class="pre">get_aca_catalog</span></code> can also be set.</p>
-<section id="id4">
-<h3>Parameters<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h3>
+<section id="id8">
+<h3>Parameters<a class="headerlink" href="#id8" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>n_fids<span class="classifier">int</span></dt><dd><p>Number of fids in the catalog</p>
 </dd>
 </dl>
 </section>
-<section id="id5">
-<h3>Returns<a class="headerlink" href="#id5" title="Link to this heading">¶</a></h3>
+<section id="id9">
+<h3>Returns<a class="headerlink" href="#id9" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>int</dt><dd><p>Guide star image readout size to be used in a catalog (6 or 8)</p>
 </dd>
@@ -2586,6 +2633,7 @@ Dict of column names and format specifiers</p></li>
 <li><a class="reference internal" href="#proseco.acq.calc_p_brightest_compare"><code class="docutils literal notranslate"><span class="pre">calc_p_brightest_compare()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.acq.calc_p_on_ccd"><code class="docutils literal notranslate"><span class="pre">calc_p_on_ccd()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.acq.filter_box_sizes_for_maxmag"><code class="docutils literal notranslate"><span class="pre">filter_box_sizes_for_maxmag()</span></code></a></li>
+<li><a class="reference internal" href="#proseco.acq.get_acq_candidates_mask"><code class="docutils literal notranslate"><span class="pre">get_acq_candidates_mask()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.acq.get_acq_catalog"><code class="docutils literal notranslate"><span class="pre">get_acq_catalog()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.acq.get_imposter_stars"><code class="docutils literal notranslate"><span class="pre">get_imposter_stars()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.acq.get_intruders"><code class="docutils literal notranslate"><span class="pre">get_intruders()</span></code></a></li>
@@ -2619,6 +2667,7 @@ Dict of column names and format specifiers</p></li>
 <li><a class="reference internal" href="#proseco.guide.check_spoil_contrib"><code class="docutils literal notranslate"><span class="pre">check_spoil_contrib()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.guide.dist2"><code class="docutils literal notranslate"><span class="pre">dist2()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.guide.get_ax_range"><code class="docutils literal notranslate"><span class="pre">get_ax_range()</span></code></a></li>
+<li><a class="reference internal" href="#proseco.guide.get_guide_candidates_mask"><code class="docutils literal notranslate"><span class="pre">get_guide_candidates_mask()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.guide.get_guide_catalog"><code class="docutils literal notranslate"><span class="pre">get_guide_catalog()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.guide.get_imposter_mags"><code class="docutils literal notranslate"><span class="pre">get_imposter_mags()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.guide.get_pixmag_for_offset"><code class="docutils literal notranslate"><span class="pre">get_pixmag_for_offset()</span></code></a></li>

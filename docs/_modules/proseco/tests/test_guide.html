@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>proseco.tests.test_guide &#8212; proseco 5.13.2 documentation</title>
+    <title>proseco.tests.test_guide &#8212; proseco 5.16.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=fa44fd50" />
     <link rel="stylesheet" type="text/css" href="../../../_static/bootstrap-astropy.css?v=f4f7060c" />
     
-    <script src="../../../_static/documentation_options.js?v=0c4239ea"></script>
+    <script src="../../../_static/documentation_options.js?v=f23352e5"></script>
     <script src="../../../_static/doctools.js?v=888ff710"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script type="text/javascript" src="../../../_static/sidebar.js"></script>
@@ -44,7 +44,7 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../../index.html">proseco 5.13.2 documentation</a>
+	<a href="../../../index.html">proseco 5.16.0 documentation</a>
 	 &#187;
       </li>
       <li><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
@@ -253,6 +253,25 @@
     <span class="n">stars</span><span class="o">.</span><span class="n">add_fake_constellation</span><span class="p">(</span><span class="n">mag</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mf">10.3</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="n">n_stars</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
     <span class="c1"># Bright star that would normally be selected</span>
     <span class="n">stars</span><span class="o">.</span><span class="n">add_fake_star</span><span class="p">(</span><span class="n">yang</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">zang</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">mag</span><span class="o">=</span><span class="mf">6.5</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="n">bad_id</span><span class="p">)</span>
+    <span class="n">kwargs</span> <span class="o">=</span> <span class="n">mod_std_info</span><span class="p">(</span><span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span> <span class="n">dark</span><span class="o">=</span><span class="n">dark</span><span class="p">,</span> <span class="n">n_guide</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">guides</span> <span class="o">=</span> <span class="n">get_guide_catalog</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">bad_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">guides</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span>
+
+    <span class="n">idx</span> <span class="o">=</span> <span class="n">guides</span><span class="o">.</span><span class="n">stars</span><span class="o">.</span><span class="n">get_id_idx</span><span class="p">(</span><span class="n">bad_id</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">guides</span><span class="o">.</span><span class="n">bad_stars_mask</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="test_color1_0p7">
+<a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_guide.test_color1_0p7">[docs]</a>
+<span class="k">def</span> <span class="nf">test_color1_0p7</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test that a star with COLOR1=0.7 is not selected&quot;&quot;&quot;</span>
+    <span class="n">dark</span> <span class="o">=</span> <span class="n">DARK40</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">stars</span> <span class="o">=</span> <span class="n">StarsTable</span><span class="o">.</span><span class="n">empty</span><span class="p">()</span>
+    <span class="n">stars</span><span class="o">.</span><span class="n">add_fake_constellation</span><span class="p">(</span><span class="n">mag</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mf">10.3</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="n">n_stars</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+    <span class="c1"># Bright star that would normally be selected but with color=0.7</span>
+    <span class="n">bad_id</span> <span class="o">=</span> <span class="mi">11111111</span>
+    <span class="n">stars</span><span class="o">.</span><span class="n">add_fake_star</span><span class="p">(</span><span class="n">yang</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">zang</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">mag</span><span class="o">=</span><span class="mf">6.5</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="n">bad_id</span><span class="p">,</span> <span class="n">COLOR1</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
     <span class="n">kwargs</span> <span class="o">=</span> <span class="n">mod_std_info</span><span class="p">(</span><span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span> <span class="n">dark</span><span class="o">=</span><span class="n">dark</span><span class="p">,</span> <span class="n">n_guide</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
     <span class="n">guides</span> <span class="o">=</span> <span class="n">get_guide_catalog</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">assert</span> <span class="n">bad_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">guides</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span>
@@ -759,7 +778,9 @@
     <span class="c1"># Force include the faint 4 stars that are also close together</span>
     <span class="n">include_ids</span> <span class="o">=</span> <span class="p">[</span><span class="mi">21</span><span class="p">,</span> <span class="mi">22</span><span class="p">,</span> <span class="mi">23</span><span class="p">,</span> <span class="mi">24</span><span class="p">]</span>
     <span class="n">cat2</span> <span class="o">=</span> <span class="n">get_guide_catalog</span><span class="p">(</span>
-        <span class="o">**</span><span class="n">mod_std_info</span><span class="p">(</span><span class="n">n_guide</span><span class="o">=</span><span class="mi">5</span><span class="p">),</span> <span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span> <span class="n">include_ids_guide</span><span class="o">=</span><span class="n">include_ids</span>
+        <span class="o">**</span><span class="n">mod_std_info</span><span class="p">(</span><span class="n">n_guide</span><span class="o">=</span><span class="mi">5</span><span class="p">),</span>
+        <span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span>
+        <span class="n">include_ids_guide</span><span class="o">=</span><span class="n">include_ids</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># Run the cluster checks and confirm all 3 fail</span>
@@ -900,15 +921,20 @@
         <span class="n">mag</span><span class="o">=</span><span class="p">[</span><span class="mf">7.0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">4</span> <span class="o">+</span> <span class="p">[</span><span class="n">GUIDE</span><span class="o">.</span><span class="n">ref_faint_mag</span> <span class="o">-</span> <span class="mf">0.001</span><span class="p">],</span> <span class="n">n_stars</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="n">ids</span>
     <span class="p">)</span>
 
-    <span class="c1"># Select stars at 0.1 degC colder than reference temperature, expect 5 stars selected</span>
+    <span class="c1"># Select stars at 0.1 degC colder than reference temperature, use previous default of</span>
+    <span class="c1"># dyn_bgd_n_faint=0 for this test, expect 5 stars selected</span>
     <span class="n">guides</span> <span class="o">=</span> <span class="n">get_guide_catalog</span><span class="p">(</span>
-        <span class="o">**</span><span class="n">mod_std_info</span><span class="p">(</span><span class="n">t_ccd</span><span class="o">=</span><span class="n">GUIDE</span><span class="o">.</span><span class="n">ref_faint_mag_t_ccd</span> <span class="o">-</span> <span class="mf">0.1</span><span class="p">),</span> <span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span> <span class="n">dark</span><span class="o">=</span><span class="n">DARK40</span>
+        <span class="o">**</span><span class="n">mod_std_info</span><span class="p">(</span><span class="n">t_ccd</span><span class="o">=</span><span class="n">GUIDE</span><span class="o">.</span><span class="n">ref_faint_mag_t_ccd</span> <span class="o">-</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">dyn_bgd_n_faint</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+        <span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span>
+        <span class="n">dark</span><span class="o">=</span><span class="n">DARK40</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">guides</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">ids</span><span class="p">)</span>
 
     <span class="c1"># Select stars at 0.1 degC warmer than reference temperature, expect 4 stars selected</span>
     <span class="n">guides</span> <span class="o">=</span> <span class="n">get_guide_catalog</span><span class="p">(</span>
-        <span class="o">**</span><span class="n">mod_std_info</span><span class="p">(</span><span class="n">t_ccd</span><span class="o">=</span><span class="n">GUIDE</span><span class="o">.</span><span class="n">ref_faint_mag_t_ccd</span> <span class="o">+</span> <span class="mf">0.1</span><span class="p">),</span> <span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span> <span class="n">dark</span><span class="o">=</span><span class="n">DARK40</span>
+        <span class="o">**</span><span class="n">mod_std_info</span><span class="p">(</span><span class="n">t_ccd</span><span class="o">=</span><span class="n">GUIDE</span><span class="o">.</span><span class="n">ref_faint_mag_t_ccd</span> <span class="o">+</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">dyn_bgd_n_faint</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+        <span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span>
+        <span class="n">dark</span><span class="o">=</span><span class="n">DARK40</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">guides</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">])</span>
 </pre></div>
