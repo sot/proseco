@@ -746,7 +746,7 @@ def test_monitors_and_target_offset_args():
         "-1700.0 1900.0          2 7.5        3",
         "  500.0 -500.0          2 7.5        2",
     ]
-    assert aca.monitors.pformat_all() == exp
+    assert aca.monitors.pformat() == exp
     assert aca.target_offset is target_offset
 
 
