@@ -147,7 +147,7 @@ def get_catalog_lines(
 
     # Text representation of table with separator lines between GUI, MON, and
     # ACQ sections.
-    lines = out.pformat_all()
+    lines = out.pformat()
 
     # Optionally divide the fid, guide, mon, and acq sections
     if section_lines:
