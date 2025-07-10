@@ -19,6 +19,7 @@ from ..core import (
     calc_spoiler_impact,
     get_dim_res,
     get_kwargs_from_starcheck_text,
+    get_mag_std,
 )
 from ..guide import GuideTable
 
@@ -404,3 +405,8 @@ def test_get_dim_res():
     dim, res = get_dim_res(halfws)
     assert np.all(dim == exp_dim)
     assert np.all(res == exp_res)
+
+
+def test_get_mag_std_extrapolate():
+    mag_err = get_mag_std(25)
+    assert np.isclose(mag_err, 1.428, atol=0.001, rtol=0)
