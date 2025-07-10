@@ -194,22 +194,20 @@ class ACABox:
             self.z = size.z
             return
 
+        if size is None:
+            size = (20, 20)
+
         try:
-            assert len(size) == 2
+            if len(size) != 2:
+                raise ValueError(
+                    "size arg must be either a scalar or a two-element sequence"
+                )
         except TypeError:
-            # len(scalar) raises TypeError
-            if size is None:
-                size = 20
-            self.y = size
-            self.z = size
-        except AssertionError:
-            # Has a length but it is not 2
-            raise ValueError(
-                "size arg must be either a scalar or a two-element sequence"
-            )
-        else:
-            self.y = size[0]
-            self.z = size[1]
+            # len(scalar) raises TypeError, turn it into a 2-tuple
+            size = (size, size)
+
+        self.y = size[0]
+        self.z = size[1]
 
     @property
     def row(self):
@@ -246,6 +244,9 @@ class ACABox:
 
     def __radd__(self, other):
         return self.__add__(other)
+
+    def __hash__(self):
+        return hash((self.y, self.z))
 
     def __repr__(self):
         return f"<ACABox y={self.y} z={self.z}>"
@@ -341,7 +342,7 @@ class MonitorsMetaAttribute(MetaAttribute):
             colnames = ["coord0", "coord1", "coord_type", "mag", "function"]
             if not set(colnames) <= set(value.colnames):
                 raise ValueError(
-                    f'monitors input table must have {", ".join(colnames)} columns'
+                    f"monitors input table must have {', '.join(colnames)} columns"
                 )
         else:
             value = np.asarray(value)
@@ -492,12 +493,14 @@ class BaseCatalogTable(Table):
 
         try:
             idx = (self._id_index_mon if mon else self._id_index)[id]
-            assert self["id"][idx] == id
+            if self["id"][idx] != id:
+                raise AssertionError
         except (KeyError, IndexError, AssertionError):
             self.make_index()
             try:
                 idx = (self._id_index_mon if mon else self._id_index)[id]
-                assert self["id"][idx] == id
+                if self["id"][idx] != id:
+                    raise AssertionError
             except (KeyError, IndexError, AssertionError):
                 raise KeyError(f"{id} is not in table")
 
@@ -662,7 +665,8 @@ class ACACatalogTable(BaseCatalogTable):
 
     @dark.setter
     def dark(self, value):
-        assert value.shape == (1024, 1024)
+        if value.shape != (1024, 1024):
+            raise ValueError(f"dark image must be 1024x1024, got {value.shape}")
         self._dark = value
 
         # Set pixel regions from ACA.bad_pixels to have acqs.dark=700000 (5.0 mag
@@ -986,7 +990,7 @@ class ACACatalogTable(BaseCatalogTable):
         :param rootdir: root directory (default='.')
         """
         rootdir = Path(rootdir)
-        outdir = rootdir / f'obs{self.meta["obsid"]:05}'
+        outdir = rootdir / f"obs{self.meta['obsid']:05}"
         if not outdir.exists():
             outdir.mkdir()
         outfile = outdir / f"{self.name}.pkl"
@@ -1038,8 +1042,8 @@ class ACACatalogTable(BaseCatalogTable):
 
         if np.any(bads):
             self.log(
-                f'Candidate object id={cand["id"]} rejected due to column spoiler(s) '
-                f'{stars["id"][mask][bads].tolist()}',
+                f"Candidate object id={cand['id']} rejected due to column spoiler(s) "
+                f"{stars['id'][mask][bads].tolist()}",
                 id=cand["id"],
             )
             return True
@@ -1110,6 +1114,8 @@ get_mag_std = interp1d(
         1.0,
     ],  # std-dev
     kind="linear",
+    fill_value="extrapolate",
+    bounds_error=False,
 )
 
 

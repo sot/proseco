@@ -435,8 +435,8 @@ class GuideTable(ACACatalogTable):
                             "id": star["id"],
                             "type": "overlap",
                             "stage": 0,
-                            "text": f'Cand {star["id"]} has track overlap (12 pixels) '
-                            f'with star {other_star["id"]}',
+                            "text": f"Cand {star['id']} has track overlap (12 pixels) "
+                            f"with star {other_star['id']}",
                         }
                     )
                     nok[idx] = True
@@ -633,7 +633,7 @@ class GuideTable(ACACatalogTable):
                     "cand_mag": cand_guides["mag"][idx],
                     "cand_mag_err_times_sigma": n_sigma * mag_err[idx],
                     "text": (
-                        f'Cand {cand_guides["id"][idx]} rejected with '
+                        f"Cand {cand_guides['id'][idx]} rejected with "
                         "mag outside range for stage"
                     ),
                 }
@@ -651,8 +651,8 @@ class GuideTable(ACACatalogTable):
                     "stage": stage["Stage"],
                     "aspq1_lim": stage["ASPQ1Lim"],
                     "text": (
-                        f'Cand {cand_guides["id"][idx]} rejected with '
-                        f'aspq1 > {stage["ASPQ1Lim"]}'
+                        f"Cand {cand_guides['id'][idx]} rejected with "
+                        f"aspq1 > {stage['ASPQ1Lim']}"
                     ),
                 }
             )
@@ -679,7 +679,7 @@ class GuideTable(ACACatalogTable):
                     "imp_row_start": cand["imp_r"],
                     "imp_col_start": cand["imp_c"],
                     "text": (
-                        f'Cand {cand["id"]} mag {cand["mag"]:.1f} imposter with '
+                        f"Cand {cand['id']} mag {cand['mag']:.1f} imposter with "
                         f'"mag" {cand["imp_mag"]:.1f} '
                         f"limit {pixmag_lims[idx]:.2f} with offset lim {cen_limit} at stage"
                     ),
@@ -726,7 +726,7 @@ class GuideTable(ACACatalogTable):
                         "id": cand_guides["id"][idx],
                         "type": "bad color",
                         "stage": stage["Stage"],
-                        "text": f'Cand {cand_guides["id"][idx]} has bad color (0.7)',
+                        "text": f"Cand {cand_guides['id'][idx]} has bad color (0.7)",
                     }
                 )
             cand_guides[scol][bad_color] += GUIDE.errs["bad color"]
@@ -838,7 +838,7 @@ class GuideTable(ACACatalogTable):
         # selection filter from acq, but allows bad color and limits to brighter stars).
         ok = self.get_candidates_mask(stars) & ~outofbounds
         cand_guides = stars[ok]
-        self.log("Filtering on CLASS, mag, row/col, " "mag_err, ASPQ1/2, POS_ERR:")
+        self.log("Filtering on CLASS, mag, row/col, mag_err, ASPQ1/2, POS_ERR:")
         self.log(
             f"Reduced star list from {len(stars)} to "
             f"{len(cand_guides)} candidate guide stars"
@@ -862,7 +862,7 @@ class GuideTable(ACACatalogTable):
                     "id": cand_guides["id"][idx],
                     "stage": 0,
                     "type": "bad star list",
-                    "text": f'Cand {cand_guides["id"][idx]} in bad star list',
+                    "text": f"Cand {cand_guides['id'][idx]} in bad star list",
                 }
             )
         cand_guides = cand_guides[~bs]
@@ -979,7 +979,7 @@ def check_fid_trap(cand_stars, fids, dither):
                         "fid_id": fid["id"],
                         "fid_dist_to_trap": fid_dist_to_trap,
                         "star_dist_to_register": star_dist_to_register[idx],
-                        "text": f'Cand {cand["id"]} in trap zone for fid {fid["id"]}',
+                        "text": f"Cand {cand['id']} in trap zone for fid {fid['id']}",
                     }
                 )
     return spoilers, rej
@@ -1049,7 +1049,7 @@ def check_spoil_contrib(cand_stars, ok, stars, regfrac, bgthresh):
                     "fraction": fraction,
                     "sum_in_region": sum_in_region,
                     "text": (
-                        f'Cand {cand_stars["id"]} has too much contribution '
+                        f"Cand {cand_stars['id']} has too much contribution "
                         "to region from spoilers"
                     ),
                 }
@@ -1069,7 +1069,7 @@ def check_spoil_contrib(cand_stars, ok, stars, regfrac, bgthresh):
                         "bg_thresh": bgthresh,
                         "bg_pix_val": val,
                         "pix_id": pixlabel,
-                        "text": f'Cand {cand["id"]} has bg pix spoiled by spoilers',
+                        "text": f"Cand {cand['id']} has bg pix spoiled by spoilers",
                     }
                 )
                 continue
@@ -1141,7 +1141,7 @@ def check_mag_spoilers(cand_stars, ok, stars, n_sigma):
                         "actual_dist": dist,
                         "type": "spoiler by distance-mag line",
                         "text": (
-                            f'Cand {cand["id"]} spoiled by {spoil["id"]}, '
+                            f"Cand {cand['id']} spoiled by {spoil['id']}, "
                             f"too close ({dist:.1f}) pix for magdiff ({delmag:.1f})"
                         ),
                     }
@@ -1203,9 +1203,9 @@ def check_column_spoilers(cand_stars, ok, stars, n_sigma):
                     "dmag_lim": ACA.col_spoiler_mag_diff,
                     "dcol": cand["col"] - spoiler["col"],
                     "text": (
-                        f'Cand {cand["id"]} has column spoiler {spoiler["id"]} '
-                        f'at ({spoiler["row"]:.1f}, {spoiler["row"]:.1f}), '
-                        f'mag {spoiler["mag"]:.2f}'
+                        f"Cand {cand['id']} has column spoiler {spoiler['id']} "
+                        f"at ({spoiler['row']:.1f}, {spoiler['row']:.1f}), "
+                        f"mag {spoiler['mag']:.2f}"
                     ),
                 }
             )
@@ -1337,8 +1337,8 @@ def has_spoiler_in_box(cand_guides, stars, halfbox=5, magdiff=-4):
                     "dmag": cand["mag"] - spoiler["mag"],
                     "n": n,
                     "text": (
-                        f'Cand {cand["id"]} spoiled by {n} stars in {boxsize}x{boxsize} '
-                        f' including {spoiler["id"]}'
+                        f"Cand {cand['id']} spoiled by {n} stars in {boxsize}x{boxsize} "
+                        f" including {spoiler['id']}"
                     ),
                 }
             )
@@ -1398,7 +1398,7 @@ def spoiled_by_bad_pixel(cand_guides, dither):
                     "pixel": (bp_row[bps][0], bp_col[bps][0]),
                     "n_bad": np.count_nonzero(bps),
                     "text": (
-                        f'Cand {cand["id"]} spoiled by {np.count_nonzero(bps)} bad pixels '
+                        f"Cand {cand['id']} spoiled by {np.count_nonzero(bps)} bad pixels "
                         f"including {(bp_row[bps][0], bp_col[bps][0])}"
                     ),
                 }

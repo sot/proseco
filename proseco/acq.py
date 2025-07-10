@@ -526,9 +526,7 @@ class AcqTable(ACACatalogTable):
         cand_acqs = stars[ok]
 
         cand_acqs.sort("mag")
-        self.log(
-            "Filtering on CLASS, mag, COLOR1, row/col, " "mag_err, ASPQ1/2, POS_ERR:"
-        )
+        self.log("Filtering on CLASS, mag, COLOR1, row/col, mag_err, ASPQ1/2, POS_ERR:")
         self.log(
             f"Reduced star list from {len(stars)} to "
             f"{len(cand_acqs)} candidate acq stars"
@@ -658,7 +656,7 @@ class AcqTable(ACACatalogTable):
         """
         if acq["id"] in ACA.bad_star_set:
             self.log(
-                f'Rejecting star {acq["id"]} which is in bad star list', id=acq["id"]
+                f"Rejecting star {acq['id']} which is in bad star list", id=acq["id"]
             )
             idx = self.stars.get_id_idx(acq["id"])
             self.bad_stars_mask[idx] = True
@@ -681,7 +679,7 @@ class AcqTable(ACACatalogTable):
         dy, dz, frac_norm = calc_spoiler_impact(acq, stars)
         if np.abs(dy) > 1.5 or np.abs(dz) > 1.5 or frac_norm < 0.95:
             self.log(
-                f'Candidate acq star {acq["id"]} rejected due to nearby spoiler(s) '
+                f"Candidate acq star {acq['id']} rejected due to nearby spoiler(s) "
                 f"dy={dy:.1f} dz={dz:.1f} frac_norm={frac_norm:.2f}",
                 id=acq["id"],
             )
@@ -800,8 +798,8 @@ class AcqTable(ACACatalogTable):
                 accepted = p_acq > min_p_acq
                 status = "ACCEPTED" if accepted else "rejected"
                 self.log(
-                    f'Star idx={acq_idx:2d} id={acq["id"]:10d} '
-                    f'box={box_size:3d} mag={acq["mag"]:5.1f} p_acq={p_acq:.3f} '
+                    f"Star idx={acq_idx:2d} id={acq['id']:10d} "
+                    f"box={box_size:3d} mag={acq['mag']:5.1f} p_acq={p_acq:.3f} "
                     f"{status}",
                     id=acq["id"],
                     level=2,
@@ -1065,7 +1063,7 @@ class AcqTable(ACACatalogTable):
         orig_halfw = acq["halfw"]
         orig_p_acq = acq["probs"].p_acq_marg(acq["halfw"], self)
 
-        self.log(f'Optimizing halfw for idx={idx} id={acq["id"]}', id=acq["id"])
+        self.log(f"Optimizing halfw for idx={idx} id={acq['id']}", id=acq["id"])
 
         # Compute p_safe for each possible halfw for the current star
         p_safes = []
@@ -1655,14 +1653,16 @@ class AcqProbs:
         return self._p_on_ccd[man_err]
 
     def p_brightest(self, box_size, man_err, acqs):
-        assert acqs.cand_acqs is not None
+        if acqs.cand_acqs is None:
+            raise AssertionError
         return self._p_brightest[box_size, man_err]
 
     def p_acq_model(self, box_size):
         return self._p_acq_model[box_size]
 
     def p_acqs(self, box_size, man_err, acqs):
-        assert acqs.cand_acqs is not None
+        if acqs.cand_acqs is None:
+            raise AssertionError
         fid_set = acqs.fid_set
 
         try:
@@ -1678,7 +1678,8 @@ class AcqProbs:
             return p_acq
 
     def p_acq_marg(self, box_size, acqs):
-        assert acqs.cand_acqs is not None
+        if acqs.cand_acqs is None:
+            raise AssertionError
         fid_set = acqs.fid_set
         try:
             return self._p_acq_marg[box_size, fid_set]
@@ -1702,7 +1703,8 @@ class AcqProbs:
         :param box_size: search box size in arcsec
         :returns: probability multiplier (0 or 1)
         """
-        assert acqs.cand_acqs is not None
+        if acqs.cand_acqs is None:
+            raise AssertionError
         fid_set = acqs.fid_set
         try:
             return self._p_fid_spoiler[box_size, fid_set]
@@ -1728,15 +1730,15 @@ class AcqProbs:
         :param box_size: search box size in arcsec
         :returns: probability multiplier (0 or 1)
         """
-        assert acqs.cand_acqs is not None
+        if acqs.cand_acqs is None:
+            raise AssertionError
         try:
             return self._p_fid_id_spoiler[box_size, fid_id]
         except KeyError:
             fids = acqs.fids
             if fids is None:
                 acqs.add_warning(
-                    "Requested fid spoiler probability without "
-                    "setting acqs.fids first"
+                    "Requested fid spoiler probability without setting acqs.fids first"
                 )
                 return 1.0
 
@@ -1776,6 +1778,6 @@ def get_p_man_err(man_err, man_angle):
 
     man_err_idx = np.searchsorted(pme["man_err_hi"], man_err)
     if man_err_idx == len(pme):
-        raise ValueError(f'man_err must be <= {pme["man_err_hi"]}')
+        raise ValueError(f"man_err must be <= {pme['man_err_hi']}")
 
     return pme[name][man_err_idx]

@@ -223,14 +223,14 @@ def make_acq_star_details_report(acqs, cand_acqs, events, context, obsdir):
         cca["p_on_ccd_table"] = get_p_on_ccd_table(acq)
 
         # Make the star detail plot
-        basename = f'spoilers_{acq["id"]}.png'
+        basename = f"spoilers_{acq['id']}.png"
         filename = obsdir / basename
         cca["spoilers_plot"] = basename
         if not filename.exists():
             plot_spoilers(acq, acqs, filename=filename)
 
         # Make the acq detail plot with spoilers and imposters
-        basename = f'imposters_{acq["id"]}.png'
+        basename = f"imposters_{acq['id']}.png"
         filename = obsdir / basename
         cca["imposters_plot"] = basename
         if not filename.exists():
@@ -435,7 +435,7 @@ def plot_spoilers(acq, acqs, filename=None):
         plt.text(
             star["row"],
             star["col"] - 3,
-            f'{star["mag"]:.1f}±{star["mag_err"]:.1f}',
+            f"{star['mag']:.1f}±{star['mag_err']:.1f}",
             verticalalignment="top",
             horizontalalignment="center",
             fontsize="small",

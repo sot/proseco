@@ -1110,7 +1110,7 @@ def test_acq_fid_catalog_one_cand_fid():
 
     # Not enough fids
     assert aca.warnings == [
-        "WARNING: No acq-fid combination was " "found that met stage requirements"
+        "WARNING: No acq-fid combination was found that met stage requirements"
     ]
 
 

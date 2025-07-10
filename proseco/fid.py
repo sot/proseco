@@ -338,7 +338,7 @@ class FidTable(ACACatalogTable):
         cand_fids["spoilers"] = np.full(shape, None)  # Filled in with Table of spoilers
         cand_fids["spoiler_score"] = np.full(shape, 0, dtype=np.int64)
 
-        self.log(f'Initial candidate fid ids are {cand_fids["id"].tolist()}')
+        self.log(f"Initial candidate fid ids are {cand_fids['id'].tolist()}")
 
         # First check that any manually included fid ids are valid by seeing if
         # the supplied fid is in the initial ids for this detector.
@@ -385,8 +385,8 @@ class FidTable(ACACatalogTable):
             np.abs(fid["col"]) + FID.ccd_edge_margin > ACA.max_ccd_col
         ):
             self.log(
-                f'Rejecting fid id={fid["id"]} row,col='
-                f'({fid["row"]:.1f}, {fid["col"]:.1f}) off CCD',
+                f"Rejecting fid id={fid['id']} row,col="
+                f"({fid['row']:.1f}, {fid['col']:.1f}) off CCD",
                 level=1,
             )
             return True
@@ -399,7 +399,7 @@ class FidTable(ACACatalogTable):
         :param fid: FidTable Row of candidate fid light
         """
         if fid["id"] in self.exclude_ids_fid:
-            self.log(f'Rejecting fid {fid["id"]}: manually excluded by exclude_ids_fid')
+            self.log(f"Rejecting fid {fid['id']}: manually excluded by exclude_ids_fid")
             return True
         else:
             return False
@@ -422,7 +422,7 @@ class FidTable(ACACatalogTable):
             rows, cols = np.unravel_index(idxs, dark.shape)
             vals = dark[rows, cols]
             self.log(
-                f'Rejecting fid {fid["id"]}: near hot or bad pixel(s) '
+                f"Rejecting fid {fid['id']}: near hot or bad pixel(s) "
                 f"rows={rows + r0} cols={cols + c0} vals={vals}"
             )
             return True
@@ -474,7 +474,7 @@ class FidTable(ACACatalogTable):
 
             if fid["spoiler_score"] != 0:
                 self.log(
-                    f'Set fid {fid["id"]} spoiler score to {fid["spoiler_score"]}',
+                    f"Set fid {fid['id']} spoiler score to {fid['spoiler_score']}",
                     level=1,
                 )
 

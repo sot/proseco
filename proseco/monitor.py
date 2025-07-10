@@ -169,8 +169,7 @@ class MonTable(ACACatalogTable):
                     monitor["mag"] = star["mag"]
                 elif monitor["function"] == MonFunc.GUIDE:
                     raise BadMonitorError(
-                        "no acceptable AGASC star within "
-                        "2 arcsec of monitor position"
+                        "no acceptable AGASC star within 2 arcsec of monitor position"
                     )
 
             if monitor["function"] in (MonFunc.MON_FIXED, MonFunc.MON_TRACK):
@@ -198,4 +197,4 @@ class MonTable(ACACatalogTable):
                 self.add_row(mon)
 
             elif monitor["function"] != MonFunc.GUIDE:
-                raise ValueError(f'unexpected monitor function {monitor["function"]}')
+                raise ValueError(f"unexpected monitor function {monitor['function']}")
