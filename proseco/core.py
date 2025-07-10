@@ -1114,6 +1114,8 @@ get_mag_std = interp1d(
         1.0,
     ],  # std-dev
     kind="linear",
+    fill_value="extrapolate",
+    bounds_error=False,
 )
 
 
