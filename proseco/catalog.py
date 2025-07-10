@@ -740,7 +740,7 @@ def merge_cats(fids=None, guides=None, acqs=None, mons=None):
         acqs["sz"] = f"{img_size}x{img_size}"
 
     if len(acqs) > 8:
-        raise ValueError("catalog has too many acq entries: " f"n_acq={len(acqs)}")
+        raise ValueError(f"catalog has too many acq entries: n_acq={len(acqs)}")
 
     if len(guides) + len(mons) + len(gfms) + len(fids) > 8:
         raise ValueError(

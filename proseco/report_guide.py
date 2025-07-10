@@ -160,7 +160,7 @@ def make_cand_report(guides, cand_guides, context, obsdir):
         rep["guide_table"] = table_to_html(guide_table)
 
         # Make the star detail plot
-        basename = f'guide_candidate_{guide["id"]}.png'
+        basename = f"guide_candidate_{guide['id']}.png"
         filename = obsdir / basename
         rep["candidate_plot"] = basename
         if not filename.exists():
