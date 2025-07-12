@@ -1350,10 +1350,6 @@ def get_imposter_stars(
 
     :returns: numpy structured array of imposter stars
     """
-    print(
-        f"get_imposter_stars: star_row={star_row}, star_col={star_col}, "
-        f"{thresh=} {box_size=} {maxmag=} {bgd=} {mag_limit=}"
-    )
     # Convert row/col to array index coords unless testing.
     rc_off = 0 if test else 512
     acq_row = int(star_row + rc_off)
