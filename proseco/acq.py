@@ -255,6 +255,15 @@ def get_acq_catalog(obsid=0, **kwargs):
     acqs.set_attrs_from_kwargs(obsid=obsid, **kwargs)
     acqs.set_stars()
 
+    # If Jupiter in the target name and field, update the stars with it as a bright
+    # object.
+    if acqs.jupiter is not None:
+        from proseco.jupiter import add_jupiter_as_spoiler
+
+        acqs.stars = add_jupiter_as_spoiler(
+            date=acqs.date, stars=acqs.stars, jupiter=acqs.jupiter
+        )
+
     # Only allow imposters that are statistical outliers and are brighter than
     # this (temperature-dependent) threshold.  See characterisics.py for more
     # explanation.
@@ -1033,7 +1042,11 @@ class AcqTable(ACACatalogTable):
             p_n_cum = prob_n_acq(p_acqs)[1]  # This returns (p_n, p_n_cum)
 
             # Probability of 2 or fewer stars => conservative fail criteria
-            p2 = p_n_cum[2]
+            # handle the case of < 2 stars
+            if len(p_n_cum) <= 2:
+                p2 = 0
+            else:
+                p2 = p_n_cum[2]
 
             if verbose:
                 self.log(f"man_err = {man_err}, p_man_err = {p_man_err}")

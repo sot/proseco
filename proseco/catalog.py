@@ -115,8 +115,6 @@ def _get_aca_catalog(**kwargs):
         "t_ccd_eff_guide",
         "stars",
         "t_ccd_penalty_limit",
-        "duration",
-        "target_name",
     ):
         kwargs.pop(kwarg, None)
 

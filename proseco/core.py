@@ -598,6 +598,8 @@ class ACACatalogTable(BaseCatalogTable):
     t_ccd_acq = MetaAttribute()
     t_ccd_guide = MetaAttribute()
     date = MetaAttribute()
+    duration = MetaAttribute()
+    target_name = MetaAttribute(default="")
     dark_date = MetaAttribute()
     dither_acq = MetaAttribute()
     dither_guide = MetaAttribute()
@@ -619,6 +621,26 @@ class ACACatalogTable(BaseCatalogTable):
     verbose = MetaAttribute(default=False)
     print_log = MetaAttribute(default=False)
     log_info = MetaAttribute(default={}, is_kwarg=False)
+
+    @property
+    def jupiter(self):
+        if hasattr(self, "_jupiter"):
+            return self._jupiter
+
+        if "jupiter" not in self.target_name.lower():
+            self._jupiter = None
+            return self._jupiter
+
+        from proseco.jupiter import date_is_excluded
+
+        if date_is_excluded(self.date):
+            self._jupiter = None
+            return self._jupiter
+
+        from proseco.jupiter import get_jupiter_position
+
+        self._jupiter = get_jupiter_position(self.date, self.duration, self.att)
+        return self._jupiter
 
     @property
     def dark(self):

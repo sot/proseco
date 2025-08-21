@@ -374,6 +374,12 @@ class FidTable(ACACatalogTable):
             for fid in cand_fids:
                 self.set_spoilers_score(fid)
 
+        # If this is a jupiter observation, include jupiter in spoiling score
+        if self.jupiter:
+            from proseco.jupiter import update_fid_spoiler_score
+
+            update_fid_spoiler_score(cand_fids, self.jupiter)
+
         return cand_fids
 
     def off_ccd(self, fid):
