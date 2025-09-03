@@ -19,8 +19,17 @@ def date_is_excluded(date):
 
 def get_jupiter_position(date, duration, att):
     date0 = CxoTime(date)
-    n_times = int(duration / 1000) + 1
-    dates = date0 + np.linspace(0, duration, n_times) * u.s
+
+    # First 5 minutes: sample every 60 seconds
+    first_phase = np.arange(0, min(300, duration) + 1, 60)
+    # After 5 minutes: sample every 1000 seconds, not duplicating the 300s point
+    if duration > 300:
+        second_phase = np.arange(300 + 1000, duration, 1000)
+    else:
+        second_phase = np.array([])
+    # Always include the end point
+    all_times = np.unique(np.concatenate([first_phase, second_phase, [duration]]))
+    dates = date0 + all_times * u.s
     times = np.atleast_1d(dates.secs)
 
     chandra_ephem = ephem_stk.get_ephemeris_stk(start=dates[0], stop=dates[-1])
@@ -50,9 +59,9 @@ def get_jupiter_position(date, duration, att):
     if np.any(ok):
         out = Table(
             {
-                "times": times[ok],
-                "rows": row[ok],
-                "cols": col[ok],
+                "time": times[ok],
+                "row": row[ok],
+                "col": col[ok],
             }
         )
     else:
@@ -71,8 +80,8 @@ def jupiter_distribution_check(cand_guide_set, jupiter_data):
     # It looks like jupiter ang diam goes from 30 to 45 arcsec
     # so use 25 arcsec radius as reasonable value which is 5 pixels
     jupiter_size = 5  # pixels
-    sign_max = np.sign(np.max(jupiter_data["rows"] + jupiter_size))
-    sign_min = np.sign(np.min(jupiter_data["rows"] - jupiter_size))
+    sign_max = np.sign(np.max(jupiter_data["row"] + jupiter_size))
+    sign_min = np.sign(np.min(jupiter_data["row"] - jupiter_size))
     return (np.count_nonzero(np.sign(cand_guide_set["row"]) != sign_max) >= 2) and (
         np.count_nonzero(np.sign(cand_guide_set["row"]) != sign_min) >= 2
     )
@@ -90,8 +99,8 @@ def check_spoiled_by_jupiter(cands, jupiter):
         return np.zeros(len(cands), dtype=bool), []
 
     # Check that the candidates aren't within 15 columns of Jupiter
-    colmax_jup = np.max(jupiter["cols"])
-    colmin_jup = np.min(jupiter["cols"])
+    colmax_jup = np.max(jupiter["col"])
+    colmin_jup = np.min(jupiter["col"])
     tol = 15  # pixels
     ok = (cands["col"] < (colmin_jup - tol)) | (cands["col"] > (colmax_jup + tol))
 
@@ -122,9 +131,28 @@ def update_fid_spoiler_score(cand_fids, jupiter):
     cand_fids["spoiler_score"][mask] = 5
 
 
+def get_jupiter_acq_pos(date, jupiter=None):
+    if jupiter is None:
+        return None
+
+    # Use 5 minutes as the nominal acquisition time
+    acq_start = CxoTime(date)
+    acq_duration = 5 * 60 * u.s
+    ok = (jupiter["time"] >= acq_start.secs) & (
+        jupiter["time"] <= (acq_start + acq_duration).secs
+    )
+    if not np.any(ok):
+        return None
+
+    # Pick the median time for the jupiter position during the acquisition
+    spoil_time = np.median(jupiter["time"][ok])
+    spoil_idx = np.argmin(np.abs(jupiter["time"] - spoil_time))
+    return (jupiter["row"][spoil_idx], jupiter["col"][spoil_idx])
+
+
 def add_jupiter_as_spoiler(date, stars, jupiter=None):
     """
-    Add Jupiter as a bright object to the supplied stars table.
+    Add Jupiter as a bright object to the supplied stars table for acquisition.
 
     :param date: Observation date
     :param stars: Table of stars
@@ -134,23 +162,13 @@ def add_jupiter_as_spoiler(date, stars, jupiter=None):
     if jupiter is None:
         return stars
 
-    # Use 5 minutes as the nominal acquisition time
-    acq_start = CxoTime(date)
-    acq_duration = 5 * 60 * u.s
-    ok = (jupiter["times"] >= acq_start.secs) & (
-        jupiter["times"] <= (acq_start + acq_duration).secs
-    )
-    if not np.any(ok):
-        return stars
-
-    # Pick the median time for the jupiter position during the acquisition
-    spoil_time = np.median(jupiter["times"][ok])
-    spoil_idx = np.argmin(np.abs(jupiter["times"] - spoil_time))
+    # Jupiter acq position
+    row, col = get_jupiter_acq_pos(date, jupiter=jupiter)
 
     out = stars.copy()
     out.add_fake_star(
-        row=jupiter["rows"][spoil_idx],
-        col=jupiter["cols"][spoil_idx],
+        row=row,
+        col=col,
         mag=-3,  # V mag of Jupiter
         id=20,
         CLASS=100,
