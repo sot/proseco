@@ -221,6 +221,10 @@ def test_jupiter_midline():
     assert np.sum(aca.guides["row"] > 0) >= 2
     assert np.sum(aca.guides["row"] < 0) >= 2
 
+    # Confirm that a fainter star is selected which is a weak confirmation
+    # that the cluster checks are still working
+    assert 204 in aca.guides["id"]
+
     # Confirm no guide stars within 15 columns of Jupiter
     for jcol in aca.jupiter["col"]:
         dcol = np.abs(aca.guides["col"] - jcol)
