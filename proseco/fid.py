@@ -16,6 +16,7 @@ from . import characteristics as ACA
 from . import characteristics_acq as ACQ
 from . import characteristics_fid as FID
 from .core import ACACatalogTable, AliasAttribute, MetaAttribute
+from .jupiter import is_spoiled_by_jupiter
 
 
 def get_fid_catalog(obsid=0, **kwargs):
@@ -353,12 +354,14 @@ class FidTable(ACACatalogTable):
         stars_mask = (self.stars["mag"] < FID.fid_mag - ACA.col_spoiler_mag_diff) & (
             np.abs(self.stars["row"]) < 512 + self.dither_guide.row
         )
+
         for idx, fid in enumerate(cand_fids):
             excluded = (
                 self.off_ccd(fid)
                 or self.near_hot_or_bad_pixel(fid)
                 or self.has_column_spoiler(fid, self.stars, stars_mask)
                 or self.is_excluded(fid)
+                or is_spoiled_by_jupiter(fid, self.jupiter)
             )
             included = fid["id"] in self.include_ids_fid
             if not included and excluded:
@@ -373,12 +376,6 @@ class FidTable(ACACatalogTable):
         if self.stars:
             for fid in cand_fids:
                 self.set_spoilers_score(fid)
-
-        # If this is a jupiter observation, include jupiter in spoiling score
-        if self.jupiter:
-            from proseco.jupiter import update_fid_spoiler_score
-
-            update_fid_spoiler_score(cand_fids, self.jupiter)
 
         return cand_fids
 

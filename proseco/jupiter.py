@@ -87,6 +87,12 @@ def jupiter_distribution_check(cand_guide_set, jupiter_data):
     )
 
 
+def is_spoiled_by_jupiter(cand, jupiter):
+    # convert the cand Table Row into a Table of one row
+    single_row_table = Table(cand)
+    return check_spoiled_by_jupiter(single_row_table, jupiter)[0][0]
+
+
 def check_spoiled_by_jupiter(cands, jupiter):
     """
 
@@ -124,13 +130,6 @@ def check_spoiled_by_jupiter(cands, jupiter):
     return ~ok, rej_info
 
 
-def update_fid_spoiler_score(cand_fids, jupiter):
-    mask, _ = check_spoiled_by_jupiter(cand_fids, jupiter)
-    if not np.any(mask):
-        return
-    cand_fids["spoiler_score"][mask] = 5
-
-
 def get_jupiter_acq_pos(date, jupiter=None):
     if jupiter is None:
         return None
@@ -150,9 +149,12 @@ def get_jupiter_acq_pos(date, jupiter=None):
     return (jupiter["row"][spoil_idx], jupiter["col"][spoil_idx])
 
 
-def add_jupiter_as_spoiler(date, stars, jupiter=None):
+def add_jupiter_as_lots_of_acq_spoilers(date, stars, jupiter=None):
     """
-    Add Jupiter as a bright object to the supplied stars table for acquisition.
+    Add Jupiter as a bunch of bright objects to the supplied stars table.
+
+    This is specific to acquisition as it uses the acquisition time as a the
+    reference time for the position of Jupiter.
 
     :param date: Observation date
     :param stars: Table of stars
@@ -166,11 +168,17 @@ def add_jupiter_as_spoiler(date, stars, jupiter=None):
     row, col = get_jupiter_acq_pos(date, jupiter=jupiter)
 
     out = stars.copy()
-    out.add_fake_star(
-        row=row,
-        col=col,
-        mag=-3,  # V mag of Jupiter
-        id=20,
-        CLASS=100,
-    )
+    idincr = 0
+    for irow in np.arange(-505, 510, 5):
+        for icol in [col - 10, col - 5, col, col + 5, col + 10]:
+            # for irow in [0]:
+            #    for icol in [0]:
+            out.add_fake_star(
+                row=irow,
+                col=icol,
+                mag=-3,  # V mag of Jupiter
+                id=20 + idincr,
+                CLASS=100,
+            )
+            idincr += 1
     return out

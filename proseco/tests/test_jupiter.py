@@ -1,14 +1,14 @@
 import numpy as np
-from astropy.table import Table
 import pytest
-
+from astropy.table import Table
+from chandra_aca import planets, transform
+from cheta import fetch
+from cxotime import CxoTime
 from Quaternion import Quat
+
 from proseco import get_aca_catalog, jupiter
 from proseco.core import StarsTable
 from proseco.tests.test_common import DARK40, mod_std_info
-from chandra_aca import planets, transform
-from cheta import fetch
-
 
 HAS_CHETA_EPHEM = False
 try:
@@ -25,7 +25,7 @@ def test_jupiter_position():
     # to chandra_aca.planets.get_planet_chandra.  The proseco code is using the
     # stk ephemeris instead of the cheta predictive ephemeris.
     # This is from obsid 23375
-    att = Quat(q=[-0.51186291,  0.27607314,  -0.17243277,  0.79501379])
+    att = Quat(q=[-0.51186291, 0.27607314, -0.17243277, 0.79501379])
     date = "2021:290:11:33:16.000"
     duration = 36000
     jupiter_proseco_data = jupiter.get_jupiter_position(date, duration, att)
@@ -37,11 +37,17 @@ def test_jupiter_position():
     lim1 = 511
     # Only plot planet within the image limits
     ok = (row >= lim0) & (row <= lim1) & (col >= lim0) & (col <= lim1)
-    jupiter_aca_data = Table({"time": jupiter_proseco_data["time"][ok], "row": row[ok], "col": col[ok]})
+    jupiter_aca_data = Table(
+        {"time": jupiter_proseco_data["time"][ok], "row": row[ok], "col": col[ok]}
+    )
     # Compare the two tables
     assert len(jupiter_proseco_data) == len(jupiter_aca_data)
-    assert np.allclose(jupiter_proseco_data["row"], jupiter_aca_data["row"], atol=0.1, rtol=0)
-    assert np.allclose(jupiter_proseco_data["col"], jupiter_aca_data["col"], atol=0.1, rtol=0)
+    assert np.allclose(
+        jupiter_proseco_data["row"], jupiter_aca_data["row"], atol=0.1, rtol=0
+    )
+    assert np.allclose(
+        jupiter_proseco_data["col"], jupiter_aca_data["col"], atol=0.1, rtol=0
+    )
 
 
 def test_jupiter_exclude_dates():
@@ -61,13 +67,19 @@ def test_jupiter_offset_left():
     stars = StarsTable.empty()
     att = Quat(q=[-0.49963289, 0.25613709, -0.16664083, 0.81055018])
     stars.att = att
-    stars.add_fake_constellation(mag=8.0, n_stars=5)
 
     # Add a fake star right on jupiter
     stars.add_fake_star(id=200, mag=6.5, row=-92, col=198)
 
     # Add a fake star near jupiter but outside the spoiler margin
     stars.add_fake_star(id=201, mag=7.5, row=-92, col=240)
+
+    # And another star on the left side that is bright
+    stars.add_fake_star(id=202, mag=6, row=-100, col=300)
+
+    # and two more stars on the right
+    stars.add_fake_star(id=203, mag=8, row=100, col=100)
+    stars.add_fake_star(id=204, mag=8, row=100, col=250)
 
     aca = get_aca_catalog(
         **mod_std_info(
@@ -78,32 +90,32 @@ def test_jupiter_offset_left():
             duration=20000,
             target_name="Jupiter 1",
             detector="HRC-I",
-            n_guide=4,
+            n_guide=2,
             raise_exc=True,
         )
     )
     # Confirm the fake star right on jupiter is not in the catalog
     assert 200 not in aca["id"]
 
-    # Confirm the other fake star is a BOT
-    assert 201 in aca.guides["id"]
+    # Confirm the other fake star is an acq
     assert 201 in aca.acqs["id"]
     # But that as an acq star it has a reduced box size
     ok = aca["id"] == 201
-    assert aca["halfw"][ok][0] == 80
+    assert aca["halfw"][ok][0] == 60
 
-    # Confirm that one of the HRC fid lights is spoiled by jupiter but still selected
-    assert aca.fids["spoiler_score"][aca.fids["id"] == 3][0] == 5
+    # Confirm that there are only two fid lights selected
+    assert len(aca.fids) == 2
 
-    # Confirm counts look good
-    assert len(aca.acqs) == 6
-    assert len(aca.guides) == 4
-    assert len(aca.fids) == 3
+    # Confirm other counts look good
+    assert len(aca.acqs) == 4
+    assert len(aca.guides) == 2
 
-    # Confirm Jupiter is all on the left side of the image
+    # Confirm Jupiter is all on the left side of the CCD
     assert np.all(aca.jupiter["row"] < 0)
 
-    # Confirm two guide stars on the opposite side of the image
+    # Confirm two guide stars on the opposite side of the CCD
+    # This checks optimization because there is a brighter star
+    # on the left side.
     assert np.sum(aca.guides["row"] > 0) >= 2
 
     # Confirm no guide stars within 15 columns of Jupiter
@@ -111,15 +123,27 @@ def test_jupiter_offset_left():
         dcol = np.abs(aca.guides["col"] - jcol)
         assert np.all(dcol > 15)
 
-    raise ValueError
-
 
 def test_jupiter_offset_right():
     dark = DARK40.copy()
+    att = Quat(q=[-0.50066275, 0.25809145, -0.16348241, 0.80993772])
     stars = StarsTable.empty()
-    att = Quat(q=[-0.50066275,  0.25809145, -0.16348241,  0.80993772])
     stars.att = att
-    stars.add_fake_constellation(mag=8.0, n_stars=8)
+
+    # Add stars on the same side as Jupiter
+    stars.add_fake_star(id=201, mag=8, row=-100, col=300)
+    stars.add_fake_star(id=202, mag=6, row=100, col=100)
+    stars.add_fake_star(id=203, mag=8, row=100, col=250)
+
+    # Add one right on Jupiter
+    stars.add_fake_star(id=204, mag=8, row=177, col=5)
+
+    # Add one below Jupiter
+    stars.add_fake_star(id=205, mag=8, row=177, col=-40)
+
+    # And star on the left side
+    stars.add_fake_star(id=206, mag=8, row=-300, col=-40)
+
     aca = get_aca_catalog(
         **mod_std_info(
             stars=stars,
@@ -130,38 +154,77 @@ def test_jupiter_offset_right():
             target_name="Jupiter 1",
             detector="HRC-I",
             raise_exc=True,
-            n_guide=3,
+            n_guide=2,
         )
     )
+
+    # Confirm the fake star right on jupiter is not in the catalog
+    assert 204 not in aca["id"]
+
+    # Confirm the fake star below jupiter is an ACQ with small box
+    assert 205 in aca.acqs["id"]
+    ok = aca["id"] == 205
+    assert aca["halfw"][ok][0] == 80
+
+    # Confirm that there are 3 fid lights selected
+    assert len(aca.fids) == 3
+
+    # Confirm other counts look good
+    assert len(aca.acqs) == 5
+    assert len(aca.guides) == 2
+
+    # Confirm Jupiter is all on the right side of the CCD
+    assert np.all(aca.jupiter["row"] > 0)
+
+    # Confirm two guide stars on the opposite side of the CCD
+    # This checks optimization because there is a brighter star
+    # on the left side.
+    assert np.sum(aca.guides["row"] < 0) >= 2
+
+    # Confirm no guide stars within 15 columns of Jupiter
+    for jcol in aca.jupiter["col"]:
+        dcol = np.abs(aca.guides["col"] - jcol)
+        assert np.all(dcol > 15)
+
 
 def test_jupiter_midline():
     dark = DARK40.copy()
     stars = StarsTable.empty()
-    att = Quat(q=[-0.43419701, -0.51408310, 0.33920339, 0.65736792])
+    att = Quat(q=[-0.313343, -0.4476205, 0.42355607, 0.72253187])
     stars.att = att
-    # stars.add_fake_constellation(mag=8.0, n_stars=8)
 
-    # t_ccd = np.trunc(ACA.aca_t_ccd_penalty_limit - 1.0)
+    stars.add_fake_star(id=200, mag=6.5, row=-150, col=150)
+    stars.add_fake_star(id=201, mag=6.5, row=150, col=150)
+    stars.add_fake_star(id=202, mag=6.5, row=150, col=-150)
+    stars.add_fake_star(id=203, mag=6.5, row=-150, col=-150)
+    stars.add_fake_star(id=204, mag=9, row=-300, col=300)
+    stars.add_fake_star(id=205, mag=9, row=300, col=300)
 
     aca = get_aca_catalog(
         **mod_std_info(
             stars=stars,
             dark=dark,
-            # date="2025:093:13:26:04.000",
             date="2025:093:12:26:04.000",
             att=att,
-            duration=25000,
+            duration=30000,
             target_name="Jupiter 1",
+            detector="HRC-I",
             raise_exc=True,
+            n_guide=4,
         )
     )
-    # assert len(aca.acqs) == 8
-    # assert len(aca.guides) == 5
-    # assert len(aca.fids) == 3
-    # names = ["id", "yang", "zang", "row", "col", "mag", "spoiler_score", "idx"]
-    # assert all(name in aca.fids.colnames for name in names)
-    # assert aca.duration == 20000
-    # assert aca.target_name == "Jupiter 1"
+    # Confirm Jupiter is on both sides of the CCD
+    assert np.max(aca.jupiter["row"]) > 0
+    assert np.min(aca.jupiter["row"]) < 0
+
+    # Confirm two guide stars on each side of the CCD
+    assert np.sum(aca.guides["row"] > 0) >= 2
+    assert np.sum(aca.guides["row"] < 0) >= 2
+
+    # Confirm no guide stars within 15 columns of Jupiter
+    for jcol in aca.jupiter["col"]:
+        dcol = np.abs(aca.guides["col"] - jcol)
+        assert np.all(dcol > 15)
 
 
 def test_jupiter_2():
@@ -234,24 +297,18 @@ def test_check_spoiled_by_jupiter():
     assert rej[0]["id"] == 2
 
 
-def test_add_jupiter_as_spoiler():
-    # Simulate stars and jupiter data
-    from cxotime import CxoTime
-
-    from proseco.core import StarsTable
-
+def test_add_jupiter_as_spoilers():
     date = "2025:220:12:00:00"
-    att = (0, 0, 0)
     stars = StarsTable.empty()
     jupiter_data = Table({"time": [CxoTime(date).secs], "row": [100], "col": [100]})
-    out = jupiter.add_jupiter_as_spoiler(date, stars, jupiter_data)
+    out = jupiter.add_jupiter_as_lots_of_acq_spoilers(date, stars, jupiter_data)
     # Should add a new star with id=20 at Jupiter's position
-    assert len(out) == 1
-    assert 20 in out["id"]
+    assert len(out) == 1015
+    assert 1000 in out["id"]
 
 
-def test_add_jupiter_as_spoiler_no_jupiter():
+def test_add_jupiter_as_spoilers_no_jupiter():
     # Should return stars unchanged if jupiter is None
     stars = Table({"row": [0], "col": [0], "mag": [8.0], "id": [1], "CLASS": [0]})
-    out = jupiter.add_jupiter_as_spoiler("2025:220:12:00:00", stars, None)
+    out = jupiter.add_jupiter_as_lots_of_acq_spoilers("2025:220:12:00:00", stars, None)
     assert np.array_equal(stars["id"], out["id"])
