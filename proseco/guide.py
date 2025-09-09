@@ -1476,12 +1476,12 @@ def check_single_cluster(cand_guide_set, threshold, n_minus):
 
 def run_cluster_checks(cand_guide_set):
     """
-    Yield functions that perform cluster checks on a combination of candidate guide stars.
+    Perform cluster checks on a combination of candidate guide stars.
 
-    Each yielded function, when called, will perform a specific cluster check
-    (with a given n_minus and threshold) on the provided cand_guide_set.
+    This performs a set of specific cluster checks on the provided cand_guide_set
+    and returns a list of bools, one for each cluster check run.
 
-    :returns: generator of functions, each returning True/False when called
+    :returns: list of bools, one for each cluster check run
     """
     test_status = []
     for n_minus, threshold in enumerate(GUIDE.cluster_thresholds):
