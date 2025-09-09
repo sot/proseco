@@ -21,10 +21,14 @@ except Exception:
 
 @pytest.mark.skipif(not HAS_CHETA_EPHEM, reason="Requires cheta ephemeris access")
 def test_jupiter_position():
-    # For an historical date and attitude, compare jupiter.get_jupiter_position
-    # to chandra_aca.planets.get_planet_chandra.  The proseco code is using the
-    # stk ephemeris instead of the cheta predictive ephemeris.
-    # This is from obsid 23375
+    """
+    Test jupiter.get_jupiter_position
+
+    Test jupiter.get_jupiter_position against chandra_aca.planets.get_planet_chandra
+    for a known date and attitude. This is from obsid 23375.
+    The proseco code is using the stk ephemeris instead of the cheta predictive ephemeris
+    used by chandra_aca.planets.get_planet_chandra.
+    """
     att = Quat(q=[-0.51186291, 0.27607314, -0.17243277, 0.79501379])
     date = "2021:290:11:33:16.000"
     duration = 36000
@@ -63,6 +67,9 @@ def test_jupiter_exclude_dates():
 
 
 def test_jupiter_offset_left():
+    """
+    Test a case where Jupiter is on the left side of the CCD.
+    """
     dark = DARK40.copy()
     stars = StarsTable.empty()
     att = Quat(q=[-0.49963289, 0.25613709, -0.16664083, 0.81055018])
@@ -130,6 +137,9 @@ def test_jupiter_offset_left():
 
 
 def test_jupiter_offset_right():
+    """
+    Test a case where Jupiter is on the right side of the CCD.
+    """
     dark = DARK40.copy()
     att = Quat(q=[-0.50066275, 0.25809145, -0.16348241, 0.80993772])
     stars = StarsTable.empty()
@@ -193,6 +203,9 @@ def test_jupiter_offset_right():
 
 
 def test_jupiter_midline():
+    """
+    Test a case where Jupiter crosses the midline of the CCD.
+    """
     dark = DARK40.copy()
     stars = StarsTable.empty()
     att = Quat(q=[-0.313343, -0.4476205, 0.42355607, 0.72253187])
@@ -237,12 +250,15 @@ def test_jupiter_midline():
 
 
 def test_jupiter_2():
+    """
+    Test the jupiter code with a real star field and Jupiter present.
+    """
     aca = get_aca_catalog(
         **mod_std_info(
-            # date="2025:093:13:26:04.000",
             date="2025:093:12:26:04.000",
             att=Quat(q=[-0.43419701, -0.51408310, 0.33920339, 0.65736792]),
             duration=25000,
+            detector="ACIS-S",
             target_name="Jupiter 2",
             raise_exc=True,
         )
@@ -252,8 +268,30 @@ def test_jupiter_2():
     assert len(aca.fids) == 3
     names = ["id", "yang", "zang", "row", "col", "mag", "spoiler_score", "idx"]
     assert all(name in aca.fids.colnames for name in names)
-    # assert aca.duration == 20000
     assert aca.target_name == "Jupiter 2"
+
+
+def test_jupiter_3():
+    """
+    Test the jupiter code with a real star field and Jupiter present.
+    This time use HRC-I
+    """
+    aca = get_aca_catalog(
+        **mod_std_info(
+            date="2025:093:12:26:04.000",
+            att=Quat(q=[-0.43419701, -0.51408310, 0.33920339, 0.65736792]),
+            duration=25000,
+            detector="HRC-I",
+            target_name="Jupiter 3",
+            raise_exc=True,
+        )
+    )
+    assert len(aca.acqs) == 8
+    assert len(aca.guides) == 5
+    assert len(aca.fids) == 3
+    names = ["id", "yang", "zang", "row", "col", "mag", "spoiler_score", "idx"]
+    assert all(name in aca.fids.colnames for name in names)
+    assert aca.target_name == "Jupiter 3"
 
 
 def test_get_jupiter_position_returns_table():
@@ -262,13 +300,13 @@ def test_get_jupiter_position_returns_table():
     duration = 1000  # seconds
     att = Quat(q=[-0.43419701, -0.51408310, 0.33920339, 0.65736792])
     out = jupiter.get_jupiter_position(date, duration, att)
+
     # Should return a Table or None
     assert isinstance(out, Table)
     assert all(col in out.colnames for col in ["time", "row", "col"])
     assert len(out) > 0
-    # Confirm the times in the table are reasonable for the date and duration
-    from cxotime import CxoTime
 
+    # Confirm the times in the table are reasonable for the date and duration
     start_sec = CxoTime(date).secs
     assert np.all((out["time"] >= start_sec) & (out["time"] <= start_sec + duration))
 
