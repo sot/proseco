@@ -1042,11 +1042,7 @@ class AcqTable(ACACatalogTable):
             p_n_cum = prob_n_acq(p_acqs)[1]  # This returns (p_n, p_n_cum)
 
             # Probability of 2 or fewer stars => conservative fail criteria
-            # handle the case of < 2 stars
-            if len(p_n_cum) <= 2:
-                p2 = 0
-            else:
-                p2 = p_n_cum[2]
+            p2 = p_n_cum[2]
 
             if verbose:
                 self.log(f"man_err = {man_err}, p_man_err = {p_man_err}")
