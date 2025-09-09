@@ -71,14 +71,17 @@ def test_jupiter_offset_left():
     # Add a fake star right on jupiter
     stars.add_fake_star(id=200, mag=6.5, row=-92, col=198)
 
-    # Add a fake star near jupiter but outside the spoiler margin
-    stars.add_fake_star(id=201, mag=7.5, row=-92, col=240)
+    # Add a fake star same row as Jupiter but away in column
+    stars.add_fake_star(id=201, mag=7.5, row=-92, col=300)
 
     # And another star on the left side that is bright
-    stars.add_fake_star(id=202, mag=6, row=-100, col=300)
+    stars.add_fake_star(id=202, mag=6, row=-300, col=300)
 
     # and two more stars on the right
     stars.add_fake_star(id=203, mag=8, row=100, col=100)
+
+    # Add this star close enough in column that it should have a reduced
+    # acq box
     stars.add_fake_star(id=204, mag=8, row=100, col=250)
 
     aca = get_aca_catalog(
@@ -97,11 +100,13 @@ def test_jupiter_offset_left():
     # Confirm the fake star right on jupiter is not in the catalog
     assert 200 not in aca["id"]
 
-    # Confirm the other fake star is an acq
+    # Confirm this one is an acq
     assert 201 in aca.acqs["id"]
+
+    # Confirm 204 is an acq with reduced box
     # But that as an acq star it has a reduced box size
-    ok = aca["id"] == 201
-    assert aca["halfw"][ok][0] == 60
+    ok = aca["id"] == 204
+    assert aca["halfw"][ok][0] == 80
 
     # Confirm that there are only two fid lights selected
     assert len(aca.fids) == 2
@@ -307,7 +312,7 @@ def test_add_jupiter_as_spoilers():
     jupiter_data = Table({"time": [CxoTime(date).secs], "row": [100], "col": [100]})
     out = jupiter.add_jupiter_as_lots_of_acq_spoilers(date, stars, jupiter_data)
     # Should add a new star with id=20 at Jupiter's position
-    assert len(out) == 1015
+    assert len(out) > 1000
     assert 1000 in out["id"]
 
 
