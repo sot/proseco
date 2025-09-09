@@ -354,7 +354,6 @@ class FidTable(ACACatalogTable):
         stars_mask = (self.stars["mag"] < FID.fid_mag - ACA.col_spoiler_mag_diff) & (
             np.abs(self.stars["row"]) < 512 + self.dither_guide.row
         )
-
         for idx, fid in enumerate(cand_fids):
             excluded = (
                 self.off_ccd(fid)
