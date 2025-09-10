@@ -124,7 +124,8 @@ def jupiter_distribution_check(cand_guide_set, jupiter_data):
         False otherwise.
     """
     # It looks like jupiter ang diam goes from 30 to 45 arcsec
-    # so use 25 arcsec radius as reasonable value which is 5 pixels
+    # so use 45 / 2 = 22.5 arcsec radius -> 4.5 pixels
+    # and add a 4 pixel dither pad corresponding to the 20 arcsec HRC pattern
     jupiter_size = 4.5  # pixels
     dither = 4  # pixels
     sign_max = np.sign(np.max(jupiter_data["row"] + jupiter_size + dither))
