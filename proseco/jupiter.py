@@ -125,9 +125,10 @@ def jupiter_distribution_check(cand_guide_set, jupiter_data):
     """
     # It looks like jupiter ang diam goes from 30 to 45 arcsec
     # so use 25 arcsec radius as reasonable value which is 5 pixels
-    jupiter_size = 5  # pixels
-    sign_max = np.sign(np.max(jupiter_data["row"] + jupiter_size))
-    sign_min = np.sign(np.min(jupiter_data["row"] - jupiter_size))
+    jupiter_size = 4.5  # pixels
+    dither = 4 # pixels
+    sign_max = np.sign(np.max(jupiter_data["row"] + jupiter_size + dither))
+    sign_min = np.sign(np.min(jupiter_data["row"] - jupiter_size - dither))
     return (np.count_nonzero(np.sign(cand_guide_set["row"]) != sign_max) >= 2) and (
         np.count_nonzero(np.sign(cand_guide_set["row"]) != sign_min) >= 2
     )
