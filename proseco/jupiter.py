@@ -232,8 +232,8 @@ def get_jupiter_acq_pos(date, jupiter):
 
     Returns
     -------
-    (row, col) : tuple of float or None
-        The (row, col) position of Jupiter during acquisition, or None
+    (row, col) : tuple of float or None, None
+        The (row, col) position of Jupiter during acquisition, or None, None
         if Jupiter is not present during acquisition.
     """
     # Use 5 minutes as the nominal acquisition time
@@ -243,7 +243,7 @@ def get_jupiter_acq_pos(date, jupiter):
         jupiter["time"] <= (acq_start + acq_duration).secs
     )
     if not np.any(ok):
-        return None
+        return None, None
 
     # Pick the median time for the jupiter position during the acquisition
     spoil_time = np.median(jupiter["time"][ok])
