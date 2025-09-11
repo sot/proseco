@@ -704,6 +704,14 @@ def test_guides_include_exclude():
     assert np.all(guides["id"] == [9, 11, 2, 3, 4, 5, 6, 7])
     assert np.allclose(guides["mag"], [10.0, 12.0, 7.1, 7.2, 7.3, 7.4, 7.5, 7.6])
 
+    # Now force-include more stars that n_guide
+    include_ids = [1, 2, 3, 4, 5, 6, 7, 8]
+    guides2 = get_guide_catalog(
+        **mod_std_info(n_guide=6), stars=stars, include_ids=include_ids
+    )
+    # And confirm there are just 6 guide stars
+    assert len(guides2) == 6
+
 
 dither_cases = [(8, 8), (64, 8), (8, 64), (20, 20), (30, 20)]
 
