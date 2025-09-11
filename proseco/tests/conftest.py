@@ -6,6 +6,7 @@ from agasc import get_agasc_filename
 @pytest.fixture(autouse=True)
 def clear_star_dist_cache():
     from proseco.guide import STAR_PAIR_DIST_CACHE
+
     STAR_PAIR_DIST_CACHE.clear()
 
 

@@ -645,6 +645,17 @@ def test_select_catalog_fallback():
     )
     assert guides.log_info["events"][-1]["tried_combinations"] == 1
 
+    # If we have more force-included stars than n_guide, we should hit the
+    # full fallback text as no combination will be evaluated.
+    guides.n_guide = 2
+    guides.include_ids = [1, 2, 3]
+    selected3 = guides.select_catalog(stars)
+    assert np.all(selected3["id"] == [1, 2])
+    assert guides.log_info["events"][-1]["data"] == (
+        "WARNING: No combination satisfied any checks, returning first available set"
+    )
+    assert guides.log_info["events"][-1]["tried_combinations"] == 0
+
 
 def test_guides_include_exclude():
     """
