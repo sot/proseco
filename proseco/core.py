@@ -642,6 +642,10 @@ class ACACatalogTable(BaseCatalogTable):
         self._jupiter = get_jupiter_position(self.date, self.duration, self.att)
         return self._jupiter
 
+    @jupiter.setter
+    def jupiter(self, value):
+        self._jupiter = value
+
     @property
     def dark(self):
         if hasattr(self, "_dark"):

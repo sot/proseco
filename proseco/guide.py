@@ -447,8 +447,12 @@ class GuideTable(ACACatalogTable):
 
     def select_catalog(self, stage_cands):
         """
+        Select a catalog from the candidates.
+
         For the candidates selected at any stage, select the first combination that satisfies
-        the checks in order of preference.
+        either all of the additional checks or the most checks.  The checks are manually weighted
+        so that the new jupiter check is weighted more heavily than the cluster checks (but
+        the jupiter check only applies if jupiter is present).
 
         :param stage_cands: Table of stage-selected candidates
 
