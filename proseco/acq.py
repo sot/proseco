@@ -1343,13 +1343,15 @@ def get_imposter_stars(
     :param star_col: col of acq star (float)
     :param thresh: PEA search hit threshold for a 2x2 block (e-/sec)
     :param maxmag: Max mag (alternate way to specify search hit ``thresh``)
-    :param box_size: box size (arcsec)
+    :param box_size: float or ACABox box size (arcsec)
     :param bgd: assumed flat background (float, e-/sec)
     :param mag_limit: Max mag for imposter (using 6x6 readout)
     :param test: hook for convenience in algorithm testing
 
     :returns: numpy structured array of imposter stars
     """
+    box_size = ACABox(box_size)
+
     # Convert row/col to array index coords unless testing.
     rc_off = 0 if test else 512
     acq_row = int(star_row + rc_off)
@@ -1393,6 +1395,11 @@ def get_imposter_stars(
     # contiguous regions above ``thresh`` labeled with a unique index.
     # This is a one-line way of doing the PEA merging process, roughly.
     dc_labeled, n_hits = ndimage.label(dc2x2 > thresh)
+
+    # If no hits just return empty list
+    if n_hits == 0:
+        return []
+
     if ACQ.search_hit_max_size is not None:
         dc_labeled, n_hits = split_labeled_regions(
             dc_labeled, max_size=ACQ.search_hit_max_size
@@ -1401,10 +1408,6 @@ def get_imposter_stars(
         # Print the entire dc_labeled array without clipping
         with np.printoptions(threshold=100000, linewidth=200):
             print(dc_labeled)
-
-    # If no hits just return empty list
-    if n_hits == 0:
-        return []
 
     outs = []
     for idx in range(n_hits):
@@ -1453,6 +1456,7 @@ def get_imposter_stars(
         yang, zang = pixels_to_yagzag(row, col, allow_bad=True)
 
         out = (
+            len(vals),
             row,
             col,
             row - star_row,
@@ -1470,6 +1474,7 @@ def get_imposter_stars(
 
     if len(outs) > 0:
         dtype = [
+            ("n_pix", "<i8"),  # Number of pixels in the search hit
             ("row", "<f8"),
             ("col", "<f8"),
             ("d_row", "<f8"),
