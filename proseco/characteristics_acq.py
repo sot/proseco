@@ -100,3 +100,8 @@ imposter_mag_lim_ref_t_ccd = -10.0
 
 # Index template file name
 index_template_file = "index_template_acq.html"
+
+# Search hit max size in pixels.  This is used to limit the size of search hits
+# that are used in the acquisition algorithm. See `split_labeled_regions` for
+# details. Set to None to disable the size limit.
+search_hit_max_size = 8
