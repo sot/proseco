@@ -485,6 +485,7 @@ class GuideTable(ACACatalogTable):
             cands = stage_cands[list(comb)]
 
             # If there are any include_ids, then the selected stars must include them.
+            # If not, skip this combination in consideration.
             if self.include_ids and not set(self.include_ids).issubset(cands["id"]):
                 continue
 
