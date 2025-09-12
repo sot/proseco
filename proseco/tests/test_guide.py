@@ -602,7 +602,9 @@ def test_select_catalog_jupiter_weighted():
     assert set(selected1["id"]) == set([2, 3])
 
     # Simulate Jupiter data so only stars on opposite sides pass
-    guides.jupiter = Table([{"row": [100], "col": [0]}])
+    # For testing this accesses the internal _jupiter attribute
+    # directly, but this is not part of the public API.
+    guides._jupiter = Table([{"row": [100], "col": [0]}])
     selected2 = guides.select_catalog(stars)
     # Should select the combo that passes the Jupiter check
     assert set(selected2["id"]) == set([1, 3])
