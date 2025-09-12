@@ -1,13 +1,21 @@
+from typing import TYPE_CHECKING
+
 import astropy.units as u
 import numpy as np
 from astropy.table import Table
 from chandra_aca import planets
 from chandra_aca.transform import eci_to_radec, radec_to_yagzag, yagzag_to_pixels
 from cheta.comps import ephem_stk
-from cxotime import CxoTime
+from cxotime import CxoTime, CxoTimeLike
+from Quaternion import QuatLike
+
+from proseco import characteristics_jupiter
+
+if TYPE_CHECKING:
+    from proseco.core import StarsTable
 
 
-def date_is_excluded(date):
+def date_is_excluded(date: CxoTimeLike) -> bool:
     """
     Check if the given date is in the list of excluded dates for Jupiter observations.
 
@@ -16,7 +24,7 @@ def date_is_excluded(date):
 
     Parameters
     ----------
-    date : str or CxoTime
+    date : CxoTimeLike
         The date to check.
 
     Returns
@@ -25,21 +33,23 @@ def date_is_excluded(date):
         True if the date is in an excluded range, False otherwise.
     """
     date = CxoTime(date)
-    from proseco.characteristics_jupiter import exclude_dates
-
-    for ex in exclude_dates:
+    for ex in characteristics_jupiter.exclude_dates:
         if CxoTime(ex["start"]) <= date <= CxoTime(ex["stop"]):
             return True
     return False
 
 
-def get_jupiter_position(date, duration, att):
+def get_jupiter_position(
+    date: CxoTimeLike,
+    duration: float,
+    att: QuatLike,
+) -> "Table | None":
     """
     Get the position of Jupiter on the ACA CCD.
 
     Parameters
     ----------
-    date : str or CxoTime
+    date : CxoTimeLike
         The start date of the observation (acquisition time)
     duration : float
         The duration of the observation in seconds.
@@ -103,7 +113,7 @@ def get_jupiter_position(date, duration, att):
     return out
 
 
-def jupiter_distribution_check(cand_guide_set, jupiter_data):
+def jupiter_distribution_check(cand_guide_set: Table, jupiter_data: Table) -> bool:
     """
     Check for guide star CCD distribution in presence of Jupiter.
 
@@ -135,7 +145,7 @@ def jupiter_distribution_check(cand_guide_set, jupiter_data):
     )
 
 
-def is_spoiled_by_jupiter(cand, jupiter):
+def is_spoiled_by_jupiter(cand: Table, jupiter: "Table | None") -> bool:
     """
     Check if a single candidate object is spoiled by Jupiter.
 
@@ -161,7 +171,9 @@ def is_spoiled_by_jupiter(cand, jupiter):
     return check_spoiled_by_jupiter(single_row_table, jupiter)[0][0]
 
 
-def check_spoiled_by_jupiter(cands, jupiter, tolerance=15):
+def check_spoiled_by_jupiter(
+    cands: Table, jupiter: "Table | None", tolerance: int = 15
+) -> tuple[np.ndarray, list[dict]]:
     """
     Check which candidate are spoiled by Jupiter.
 
@@ -216,7 +228,9 @@ def check_spoiled_by_jupiter(cands, jupiter, tolerance=15):
     return ~ok, rej_info
 
 
-def get_jupiter_acq_pos(date, jupiter):
+def get_jupiter_acq_pos(
+    date: CxoTimeLike, jupiter: Table
+) -> tuple["float | None", "float | None"]:
     """
     Get the position of Jupiter during acquisition.
 
@@ -226,7 +240,7 @@ def get_jupiter_acq_pos(date, jupiter):
 
     Parameters
     ----------
-    date : str or CxoTime
+    date : CxoTimeLike
         The acquisition date.
     jupiter : Table
         Table with Jupiter positions with 'time', 'row', and 'col' columns.
@@ -252,7 +266,9 @@ def get_jupiter_acq_pos(date, jupiter):
     return (jupiter["row"][spoil_idx], jupiter["col"][spoil_idx])
 
 
-def add_jupiter_as_lots_of_acq_spoilers(date, stars, jupiter=None):
+def add_jupiter_as_lots_of_acq_spoilers(
+    date: "CxoTime | CxoTimeLike", stars: "StarsTable", jupiter: "Table | None" = None
+) -> "StarsTable":
     """
     Add Jupiter as a bunch of bright objects to the supplied stars table.
 
@@ -261,7 +277,7 @@ def add_jupiter_as_lots_of_acq_spoilers(date, stars, jupiter=None):
 
     Parameters
     ----------
-    date : CxoTime or CxoTime-compatible
+    date : CxoTimeLike
         The observation date.
     stars : StarsTable
         The stars table to which to add the fake stars representing Jupiter.
@@ -278,7 +294,7 @@ def add_jupiter_as_lots_of_acq_spoilers(date, stars, jupiter=None):
         return stars
 
     # Jupiter acq position
-    row, col = get_jupiter_acq_pos(date, jupiter=jupiter)
+    _, col = get_jupiter_acq_pos(date, jupiter=jupiter)
 
     out = stars.copy()
     idincr = 0
