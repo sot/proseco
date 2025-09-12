@@ -554,7 +554,6 @@ def test_select_catalog_prefers_best_cluster():
     guides.n_guide = 3
     guides.cand_guides = stars
     guides.stars = stars
-    guides.jupiter = None  # No Jupiter for this test
 
     # Should select the 3 most separated stars (not all clustered)
     selected = guides.select_catalog(stars)
@@ -575,7 +574,6 @@ def test_select_catalog_honors_include_ids():
     guides.n_guide = 3
     guides.cand_guides = stars
     guides.stars = stars
-    guides.jupiter = None
 
     selected1 = guides.select_catalog(stars)
     # The id 2 star should not be present
@@ -621,7 +619,6 @@ def test_select_catalog_fallback():
     guides.n_guide = 2
     guides.cand_guides = stars
     guides.stars = stars
-    guides.jupiter = None
 
     ## Patch cluster check to always fail
     # import proseco.guide
