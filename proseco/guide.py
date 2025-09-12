@@ -359,10 +359,7 @@ class GuideTable(ACACatalogTable):
         stage_cands = cand_guides[cand_guides["stage"] != -1]
         stage_cands.sort(["stage", "mag"])
         stage_cands = self.exclude_overlaps(stage_cands)
-
-        guides = self.select_catalog(
-            stage_cands[0 : n_guide + GUIDE.surplus_stars],
-        )
+        guides = self.select_catalog(stage_cands[0 : n_guide + GUIDE.surplus_stars])
 
         if self.dyn_bgd_n_faint > 0:
             self.drop_excess_bonus_stars(guides)
