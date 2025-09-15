@@ -448,7 +448,7 @@ class GuideTable(ACACatalogTable):
 
         For the candidates selected at any stage, select the first combination that satisfies
         either all of the additional checks or the most checks.  The checks are manually weighted
-        so that the new jupiter check is weighted more heavily than the cluster checks (but
+        so that the jupiter check is weighted more heavily than the cluster checks (but
         the jupiter check only applies if jupiter is present).
 
         :param stage_cands: Table of stage-selected candidates
@@ -473,10 +473,7 @@ class GuideTable(ACACatalogTable):
 
         # The best possible score is 3 for 3 cluster checks or 8 for 3 cluster checks plus
         # a weighted-5 jupiter check
-        if self.jupiter:
-            best_possible_score = 8
-        else:
-            best_possible_score = 3
+        best_possible_score = 8 if self.jupiter else 3
 
         for comb in index_combinations(len(stage_cands), choose_m):
             cands = stage_cands[list(comb)]
