@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 import astropy.units as u
 import numpy as np
@@ -63,17 +63,7 @@ def get_jupiter_position(
         is on the CCD. If Jupiter is never on the CCD, returns None.
     """
     date0 = CxoTime(date)
-
-    # First 5 minutes: sample every 60 seconds
-    first_phase = np.arange(0, min(300, duration) + 1, 60)
-    # After 5 minutes: sample every 1000 seconds, not duplicating the 300s point
-    if duration > 300:
-        second_phase = np.arange(300 + 1000, duration, 1000)
-    else:
-        second_phase = np.array([])
-    # Always include the end point
-    all_times = np.unique(np.concatenate([first_phase, second_phase, [duration]]))
-    dates = date0 + all_times * u.s
+    dates = CxoTime.linspace(date0, date0 + duration * u.s, step_max=1000 * u.s)
     times = np.atleast_1d(dates.secs)
 
     chandra_ephem = ephem_stk.get_ephemeris_stk(start=dates[0], stop=dates[-1])
@@ -228,9 +218,7 @@ def check_spoiled_by_jupiter(
     return ~ok, rej_info
 
 
-def get_jupiter_acq_pos(
-    date: CxoTimeLike, jupiter: Table
-) -> tuple["float | None", "float | None"]:
+def get_jupiter_acq_pos(date: CxoTimeLike, jupiter: Table) -> NamedTuple:
     """
     Get the position of Jupiter during acquisition.
 
@@ -247,23 +235,28 @@ def get_jupiter_acq_pos(
 
     Returns
     -------
-    (row, col) : tuple of float or None, None
+    acquisition_position : NamedTuple
         The (row, col) position of Jupiter during acquisition, or None, None
         if Jupiter is not present during acquisition.
     """
     # Use 5 minutes as the nominal acquisition time
     acq_start = CxoTime(date)
-    acq_duration = 5 * 60 * u.s
-    ok = (jupiter["time"] >= acq_start.secs) & (
-        jupiter["time"] <= (acq_start + acq_duration).secs
-    )
-    if not np.any(ok):
-        return None, None
 
-    # Pick the median time for the jupiter position during the acquisition
-    spoil_time = np.median(jupiter["time"][ok])
-    spoil_idx = np.argmin(np.abs(jupiter["time"] - spoil_time))
-    return (jupiter["row"][spoil_idx], jupiter["col"][spoil_idx])
+    JupiterAcqPos = NamedTuple(
+        "JupiterAcqPos",
+        [
+            ("row", "float | None"),
+            ("col", "float | None"),
+        ],
+    )
+
+    # If the first time in the jupiter table is not within 2000 seconds
+    # then return None, None
+    if jupiter is None or np.abs(jupiter["time"][0] - acq_start.secs) > 2000:
+        return JupiterAcqPos(None, None)
+
+    # Otherwise use the first row and col in the jupiter table
+    return JupiterAcqPos(jupiter["row"][0], jupiter["col"][0])
 
 
 def add_jupiter_as_lots_of_acq_spoilers(
@@ -294,12 +287,12 @@ def add_jupiter_as_lots_of_acq_spoilers(
         return stars
 
     # Jupiter acq position
-    _, col = get_jupiter_acq_pos(date, jupiter=jupiter)
+    acq_pos = get_jupiter_acq_pos(date, jupiter=jupiter)
 
     out = stars.copy()
     idincr = 0
     for irow in np.arange(-505, 510, 5):
-        for icol in np.arange(col - 15, col + 16, 5):
+        for icol in np.arange(acq_pos.col - 15, acq_pos.col + 16, 5):
             out.add_fake_star(
                 row=irow,
                 col=icol,
