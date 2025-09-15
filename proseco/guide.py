@@ -479,7 +479,7 @@ class GuideTable(ACACatalogTable):
             cands = stage_cands[list(comb)]
 
             # If there are any include_ids, then the selected stars must include them.
-            # If not, skip this combination in consideration.
+            # If they aren't included, skip this combination.
             if self.include_ids and not set(self.include_ids).issubset(cands["id"]):
                 continue
 
@@ -513,7 +513,8 @@ class GuideTable(ACACatalogTable):
             )
             return best_cands
 
-        # Fallback: return the first choose_m stars if nothing else
+        # Fallback: return the first choose_m stars if nothing else worked.
+        # The code should only get here if there are more include_ids than n_guide.
         self.log(
             "No combination satisfied any checks, returning first available set",
             warning=True,
