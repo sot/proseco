@@ -249,6 +249,60 @@ def test_jupiter_midline():
         assert np.all(dcol > 15)
 
 
+def test_jupiter_acquisition():
+    """
+    Test how jupiter is handled during acquisition.
+
+    This test loops over a range of column offsets for a star
+    near Jupiter to confirm that the star is excluded from acquisition
+    when it could be within a search box + maneuver error (though maneuver
+    error is not explicitly used in this test).
+    """
+    for col_dist_arcsec in np.arange(-300, 305, 20):
+        dark = DARK40.copy()
+        stars = StarsTable.empty()
+        att = Quat(q=[-0.49963289, 0.25613709, -0.16664083, 0.81055018])
+        stars.att = att
+        date = "2021:249:12:00:00.000"
+        jupiter_pos = jupiter.get_jupiter_position(date, 30000, att)
+        jupiter_acq_pos = jupiter.get_jupiter_acq_pos(date, jupiter=jupiter_pos)
+
+        col_dist = int(col_dist_arcsec / 5)
+        stars.add_fake_star(id=200, mag=6.5, row=-300, col=400)
+        stars.add_fake_star(id=201, mag=6.5, row=150, col=150)
+        stars.add_fake_star(id=202, mag=6.5, row=150, col=-150)
+
+        # Move one star through the acquisition exclusion region in column for jupiter
+        stars.add_fake_star(
+            id=203, mag=6.5, row=-150, col=jupiter_acq_pos.col + col_dist
+        )
+
+        aca = get_aca_catalog(
+            **mod_std_info(
+                stars=stars,
+                dark=dark,
+                date=date,
+                att=att,
+                man_angle=90,  # This isn't a change from mod_std_info but just to be explicit
+                duration=30000,
+                target_name="Jupiter 1",
+                detector="HRC-I",
+                raise_exc=True,
+                n_guide=4,
+            )
+        )
+
+        # With maneuver error, we just don't get id=203 if within 190 arcsec
+        if np.abs(col_dist_arcsec) <= 190:
+            # Confirm that there are 3 acqs
+            assert len(aca.acqs) == 3
+            assert 203 not in aca.acqs["id"]
+        else:
+            # Confirm that there are 4 acqs
+            assert len(aca.acqs) == 4
+            assert 203 in aca.acqs["id"]
+
+
 def test_jupiter_2():
     """
     Test the jupiter code with a real star field and Jupiter present.
