@@ -1485,12 +1485,11 @@ def run_cluster_checks(cand_guide_set):
     test_status = []
     for n_minus, threshold in enumerate(GUIDE.cluster_thresholds):
         if n_minus < len(cand_guide_set) + 1:
-            if check_single_cluster(
-                cand_guide_set, threshold=threshold, n_minus=n_minus
-            ):
-                test_status.append(True)
-            else:
-                test_status.append(False)
+            test_status.append(
+                check_single_cluster(
+                    cand_guide_set, threshold=threshold, n_minus=n_minus
+                )
+            )
         else:
             test_status.append(False)
 
