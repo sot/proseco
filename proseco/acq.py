@@ -257,7 +257,7 @@ def get_acq_catalog(obsid=0, **kwargs):
 
     # If Jupiter in the target name and field, update the stars with it as a bright
     # object.
-    if acqs.jupiter is not None:
+    if len(acqs.jupiter) > 0:
         from proseco.jupiter import add_jupiter_as_lots_of_acq_spoilers
 
         acqs.stars = add_jupiter_as_lots_of_acq_spoilers(

@@ -7,6 +7,7 @@ from cxotime import CxoTime
 from Quaternion import Quat
 
 from proseco import get_aca_catalog, jupiter
+from proseco.characteristics_jupiter import JupiterPositionTable
 from proseco.core import StarsTable
 from proseco.tests.test_common import DARK40, mod_std_info
 
@@ -409,7 +410,9 @@ def test_add_jupiter_as_spoilers():
 
 
 def test_add_jupiter_as_spoilers_no_jupiter():
-    # Should return stars unchanged if jupiter is None
+    # Should return stars unchanged if jupiter has zero length
     stars = Table({"row": [0], "col": [0], "mag": [8.0], "id": [1], "CLASS": [0]})
-    out = jupiter.add_jupiter_as_lots_of_acq_spoilers("2025:220:12:00:00", stars, None)
+    out = jupiter.add_jupiter_as_lots_of_acq_spoilers(
+        "2025:220:12:00:00", stars, JupiterPositionTable.empty()
+    )
     assert np.array_equal(stars["id"], out["id"])

@@ -491,7 +491,7 @@ class GuideTable(ACACatalogTable):
             cluster_check_status = run_cluster_checks(cands)
             score += np.sum(cluster_check_status) * cluster_weights
 
-            if self.jupiter is not None:
+            if len(self.jupiter) > 0:
                 jupiter_weight = 5
                 from proseco.jupiter import jupiter_distribution_check
 
@@ -916,7 +916,7 @@ class GuideTable(ACACatalogTable):
             self.reject(rej)
         cand_guides = cand_guides[~fid_trap_spoilers]
 
-        if self.jupiter is not None:
+        if len(self.jupiter) > 0:
             from proseco.jupiter import check_spoiled_by_jupiter
 
             # Exclude candidates within 15 columns of Jupiter

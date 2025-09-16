@@ -10,6 +10,7 @@ from cxotime import CxoTime, CxoTimeLike
 from Quaternion import QuatLike
 
 from proseco import characteristics_jupiter
+from proseco.characteristics_jupiter import JupiterPositionTable
 
 if TYPE_CHECKING:
     from proseco.core import StarsTable
@@ -43,7 +44,7 @@ def get_jupiter_position(
     date: CxoTimeLike,
     duration: float,
     att: QuatLike,
-) -> "Table | None":
+) -> JupiterPositionTable:
     """
     Get the position of Jupiter on the ACA CCD.
 
@@ -58,9 +59,9 @@ def get_jupiter_position(
 
     Returns
     -------
-    Table or None
+    JupiterPositionTable
         A table with columns 'time', 'row', 'col' for the times when Jupiter
-        is on the CCD. If Jupiter is never on the CCD, returns None.
+        is on the CCD. If Jupiter is never on the CCD this is a table with zero rows.
     """
     date0 = CxoTime(date)
     # dates is a 1-d array with a minimum of 2 points (the end points)
@@ -95,20 +96,20 @@ def get_jupiter_position(
     lim1 = 511
     # Only care about planet within the CCD
     ok = (row >= lim0) & (row <= lim1) & (col >= lim0) & (col <= lim1)
-    if np.any(ok):
-        out = Table(
-            {
-                "time": times[ok],
-                "row": row[ok],
-                "col": col[ok],
-            }
-        )
-    else:
-        out = None
+    out = JupiterPositionTable(
+        {
+            "time": times[ok],
+            "row": row[ok],
+            "col": col[ok],
+        }
+    )
     return out
 
 
-def jupiter_distribution_check(cand_guide_set: Table, jupiter_data: Table) -> bool:
+def jupiter_distribution_check(
+    cand_guide_set: Table,
+    jupiter_data: JupiterPositionTable,
+) -> bool:
     """
     Check for guide star CCD distribution in presence of Jupiter.
 
@@ -119,7 +120,7 @@ def jupiter_distribution_check(cand_guide_set: Table, jupiter_data: Table) -> bo
     ----------
     cand_guide_set : Table
         Table of candidate guide stars with 'row' column.
-    jupiter_data : Table
+    jupiter_data : JupiterPositionTable
         Table with Jupiter positions with 'row' column.
 
     Returns
@@ -128,6 +129,10 @@ def jupiter_distribution_check(cand_guide_set: Table, jupiter_data: Table) -> bo
         True if the candidate guide stars are correctly distributed with respect to Jupiter,
         False otherwise.
     """
+    # If there is no Jupiter on CCD, then the check passes.
+    if len(jupiter_data) == 0:
+        return True
+
     # It looks like jupiter ang diam goes from 30 to 45 arcsec
     # so use 45 / 2 = 22.5 arcsec radius -> 4.5 pixels
     # and add a 4 pixel dither pad corresponding to the 20 arcsec HRC pattern
@@ -140,7 +145,7 @@ def jupiter_distribution_check(cand_guide_set: Table, jupiter_data: Table) -> bo
     )
 
 
-def is_spoiled_by_jupiter(cand: Table, jupiter: "Table | None") -> bool:
+def is_spoiled_by_jupiter(cand: Table, jupiter: JupiterPositionTable) -> bool:
     """
     Check if a single candidate object is spoiled by Jupiter.
 
@@ -152,7 +157,7 @@ def is_spoiled_by_jupiter(cand: Table, jupiter: "Table | None") -> bool:
     cand : Table Row
         A single astropy Table Row representing the candidate object and
         containing 'row' and 'col' columns.
-    jupiter : Table or None
+    jupiter : JupiterPositionTable
         Table with Jupiter positions with 'row' and 'col' columns, or None
         if Jupiter is not present.
 
@@ -167,7 +172,7 @@ def is_spoiled_by_jupiter(cand: Table, jupiter: "Table | None") -> bool:
 
 
 def check_spoiled_by_jupiter(
-    cands: Table, jupiter: "Table | None", tolerance: int = 15
+    cands: Table, jupiter: JupiterPositionTable, tolerance: int = 15
 ) -> tuple[np.ndarray, list[dict]]:
     """
     Check which candidate are spoiled by Jupiter.
@@ -181,7 +186,7 @@ def check_spoiled_by_jupiter(
     ----------
     cands: Table
         Table of candidate objects with 'col' columns.
-    jupiter: Table or None
+    jupiter: JupiterPositionTable
         Table with Jupiter positions with 'col' columns, or None if Jupiter is not present.
     tolerance: int
         The tolerance in pixels for considering a candidate spoiled by Jupiter.
@@ -194,7 +199,7 @@ def check_spoiled_by_jupiter(
     rej_info: list of dict
         A list of rejection info dicts for the spoiled candidates.
     """
-    if jupiter is None:
+    if len(jupiter) == 0:
         return np.zeros(len(cands), dtype=bool), []
 
     # Check that the candidates aren't within 15 columns of Jupiter
@@ -223,7 +228,7 @@ def check_spoiled_by_jupiter(
     return ~ok, rej_info
 
 
-def get_jupiter_acq_pos(date: CxoTimeLike, jupiter: Table) -> NamedTuple:
+def get_jupiter_acq_pos(date: CxoTimeLike, jupiter: JupiterPositionTable) -> NamedTuple:
     """
     Get the position of Jupiter during acquisition.
 
@@ -250,14 +255,14 @@ def get_jupiter_acq_pos(date: CxoTimeLike, jupiter: Table) -> NamedTuple:
     JupiterAcqPos = NamedTuple(
         "JupiterAcqPos",
         [
-            ("row", "float | None"),
-            ("col", "float | None"),
+            ("row", float | None),
+            ("col", float | None),
         ],
     )
 
     # If the first time in the jupiter table is not within 2000 seconds
     # then return None, None
-    if jupiter is None or np.abs(jupiter["time"][0] - acq_start.secs) > 2000:
+    if len(jupiter) == 0 or np.abs(jupiter["time"][0] - acq_start.secs) > 2000:
         return JupiterAcqPos(None, None)
 
     # Otherwise use the first row and col in the jupiter table
@@ -265,7 +270,7 @@ def get_jupiter_acq_pos(date: CxoTimeLike, jupiter: Table) -> NamedTuple:
 
 
 def add_jupiter_as_lots_of_acq_spoilers(
-    date: "CxoTime | CxoTimeLike", stars: "StarsTable", jupiter: "Table | None" = None
+    date: "CxoTime | CxoTimeLike", stars: "StarsTable", jupiter: JupiterPositionTable
 ) -> "StarsTable":
     """
     Add Jupiter as a bunch of bright objects to the supplied stars table.
@@ -279,16 +284,15 @@ def add_jupiter_as_lots_of_acq_spoilers(
         The observation date.
     stars : StarsTable
         The stars table to which to add the fake stars representing Jupiter.
-    jupiter : Table or None
-        Table with Jupiter positions with 'time', 'row', and 'col' columns,
-        or None if Jupiter is not present.
+    jupiter : JupiterPositionTable
+        Table with Jupiter positions with 'time', 'row', and 'col' columns.
 
     Returns
     -------
     StarsTable
         A copy of the input `stars` table with the fake stars added.
     """
-    if jupiter is None:
+    if len(jupiter) == 0:
         return stars
 
     # Jupiter acq position

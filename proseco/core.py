@@ -9,7 +9,7 @@ import time
 import warnings
 from copy import copy
 from pathlib import Path
-from typing import TypeAlias
+from typing import TYPE_CHECKING, TypeAlias
 
 import agasc
 import numpy as np
@@ -36,6 +36,9 @@ APL = AcaPsfLibrary()
 # Cache recently retrieved images which are called with the same args/kwargs
 get_dark_cal_image = functools.lru_cache(maxsize=6)(get_dark_cal_image)
 get_dark_cal_id = functools.lru_cache(maxsize=6)(get_dark_cal_id)
+
+if TYPE_CHECKING:
+    from proseco.characteristics_jupiter import JupiterPositionTable
 
 
 def to_python(val):
@@ -623,18 +626,20 @@ class ACACatalogTable(BaseCatalogTable):
     log_info = MetaAttribute(default={}, is_kwarg=False)
 
     @property
-    def jupiter(self):
+    def jupiter(self) -> "JupiterPositionTable":
         if hasattr(self, "_jupiter"):
             return self._jupiter
 
+        from proseco.characteristics_jupiter import JupiterPositionTable
+
         if "jupiter" not in self.target_name.lower():
-            self._jupiter = None
+            self._jupiter = JupiterPositionTable.empty()
             return self._jupiter
 
         from proseco.jupiter import date_is_excluded
 
         if date_is_excluded(self.date):
-            self._jupiter = None
+            self._jupiter = JupiterPositionTable.empty()
             return self._jupiter
 
         from proseco.jupiter import get_jupiter_position
