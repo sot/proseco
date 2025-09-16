@@ -25,10 +25,11 @@ def test_jupiter_position():
     """
     Test jupiter.get_jupiter_position
 
-    Test jupiter.get_jupiter_position against chandra_aca.planets.get_planet_chandra
-    for a known date and attitude. This is from obsid 23375.
-    The proseco code is using the stk ephemeris instead of the cheta predictive ephemeris
-    used by chandra_aca.planets.get_planet_chandra.
+    Test jupiter.get_jupiter_position against chandra_aca.planets.get_planet_chandra for
+    a known date and attitude. This is from obsid 23375.
+
+    The proseco code is using the stk ephemeris instead of the cheta predictive
+    ephemeris used by chandra_aca.planets.get_planet_chandra.
     """
     att = Quat(q=[-0.51186291, 0.27607314, -0.17243277, 0.79501379])
     date = "2021:290:11:33:16.000"
@@ -38,12 +39,9 @@ def test_jupiter_position():
     ra, dec = transform.eci_to_radec(eci)
     yag, zag = transform.radec_to_yagzag(ra, dec, att)
     row, col = transform.yagzag_to_pixels(yag, zag, allow_bad=True)
-    lim0 = -512
-    lim1 = 511
-    # Only plot planet within the image limits
-    ok = (row >= lim0) & (row <= lim1) & (col >= lim0) & (col <= lim1)
-    jupiter_aca_data = Table(
-        {"time": jupiter_proseco_data["time"][ok], "row": row[ok], "col": col[ok]}
+
+    jupiter_aca_data = JupiterPositionTable(
+        {"time": jupiter_proseco_data["time"], "row": row, "col": col}
     )
     # Compare the two tables
     assert len(jupiter_proseco_data) == len(jupiter_aca_data)
@@ -85,11 +83,9 @@ def test_jupiter_offset_left():
     # And another star on the left side that is bright
     stars.add_fake_star(id=202, mag=6, row=-300, col=300)
 
-    # and two more stars on the right
+    # and two more stars on the right, where the second one is close enough in
+    # column to the first that it should have a reduced acq box.
     stars.add_fake_star(id=203, mag=8, row=100, col=100)
-
-    # Add this star close enough in column that it should have a reduced
-    # acq box
     stars.add_fake_star(id=204, mag=8, row=100, col=250)
 
     aca = get_aca_catalog(
@@ -116,7 +112,8 @@ def test_jupiter_offset_left():
     ok = aca["id"] == 204
     assert aca["halfw"][ok][0] == 80
 
-    # Confirm that there are only two fid lights selected
+    # Confirm that there are only two fid lights selected. Jupiter column-spoils the
+    # other two HRC-I fids.
     assert len(aca.fids) == 2
 
     # Confirm other counts look good
@@ -173,6 +170,30 @@ def test_jupiter_offset_right():
             n_guide=2,
         )
     )
+    # >>> aca.jupiter
+    # <JupiterPositionTable length=22>
+    #        time              row                 col
+    #      float64           float64             float64
+    # ----------------- ------------------ -------------------
+    #     747525669.184 177.24311544187495    5.48947125483997
+    # 747526621.5649524  177.3229077138035   4.546971313655077
+    #               ...                ...                 ...
+    # 747543764.4220952   178.986298841097 -12.390976350022335
+    # 747544716.8030477 179.09250845640196 -13.329891937053558
+    #     747545669.184 179.18608156041896 -14.258603110515383
+
+    # <ACATable length=8>
+    #  slot  idx    id  type  sz   p_acq    mag    maxmag   yang     zang   halfw
+    # int64 int64 int64 str3 str3 float64 float64 float64 float64  float64  int64
+    # ----- ----- ----- ---- ---- ------- ------- ------- -------- -------- -----
+    #     0     1     1  FID  8x8   0.000    7.00    8.00  -764.49 -1303.66    25
+    #     1     2     2  FID  8x8   0.000    7.00    8.00   848.16 -1305.26    25
+    #     2     3     3  FID  8x8   0.000    7.00    8.00 -1192.95  1000.94    25
+    #     3     4   201  BOT  8x8   0.978    8.00    9.50   531.22  1469.38   160
+    #     4     5   206  BOT  8x8   0.915    8.00    9.50  1524.19  -226.31    80
+    #     0     6   202  ACQ  8x8   0.978    6.00    7.50  -467.90   475.47   160
+    #     1     7   203  ACQ  8x8   0.978    8.00    9.50  -465.94  1222.88   160
+    #     2     8   205  ACQ  8x8   0.915    8.00    9.50  -853.34  -222.81    80
 
     # Confirm the fake star right on jupiter is not in the catalog
     assert 204 not in aca["id"]
@@ -226,7 +247,7 @@ def test_jupiter_midline():
             date="2025:093:12:26:04.000",
             att=att,
             duration=30000,
-            target_name="Jupiter 1",
+            target_name="1Jupiter1",
             detector="HRC-I",
             raise_exc=True,
             n_guide=4,
@@ -248,6 +269,8 @@ def test_jupiter_midline():
     for jcol in aca.jupiter["col"]:
         dcol = np.abs(aca.guides["col"] - jcol)
         assert np.all(dcol > 15)
+
+    return aca
 
 
 def test_jupiter_acquisition():
@@ -368,7 +391,7 @@ def test_get_jupiter_position_returns_table():
 
 def test_jupiter_distribution_check_1():
     # Simulate jupiter_data crosses 0
-    jupiter_data = Table({"row": [-10, 20]})
+    jupiter_data = JupiterPositionTable({"row": [-10, 20]})
     cand_guide_set = Table({"row": [-400, -300, 400, 300]})
     # Should pass: at least two on each side
     assert jupiter.jupiter_distribution_check(cand_guide_set, jupiter_data)
@@ -379,7 +402,7 @@ def test_jupiter_distribution_check_1():
 
 def test_jupiter_distribution_check_2():
     # Simulate jupiter_data all positive
-    jupiter_data = Table({"row": [10, 20]})
+    jupiter_data = JupiterPositionTable({"row": [10, 20]})
     cand_guide_set = Table({"row": [-400, -300, 400, 300]})
     # Should pass: at least two on each side
     assert jupiter.jupiter_distribution_check(cand_guide_set, jupiter_data)
@@ -391,7 +414,7 @@ def test_jupiter_distribution_check_2():
 def test_check_spoiled_by_jupiter():
     # Simulate candidate stars and jupiter data
     cand_stars = Table({"id": [1, 2, 3], "col": [10, 50, 100], "row": [0, 0, 0]})
-    jupiter_data = Table({"col": [40, 60], "row": [0, 0]})
+    jupiter_data = JupiterPositionTable({"col": [40, 60], "row": [0, 0]})
     mask, rej = jupiter.check_spoiled_by_jupiter(cand_stars, jupiter_data)
     # Only star with col=50 should be spoiled (within 15 pixels of Jupiter)
     assert np.array_equal(mask, [False, True, False])

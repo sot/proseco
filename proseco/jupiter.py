@@ -113,8 +113,8 @@ def jupiter_distribution_check(
     """
     Check for guide star CCD distribution in presence of Jupiter.
 
-    Check that there are at least two candidate guide stars on the side of the CCD
-    that does not have Jupiter.
+    Check that there are at least two candidate guide stars on the side of the CCD that
+    does not have Jupiter.
 
     Parameters
     ----------
@@ -126,8 +126,8 @@ def jupiter_distribution_check(
     Returns
     -------
     bool
-        True if the candidate guide stars are correctly distributed with respect to Jupiter,
-        False otherwise.
+        True if the candidate guide stars are correctly distributed with respect to
+        Jupiter, False otherwise.
     """
     # If there is no Jupiter on CCD, then the check passes.
     if len(jupiter_data) == 0:
@@ -177,8 +177,8 @@ def check_spoiled_by_jupiter(
     """
     Check which candidate are spoiled by Jupiter.
 
-    A candidate is considered spoiled if it is within `tolerance` pixels
-    of Jupiter in column.
+    A candidate is considered spoiled if it is within `tolerance` pixels of Jupiter in
+    column.
 
     This method also returns a list of rejection info dicts for the spoiled candidates.
 
@@ -187,15 +187,16 @@ def check_spoiled_by_jupiter(
     cands: Table
         Table of candidate objects with 'col' columns.
     jupiter: JupiterPositionTable
-        Table with Jupiter positions with 'col' columns, or None if Jupiter is not present.
+        Table with Jupiter positions with 'col' columns.
     tolerance: int
-        The tolerance in pixels for considering a candidate spoiled by Jupiter.
-        Default is 15 pixels.
+        The tolerance in pixels for considering a candidate spoiled by Jupiter. Default
+        is 15 pixels.
 
     Returns
     -------
     mask: np.ndarray
-        A boolean mask on `cands` where True indicates the candidate is spoiled by Jupiter.
+        A boolean mask on `cands` where True indicates the candidate is spoiled by
+        Jupiter.
     rej_info: list of dict
         A list of rejection info dicts for the spoiled candidates.
     """
@@ -243,9 +244,8 @@ def get_jupiter_acq_pos(
     """
     Get the position of Jupiter during acquisition.
 
-    This uses `date` as the acquisition time and assumes a nominal
-    acquisition duration of 5 minutes to find the median position of
-    Jupiter during that time.
+    This uses `date` as the acquisition time uses the Jupiter position at that time.
+    If Jupiter is not on the CCD within 2 ks of acquisition start, returns (None, None).
 
     Parameters
     ----------
@@ -276,11 +276,11 @@ def get_jupiter_acq_pos(
 def add_jupiter_as_lots_of_acq_spoilers(
     date: "CxoTime | CxoTimeLike", stars: "StarsTable", jupiter: JupiterPositionTable
 ) -> "StarsTable":
-    """
-    Add Jupiter as a bunch of bright objects to the supplied stars table.
+    """Enforce 15-column keepout zone around Jupiter using many fake bright stars.
 
-    This is specific to acquisition as it uses the acquisition time as a the
-    reference time for the position of Jupiter.
+    This adds a bunch of bright objects to the supplied stars table. This is specific to
+    acquisition as it uses the acquisition time as a the reference time for the position
+    of Jupiter.
 
     Parameters
     ----------
