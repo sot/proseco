@@ -228,7 +228,18 @@ def check_spoiled_by_jupiter(
     return ~ok, rej_info
 
 
-def get_jupiter_acq_pos(date: CxoTimeLike, jupiter: JupiterPositionTable) -> NamedTuple:
+JupiterAcqPos = NamedTuple(
+    "JupiterAcqPos",
+    [
+        ("row", float | None),
+        ("col", float | None),
+    ],
+)
+
+
+def get_jupiter_acq_pos(
+    date: CxoTimeLike, jupiter: JupiterPositionTable
+) -> JupiterAcqPos:
     """
     Get the position of Jupiter during acquisition.
 
@@ -245,23 +256,16 @@ def get_jupiter_acq_pos(date: CxoTimeLike, jupiter: JupiterPositionTable) -> Nam
 
     Returns
     -------
-    acquisition_position : NamedTuple
+    acquisition_position : JupiterAcqPos
         The (row, col) position of Jupiter during acquisition, or None, None
         if Jupiter is not present during acquisition.
     """
     # Use 5 minutes as the nominal acquisition time
     acq_start = CxoTime(date)
 
-    JupiterAcqPos = NamedTuple(
-        "JupiterAcqPos",
-        [
-            ("row", float | None),
-            ("col", float | None),
-        ],
-    )
-
-    # If the first time in the jupiter table is not within 2000 seconds
-    # then return None, None
+    # If the first time in the jupiter table is not within 2000 seconds then return
+    # None, None. This reflects a rare but possible situation where Jupiter drifts onto
+    # the CCD well after the acquisition time.
     if len(jupiter) == 0 or np.abs(jupiter["time"][0] - acq_start.secs) > 2000:
         return JupiterAcqPos(None, None)
 
