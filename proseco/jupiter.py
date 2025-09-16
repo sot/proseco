@@ -63,8 +63,9 @@ def get_jupiter_position(
         is on the CCD. If Jupiter is never on the CCD, returns None.
     """
     date0 = CxoTime(date)
+    # dates is a 1-d array with a minimum of 2 points (the end points)
     dates = CxoTime.linspace(date0, date0 + duration * u.s, step_max=1000 * u.s)
-    times = np.atleast_1d(dates.secs)
+    times = dates.secs
 
     chandra_ephem = ephem_stk.get_ephemeris_stk(start=dates[0], stop=dates[-1])
 
@@ -73,15 +74,19 @@ def get_jupiter_position(
         key: np.interp(times, chandra_ephem["time"], chandra_ephem[key])
         for key in ["x", "y", "z"]
     }
+    # shape (len(dates), 3), units km
     pos_earth = planets.get_planet_barycentric("earth", dates)
 
-    chandra_eci = np.zeros_like(pos_earth)
-    chandra_eci[..., 0] = ephem["x"].reshape(times.shape) / 1000
-    chandra_eci[..., 1] = ephem["y"].reshape(times.shape) / 1000
-    chandra_eci[..., 2] = ephem["z"].reshape(times.shape) / 1000
+    chandra_eci = np.array(
+        [
+            ephem["x"] / 1000,  # convert m from get_ephemeris_stk to km,
+            ephem["y"] / 1000,
+            ephem["z"] / 1000,
+        ]
+    ).transpose()
     eci = planets.get_planet_eci("jupiter", dates, pos_observer=pos_earth + chandra_eci)
 
-    # Convert to RA, Dec
+    # Convert ECI position to RA, Dec => yag, zag => row, col
     ra, dec = eci_to_radec(eci)
     yag, zag = radec_to_yagzag(ra, dec, att)
     row, col = yagzag_to_pixels(yag, zag, allow_bad=True)
