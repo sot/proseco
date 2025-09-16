@@ -923,10 +923,11 @@ class GuideTable(ACACatalogTable):
             spoiled_by_jupiter, jupiter_rej = check_spoiled_by_jupiter(
                 cand_guides, self.jupiter
             )
-            for rej in jupiter_rej:
-                rej["stage"] = 0
-                self.reject(rej)
-            cand_guides = cand_guides[~spoiled_by_jupiter]
+            if np.any(spoiled_by_jupiter):
+                for rej in jupiter_rej:
+                    rej["stage"] = 0
+                    self.reject(rej)
+                cand_guides = cand_guides[~spoiled_by_jupiter]
 
         # Deal with include_ids by putting them back in candidate table if necessary
         self.process_include_ids(cand_guides, stars)
