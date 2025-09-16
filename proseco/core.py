@@ -9,7 +9,7 @@ import time
 import warnings
 from copy import copy
 from pathlib import Path
-from typing import TYPE_CHECKING, TypeAlias
+from typing import TYPE_CHECKING, Any, TypeAlias
 
 import agasc
 import numpy as np
@@ -646,6 +646,16 @@ class ACACatalogTable(BaseCatalogTable):
 
         self._jupiter = get_jupiter_position(self.date, self.duration, self.att)
         return self._jupiter
+
+    @jupiter.setter
+    def jupiter(self, value: Any) -> None:
+        from proseco.characteristics_jupiter import JupiterPositionTable
+
+        self._jupiter = (
+            value
+            if isinstance(value, JupiterPositionTable)
+            else JupiterPositionTable(value)
+        )
 
     @property
     def dark(self):
