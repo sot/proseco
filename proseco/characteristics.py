@@ -46,8 +46,10 @@ max_delta_maxmag = 1.5
 monitor_maxmag = 13.9375
 
 # Convenience characteristics
-max_ccd_row = CCD["row_max"] - CCD["row_pad"]  # Max allowed row for stars (SOURCE?)
-max_ccd_col = CCD["col_max"] - CCD["col_pad"]  # Max allow col for stars (SOURCE?)
+# See https://occweb.cfa.harvard.edu/twiki/bin/view/Aspect/CcdEdgeSearchLimits for the PEA
+# documentation that supports the larger row pad and shows max CCD extent close to these values.
+max_ccd_row = CCD["row_max"] - CCD["row_pad"]  # Max allowed row for stars
+max_ccd_col = CCD["col_max"] - CCD["col_pad"]  # Max allow col for stars
 
 # Column spoiler rules
 col_spoiler_mag_diff = 4.5
