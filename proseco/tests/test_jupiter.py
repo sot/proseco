@@ -270,10 +270,9 @@ def test_jupiter_midline():
         dcol = np.abs(aca.guides["col"] - jcol)
         assert np.all(dcol > 15)
 
-    return aca
 
-
-def test_jupiter_acquisition():
+@pytest.mark.parametrize("col_dist_arcsec", np.arange(-300, 305, 20))
+def test_jupiter_acquisition(col_dist_arcsec):
     """
     Test how jupiter is handled during acquisition.
 
@@ -282,54 +281,69 @@ def test_jupiter_acquisition():
     when it could be within a search box + maneuver error (though maneuver
     error is not explicitly used in this test).
     """
-    for col_dist_arcsec in np.arange(-300, 305, 20):
-        dark = DARK40.copy()
-        stars = StarsTable.empty()
-        att = Quat(q=[-0.49963289, 0.25613709, -0.16664083, 0.81055018])
-        stars.att = att
-        date = "2021:249:12:00:00.000"
-        jupiter_pos = jupiter.get_jupiter_position(date, 30000, att)
-        jupiter_acq_pos = jupiter.get_jupiter_acq_pos(date, jupiter=jupiter_pos)
+    dark = DARK40.copy()
+    stars = StarsTable.empty()
+    att = Quat(q=[-0.49963289, 0.25613709, -0.16664083, 0.81055018])
+    stars.att = att
+    date = "2021:249:12:00:00.000"
+    jupiter_pos = jupiter.get_jupiter_position(date, 30000, att)
+    jupiter_acq_pos = jupiter.get_jupiter_acq_pos(date, jupiter=jupiter_pos)
 
-        col_dist = int(col_dist_arcsec / 5)
-        stars.add_fake_star(id=200, mag=6.5, row=-300, col=400)
-        stars.add_fake_star(id=201, mag=6.5, row=150, col=150)
-        stars.add_fake_star(id=202, mag=6.5, row=150, col=-150)
+    col_dist = int(col_dist_arcsec / 5)
+    stars.add_fake_star(id=200, mag=6.5, row=-300, col=400)
+    stars.add_fake_star(id=201, mag=6.5, row=150, col=150)
+    stars.add_fake_star(id=202, mag=6.5, row=150, col=-150)
 
-        # Move one star through the acquisition exclusion region in column for jupiter
-        stars.add_fake_star(
-            id=203, mag=6.5, row=-150, col=jupiter_acq_pos.col + col_dist
+    # Move one star through the acquisition exclusion region in column for jupiter
+    stars.add_fake_star(id=203, mag=6.5, row=-150, col=jupiter_acq_pos.col + col_dist)
+
+    aca = get_aca_catalog(
+        **mod_std_info(
+            stars=stars,
+            dark=dark,
+            date=date,
+            att=att,
+            man_angle=90,  # This isn't a change from mod_std_info but just to be explicit
+            duration=30000,
+            target_name="Jupiter 1",
+            detector="HRC-I",
+            raise_exc=True,
+            n_guide=4,
         )
+    )
 
-        aca = get_aca_catalog(
-            **mod_std_info(
-                stars=stars,
-                dark=dark,
-                date=date,
-                att=att,
-                man_angle=90,  # This isn't a change from mod_std_info but just to be explicit
-                duration=30000,
-                target_name="Jupiter 1",
-                detector="HRC-I",
-                raise_exc=True,
-                n_guide=4,
-            )
-        )
+    # With maneuver error, we just don't get id=203 if within 190 arcsec
+    if np.abs(col_dist_arcsec) <= 190:
+        # Confirm that there are 3 acqs
+        assert len(aca.acqs) == 3
+        assert 203 not in aca.acqs["id"]
+    else:
+        # Confirm that there are 4 acqs and that the box size expands as possible, at
+        # least somewhat.
+        assert len(aca.acqs) == 4
+        assert 203 in aca.acqs["id"]
+        halfw = aca.get_id(203)["halfw"]
+        separation = abs(col_dist_arcsec) - halfw
+        assert 140 <= separation <= 180
+        # print(f"col_dist_arcsec={col_dist_arcsec} box size = {halfw}"
+        #       f" separation={abs(col_dist_arcsec) - halfw}")
+        # col_dist_arcsec=-300 box size = 120 separation=180
+        # col_dist_arcsec=-280 box size = 100 separation=180
+        # col_dist_arcsec=-260 box size = 100 separation=160
+        # col_dist_arcsec=-240 box size = 80 separation=160
+        # col_dist_arcsec=-220 box size = 80 separation=140
+        # col_dist_arcsec=-200 box size = 60 separation=140
+        # col_dist_arcsec=200 box size = 60 separation=140
+        # col_dist_arcsec=220 box size = 80 separation=140
+        # col_dist_arcsec=240 box size = 80 separation=160
+        # col_dist_arcsec=260 box size = 100 separation=160
+        # col_dist_arcsec=280 box size = 100 separation=180
+        # col_dist_arcsec=300 box size = 120 separation=180
 
-        # With maneuver error, we just don't get id=203 if within 190 arcsec
-        if np.abs(col_dist_arcsec) <= 190:
-            # Confirm that there are 3 acqs
-            assert len(aca.acqs) == 3
-            assert 203 not in aca.acqs["id"]
-        else:
-            # Confirm that there are 4 acqs
-            assert len(aca.acqs) == 4
-            assert 203 in aca.acqs["id"]
 
-
-def test_jupiter_2():
+def test_jupiter_real_star_field_acis_s():
     """
-    Test the jupiter code with a real star field and Jupiter present.
+    Test the jupiter code with a real star field and Jupiter present and ACIS-S
     """
     aca = get_aca_catalog(
         **mod_std_info(
@@ -349,10 +363,9 @@ def test_jupiter_2():
     assert aca.target_name == "Jupiter 2"
 
 
-def test_jupiter_3():
+def test_jupiter_real_star_field_hrc_i():
     """
-    Test the jupiter code with a real star field and Jupiter present.
-    This time use HRC-I
+    Test the jupiter code with a real star field and Jupiter present and HRC-I.
     """
     aca = get_aca_catalog(
         **mod_std_info(
@@ -375,14 +388,14 @@ def test_jupiter_3():
 def test_get_jupiter_position_returns_table():
     # Use a known date, duration, and a simple attitude (RA, Dec, Roll)
     date = "2025:093:12:26:04.000"
-    duration = 1000  # seconds
+    duration = 10500  # seconds
     att = Quat(q=[-0.43419701, -0.51408310, 0.33920339, 0.65736792])
     out = jupiter.get_jupiter_position(date, duration, att)
 
-    # Should return a Table or None
-    assert isinstance(out, Table)
-    assert all(col in out.colnames for col in ["time", "row", "col"])
-    assert len(out) > 0
+    # Should return a JupiterPositionTable
+    assert isinstance(out, JupiterPositionTable)
+    assert out.colnames == ["time", "row", "col"]
+    assert len(out) == 12
 
     # Confirm the times in the table are reasonable for the date and duration
     start_sec = CxoTime(date).secs
@@ -406,8 +419,8 @@ def test_jupiter_distribution_check_2():
     cand_guide_set = Table({"row": [-400, -300, 400, 300]})
     # Should pass: at least two on each side
     assert jupiter.jupiter_distribution_check(cand_guide_set, jupiter_data)
-    # Should fail: only with all on one side
-    cand_guide_set = Table({"row": [400, 300, 200]})
+    # Should fail: only one on opposite side
+    cand_guide_set = Table({"row": [400, 300, -200]})
     assert not jupiter.jupiter_distribution_check(cand_guide_set, jupiter_data)
 
 
@@ -419,7 +432,13 @@ def test_check_spoiled_by_jupiter():
     # Only star with col=50 should be spoiled (within 15 pixels of Jupiter)
     assert np.array_equal(mask, [False, True, False])
     assert len(rej) == 1
-    assert rej[0]["id"] == 2
+    assert rej[0] == {
+        "id": 2,
+        "row": 0,
+        "col": 50,
+        "reason": "spoiled by Jupiter",
+        "stage": 0,
+    }
 
 
 def test_add_jupiter_as_spoilers():
@@ -438,4 +457,4 @@ def test_add_jupiter_as_spoilers_no_jupiter():
     out = jupiter.add_jupiter_as_lots_of_acq_spoilers(
         "2025:220:12:00:00", stars, JupiterPositionTable.empty()
     )
-    assert np.array_equal(stars["id"], out["id"])
+    assert out is stars
