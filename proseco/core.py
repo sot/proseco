@@ -9,7 +9,7 @@ import time
 import warnings
 from copy import copy
 from pathlib import Path
-from typing import TypeAlias
+from typing import TYPE_CHECKING, Any, TypeAlias
 
 import agasc
 import numpy as np
@@ -36,6 +36,9 @@ APL = AcaPsfLibrary()
 # Cache recently retrieved images which are called with the same args/kwargs
 get_dark_cal_image = functools.lru_cache(maxsize=6)(get_dark_cal_image)
 get_dark_cal_id = functools.lru_cache(maxsize=6)(get_dark_cal_id)
+
+if TYPE_CHECKING:
+    from proseco.characteristics_jupiter import JupiterPositionTable
 
 
 def to_python(val):
@@ -598,6 +601,8 @@ class ACACatalogTable(BaseCatalogTable):
     t_ccd_acq = MetaAttribute()
     t_ccd_guide = MetaAttribute()
     date = MetaAttribute()
+    duration = MetaAttribute()
+    target_name = MetaAttribute(default="")
     dark_date = MetaAttribute()
     dither_acq = MetaAttribute()
     dither_guide = MetaAttribute()
@@ -619,6 +624,38 @@ class ACACatalogTable(BaseCatalogTable):
     verbose = MetaAttribute(default=False)
     print_log = MetaAttribute(default=False)
     log_info = MetaAttribute(default={}, is_kwarg=False)
+
+    @property
+    def jupiter(self) -> "JupiterPositionTable":
+        if hasattr(self, "_jupiter"):
+            return self._jupiter
+
+        from proseco.characteristics_jupiter import JupiterPositionTable
+
+        if "jupiter" not in self.target_name.lower():
+            self._jupiter = JupiterPositionTable.empty()
+            return self._jupiter
+
+        from proseco.jupiter import date_is_excluded
+
+        if date_is_excluded(self.date):
+            self._jupiter = JupiterPositionTable.empty()
+            return self._jupiter
+
+        from proseco.jupiter import get_jupiter_position
+
+        self._jupiter = get_jupiter_position(self.date, self.duration, self.att)
+        return self._jupiter
+
+    @jupiter.setter
+    def jupiter(self, value: Any) -> None:
+        from proseco.characteristics_jupiter import JupiterPositionTable
+
+        self._jupiter = (
+            value
+            if isinstance(value, JupiterPositionTable)
+            else JupiterPositionTable(value)
+        )
 
     @property
     def dark(self):

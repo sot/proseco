@@ -35,12 +35,14 @@ def test_allowed_kwargs():
         "t_ccd_eff_acq",
         "t_ccd_eff_guide",
         "t_ccd_penalty_limit",
-        "duration",
-        "target_name",
     }
 
     new_kwargs = FidTable.allowed_kwargs - ACACatalogTable.allowed_kwargs
-    assert new_kwargs == {"acqs", "include_ids", "exclude_ids"}
+    assert new_kwargs == {
+        "acqs",
+        "include_ids",
+        "exclude_ids",
+    }
 
 
 @pytest.mark.skipif(not HAS_SC_ARCHIVE, reason="Test requires starcheck archive")
@@ -383,7 +385,7 @@ def test_clip_maxmag():
 def test_big_sim_offset():
     """
     Check getting a catalog for a large SIM offset that means there are
-    no candidates.
+    no fid light candidates.
 
     Bonus: check that duration and target_name can be set.
     """

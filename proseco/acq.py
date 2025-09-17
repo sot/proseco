@@ -255,6 +255,15 @@ def get_acq_catalog(obsid=0, **kwargs):
     acqs.set_attrs_from_kwargs(obsid=obsid, **kwargs)
     acqs.set_stars()
 
+    # If Jupiter in the target name and field, update the stars with it as a bright
+    # object.
+    if len(acqs.jupiter) > 0:
+        from proseco.jupiter import add_jupiter_as_lots_of_acq_spoilers
+
+        acqs.stars = add_jupiter_as_lots_of_acq_spoilers(
+            date=acqs.date, stars=acqs.stars, jupiter=acqs.jupiter
+        )
+
     # Only allow imposters that are statistical outliers and are brighter than
     # this (temperature-dependent) threshold.  See characterisics.py for more
     # explanation.

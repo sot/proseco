@@ -16,13 +16,14 @@ from ..characteristics_guide import mag_spoiler
 from ..core import StarsTable
 from ..guide import (
     GUIDE,
+    GuideTable,
     check_column_spoilers,
     check_mag_spoilers,
     check_spoil_contrib,
     get_ax_range,
     get_guide_catalog,
     get_pixmag_for_offset,
-    run_select_checks,
+    run_cluster_checks,
 )
 from ..report_guide import make_report
 from .test_common import DARK40, OBS_INFO, STD_INFO, mod_std_info
@@ -535,6 +536,122 @@ def test_warnings():
     ]
 
 
+def make_fake_guides(rows, cols, mags, ids):
+    stars = StarsTable.empty()
+    for r, c, m, i in zip(rows, cols, mags, ids):
+        stars.add_fake_star(row=r, col=c, mag=m, id=i)
+    return stars
+
+
+def test_select_catalog_prefers_best_cluster():
+    # Make 5 stars, 3 close together, 2 far apart
+    rows = [0, 0, 0, 300, -300]
+    cols = [0, 20, -20, 0, 0]
+    mags = [7, 7, 7, 7, 7]
+    ids = [1, 2, 3, 4, 5]
+    stars = make_fake_guides(rows, cols, mags, ids)
+    guides = GuideTable()
+    guides.n_guide = 3
+    guides.cand_guides = stars
+    guides.stars = stars
+
+    # Should select the 3 most separated stars (not all clustered)
+    selected = guides.select_catalog(stars)
+    # The selected IDs should include the far-apart stars
+    assert set(selected["id"]) == set([1, 4, 5]) or set(selected["id"]) == set(
+        [3, 4, 5]
+    )
+
+
+def test_select_catalog_honors_include_ids():
+    # Make 4 stars, force include one that would otherwise fail cluster check
+    rows = [0, 0, 300, -300]
+    cols = [0, 20, 0, 0]
+    mags = [7, 7, 7, 7]
+    ids = [1, 2, 3, 4]
+    stars = make_fake_guides(rows, cols, mags, ids)
+    guides = GuideTable()
+    guides.n_guide = 3
+    guides.cand_guides = stars
+    guides.stars = stars
+
+    selected1 = guides.select_catalog(stars)
+    # The id 2 star should not be present
+    assert 2 not in selected1["id"]
+
+    guides.include_ids = [2]
+    selected2 = guides.select_catalog(stars)
+    # The forced-included star should be present
+    assert 2 in selected2["id"]
+
+
+def test_select_catalog_jupiter_weighted():
+    # Make 3 stars, Jupiter present, only one combo passes jupiter check
+    # These stars are not spoiled directly by Jupiter.
+    rows = [-20, 300, -300]
+    cols = [100, -50, -100]
+    mags = [7, 7, 7]
+    ids = [1, 2, 3]
+    stars = make_fake_guides(rows, cols, mags, ids)
+    guides = GuideTable()
+    guides.n_guide = 2
+    guides.cand_guides = stars
+    guides.stars = stars
+
+    selected1 = guides.select_catalog(stars)
+    assert set(selected1["id"]) == set([2, 3])
+
+    # Simulate Jupiter data so only stars on opposite sides pass
+    # For testing this accesses the internal _jupiter attribute
+    # directly, but this is not part of the public API.
+    guides._jupiter = Table([{"row": [100], "col": [0]}])
+    selected2 = guides.select_catalog(stars)
+    # Should select the combo that passes the Jupiter check
+    assert set(selected2["id"]) == set([1, 3])
+
+
+def test_select_catalog_fallback():
+    # No combination passes cluster or Jupiter check
+    rows = [0, 0, 0]
+    cols = [0, 1, -1]
+    mags = [7, 7, 7]
+    ids = [1, 2, 3]
+    stars = make_fake_guides(rows, cols, mags, ids)
+    guides = GuideTable()
+    guides.n_guide = 2
+    guides.cand_guides = stars
+    guides.stars = stars
+
+    selected = guides.select_catalog(stars)
+    # Should return the first available set
+    assert np.all(selected["id"] == [1, 2])
+
+    # And there should be a 0 score log entry
+    assert (
+        guides.log_info["events"][-1]["data"] == "Selected stars with weighted score 0"
+    )
+
+    # And that this still works if there are no "combinations to check"
+    guides.n_guide = 3
+    selected3 = guides.select_catalog(stars)
+    assert np.all(selected3["id"] == [1, 2, 3])
+    assert (
+        guides.log_info["events"][-1]["data"] == "Selected stars with weighted score 0"
+    )
+    assert guides.log_info["events"][-1]["tried_combinations"] == 1
+
+    # If we have more force-included stars than n_guide, we should hit the
+    # full fallback text as no combination will be evaluated.
+    guides.n_guide = 2
+    guides.include_ids = [1, 2, 3]
+    selected3 = guides.select_catalog(stars)
+    assert np.all(selected3["id"] == [1, 2])
+    assert guides.log_info["events"][-1]["data"] == (
+        "WARNING: No combination satisfied any checks, returning first available set"
+    )
+    assert guides.log_info["events"][-1]["tried_combinations"] == 0
+
+
 def test_guides_include_exclude():
     """
     Test include and exclude stars for guide.  This uses a catalog with 11 stars:
@@ -581,6 +698,14 @@ def test_guides_include_exclude():
 
     assert np.all(guides["id"] == [9, 11, 2, 3, 4, 5, 6, 7])
     assert np.allclose(guides["mag"], [10.0, 12.0, 7.1, 7.2, 7.3, 7.4, 7.5, 7.6])
+
+    # Now force-include more stars that n_guide
+    include_ids = [1, 2, 3, 4, 5, 6, 7, 8]
+    guides2 = get_guide_catalog(
+        **mod_std_info(n_guide=6), stars=stars, include_ids=include_ids
+    )
+    # And confirm there are just 6 guide stars
+    assert len(guides2) == 6
 
 
 dither_cases = [(8, 8), (64, 8), (8, 64), (20, 20), (30, 20)]
@@ -644,9 +769,8 @@ def test_guides_include_close():
 
     cat1 = get_guide_catalog(**mod_std_info(n_guide=5), stars=stars)
 
-    # Run the cluster checks and confirm all 3 pass
-    cat1_pass, _ = run_select_checks(cat1)
-    assert cat1_pass == 3
+    cluster_check_sum = np.sum(run_cluster_checks(cat1))
+    assert cluster_check_sum == 3
 
     # Confirm that only bright stars are used
     assert np.count_nonzero(cat1["mag"] == 7.0) == 5
@@ -660,8 +784,8 @@ def test_guides_include_close():
     )
 
     # Run the cluster checks and confirm all 3 fail
-    cat2_pass, _ = run_select_checks(cat2)
-    assert cat2_pass == 0
+    cluster_check_sum = np.sum(run_cluster_checks(cat2))
+    assert cluster_check_sum == 0
     assert np.all(np.in1d(include_ids, cat2["id"]))
     # And confirm that only one of the bright stars is used
     assert np.count_nonzero(cat2["mag"] == 7.0) == 1

@@ -115,8 +115,6 @@ def _get_aca_catalog(**kwargs):
         "t_ccd_eff_guide",
         "stars",
         "t_ccd_penalty_limit",
-        "duration",
-        "target_name",
     ):
         kwargs.pop(kwarg, None)
 
@@ -309,10 +307,6 @@ class ACATable(ACACatalogTable):
     # For validation with get_aca_catalog(obsid), store the starcheck
     # catalog in the ACATable meta.
     starcheck_catalog = MetaAttribute(is_kwarg=False)
-
-    # Observation information
-    duration = MetaAttribute()
-    target_name = MetaAttribute()
 
     # Effective T_ccd used for dynamic ACA limits (see updates_for_t_ccd_effective()
     # method below).

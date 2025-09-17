@@ -444,10 +444,15 @@ class GuideTable(ACACatalogTable):
 
     def select_catalog(self, stage_cands):
         """
-        For the candidates selected at any stage (stage-assigned candidates?) select the
-        first combination that satisfies the most number of extra tests.
-        Here the extra tests are just the 3 checks for guide stars that are
-        too tightly clustered.
+        Select a catalog from the candidates.
+
+        For the candidates selected at any stage, select the first combination that satisfies
+        either all of the additional checks or the most checks.  The checks are manually weighted
+        so that the jupiter check is weighted more heavily than the cluster checks (but
+        the jupiter check only applies if jupiter is present).
+
+        :param stage_cands: Table of stage-selected candidates
+
         """
         self.log(f"Selecting catalog from {len(stage_cands)} stage-selected stars")
 
@@ -459,48 +464,63 @@ class GuideTable(ACACatalogTable):
                         seen.add(comb)
                         yield comb
 
-        # Set a dictionary to save the first combination of that satisfies N tests.
-        # This will be used if no combination satisfies all the tests.
-        select_results = {}
-
-        # I should come back to this and see if the "min" is needed or if the combinations
-        # code runs fine even if we have fewer-than-expected stage_cands to start
         choose_m = min(len(stage_cands), self.n_guide)
-
         n_tries = 0
+
+        # Try to find the combination with the highest weighted sum of passing checks
+        best_score = -1
+        best_cands = None
+
+        # The best possible score is 3 for 3 cluster checks or 8 for 3 cluster checks plus
+        # a weighted-5 jupiter check
+        best_possible_score = 8 if self.jupiter else 3
+
         for comb in index_combinations(len(stage_cands), choose_m):
-            cands = stage_cands[
-                list(comb)
-            ]  # (note that [(1,2)] is not the same as list((1,2))
+            cands = stage_cands[list(comb)]
 
             # If there are any include_ids, then the selected stars must include them.
-            # If not, skip this combination.
+            # If they aren't included, skip this combination.
             if self.include_ids and not set(self.include_ids).issubset(cands["id"]):
                 continue
 
             n_tries += 1
 
-            n_pass, n_tests = run_select_checks(
-                cands
-            )  # This function knows how many tests get run
-            if n_pass == n_tests:
-                self.log(
-                    f"Selected stars passing all tests at combination {n_tries}",
-                    tried_combinations=n_tries,
-                )
-                return cands
-            elif n_pass not in select_results:
-                # Keep a copy of the first cands table with n_pass passing tests
-                select_results[n_pass] = cands
+            score = 0
 
-        # Return the catalog with the maximum n_pass key value
-        max_n_pass = max(select_results)
+            cluster_weights = 1
+            cluster_check_status = run_cluster_checks(cands)
+            score += np.sum(cluster_check_status) * cluster_weights
+
+            if len(self.jupiter) > 0:
+                jupiter_weight = 5
+                from proseco.jupiter import jupiter_distribution_check
+
+                jupiter_check_status = jupiter_distribution_check(cands, self.jupiter)
+                score += np.sum([jupiter_check_status]) * jupiter_weight
+
+            if score > best_score:
+                best_score = score
+                best_cands = cands
+
+            if best_score == best_possible_score:
+                break
+
+        if best_cands is not None:
+            self.log(
+                f"Selected stars with weighted score {best_score}",
+                warning=False,
+                tried_combinations=n_tries,
+            )
+            return best_cands
+
+        # Fallback: return the first choose_m stars if nothing else worked.
+        # The code should only get here if there are more include_ids than n_guide.
         self.log(
-            f"Settled for combination that satisfied {max_n_pass} cluster checks",
+            "No combination satisfied any checks, returning first available set",
             warning=True,
             tried_combinations=n_tries,
         )
-        return select_results[max_n_pass]
+        return stage_cands[:choose_m]
 
     def search_stage(self, stage):
         """
@@ -895,6 +915,19 @@ class GuideTable(ACACatalogTable):
             rej["stage"] = 0
             self.reject(rej)
         cand_guides = cand_guides[~fid_trap_spoilers]
+
+        if len(self.jupiter) > 0:
+            from proseco.jupiter import check_spoiled_by_jupiter
+
+            # Exclude candidates within 15 columns of Jupiter
+            spoiled_by_jupiter, jupiter_rej = check_spoiled_by_jupiter(
+                cand_guides, self.jupiter
+            )
+            if np.any(spoiled_by_jupiter):
+                for rej in jupiter_rej:
+                    rej["stage"] = 0
+                    self.reject(rej)
+                cand_guides = cand_guides[~spoiled_by_jupiter]
 
         # Deal with include_ids by putting them back in candidate table if necessary
         self.process_include_ids(cand_guides, stars)
@@ -1442,22 +1475,24 @@ def check_single_cluster(cand_guide_set, threshold, n_minus):
     return True
 
 
-def run_select_checks(cand_guide_set):
+def run_cluster_checks(cand_guide_set):
     """
-    Run boolean checks on a combination of candidate guide stars.
-    Returns a sum of the status of the checks and the number of checks run.
+    Perform cluster checks on a combination of candidate guide stars.
 
-    Presently this runs three checks to confirm that the set of stars
-    is not too tightly packed.
+    This performs a set of specific cluster checks on the provided cand_guide_set
+    and returns a list of bools, one for each cluster check run.
 
-    :returns: tuple (status sum, number of tests run)
+    :returns: list of bools, one for each cluster check run
     """
-    status = []
+    test_status = []
     for n_minus, threshold in enumerate(GUIDE.cluster_thresholds):
         if n_minus < len(cand_guide_set) + 1:
-            status.append(
+            test_status.append(
                 check_single_cluster(
                     cand_guide_set, threshold=threshold, n_minus=n_minus
                 )
             )
-    return sum(status), len(status)
+        else:
+            test_status.append(False)
+
+    return test_status
