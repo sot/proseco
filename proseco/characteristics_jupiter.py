@@ -6,7 +6,8 @@ class JupiterPositionTable(Table):
     A subclass of astropy Table for Jupiter positions.
 
     This is mainly to provide a specific docstring and type alias, but it does
-    implicitly document that the table should have 'time', 'row', and 'col' columns.
+    implicitly document that the table should have 'time', 'row', and 'col' columns
+    and provides an `empty` class method to create an empty table with those columns.
     """
 
     @classmethod

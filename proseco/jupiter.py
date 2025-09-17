@@ -33,9 +33,12 @@ def date_is_excluded(date: CxoTimeLike) -> bool:
     bool
         True if the date is in an excluded range, False otherwise.
     """
-    date = CxoTime(date)
-    for ex in characteristics_jupiter.exclude_dates:
-        if CxoTime(ex["start"]) <= date <= CxoTime(ex["stop"]):
+    date_str = CxoTime(date).date
+    # Exclude dates are in CXO date format and we compare as strings. This prevents a
+    # warning from pyerfa about dubius dates in the future where leap seconds may be
+    # uncertain.
+    for exclude_date in characteristics_jupiter.exclude_dates:
+        if exclude_date["start"] <= date_str <= exclude_date["stop"]:
             return True
     return False
 
