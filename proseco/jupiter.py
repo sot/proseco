@@ -95,10 +95,13 @@ def get_jupiter_position(
     yag, zag = radec_to_yagzag(ra, dec, att)
     row, col = yagzag_to_pixels(yag, zag, allow_bad=True)
 
-    lim0 = -512
-    lim1 = 511
-    # Only care about planet within the CCD
-    ok = (row >= lim0) & (row <= lim1) & (col >= lim0) & (col <= lim1)
+    # Row/col limit in pixels to check for bright object - this is padded past the edge of
+    # the CCD so the checks will continue to run if the coords of Jupiter are off
+    # the CCD but the extent of Jupiter (~50" diam) could still be imaged on the CCD.
+    limit = 512 + 50 / 5
+
+    # Limit data to entries within limit
+    ok = (np.abs(row) <= limit) & (np.abs(col) <= limit)
     out = JupiterPositionTable(
         {
             "time": times[ok],
