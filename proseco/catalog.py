@@ -308,10 +308,6 @@ class ACATable(ACACatalogTable):
     # catalog in the ACATable meta.
     starcheck_catalog = MetaAttribute(is_kwarg=False)
 
-    # Observation information
-    duration = MetaAttribute()
-    target_name = MetaAttribute()
-
     # Effective T_ccd used for dynamic ACA limits (see updates_for_t_ccd_effective()
     # method below).
     t_ccd_eff_acq = MetaAttribute()
