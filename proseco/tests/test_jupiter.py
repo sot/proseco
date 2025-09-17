@@ -61,7 +61,7 @@ def test_jupiter_exclude_dates():
     # Dates outside the exclude range should return False
     assert not jupiter.date_is_excluded("2026:100")
     assert not jupiter.date_is_excluded("2026:310")
-    assert not jupiter.date_is_excluded("2025-09-01")
+    assert not jupiter.date_is_excluded("2025-09-04")
     assert not jupiter.date_is_excluded("2027:150")
 
 
