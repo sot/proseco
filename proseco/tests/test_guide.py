@@ -622,10 +622,6 @@ def test_select_catalog_fallback():
     guides.cand_guides = stars
     guides.stars = stars
 
-    ## Patch cluster check to always fail
-    # import proseco.guide
-    # proseco.guide.run_cluster_checks = lambda cands: [False, False, False]
-
     selected = guides.select_catalog(stars)
     # Should return the first available set
     assert np.all(selected["id"] == [1, 2])
