@@ -446,7 +446,7 @@ def test_add_jupiter_as_spoilers():
     stars = StarsTable.empty()
     jupiter_data = Table({"time": [CxoTime(date).secs], "row": [100], "col": [100]})
     out = jupiter.add_jupiter_as_lots_of_acq_spoilers(date, stars, jupiter_data)
-    # Should add a new star with id=20 at Jupiter's position
+    # Should add many new stars (>1000) with new ids starting at 1000
     assert len(out) > 1000
     assert 1000 in out["id"]
 
