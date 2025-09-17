@@ -98,10 +98,10 @@ def get_jupiter_position(
     # Row/col limit in pixels to check for bright object - this is padded past the edge of
     # the CCD so the checks will continue to run if the coords of Jupiter are off
     # the CCD but the extent of Jupiter (~50" diam) could still be imaged on the CCD.
-    limit = 512 + 50 / 5
+    ccd_limit = 512 + 50 / 5
 
-    # Limit data to entries within limit
-    ok = (np.abs(row) <= limit) & (np.abs(col) <= limit)
+    # Limit data to entries within or just outside the CCD
+    ok = (np.abs(row) <= ccd_limit) & (np.abs(col) <= ccd_limit)
     out = JupiterPositionTable(
         {
             "time": times[ok],
