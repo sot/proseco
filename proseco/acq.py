@@ -1517,14 +1517,33 @@ def get_intruders(acq, box_size, name, n_sigma, get_func, kwargs):
 
     colnames = ["yang", "zang", "mag", "mag_err"]
     if len(intruders) == 0:
-        intruders = {name: np.array([], dtype=np.float64) for name in colnames}
+        out = {name: np.array([], dtype=np.float64) for name in colnames}
     else:
-        ok = (np.abs(intruders["yang"] - acq["yang"]) < box_size.y) & (
-            np.abs(intruders["zang"] - acq["zang"]) < box_size.z
-        )
-        intruders = {name: intruders[name][ok] for name in ["mag", "mag_err"]}
+        dys = intruders["yang"] - acq["yang"]
+        dzs = intruders["zang"] - acq["zang"]
+        ok = (np.abs(dys) < box_size.y + 20) & (np.abs(dzs) < box_size.z + 20)
+        intruders = intruders[ok]
+        mags = []
+        for dy, dz, mag in zip(dys, dzs, intruders["mag"]):
+            mag += get_box_edge_dmag(dy, box_size.y)  # noqa: PLW2901
+            mag += get_box_edge_dmag(dz, box_size.z)  # noqa: PLW2901
+            mags.append(mag)
+        out = {
+            "yang": intruders["yang"],
+            "zang": intruders["zang"],
+            "mag": np.array(mags),
+            "mag_err": intruders["mag_err"],
+        }
 
-    return intruders
+    return out
+
+
+def get_box_edge_dmag(dyz, box_size):
+    d_box_edge = abs(dyz) - box_size
+    offsets = np.array([-20.0, -10.0, -5.0, 0.0, 5.0, 12.5, 17.0, 20.0])
+    dmags = np.array([0.0, 0.03, 0.18, 0.75, 2.03, 5.12, 6.28, 10.0])
+    dmag = np.interp(d_box_edge, offsets, dmags)
+    return dmag
 
 
 def calc_p_on_ccd(row, col, box_size):
