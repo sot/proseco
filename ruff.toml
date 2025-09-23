@@ -2,7 +2,11 @@ extend = "ruff-base.toml"
 
 # These are files to exclude for this project.
 extend-exclude = [
-  # "**/*.ipynb",  # commonly not ruff-compliant
+  "analysis/pr388-backstop-vs-proseco-star-positions.ipynb",
+  "analysis/pr388-validate-drift-model-fid-positions.ipynb",
+  "analysis/maxmag/interpolate-maxmags-contour-plot.ipynb",
+  "analysis/maxmag/maxmags-demo.ipynb",
+  "analysis/maxmag/validate-maxmags-recent-loads.ipynb",
 ]
 
 # These are rules that commonly cause many ruff warnings. Code will be improved by
