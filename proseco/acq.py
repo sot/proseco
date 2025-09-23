@@ -1282,6 +1282,53 @@ def get_spoiler_stars(stars, acq, box_size):
     return spoilers
 
 
+def split_labeled_regions(dc_labeled, max_size=8):
+    """
+    Split labeled regions into smaller subregions.
+
+    This is used to ensure that the labeled regions corresponding to "search hits" are
+    not too large, which can happen if the dark current is mostly above the threshold.
+    The algorithm splits each labeled region into smaller subregions of size at most
+    `max_size` x `max_size` pixels. This ensures that a large region of high background
+    does not turn into just one isolated search hit.
+
+    Parameters
+    ----------
+    dc_labeled : np.ndarray
+        Labeled array where each contiguous region has a unique label.
+    max_size : int, optional
+        Maximum size of subregions to create, by default 8.
+
+    Returns
+    -------
+    dc_labeled : np.ndarray
+        New labeled array with subregions of size at most `max_size`.
+    n_regions : int
+        Number of labeled regions found.
+    """
+    # Find slices for each labeled region
+    slices = ndimage.find_objects(dc_labeled)
+    new_label = 1
+    dc_labeled_new = np.zeros_like(dc_labeled)
+    for i, slc in enumerate(slices):
+        region = dc_labeled[slc] == (i + 1)
+        region_shape = region.shape
+
+        # Split region into 8x8 subregions if needed
+        for r_start in range(0, region_shape[0], max_size):
+            for c_start in range(0, region_shape[1], max_size):
+                r_end = min(r_start + max_size, region_shape[0])
+                c_end = min(c_start + max_size, region_shape[1])
+                subregion = region[r_start:r_end, c_start:c_end]
+                if np.any(subregion):
+                    mask = np.zeros_like(region, dtype=bool)
+                    mask[r_start:r_end, c_start:c_end] = subregion
+                    dc_labeled_new[slc][mask] = new_label
+                    new_label += 1
+
+    return dc_labeled_new, new_label - 1
+
+
 def get_imposter_stars(
     dark,
     star_row,
@@ -1305,13 +1352,15 @@ def get_imposter_stars(
     :param star_col: col of acq star (float)
     :param thresh: PEA search hit threshold for a 2x2 block (e-/sec)
     :param maxmag: Max mag (alternate way to specify search hit ``thresh``)
-    :param box_size: box size (arcsec)
+    :param box_size: float or ACABox box size (arcsec)
     :param bgd: assumed flat background (float, e-/sec)
     :param mag_limit: Max mag for imposter (using 6x6 readout)
     :param test: hook for convenience in algorithm testing
 
     :returns: numpy structured array of imposter stars
     """
+    box_size = ACABox(box_size)
+
     # Convert row/col to array index coords unless testing.
     rc_off = 0 if test else 512
     acq_row = int(star_row + rc_off)
@@ -1355,12 +1404,19 @@ def get_imposter_stars(
     # contiguous regions above ``thresh`` labeled with a unique index.
     # This is a one-line way of doing the PEA merging process, roughly.
     dc_labeled, n_hits = ndimage.label(dc2x2 > thresh)
-    if test:
-        print(dc_labeled)
 
     # If no hits just return empty list
     if n_hits == 0:
         return []
+
+    if ACQ.search_hit_max_size is not None:
+        dc_labeled, n_hits = split_labeled_regions(
+            dc_labeled, max_size=ACQ.search_hit_max_size
+        )
+    if test:
+        # Print the entire dc_labeled array without clipping
+        with np.printoptions(threshold=100000, linewidth=200):
+            print(dc_labeled)
 
     outs = []
     for idx in range(n_hits):
@@ -1409,6 +1465,7 @@ def get_imposter_stars(
         yang, zang = pixels_to_yagzag(row, col, allow_bad=True)
 
         out = (
+            len(vals),
             row,
             col,
             row - star_row,
@@ -1426,6 +1483,7 @@ def get_imposter_stars(
 
     if len(outs) > 0:
         dtype = [
+            ("n_pix", "<i8"),  # Number of pixels in the search hit
             ("row", "<f8"),
             ("col", "<f8"),
             ("d_row", "<f8"),
