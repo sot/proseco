@@ -1282,6 +1282,22 @@ def get_spoiler_stars(stars, acq, box_size):
     return spoilers
 
 
+def force_even_and_on_ccd(val: int, offset: int) -> int:
+    """Force val to be even and on the CCD (0-1024).
+
+    Parameters
+    ----------
+    val : int
+        Input value.
+    offset : int
+        If ``val`` is odd then add ``sign(offset)`` to make even.
+    """
+    if val % 2 == 1:
+        val += np.sign(offset)
+    val = np.clip(val, 0, 1024)
+    return val
+
+
 def get_imposter_stars(
     dark,
     star_row,
@@ -1320,26 +1336,10 @@ def get_imposter_stars(
     box_col = int(box_size.col)
 
     # Make sure box is within CCD
-    box_r0 = np.clip(acq_row - box_row, 0, 1024)
-    box_r1 = np.clip(acq_row + box_row, 0, 1024)
-    box_c0 = np.clip(acq_col - box_col, 0, 1024)
-    box_c1 = np.clip(acq_col + box_col, 0, 1024)
-
-    # Make sure box has even number of pixels on each edge.  Increase
-    # box by one if needed.
-    #
-    # TO DO: Test the clipping and shrinking code
-    #
-    if (box_r1 - box_r0) % 2 == 1:
-        if box_r1 == 1024:
-            box_r0 -= 1
-        else:
-            box_r1 += 1
-    if (box_c1 - box_c0) % 2 == 1:
-        if box_c1 == 1024:
-            box_c0 -= 1
-        else:
-            box_c1 += 1
+    box_r0 = force_even_and_on_ccd(acq_row - box_row, -1)
+    box_r1 = force_even_and_on_ccd(acq_row + box_row, 1)
+    box_c0 = force_even_and_on_ccd(acq_col - box_col, -1)
+    box_c1 = force_even_and_on_ccd(acq_col + box_col, 1)
 
     # Get bgd-subtracted dark current image corresponding to the search box
     # and bin in 2x2 blocks.
