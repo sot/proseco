@@ -45,6 +45,10 @@ OVERLAP_P_ACQ_PENALTY = 0.7  # p_acq multiplier for search box overlap
 OVERLAP_MAG_DEADBAND = 0.2  # overlap penalty applies for mag difference > deadband
 OVERLAP_PAD = 20  # arcsec, extra padding for overlap check
 
+# Constants in get_box_edge_dmag() function
+BOX_EDGE_DMAG_OFFSETS = np.array([-20.0, -10.0, -5.0, 0.0, 5.0, 12.5, 17.0, 20.0])
+BOX_EDGE_DMAG_VALUES = np.array([0.0, 0.03, 0.18, 0.75, 2.03, 5.12, 6.28, 10.0])
+
 
 def load_maxmags() -> dict:
     """
@@ -450,7 +454,7 @@ class AcqTable(ACACatalogTable):
         """
         Update the rows of self to match the specified ``agasc_ids``
         and half widths.  These two input lists must match the length
-        of self and correspond to stars in self.cand_acqs.
+        of acqs and correspond to stars in self.cand_acqs.
 
         :param agasc_ids: list of AGASC IDs
         :param halfws: list of search box half widths
@@ -1521,7 +1525,12 @@ def get_intruders(acq, box_size, name, n_sigma, get_func, kwargs):
     else:
         dys = intruders["yang"] - acq["yang"]
         dzs = intruders["zang"] - acq["zang"]
-        ok = (np.abs(dys) < box_size.y + 20) & (np.abs(dzs) < box_size.z + 20)
+        box_margin = (
+            0.0 if os.environ.get("PROSECO_DISABLE_BOX_EDGE_DMAG") == "True" else 20.0
+        )
+        ok = (np.abs(dys) < box_size.y + box_margin) & (
+            np.abs(dzs) < box_size.z + box_margin
+        )
         intruders = intruders[ok]
         mags = []
         for dy, dz, mag in zip(dys, dzs, intruders["mag"]):
@@ -1539,10 +1548,31 @@ def get_intruders(acq, box_size, name, n_sigma, get_func, kwargs):
 
 
 def get_box_edge_dmag(dyz, box_size):
+    """
+    Calculate the magnitude penalty for an intruder near the edge of a search box.
+
+    This uses linear interpolation of an empirical relationship determined in the
+    ``pr409-intruders-at-search-box-edge.ipynb`` notebook.
+
+    Parameters
+    ----------
+    dyz : float
+        Offset from the box center to the intruder (arcsec).
+    box_size : float
+        Size of the box (arcsec).
+
+    Returns
+    -------
+    dmag : float
+        Magnitude penalty for being near the box edge.
+    """
+    if os.environ.get("PROSECO_DISABLE_BOX_EDGE_DMAG") == "True":
+        return 0.0
+
     d_box_edge = abs(dyz) - box_size
-    offsets = np.array([-20.0, -10.0, -5.0, 0.0, 5.0, 12.5, 17.0, 20.0])
-    dmags = np.array([0.0, 0.03, 0.18, 0.75, 2.03, 5.12, 6.28, 10.0])
-    dmag = np.interp(d_box_edge, offsets, dmags)
+    # Note: np.interp is at least 5x faster than scipy.interpolate.interp1d (even with
+    # that returning a lambda func).
+    dmag = np.interp(x=d_box_edge, xp=BOX_EDGE_DMAG_OFFSETS, fp=BOX_EDGE_DMAG_VALUES)
     return dmag
 
 
