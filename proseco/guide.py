@@ -35,6 +35,18 @@ APL = AcaPsfLibrary()
 STAR_PAIR_DIST_CACHE = {}
 
 
+def guide_candidates_first_cut(obsid=0, **kwargs):
+    STAR_PAIR_DIST_CACHE.clear()
+    guides = GuideTable()
+    guides.set_attrs_from_kwargs(obsid=obsid, **kwargs)
+    guides.set_stars()
+    # Process monitor window requests, converting them into fake stars that
+    # are added to the include_ids list.
+    guides.process_monitors_pre()
+    # Do a first cut of the stars to get a set of reasonable candidates
+    return guides.get_initial_guide_candidates()
+
+
 def get_guide_catalog(obsid=0, **kwargs):
     """
     Get a catalog of guide stars

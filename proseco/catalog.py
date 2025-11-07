@@ -22,7 +22,7 @@ from .core import (
     get_kwargs_from_starcheck_text,
 )
 from .fid import FidTable, get_fid_catalog
-from .guide import GuideTable, get_guide_catalog
+from .guide import GuideTable, get_guide_catalog, guide_candidates_first_cut
 from .monitor import BadMonitorError, get_mon_catalog
 
 # Colnames and types for final ACA catalog
@@ -133,15 +133,24 @@ def _get_aca_catalog(**kwargs):
     if hasattr(aca.acqs, "dark_date"):
         aca.dark_date = aca.acqs.dark_date
 
+    # Get initial guide candidates assuming no fids
+    initial_guide_cands = guide_candidates_first_cut(stars=aca.acqs.stars, **kwargs)
+
     # Note that aca.acqs.stars is a filtered version of aca.stars and includes
     # only stars that are in or near ACA FOV.  Use this for fids and guides stars.
     aca.log("Starting get_fid_catalog")
-    aca.fids = get_fid_catalog(stars=aca.acqs.stars, acqs=aca.acqs, **kwargs)
+    aca.fids = get_fid_catalog(
+        stars=aca.acqs.stars, acqs=aca.acqs, guide_cands=initial_guide_cands, **kwargs
+    )
     aca.acqs.fids = aca.fids
 
     if aca.optimize:
         aca.log("Starting optimize_acqs_fids")
-        aca.optimize_acqs_fids()
+        no_fid_guides = get_guide_catalog(
+            stars=aca.acqs.stars,
+            **kwargs,
+        )
+        aca.optimize_acqs_fids(guides=no_fid_guides, **kwargs)
 
     aca.acqs.fid_set = aca.fids["id"]
 
@@ -409,7 +418,7 @@ class ACATable(ACACatalogTable):
         self.acqs.make_report(rootdir=rootdir)
         self.guides.make_report(rootdir=rootdir)
 
-    def optimize_acqs_fids(self):
+    def optimize_acqs_fids(self, guides=None, **kwargs):
         """
         Concurrently optimize acqs and fids in the case where there is not
         already a good (no spoilers) fid set available.
@@ -437,6 +446,13 @@ class ACATable(ACACatalogTable):
 
         # Start with the no-fids optimum catalog and save required info to restore
         opt_P2 = -acqs.get_log_p_2_or_fewer()
+        from chandra_aca.star_probs import guide_count
+        from sparkles.aca_check_table import get_t_ccds_bonus
+
+        t_ccd_applied = get_t_ccds_bonus(
+            guides["mag"], guides.t_ccd, guides.dyn_bgd_n_faint, guides.dyn_bgd_dt_ccd
+        )
+        opt_guide_count = guide_count(guides["mag"], t_ccd_applied)
         orig_acq_idxs = acqs["idx"].tolist()
         orig_acq_halfws = acqs["halfw"].tolist()
 
@@ -461,6 +477,7 @@ class ACATable(ACACatalogTable):
         # ranking metric P2 and the acq catalog info halfws and star ids.
         fid_sets = Table(rows=rows, names=("fid_ids", "spoiler_score"))
         fid_sets["P2"] = -99.0  # Marker for unfilled values
+        fid_sets["guide_count"] = -99.0
         fid_sets["acq_halfws"] = None
         fid_sets["acq_idxs"] = None
 
@@ -475,6 +492,24 @@ class ACATable(ACACatalogTable):
             self.log(f"Checking fid sets with spoiler_score={spoiler_score}", level=1)
 
             for fid_set in fid_set_group:
+                # get the rows of candidate fids that correspond to the fid_ids
+                # in the current fid_set.
+                fid_mask = [fid_id in fid_set["fid_ids"] for fid_id in cand_fids["id"]]
+                fids_for_set = cand_fids[fid_mask]
+                guides_for_fid_set = get_guide_catalog(
+                    stars=acqs.stars,
+                    fids=fids_for_set,
+                    **kwargs,
+                )
+                local_t_ccd_applied = get_t_ccds_bonus(
+                    guides_for_fid_set["mag"],
+                    guides.t_ccd,
+                    guides.dyn_bgd_n_faint,
+                    guides.dyn_bgd_dt_ccd,
+                )
+                local_guide_count = guide_count(
+                    guides_for_fid_set["mag"], local_t_ccd_applied
+                )
                 # Set the internal acqs fid set.  This does validation of the set
                 # and also calls update_p_acq_column().
                 acqs.fid_set = fid_set["fid_ids"]
@@ -487,10 +522,12 @@ class ACATable(ACACatalogTable):
                 # sets.  Only optimize if P2 decreased by at least 0.001,
                 # remembering P2 is the -log10(prob).
                 fid_set_P2 = -acqs.get_log_p_2_or_fewer()
-                found_good_set = fid_set_P2 - opt_P2 > -0.001
+                found_good_set = (fid_set_P2 - opt_P2 > -0.001) & (
+                    local_guide_count >= (opt_guide_count - 0.05)
+                )
                 if found_good_set:
                     self.log(
-                        f"No change in P2 for fid set {acqs.fid_set}, "
+                        f"No change in P2 or guide_count for fid set {acqs.fid_set}, "
                         f"skipping optimization"
                     )
                 else:
@@ -500,6 +537,7 @@ class ACATable(ACACatalogTable):
 
                 # Store optimization results
                 fid_set["P2"] = -acqs.get_log_p_2_or_fewer()
+                fid_set["guide_count"] = local_guide_count
                 fid_set["acq_idxs"] = acqs["idx"].tolist()
                 fid_set["acq_halfws"] = acqs["halfw"].tolist()
 
@@ -518,14 +556,24 @@ class ACATable(ACACatalogTable):
 
             # Get the best fid set / acq catalog configuration so far.  Fid sets not
             # yet considered have P2 = -99.
-            best_idx = np.argmax(fid_sets["P2"])
-            best_P2 = fid_sets["P2"][best_idx]
+
+            # Are there sets with P2 >= 2 and guide_count >= 4
+            passable = (fid_sets["P2"] >= 2) & (fid_sets["guide_count"] >= 4)
+            if np.any(passable):
+                fid_sets_passable = fid_sets[passable]
+                best_idx = np.argmax(fid_sets_passable["P2"])
+                best_P2 = fid_sets_passable["P2"][best_idx]
+                best_idx = np.where(passable)[0][best_idx]
+
+            # If none passable then just get the best P2
+            else:
+                best_idx = np.argmax(fid_sets["P2"])
+                best_P2 = fid_sets["P2"][best_idx]
 
             # Get the row of the fid / acq stages table to determine the required minimum
             # P2 given the fid spoiler score.
             stage = ACQ.fid_acq_stages.loc[spoiler_score]
             stage_min_P2 = stage["min_P2"](opt_P2)
-
             self.log(
                 f"Best P2={best_P2:.2f} at idx={best_idx} vs. "
                 "stage_min_P2={stage_min_P2:.2f}",
@@ -533,7 +581,7 @@ class ACATable(ACACatalogTable):
             )
 
             # If we have a winner then use that.
-            if best_P2 >= stage_min_P2:
+            if (best_P2 >= stage_min_P2) and np.any(passable):
                 break
 
         # Set the acqs table to the best catalog
