@@ -19,7 +19,7 @@ from .core import ACACatalogTable, AliasAttribute, MetaAttribute
 from .jupiter import is_spoiled_by_jupiter
 
 
-def get_fid_catalog(obsid=0, **kwargs):
+def get_fid_catalog(obsid=0, guide_cands=None, **kwargs):
     """
     Get a catalog of fid lights.
 
@@ -36,6 +36,7 @@ def get_fid_catalog(obsid=0, **kwargs):
     :param focus_offset: SIM focus offset [steps] (default=0)
     :param sim_offset: SIM translation offset from nominal [steps] (default=0)
     :param acqs: AcqTable catalog.  Optional but needed for actual fid selection.
+    :param guide_cands: GuideTable of initial guide candidates (used for star spoilers)
     :param stars: stars table.  Defaults to acqs.stars if available.
     :param dither_acq: acq dither size (2-element sequence (y, z), arcsec)
     :param dither_guide: guide dither size (2-element sequence (y, z), arcsec)
@@ -58,8 +59,9 @@ def get_fid_catalog(obsid=0, **kwargs):
         empty_fids.meta = fids.meta
         return empty_fids
 
+    fids.guide_cands = guide_cands
     fids.set_stars(acqs=fids.acqs)
-    fids.cand_fids = fids.get_fid_candidates()
+    fids.cand_fids = fids.get_fid_candidates(guide_cands=guide_cands)
 
     # Set list of available fid_set's, accounting for n_fid and cand_fids.
     fids.cand_fid_sets = fids.get_cand_fid_sets()
@@ -256,7 +258,7 @@ class FidTable(ACACatalogTable):
 
         else:
             spoils_any_acq = {}
-
+            spoils_any_guide_cand = {}
             for fid_set in ok_fid_sets:
                 self.log(f"Checking fid set {fid_set} for acq star spoilers", level=1)
                 for fid_id in fid_set:
@@ -265,15 +267,38 @@ class FidTable(ACACatalogTable):
                         spoils_any_acq[fid_id] = any(
                             self.spoils(fid, acq, acq["halfw"]) for acq in self.acqs
                         )
+                    if fid_id not in spoils_any_guide_cand:
+                        fid = cand_fids.get_id(fid_id)
+                        spoils_any_guide_cand[fid_id] = (
+                            any(
+                                self.spoils(fid, guide, 25)
+                                for guide in self.guide_cands
+                            )
+                            if self.guide_cands is not None
+                            else False
+                        )
+                        from proseco import guide
+
+                        fid_trap, _ = guide.check_fid_trap(
+                            self.guide_cands, [fid], self.dither_guide
+                        )
+                        if np.any(fid_trap):
+                            spoils_any_guide_cand[fid_id] = True
                     if spoils_any_acq[fid_id]:
                         # Loser, don't bother with the rest.
                         self.log(f"Fid {fid_id} spoils an acq star", level=2)
+                        break
+                    if spoils_any_guide_cand[fid_id]:
+                        # Loser, don't bother with the rest.
+                        self.log(f"Fid {fid_id} spoils a guide candidate", level=2)
                         break
                 else:
                     # We have a winner, none of the fid_ids in current fid set
                     # will spoil any acquisition star.  Break out of loop with
                     # fid_set as the winner.
-                    self.log(f"Fid set {fid_set} is fine for acq stars")
+                    self.log(
+                        f"Fid set {fid_set} is fine for acq stars and guide candidates"
+                    )
                     break
             else:
                 # Tried every set and none were acceptable.
@@ -310,7 +335,7 @@ class FidTable(ACACatalogTable):
         dz = np.abs(fid["zang"] - acq["zang"])
         return dy < spoiler_margin.y and dz < spoiler_margin.z
 
-    def get_fid_candidates(self):
+    def get_fid_candidates(self, guide_cands=None):
         """
         Get all fids for this detector that are on the CCD (with margin) and are not
         impacted by a bad pixel.
@@ -372,9 +397,9 @@ class FidTable(ACACatalogTable):
         cand_fids["idx"] = np.arange(len(cand_fids), dtype=np.int64)
 
         # If stars are available then find stars that are bad for fid.
-        if self.stars:
+        if self.stars or guide_cands:
             for fid in cand_fids:
-                self.set_spoilers_score(fid)
+                self.set_spoilers_score(fid, guide_cands)
 
         return cand_fids
 
@@ -431,7 +456,7 @@ class FidTable(ACACatalogTable):
         else:
             return False
 
-    def set_spoilers_score(self, fid):
+    def set_spoilers_score(self, fid, guide_cands=None):
         """Get stars within FID.spoiler_margin (50 arcsec) + dither.  Starcheck uses
         25" but this seems small: 20" (4 pix) positional err + 4 pixel readout
         halfw + 2 pixel PSF width of spoiler star.
@@ -447,12 +472,21 @@ class FidTable(ACACatalogTable):
         stars = self.stars[ACQ.spoiler_star_cols]
         dither = self.dither_guide
 
+        # Run guide star fid_trap checks ()
+        fid_trap_spoiler = False
+        if guide_cands is not None:
+            from proseco import guide
+
+            fid_trap, _ = guide.check_fid_trap(guide_cands, [fid], dither)
+            if np.any(fid_trap):
+                fid_trap_spoiler = True
+
         # Potential spoiler by position
         spoil = (
             np.abs(stars["yang"] - fid["yang"]) < FID.spoiler_margin + dither.y
         ) & (np.abs(stars["zang"] - fid["zang"]) < FID.spoiler_margin + dither.z)
 
-        if not np.any(spoil):
+        if not np.any(spoil) and not fid_trap_spoiler:
             # Make an empty table with same columns
             fid["spoilers"] = []
         else:
@@ -473,6 +507,9 @@ class FidTable(ACACatalogTable):
                 fid["spoiler_score"] = 4
             elif np.any(yellow):
                 fid["spoiler_score"] = 1
+
+            if fid_trap_spoiler:
+                fid["spoiler_score"] = 5
 
             if fid["spoiler_score"] != 0:
                 self.log(
