@@ -440,9 +440,7 @@ class ACATable(ACACatalogTable):
             or len(self.fids.cand_fids) == 0
             or len(self.fids.cand_fid_sets) == 0
         ):
-            self.log(
-                "No acq-fid optimization required"
-            )
+            self.log("No acq-fid optimization required")
             return
 
         from chandra_aca.star_probs import guide_count
@@ -455,8 +453,10 @@ class ACATable(ACACatalogTable):
         # Start with the no-fids optimum catalog and save required info to restore
         opt_P2 = -acqs.get_log_p_2_or_fewer()
         t_ccd_applied = get_t_ccds_bonus(
-            no_fid_guides["mag"], no_fid_guides.t_ccd,
-            no_fid_guides.dyn_bgd_n_faint, no_fid_guides.dyn_bgd_dt_ccd
+            no_fid_guides["mag"],
+            no_fid_guides.t_ccd,
+            no_fid_guides.dyn_bgd_n_faint,
+            no_fid_guides.dyn_bgd_dt_ccd,
         )
         opt_guide_count = guide_count(no_fid_guides["mag"], t_ccd_applied)
         orig_acq_idxs = acqs["idx"].tolist()

@@ -476,6 +476,7 @@ class FidTable(ACACatalogTable):
         fid_trap_spoiler = False
         if guide_cands is not None:
             from proseco import guide
+
             fid_trap, _ = guide.check_fid_trap(guide_cands, [fid], dither)
             if np.any(fid_trap):
                 fid_trap_spoiler = True
