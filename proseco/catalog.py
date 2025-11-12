@@ -133,7 +133,7 @@ def _get_aca_catalog(**kwargs):
     if hasattr(aca.acqs, "dark_date"):
         aca.dark_date = aca.acqs.dark_date
 
-    # Get initial guide candidates assuming no fids
+    # Get initial guide candidates
     initial_guide_cands = get_guide_catalog(just_initial_cands=True,
                                             stars=aca.acqs.stars, **kwargs)
 
