@@ -22,8 +22,7 @@ from .core import (
     get_kwargs_from_starcheck_text,
 )
 from .fid import FidTable, get_fid_catalog
-from .guide import (GuideTable, get_guide_catalog,
-                    get_t_ccds_bonus)
+from .guide import GuideTable, get_guide_catalog, get_t_ccds_bonus
 from .monitor import BadMonitorError, get_mon_catalog
 
 # Colnames and types for final ACA catalog
@@ -548,7 +547,8 @@ class ACATable(ACACatalogTable):
                 fid_set["acq_halfws"] = acqs["halfw"].tolist()
 
                 self.log(
-                    f"Fid set {fid_set['fid_ids']}: P2={fid_set['P2']:.2f} guide_count={fid_set['guide_count']:.2f} "
+                    f"Fid set {fid_set['fid_ids']}: P2={fid_set['P2']:.2f} "
+                    f" guide_count={fid_set['guide_count']:.2f} "
                     f"acq_idxs={fid_set['acq_idxs']} halfws={fid_set['acq_halfws']}",
                     level=2,
                 )
