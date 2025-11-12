@@ -110,7 +110,6 @@ def get_guide_catalog(obsid=0, guides=None, **kwargs):
     :returns: GuideTable of acquisition stars
     """
     if guides is None:
-
         guides = GuideTable()
         guides.set_attrs_from_kwargs(obsid=obsid, **kwargs)
         guides.set_stars()
@@ -135,7 +134,6 @@ def get_guide_catalog(obsid=0, guides=None, **kwargs):
             guides.reject(rej)
         cand_guides = cand_guides[~fid_trap_spoilers]
         guides.cand_guides = cand_guides
-
 
     # Process guide-from-monitor requests by finding corresponding star in
     # cand_guides and adding to the include_ids list.
