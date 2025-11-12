@@ -19,7 +19,7 @@ from .core import ACACatalogTable, AliasAttribute, MetaAttribute
 from .jupiter import is_spoiled_by_jupiter
 
 
-def get_fid_catalog(obsid=0, guide_cands=None, **kwargs):
+def get_fid_catalog(obsid=0, **kwargs):
     """
     Get a catalog of fid lights.
 
@@ -59,9 +59,8 @@ def get_fid_catalog(obsid=0, guide_cands=None, **kwargs):
         empty_fids.meta = fids.meta
         return empty_fids
 
-    fids.guide_cands = guide_cands
     fids.set_stars(acqs=fids.acqs)
-    fids.cand_fids = fids.get_fid_candidates(guide_cands=guide_cands)
+    fids.cand_fids = fids.get_fid_candidates()
 
     # Set list of available fid_set's, accounting for n_fid and cand_fids.
     fids.cand_fid_sets = fids.get_cand_fid_sets()
@@ -81,7 +80,7 @@ def get_fid_catalog(obsid=0, guide_cands=None, **kwargs):
 class FidTable(ACACatalogTable):
     # Define base set of allowed keyword args to __init__. Subsequent MetaAttribute
     # or AliasAttribute properties will add to this.
-    allowed_kwargs = ACACatalogTable.allowed_kwargs | set(["acqs"])
+    allowed_kwargs = ACACatalogTable.allowed_kwargs | set(["acqs", "guide_cands"])
 
     # Catalog type when plotting (None | 'FID' | 'ACQ' | 'GUI')
     catalog_type = "FID"
@@ -335,7 +334,7 @@ class FidTable(ACACatalogTable):
         dz = np.abs(fid["zang"] - acq["zang"])
         return dy < spoiler_margin.y and dz < spoiler_margin.z
 
-    def get_fid_candidates(self, guide_cands=None):
+    def get_fid_candidates(self):
         """
         Get all fids for this detector that are on the CCD (with margin) and are not
         impacted by a bad pixel.
@@ -397,9 +396,9 @@ class FidTable(ACACatalogTable):
         cand_fids["idx"] = np.arange(len(cand_fids), dtype=np.int64)
 
         # If stars are available then find stars that are bad for fid.
-        if self.stars or guide_cands:
+        if self.stars or self.guide_cands:
             for fid in cand_fids:
-                self.set_spoilers_score(fid, guide_cands)
+                self.set_spoilers_score(fid)
 
         return cand_fids
 
@@ -456,7 +455,7 @@ class FidTable(ACACatalogTable):
         else:
             return False
 
-    def set_spoilers_score(self, fid, guide_cands=None):
+    def set_spoilers_score(self, fid):
         """Get stars within FID.spoiler_margin (50 arcsec) + dither.  Starcheck uses
         25" but this seems small: 20" (4 pix) positional err + 4 pixel readout
         halfw + 2 pixel PSF width of spoiler star.
@@ -470,13 +469,13 @@ class FidTable(ACACatalogTable):
         :param fid: fid light (FidTable Row)
         """
         stars = self.stars[ACQ.spoiler_star_cols]
+        guide_cands = self.guide_cands
         dither = self.dither_guide
 
-        # Run guide star fid_trap checks ()
+        # Run guide star fid_trap checks
         fid_trap_spoiler = False
         if guide_cands is not None:
             from proseco import guide
-
             fid_trap, _ = guide.check_fid_trap(guide_cands, [fid], dither)
             if np.any(fid_trap):
                 fid_trap_spoiler = True
@@ -509,7 +508,7 @@ class FidTable(ACACatalogTable):
                 fid["spoiler_score"] = 1
 
             if fid_trap_spoiler:
-                fid["spoiler_score"] = 5
+                fid["spoiler_score"] += 10
 
             if fid["spoiler_score"] != 0:
                 self.log(

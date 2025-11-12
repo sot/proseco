@@ -148,11 +148,7 @@ def _get_aca_catalog(**kwargs):
 
     if aca.optimize:
         aca.log("Starting optimize_acqs_fids")
-        no_fid_guides = get_guide_catalog(
-            stars=aca.acqs.stars,
-            **kwargs,
-        )
-        aca.optimize_acqs_fids(guides=no_fid_guides, **kwargs)
+        aca.optimize_acqs_fids(**kwargs)
 
     aca.acqs.fid_set = aca.fids["id"]
 
@@ -444,17 +440,25 @@ class ACATable(ACACatalogTable):
             or len(self.fids.cand_fids) == 0
             or len(self.fids.cand_fid_sets) == 0
         ):
+            self.log(
+                "No acq-fid optimization required"
+            )
             return
+
+        from chandra_aca.star_probs import guide_count
+
+        no_fid_guides = get_guide_catalog(
+            stars=acqs.stars,
+            **kwargs,
+        )
 
         # Start with the no-fids optimum catalog and save required info to restore
         opt_P2 = -acqs.get_log_p_2_or_fewer()
-        from chandra_aca.star_probs import guide_count
-        from sparkles.aca_check_table import get_t_ccds_bonus
-
         t_ccd_applied = get_t_ccds_bonus(
-            guides["mag"], guides.t_ccd, guides.dyn_bgd_n_faint, guides.dyn_bgd_dt_ccd
+            no_fid_guides["mag"], no_fid_guides.t_ccd,
+            no_fid_guides.dyn_bgd_n_faint, no_fid_guides.dyn_bgd_dt_ccd
         )
-        opt_guide_count = guide_count(guides["mag"], t_ccd_applied)
+        opt_guide_count = guide_count(no_fid_guides["mag"], t_ccd_applied)
         orig_acq_idxs = acqs["idx"].tolist()
         orig_acq_halfws = acqs["halfw"].tolist()
 
@@ -498,19 +502,19 @@ class ACATable(ACACatalogTable):
                 # in the current fid_set.
                 fid_mask = [fid_id in fid_set["fid_ids"] for fid_id in cand_fids["id"]]
                 fids_for_set = cand_fids[fid_mask]
-                guides_for_fid_set = get_guide_catalog(
+                local_guides = get_guide_catalog(
                     stars=acqs.stars,
                     fids=fids_for_set,
                     **kwargs,
                 )
                 local_t_ccd_applied = get_t_ccds_bonus(
-                    guides_for_fid_set["mag"],
-                    guides.t_ccd,
-                    guides.dyn_bgd_n_faint,
-                    guides.dyn_bgd_dt_ccd,
+                    local_guides["mag"],
+                    local_guides.t_ccd,
+                    local_guides.dyn_bgd_n_faint,
+                    local_guides.dyn_bgd_dt_ccd,
                 )
                 local_guide_count = guide_count(
-                    guides_for_fid_set["mag"], local_t_ccd_applied
+                    local_guides["mag"], local_t_ccd_applied
                 )
                 # Set the internal acqs fid set.  This does validation of the set
                 # and also calls update_p_acq_column().
@@ -544,7 +548,7 @@ class ACATable(ACACatalogTable):
                 fid_set["acq_halfws"] = acqs["halfw"].tolist()
 
                 self.log(
-                    f"Fid set {fid_set['fid_ids']}: P2={fid_set['P2']:.2f} "
+                    f"Fid set {fid_set['fid_ids']}: P2={fid_set['P2']:.2f} guide_count={fid_set['guide_count']:.2f} "
                     f"acq_idxs={fid_set['acq_idxs']} halfws={fid_set['acq_halfws']}",
                     level=2,
                 )
@@ -578,7 +582,7 @@ class ACATable(ACACatalogTable):
             stage_min_P2 = stage["min_P2"](opt_P2)
             self.log(
                 f"Best P2={best_P2:.2f} at idx={best_idx} vs. "
-                "stage_min_P2={stage_min_P2:.2f}",
+                f"stage_min_P2={stage_min_P2:.2f}",
                 level=1,
             )
 
