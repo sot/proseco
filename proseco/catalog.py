@@ -22,7 +22,8 @@ from .core import (
     get_kwargs_from_starcheck_text,
 )
 from .fid import FidTable, get_fid_catalog
-from .guide import GuideTable, get_guide_catalog, guide_candidates_first_cut
+from .guide import (GuideTable, get_guide_catalog,
+                    get_t_ccds_bonus)
 from .monitor import BadMonitorError, get_mon_catalog
 
 # Colnames and types for final ACA catalog
@@ -134,7 +135,8 @@ def _get_aca_catalog(**kwargs):
         aca.dark_date = aca.acqs.dark_date
 
     # Get initial guide candidates assuming no fids
-    initial_guide_cands = guide_candidates_first_cut(stars=aca.acqs.stars, **kwargs)
+    initial_guide_cands = get_guide_catalog(just_initial_cands=True,
+                                            stars=aca.acqs.stars, **kwargs)
 
     # Note that aca.acqs.stars is a filtered version of aca.stars and includes
     # only stars that are in or near ACA FOV.  Use this for fids and guides stars.
