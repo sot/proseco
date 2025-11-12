@@ -35,16 +35,40 @@ APL = AcaPsfLibrary()
 STAR_PAIR_DIST_CACHE = {}
 
 
-def guide_candidates_first_cut(obsid=0, **kwargs):
-    STAR_PAIR_DIST_CACHE.clear()
-    guides = GuideTable()
-    guides.set_attrs_from_kwargs(obsid=obsid, **kwargs)
-    guides.set_stars()
-    # Process monitor window requests, converting them into fake stars that
-    # are added to the include_ids list.
-    guides.process_monitors_pre()
-    # Do a first cut of the stars to get a set of reasonable candidates
-    return guides.get_initial_guide_candidates()
+# Minimum number of "anchor stars" that are always evaluated *without* the bonus
+# from dynamic background when dyn_bgd_n_faint > 0. This is mostly to avoid the
+# situation where 4 stars are selected and 2 are faint bonus stars. In this case
+# there would be only 2 anchor stars that ensure good tracking even without
+# dyn bgd.
+MIN_DYN_BGD_ANCHOR_STARS = 3
+
+
+def get_t_ccds_bonus(mags, t_ccd, dyn_bgd_n_faint, dyn_bgd_dt_ccd):
+    """Return array of t_ccds with dynamic background bonus applied.
+
+    This adds ``dyn_bgd_dt_ccd`` to the effective CCD temperature for the
+    ``dyn_bgd_n_faint`` faintest stars, ensuring that at least MIN_DYN_BGD_ANCHOR_STARS
+    are evaluated without the bonus. See:
+    https://nbviewer.org/urls/cxc.harvard.edu/mta/ASPECT/ipynb/misc/guide-count-dyn-bgd.ipynb
+
+    :param mags: array of star magnitudes
+    :param t_ccd: single T_ccd value (degC)
+    :param dyn_bgd_n_faint: number of faintest stars to apply bonus
+    :returns: array of t_ccds (matching ``mags``) with dynamic background bonus applied
+    """
+    t_ccds = np.full_like(mags, t_ccd)
+
+    # If no bonus stars then just return the input t_ccd broadcast to all stars
+    if dyn_bgd_n_faint == 0:
+        return t_ccds
+
+    idxs = np.argsort(mags)
+    n_faint = min(dyn_bgd_n_faint, len(t_ccds))
+    idx_bonus = max(len(t_ccds) - n_faint, MIN_DYN_BGD_ANCHOR_STARS)
+    for idx in idxs[idx_bonus:]:
+        t_ccds[idx] += dyn_bgd_dt_ccd
+
+    return t_ccds
 
 
 def get_guide_catalog(obsid=0, **kwargs):
