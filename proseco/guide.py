@@ -71,7 +71,7 @@ def get_t_ccds_bonus(mags, t_ccd, dyn_bgd_n_faint, dyn_bgd_dt_ccd):
     return t_ccds
 
 
-def get_guide_catalog(obsid=0, **kwargs):
+def get_guide_catalog(obsid=0, just_initial_cands=False, **kwargs):
     """
     Get a catalog of guide stars
 
@@ -106,6 +106,8 @@ def get_guide_catalog(obsid=0, **kwargs):
 
     # Do a first cut of the stars to get a set of reasonable candidates
     guides.cand_guides = guides.get_initial_guide_candidates()
+    if just_initial_cands:
+        return guides.cand_guides
 
     # Process guide-from-monitor requests by finding corresponding star in
     # cand_guides and adding to the include_ids list.
