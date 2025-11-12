@@ -71,7 +71,22 @@ def get_t_ccds_bonus(mags, t_ccd, dyn_bgd_n_faint, dyn_bgd_dt_ccd):
     return t_ccds
 
 
-def get_guide_catalog(obsid=0, just_initial_cands=False, **kwargs):
+def get_guide_candidates(obsid=0, **kwargs):
+    guides = GuideTable()
+    guides.set_attrs_from_kwargs(obsid=obsid, **kwargs)
+    guides.set_stars()
+
+    # Process monitor window requests, converting them into fake stars that
+    # are added to the include_ids list.
+    guides.process_monitors_pre()
+
+    # Do a first cut of the stars to get a set of reasonable candidates
+    cand_guides = guides.get_initial_guide_candidates()
+    guides.cand_guides = cand_guides
+    return guides
+
+
+def get_guide_catalog(obsid=0, guides=None, **kwargs):
     """
     Get a catalog of guide stars
 
@@ -94,26 +109,40 @@ def get_guide_catalog(obsid=0, just_initial_cands=False, **kwargs):
 
     :returns: GuideTable of acquisition stars
     """
-    STAR_PAIR_DIST_CACHE.clear()
+    if guides is None:
 
-    guides = GuideTable()
-    guides.set_attrs_from_kwargs(obsid=obsid, **kwargs)
-    guides.set_stars()
+        guides = GuideTable()
+        guides.set_attrs_from_kwargs(obsid=obsid, **kwargs)
+        guides.set_stars()
 
-    # Process monitor window requests, converting them into fake stars that
-    # are added to the include_ids list.
-    guides.process_monitors_pre()
+        # Process monitor window requests, converting them into fake stars that
+        # are added to the include_ids list.
+        guides.process_monitors_pre()
 
-    # Do a first cut of the stars to get a set of reasonable candidates
-    guides.cand_guides = guides.get_initial_guide_candidates()
-    if just_initial_cands:
-        return guides.cand_guides
+        # Do a first cut of the stars to get a set of reasonable candidates
+        cand_guides = guides.get_initial_guide_candidates()
+        guides.cand_guides = cand_guides
+
+    # Explicitly filter the fid trap spoilers for the current fid set
+    if guides.fids is not None and len(guides.fids) > 0:
+        cand_guides = guides.cand_guides
+        # Handle the fid trap as a separate step
+        fid_trap_spoilers, fid_rej = check_fid_trap(
+            cand_guides, fids=guides.fids, dither=guides.dither
+        )
+        for rej in fid_rej:
+            rej["stage"] = 0
+            guides.reject(rej)
+        cand_guides = cand_guides[~fid_trap_spoilers]
+        guides.cand_guides = cand_guides
+
 
     # Process guide-from-monitor requests by finding corresponding star in
     # cand_guides and adding to the include_ids list.
     # guides.process_monitors_pre2()
 
     # Run through search stages to select stars
+    STAR_PAIR_DIST_CACHE.clear()
     selected = guides.run_search_stages()
 
     # Transfer to table (which at this point is an empty table)
