@@ -22,8 +22,7 @@ from .core import (
     get_kwargs_from_starcheck_text,
 )
 from .fid import FidTable, get_fid_catalog
-from .guide import (GuideTable, get_guide_catalog, get_t_ccds_bonus,
-                    get_guide_candidates)
+from .guide import GuideTable, get_guide_candidates, get_guide_catalog, get_t_ccds_bonus
 from .monitor import BadMonitorError, get_mon_catalog
 
 # Colnames and types for final ACA catalog
