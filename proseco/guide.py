@@ -961,7 +961,7 @@ class GuideTable(ACACatalogTable):
         :param cand_guides: Table of candidate stars
         :returns: boolean mask where True means star is in bad star list
         """
-        bad = np.in1d(cand_guides["id"], list(ACA.bad_star_set))
+        bad = np.isin(cand_guides["id"], list(ACA.bad_star_set))
 
         # Set any matching bad stars as bad for plotting
         for bad_id in cand_guides["id"][bad]:

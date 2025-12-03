@@ -786,7 +786,7 @@ def test_guides_include_close():
     # Run the cluster checks and confirm all 3 fail
     cluster_check_sum = np.sum(run_cluster_checks(cat2))
     assert cluster_check_sum == 0
-    assert np.all(np.in1d(include_ids, cat2["id"]))
+    assert np.all(np.isin(include_ids, cat2["id"]))
     # And confirm that only one of the bright stars is used
     assert np.count_nonzero(cat2["mag"] == 7.0) == 1
 
