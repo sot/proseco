@@ -17,6 +17,11 @@ def disable_fid_offsets(monkeypatch):
     monkeypatch.setenv("PROSECO_ENABLE_FID_OFFSET", "False")
 
 
+@pytest.fixture()
+def disable_box_edge_dmag(monkeypatch):
+    monkeypatch.setenv("PROSECO_DISABLE_BOX_EDGE_DMAG", "True")
+
+
 @pytest.fixture(autouse=True)
 def use_fixed_chandra_models(monkeypatch):
     monkeypatch.setenv("CHANDRA_MODELS_DEFAULT_VERSION", "3.48")
