@@ -148,7 +148,7 @@ def get_guide_candidates_mask(
         & (mag > 5.2)
         & (mag < faint_mag_limit)
         & (mag_err < 1.0)
-        & (stars["COLOR1"] != 0.7)
+        & (~np.isclose(stars["COLOR1"], 0.7))
         & (stars["ASPQ1"] < 20)  # Less than 1 arcsec offset from nearby spoiler
         & (stars["ASPQ2"] == 0)  # Unknown proper motion, or PM < 500 milli-arcsec/year
         & (stars["POS_ERR"] < 1250)  # Position error < 1.25 arcsec
