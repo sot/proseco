@@ -1816,19 +1816,19 @@ def get_kwargs_from_starcheck_text(obs_text, include_cat=False, force_catalog=Fa
             kw["cat"] = cat
 
         if force_catalog:
-            ok = np.in1d(cat["type"], ("ACQ", "BOT"))
+            ok = np.isin(cat["type"], ("ACQ", "BOT"))
             kw["n_acq"] = np.count_nonzero(ok)
             kw["include_ids_acq"] = cat["id"][ok].tolist()
             kw["include_halfws_acq"] = cat["halfw"][ok].tolist()
 
-            ok = np.in1d(cat["type"], ("GUI", "BOT"))
+            ok = np.isin(cat["type"], ("GUI", "BOT"))
             # n_guide kwarg needs to include guide stars + MON stars
             kw["n_guide"] = np.count_nonzero(ok) + np.count_nonzero(
                 cat["type"] == "MON"
             )
             kw["include_ids_guide"] = cat["id"][ok].tolist()
 
-            ok = np.in1d(cat["type"], "FID")
+            ok = np.isin(cat["type"], "FID")
             kw["include_ids_fid"] = cat["id"][ok].tolist()
         else:
             kw["n_acq"] = 8
@@ -1920,14 +1920,14 @@ def includes_for_obsid(obsid):
     cat = obs["cat"]
     out = {}
 
-    ok = np.in1d(cat["type"], ("ACQ", "BOT"))
+    ok = np.isin(cat["type"], ("ACQ", "BOT"))
     out["include_ids_acq"] = cat["id"][ok].tolist()
     out["include_halfws_acq"] = cat["halfw"][ok].tolist()
 
-    ok = np.in1d(cat["type"], ("GUI", "BOT"))
+    ok = np.isin(cat["type"], ("GUI", "BOT"))
     out["include_ids_guide"] = cat["id"][ok].tolist()
 
-    ok = np.in1d(cat["type"], ("FID"))
+    ok = np.isin(cat["type"], ("FID"))
     out["include_ids_fid"] = cat["id"][ok].tolist()
 
     return out

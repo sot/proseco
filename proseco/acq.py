@@ -853,7 +853,7 @@ class AcqTable(ACACatalogTable):
             )
 
             # Re-order candidate acqs to put those in the include list first
-            ok = np.in1d(cand_acqs["id"], self.include_ids)
+            ok = np.isin(cand_acqs["id"], self.include_ids)
             idxs = np.concatenate([np.where(ok)[0], np.where(~ok)[0]])
             cand_acqs = cand_acqs[idxs]
 

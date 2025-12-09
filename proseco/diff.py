@@ -92,7 +92,7 @@ def get_catalog_lines(
     if isinstance(names, str):
         names = names.split()
 
-    ok = np.in1d(cat["type"], ["FID"])
+    ok = np.isin(cat["type"], ["FID"])
     fids = cat[ok]
     fids.sort(sort_name)
     fids["dim"] = 1
@@ -105,7 +105,7 @@ def get_catalog_lines(
     ok = fids["id"] > 6
     fids["id"][ok] -= 6
 
-    ok = np.in1d(cat["type"], ["GUI", "BOT"])
+    ok = np.isin(cat["type"], ["GUI", "BOT"])
     guides = cat[ok]
     guides.sort(sort_name)
     bot = guides["type"] == "BOT"
@@ -115,11 +115,11 @@ def get_catalog_lines(
     guides["type"][bot] = "GU*"
 
     # Make MON catalog and convert slot in dim (designated track star).
-    ok = np.in1d(cat["type"], ["MON"])
+    ok = np.isin(cat["type"], ["MON"])
     mons = cat[ok]
     mons.sort(sort_name)
 
-    ok = np.in1d(cat["type"], ["ACQ", "BOT"])
+    ok = np.isin(cat["type"], ["ACQ", "BOT"])
     acqs = cat[ok]
     acqs.sort(sort_name)
     acqs["type"][acqs["type"] == "BOT"] = "AC*"
