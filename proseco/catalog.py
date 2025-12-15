@@ -564,8 +564,17 @@ class ACATable(ACACatalogTable):
             # Get the best fid set / acq catalog configuration so far.  Fid sets not
             # yet considered have P2 = -99.
 
-            # Are there sets with P2 >= 2 and guide_count >= 4
-            passable = (fid_sets["P2"] >= 2) & (fid_sets["guide_count"] >= 4)
+            # Are there sets with P2 >= 2 and guide_count >= 4?
+            # P2 == 2 is considered the minimum operationally acceptable level
+            # and fractional guide_count == 4 is similarly considered the minimum
+            # acceptable level. In general, we have not put these tolerances into
+            # proseco, but have checked the catalogs with sparkles. However, here
+            # in optimization if there are cases that satisfy these minimums then
+            # we prefer those cases to ones that just maximize P2.
+            MIN_ACCEPTABLE_P2 = 2.0
+            MIN_ACCEPTABLE_GUIDE_COUNT = 4.0
+            passable = ((fid_sets["P2"] >= MIN_ACCEPTABLE_P2)
+                        & (fid_sets["guide_count"] >= MIN_ACCEPTABLE_GUIDE_COUNT))
             if np.any(passable):
                 fid_sets_passable = fid_sets[passable]
                 best_idx = np.argmax(fid_sets_passable["P2"])

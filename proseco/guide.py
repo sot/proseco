@@ -94,6 +94,10 @@ def get_guide_catalog(obsid=0, guides=None, **kwargs):
     ``att``, ``t_ccd``, ``date``, and ``dither`` will
     be fetched via ``mica.starcheck`` if not explicitly provided here.
 
+    If ``guides`` is provided as an argument, it is assumed to be a
+    GuideTable that has already been initialized with stars and initial
+    candidate guide stars.
+
     :param obsid: obsid (default=0)
     :param att: attitude (any object that can initialize Quat)
     :param t_ccd: ACA CCD temperature (degC)
@@ -102,6 +106,8 @@ def get_guide_catalog(obsid=0, guides=None, **kwargs):
     :param n_guide: number of guide stars to attempt to get
     :param fids: selected fids (used for guide star exclusion)
     :param stars: astropy.Table of AGASC stars (will be fetched from agasc if None)
+    :param guides: GuideTable of stars with initial candidates already set
+        (if None, a new one is created)
     :param include_ids: list of AGASC IDs of stars to include in guide catalog
     :param exclude_ids: list of AGASC IDs of stars to exclude from guide catalog
     :param dark: ACAImage of dark map (fetched based on time and t_ccd if None)
@@ -122,7 +128,8 @@ def get_guide_catalog(obsid=0, guides=None, **kwargs):
         cand_guides = guides.get_initial_guide_candidates()
         guides.cand_guides = cand_guides
 
-    # Explicitly filter the fid trap spoilers for the current fid set
+    # Explicitly filter out the candidate guide stars that are fid trap spoilers
+    # for the current fid set
     if guides.fids is not None and len(guides.fids) > 0:
         cand_guides = guides.cand_guides
         # Handle the fid trap as a separate step

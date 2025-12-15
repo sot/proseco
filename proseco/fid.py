@@ -508,6 +508,9 @@ class FidTable(ACACatalogTable):
             elif np.any(yellow):
                 fid["spoiler_score"] = 1
 
+            # For the rare case when a fid is in a fid_trap region and there is
+            # a potential guide candidate that would trigger the fid trap effect,
+            # add a large penalty to the spoiler score.
             if fid_trap_spoiler:
                 fid["spoiler_score"] += 10
 
