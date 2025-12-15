@@ -469,17 +469,21 @@ class FidTable(ACACatalogTable):
         :param fid: fid light (FidTable Row)
         """
         stars = self.stars[ACQ.spoiler_star_cols]
-        guide_cands = self.guide_cands
+        guide_cands = None
+        fid_trap_spoiler = False
         dither = self.dither_guide
 
-        # Run guide star fid_trap checks
-        fid_trap_spoiler = False
-        if guide_cands is not None:
-            from proseco import guide
+        if hasattr(self, "guide_cands"):
+            guide_cands = self.guide_cands
 
-            fid_trap, _ = guide.check_fid_trap(guide_cands, [fid], dither)
-            if np.any(fid_trap):
-                fid_trap_spoiler = True
+            # Run guide star fid_trap checks
+            fid_trap_spoiler = False
+            if guide_cands is not None:
+                from proseco import guide
+
+                fid_trap, _ = guide.check_fid_trap(guide_cands, [fid], dither)
+                if np.any(fid_trap):
+                    fid_trap_spoiler = True
 
         # Potential spoiler by position
         spoil = (
