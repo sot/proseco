@@ -2,21 +2,16 @@
 """
 Tests for guide candidate awareness in fid selection and acq-fid-guide optimization.
 """
-import array
-import types
+
 import numpy as np
 import pytest
-from astropy.table import Table
 
 from proseco import get_aca_catalog
-from proseco.tests.test_common import DARK40, STD_INFO, OBS_INFO, mod_std_info
 from proseco.fid import FidTable, get_fid_catalog
-from proseco.guide import (get_guide_candidates, get_guide_catalog,
-                            get_t_ccds_bonus, check_fid_trap, MIN_DYN_BGD_ANCHOR_STARS)
-from proseco.acq import AcqTable, get_acq_catalog
-from ..core import StarsTable, ACABox
+from proseco.guide import MIN_DYN_BGD_ANCHOR_STARS, get_guide_catalog, get_t_ccds_bonus
+from proseco.tests.test_common import mod_std_info
 
-
+from ..core import StarsTable
 
 
 def test_get_t_ccds_bonus_1():
@@ -125,7 +120,11 @@ def test_fid_trap_optimize():
         assert not np.any(spoiled)
 
     # And the log should show that optimization occurred
-    log_opt = [rec["data"] for rec in aca.log_info["events"] if "optimize_acqs_fids" == rec["func"]]
+    log_opt = [
+        rec["data"]
+        for rec in aca.log_info["events"]
+        if "optimize_acqs_fids" == rec["func"]
+    ]
     assert len(log_opt) == 14
     assert "fid_ids=(1, 3, 5) N opt runs=10" in log_opt[-1]
 
@@ -144,15 +143,22 @@ def test_fid_spoil_short_circuits_optimization():
     assert 6 not in aca.fids["id"]
 
     # And the log should show that the optimization function was called but not needed
-    log_opt = [rec["data"] for rec in aca.log_info["events"] if "optimize_acqs_fids" == rec["func"]]
+    log_opt = [
+        rec["data"]
+        for rec in aca.log_info["events"]
+        if "optimize_acqs_fids" == rec["func"]
+    ]
     assert "No acq-fid optimization required" == log_opt[-1]
 
 
+guide_test_cases = [
+    {"mags": [6, 6, 7, 7, 8, 8], "expected_fids": [3, 5, 6]},
+    {"mags": [10, 6, 6, 10, 9, 9], "expected_fids": [1, 4, 5]},
+    {"mags": [8, 8, 8, 8, 8, 8], "expected_fids": [1, 5, 6]},
+    {"mags": [10, 10, 10, 6, 6, 6], "expected_fids": [1, 2, 3]},
+]
 
-guide_test_cases = [{"mags": [6, 6, 7, 7, 8, 8], "expected_fids": [3, 5, 6]},
-                    {"mags": [10, 6, 6, 10, 9, 9], "expected_fids": [1, 4, 5]},
-                    {"mags": [8, 8, 8, 8, 8, 8], "expected_fids": [1, 5, 6]},
-                    {"mags": [10, 10, 10, 6, 6, 6], "expected_fids": [1, 2, 3]}]
+
 @pytest.mark.parametrize("case", guide_test_cases)
 def test_guide_fid_optimization(case):
     stars = StarsTable.empty()

@@ -127,12 +127,12 @@ def get_guide_catalog(obsid=0, initial_guide_cands=None, **kwargs):
 
     # Do a first cut of the stars to get a set of reasonable candidates
     if initial_guide_cands is None:
-       guides.cand_guides = guides.get_initial_guide_candidates()
+        guides.cand_guides = guides.get_initial_guide_candidates()
     else:
         cand_guides = initial_guide_cands
 
         # Refilter candidates for the current fid set if needed
-        if hasattr(guides, 'fids') and guides.fids is not None and len(guides.fids) > 0:
+        if hasattr(guides, "fids") and guides.fids is not None and len(guides.fids) > 0:
             cand_guides = guides.filter_candidates_for_fids(cand_guides)
 
         guides.cand_guides = cand_guides
@@ -152,7 +152,6 @@ def get_guide_catalog(obsid=0, initial_guide_cands=None, **kwargs):
                     }
                 )
                 cand_guides = cand_guides[cand_guides["id"] != star_id]
-
 
     # Run through search stages to select stars
     STAR_PAIR_DIST_CACHE.clear()
@@ -340,9 +339,8 @@ class GuideTable(ACACatalogTable):
                 row["type"] = "GFM"  # Guide From Monitor, changed in merge_catalog
 
     def filter_candidates_for_fids(self, cand_guides):
-
         """Filter candidate guide stars for fiducial traps and direct fid spoilage."""
-        if not hasattr(self, 'fids') or self.fids is None or len(self.fids) == 0:
+        if not hasattr(self, "fids") or self.fids is None or len(self.fids) == 0:
             return cand_guides
 
         # Handle the fid trap as a separate step

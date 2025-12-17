@@ -575,8 +575,9 @@ class ACATable(ACACatalogTable):
             # we prefer those cases to ones that just maximize P2.
             MIN_ACCEPTABLE_P2 = 2.0
             MIN_ACCEPTABLE_GUIDE_COUNT = 4.0
-            passable = ((fid_sets["P2"] >= MIN_ACCEPTABLE_P2)
-                        & (fid_sets["guide_count"] >= MIN_ACCEPTABLE_GUIDE_COUNT))
+            passable = (fid_sets["P2"] >= MIN_ACCEPTABLE_P2) & (
+                fid_sets["guide_count"] >= MIN_ACCEPTABLE_GUIDE_COUNT
+            )
             if np.any(passable):
                 fid_sets_passable = fid_sets[passable]
                 best_idx = np.argmax(fid_sets_passable["P2"])
@@ -613,7 +614,8 @@ class ACATable(ACACatalogTable):
 
         self.log(
             f"Best acq-fid set: P2={best_P2:.2f} "
-            f"acq_idxs={best_acq_idxs} halfws={best_acq_halfws} fid_ids={acqs.fid_set} N opt runs={n_tries}"
+            f"acq_idxs={best_acq_idxs} halfws={best_acq_halfws} "
+            f"fid_ids={acqs.fid_set} N opt runs={n_tries}"
         )
 
         if best_P2 < stage_min_P2:
