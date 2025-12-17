@@ -266,23 +266,22 @@ class FidTable(ACACatalogTable):
                         spoils_any_acq[fid_id] = any(
                             self.spoils(fid, acq, acq["halfw"]) for acq in self.acqs
                         )
-                    if fid_id not in spoils_any_guide_cand:
-                        fid = cand_fids.get_id(fid_id)
-                        spoils_any_guide_cand[fid_id] = (
-                            any(
-                                self.spoils(fid, guide, 25)
-                                for guide in self.guide_cands
+                    if hasattr(self, 'guide_cands') and self.guide_cands is not None:
+                        if fid_id not in spoils_any_guide_cand:
+                            fid = cand_fids.get_id(fid_id)
+                            spoils_any_guide_cand[fid_id] = (
+                                any(
+                                    self.spoils(fid, guide, 25)
+                                    for guide in self.guide_cands
+                                )
                             )
-                            if self.guide_cands is not None
-                            else False
-                        )
-                        from proseco import guide
+                            from proseco import guide
 
-                        fid_trap, _ = guide.check_fid_trap(
-                            self.guide_cands, [fid], self.dither_guide
-                        )
-                        if np.any(fid_trap):
-                            spoils_any_guide_cand[fid_id] = True
+                            fid_trap, _ = guide.check_fid_trap(
+                                self.guide_cands, [fid], self.dither_guide
+                            )
+                            if np.any(fid_trap):
+                                spoils_any_guide_cand[fid_id] = True
                     if spoils_any_acq[fid_id]:
                         # Loser, don't bother with the rest.
                         self.log(f"Fid {fid_id} spoils an acq star", level=2)
@@ -396,7 +395,7 @@ class FidTable(ACACatalogTable):
         cand_fids["idx"] = np.arange(len(cand_fids), dtype=np.int64)
 
         # If stars are available then find stars that are bad for fid.
-        if self.stars or self.guide_cands:
+        if self.stars or (hasattr(self, "guide_cands") and self.guide_cands is not None):
             for fid in cand_fids:
                 self.set_spoilers_score(fid)
 

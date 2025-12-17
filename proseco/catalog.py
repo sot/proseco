@@ -159,7 +159,7 @@ def _get_aca_catalog(**kwargs):
         stars=aca.acqs.stars,
         fids=aca.fids,
         mons=aca.mons,
-        guides=guides,
+        initial_guide_cands=initial_guide_cands,
         img_size=img_size_guide,
         **kwargs,
     )
@@ -493,6 +493,7 @@ class ACATable(ACACatalogTable):
 
         # Iterate through each spoiler_score group and then within that iterate
         # over each fid set.
+        n_tries = 0
         for fid_set_group in fid_sets.groups:
             spoiler_score = fid_set_group["spoiler_score"][0]
             self.log(f"Checking fid sets with spoiler_score={spoiler_score}", level=1)
@@ -500,6 +501,7 @@ class ACATable(ACACatalogTable):
             for fid_set in fid_set_group:
                 # get the rows of candidate fids that correspond to the fid_ids
                 # in the current fid_set.
+                n_tries += 1
                 fid_mask = [fid_id in fid_set["fid_ids"] for fid_id in cand_fids["id"]]
                 fids_for_set = cand_fids[fid_mask]
                 local_guides = get_guide_catalog(
@@ -611,7 +613,7 @@ class ACATable(ACACatalogTable):
 
         self.log(
             f"Best acq-fid set: P2={best_P2:.2f} "
-            f"acq_idxs={best_acq_idxs} halfws={best_acq_halfws} fid_ids={acqs.fid_set}"
+            f"acq_idxs={best_acq_idxs} halfws={best_acq_halfws} fid_ids={acqs.fid_set} N opt runs={n_tries}"
         )
 
         if best_P2 < stage_min_P2:

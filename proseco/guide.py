@@ -15,6 +15,7 @@ from chandra_aca.transform import (
 from proseco.characteristics import MonFunc
 
 from . import characteristics as ACA
+from . import characteristics_fid as FID
 from . import characteristics_guide as GUIDE
 from .core import (
     ACACatalogTable,
@@ -86,7 +87,7 @@ def get_guide_candidates(obsid=0, **kwargs):
     return guides
 
 
-def get_guide_catalog(obsid=0, guides=None, **kwargs):
+def get_guide_catalog(obsid=0, initial_guide_cands=None, **kwargs):
     """
     Get a catalog of guide stars
 
@@ -106,7 +107,7 @@ def get_guide_catalog(obsid=0, guides=None, **kwargs):
     :param n_guide: number of guide stars to attempt to get
     :param fids: selected fids (used for guide star exclusion)
     :param stars: astropy.Table of AGASC stars (will be fetched from agasc if None)
-    :param guides: GuideTable of stars with initial candidates already set
+    :param initial_guide_cands: GuideTable of stars with initial candidates already set
         (if None, a new one is created)
     :param include_ids: list of AGASC IDs of stars to include in guide catalog
     :param exclude_ids: list of AGASC IDs of stars to exclude from guide catalog
@@ -115,36 +116,43 @@ def get_guide_catalog(obsid=0, guides=None, **kwargs):
 
     :returns: GuideTable of acquisition stars
     """
-    if guides is None:
-        guides = GuideTable()
-        guides.set_attrs_from_kwargs(obsid=obsid, **kwargs)
-        guides.set_stars()
 
-        # Process monitor window requests, converting them into fake stars that
-        # are added to the include_ids list.
-        guides.process_monitors_pre()
+    guides = GuideTable()
+    guides.set_attrs_from_kwargs(obsid=obsid, **kwargs)
+    guides.set_stars()
 
-        # Do a first cut of the stars to get a set of reasonable candidates
-        cand_guides = guides.get_initial_guide_candidates()
+    # Process monitor window requests, converting them into fake stars that
+    # are added to the include_ids list.
+    guides.process_monitors_pre()
+
+    # Do a first cut of the stars to get a set of reasonable candidates
+    if initial_guide_cands is None:
+       guides.cand_guides = guides.get_initial_guide_candidates()
+    else:
+        cand_guides = initial_guide_cands
+
+        # Refilter candidates for the current fid set if needed
+        if hasattr(guides, 'fids') and guides.fids is not None and len(guides.fids) > 0:
+            cand_guides = guides.filter_candidates_for_fids(cand_guides)
+
         guides.cand_guides = cand_guides
 
-    # Explicitly filter out the candidate guide stars that are fid trap spoilers
-    # for the current fid set
-    if guides.fids is not None and len(guides.fids) > 0:
-        cand_guides = guides.cand_guides
-        # Handle the fid trap as a separate step
-        fid_trap_spoilers, fid_rej = check_fid_trap(
-            cand_guides, fids=guides.fids, dither=guides.dither
-        )
-        for rej in fid_rej:
-            rej["stage"] = 0
-            guides.reject(rej)
-        cand_guides = cand_guides[~fid_trap_spoilers]
-        guides.cand_guides = cand_guides
+        # Put back any include/excludes
+        guides.process_include_ids(cand_guides, guides.stars)
 
-    # Process guide-from-monitor requests by finding corresponding star in
-    # cand_guides and adding to the include_ids list.
-    # guides.process_monitors_pre2()
+        # Deal with exclude_ids by cutting from the candidate list again
+        for star_id in guides.exclude_ids:
+            if star_id in cand_guides["id"]:
+                guides.reject(
+                    {
+                        "stage": 0,
+                        "type": "exclude_id",
+                        "id": star_id,
+                        "text": f"Cand {star_id} rejected.  In exclude_ids",
+                    }
+                )
+                cand_guides = cand_guides[cand_guides["id"] != star_id]
+
 
     # Run through search stages to select stars
     STAR_PAIR_DIST_CACHE.clear()
@@ -330,6 +338,39 @@ class GuideTable(ACACatalogTable):
                 row = self.get_id(monitor["id"])
                 row["sz"] = "8x8"
                 row["type"] = "GFM"  # Guide From Monitor, changed in merge_catalog
+
+    def filter_candidates_for_fids(self, cand_guides):
+
+        """Filter candidate guide stars for fiducial traps and direct fid spoilage."""
+        if not hasattr(self, 'fids') or self.fids is None or len(self.fids) == 0:
+            return cand_guides
+
+        # Handle the fid trap as a separate step
+        fid_trap_spoilers, fid_rej = check_fid_trap(
+            cand_guides, fids=self.fids, dither=self.dither
+        )
+        for rej in fid_rej:
+            rej["stage"] = 0
+            self.reject(rej)
+            cand_guides = cand_guides[~fid_trap_spoilers]
+
+        # Exclude guide stars directly spoiled by fid lights
+        spoiler_margin = FID.spoiler_margin + self.dither + 25
+        for fid in self.fids:
+            dy = np.abs(fid["yang"] - cand_guides["yang"])
+            dz = np.abs(fid["zang"] - cand_guides["zang"])
+            spoiled = (dy < spoiler_margin.y) & (dz < spoiler_margin.z)
+            for star_id in cand_guides["id"][spoiled]:
+                self.reject(
+                    {
+                        "stage": 0,
+                        "type": "spoiled by fid",
+                        "id": star_id,
+                        "text": f"Cand {star_id} rejected.  Spoiled by fid {fid['id']}",
+                    }
+                )
+            cand_guides = cand_guides[~spoiled]
+        return cand_guides
 
     def get_img_size(self, n_fids=None):
         """Get guide image readout size from ``img_size`` and ``n_fids``.
@@ -980,13 +1021,7 @@ class GuideTable(ACACatalogTable):
             f"{len(cand_guides)} candidate guide stars"
         )
 
-        fid_trap_spoilers, fid_rej = check_fid_trap(
-            cand_guides, fids=self.fids, dither=self.dither
-        )
-        for rej in fid_rej:
-            rej["stage"] = 0
-            self.reject(rej)
-        cand_guides = cand_guides[~fid_trap_spoilers]
+        self.filter_candidates_for_fids(cand_guides)
 
         if len(self.jupiter) > 0:
             from proseco.jupiter import check_spoiled_by_jupiter
