@@ -42,6 +42,7 @@ def test_allowed_kwargs():
         "acqs",
         "include_ids",
         "exclude_ids",
+        "guide_cands"
     }
 
 

@@ -77,11 +77,7 @@ def get_guide_candidates(obsid=0, **kwargs):
     guides.set_attrs_from_kwargs(obsid=obsid, **kwargs)
     guides.set_stars()
 
-    # Process monitor window requests, converting them into fake stars that
-    # are added to the include_ids list.
-    guides.process_monitors_pre()
-
-    # Do a first cut of the stars to get a set of reasonable candidates
+    # Do a first cut of the stars to get a set of reasonable candidates.
     guides.cand_guides = guides.get_initial_guide_candidates()
     return guides
 
@@ -122,11 +118,12 @@ def get_guide_catalog(obsid=0, initial_guide_cands=None, **kwargs):
     guides.set_attrs_from_kwargs(obsid=obsid, **kwargs)
     guides.set_stars()
 
+    # Process monitor window requests, converting them into fake stars that
+    # are added to the include_ids list. This also modifies n_guide.
+    guides.process_monitors_pre()
+
     # Do a first cut of the stars to get a set of reasonable candidates
     if initial_guide_cands is None:
-        # First - process monitor windows to add any monitor stars to include_ids
-        # If initial_guide_cands is provided, this was already done, so skip it.
-        guides.process_monitors_pre()
         guides.cand_guides = guides.get_initial_guide_candidates()
     else:
         guides.cand_guides = initial_guide_cands
@@ -137,21 +134,15 @@ def get_guide_catalog(obsid=0, initial_guide_cands=None, **kwargs):
 
         # Put back any include/excludes
         guides.process_include_ids(guides.cand_guides, guides.stars)
+        guides.process_exclude_ids(guides.cand_guides)
 
-        # Deal with exclude_ids by cutting from the candidate list again
-        for star_id in guides.exclude_ids:
-            if star_id in guides.cand_guides["id"]:
-                guides.reject(
-                    {
-                        "stage": 0,
-                        "type": "exclude_id",
-                        "id": star_id,
-                        "text": f"Cand {star_id} rejected.  In exclude_ids",
-                    }
-                )
-                guides.cand_guides = guides.cand_guides[
-                    guides.cand_guides["id"] != star_id
-                ]
+
+    # Get the brightest 2x2 in the dark map for each candidate and save value and location
+    imp_mag, imp_row, imp_col = get_imposter_mags(guides.cand_guides, guides.dark, guides.dither)
+    guides.cand_guides["imp_mag"] = imp_mag
+    guides.cand_guides["imp_r"] = imp_row
+    guides.cand_guides["imp_c"] = imp_col
+    guides.log("Getting pseudo-mag of brightest pixel 2x2 in candidate region")
 
     # Run through search stages to select stars
     STAR_PAIR_DIST_CACHE.clear()
@@ -878,6 +869,30 @@ class GuideTable(ACACatalogTable):
 
         super().process_include_ids(cand_guides, stars[ok])
 
+    def process_exclude_ids(self, cand_guides):
+        """
+        Remove any stars from cand_guides that are in exclude_ids.
+
+        This works in-place on cand_guides.
+
+        :param cand_guides: candidate guide stars table
+        """
+        # Deal with exclude_ids by removing rows from the candidate list
+        # This works in-place on cand_guides
+        for star_id in self.exclude_ids:
+            if star_id in cand_guides["id"]:
+                self.reject(
+                    {
+                        "stage": 0,
+                        "type": "exclude_id",
+                        "id": star_id,
+                        "text": f"Cand {star_id} rejected.  In exclude_ids",
+                    }
+                )
+                # Remove the row in-place
+                idx = np.where(cand_guides["id"] == star_id)[0]
+                cand_guides.remove_rows(idx)
+
     def get_candidates_mask(self, stars):
         """Get base filter for acceptable candidates.
 
@@ -943,7 +958,6 @@ class GuideTable(ACACatalogTable):
 
         """
         stars = self.stars
-        dark = self.dark
 
         # Mark stars that are off chip
         offchip = (np.abs(stars["row"]) > CCD["row_max"]) | (
@@ -1038,24 +1052,7 @@ class GuideTable(ACACatalogTable):
         self.process_include_ids(cand_guides, stars)
 
         # Deal with exclude_ids by cutting from the candidate list
-        for star_id in self.exclude_ids:
-            if star_id in cand_guides["id"]:
-                self.reject(
-                    {
-                        "stage": 0,
-                        "type": "exclude_id",
-                        "id": star_id,
-                        "text": f"Cand {star_id} rejected.  In exclude_ids",
-                    }
-                )
-                cand_guides = cand_guides[cand_guides["id"] != star_id]
-
-        # Get the brightest 2x2 in the dark map for each candidate and save value and location
-        imp_mag, imp_row, imp_col = get_imposter_mags(cand_guides, dark, self.dither)
-        cand_guides["imp_mag"] = imp_mag
-        cand_guides["imp_r"] = imp_row
-        cand_guides["imp_c"] = imp_col
-        self.log("Getting pseudo-mag of brightest pixel 2x2 in candidate region")
+        self.process_exclude_ids(cand_guides)
 
         return cand_guides
 
