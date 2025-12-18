@@ -107,8 +107,10 @@ def get_guide_catalog(obsid=0, initial_guide_cands=None, **kwargs):
     :param n_guide: number of guide stars to attempt to get
     :param fids: selected fids (used for guide star exclusion)
     :param stars: astropy.Table of AGASC stars (will be fetched from agasc if None)
-    :param initial_guide_cands: GuideTable of stars with initial candidates already set
-        (if None, a new one is created)
+    :param initial_guide_cands: Astropy Table of initial guide candidates
+        (this is usually the candidate guides stars from a previous call to
+        get_initial_guide_candidates, but can be any valid candidate table; if
+        None, a new one is created)
     :param include_ids: list of AGASC IDs of stars to include in guide catalog
     :param exclude_ids: list of AGASC IDs of stars to exclude from guide catalog
     :param dark: ACAImage of dark map (fetched based on time and t_ccd if None)
@@ -129,20 +131,18 @@ def get_guide_catalog(obsid=0, initial_guide_cands=None, **kwargs):
     if initial_guide_cands is None:
         guides.cand_guides = guides.get_initial_guide_candidates()
     else:
-        cand_guides = initial_guide_cands
+        guides.cand_guides = initial_guide_cands
 
         # Refilter candidates for the current fid set if needed
         if hasattr(guides, "fids") and guides.fids is not None and len(guides.fids) > 0:
-            cand_guides = guides.filter_candidates_for_fids(cand_guides)
-
-        guides.cand_guides = cand_guides
+            guides.cand_guides = guides.filter_candidates_for_fids(guides.cand_guides)
 
         # Put back any include/excludes
-        guides.process_include_ids(cand_guides, guides.stars)
+        guides.process_include_ids(guides.cand_guides, guides.stars)
 
         # Deal with exclude_ids by cutting from the candidate list again
         for star_id in guides.exclude_ids:
-            if star_id in cand_guides["id"]:
+            if star_id in guides.cand_guides["id"]:
                 guides.reject(
                     {
                         "stage": 0,
@@ -151,7 +151,8 @@ def get_guide_catalog(obsid=0, initial_guide_cands=None, **kwargs):
                         "text": f"Cand {star_id} rejected.  In exclude_ids",
                     }
                 )
-                cand_guides = cand_guides[cand_guides["id"] != star_id]
+                guides.cand_guides = guides.cand_guides[guides.cand_guides["id"] != star_id]
+
 
     # Run through search stages to select stars
     STAR_PAIR_DIST_CACHE.clear()
@@ -1019,7 +1020,7 @@ class GuideTable(ACACatalogTable):
             f"{len(cand_guides)} candidate guide stars"
         )
 
-        self.filter_candidates_for_fids(cand_guides)
+        cand_guides = self.filter_candidates_for_fids(cand_guides)
 
         if len(self.jupiter) > 0:
             from proseco.jupiter import check_spoiled_by_jupiter

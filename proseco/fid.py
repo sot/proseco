@@ -73,9 +73,7 @@ def get_fid_catalog(obsid=0, **kwargs):
 
     # Add a `slot` column that makes sense
     fids.set_slot_column()
-
     return fids
-
 
 class FidTable(ACACatalogTable):
     # Define base set of allowed keyword args to __init__. Subsequent MetaAttribute
@@ -249,11 +247,11 @@ class FidTable(ACACatalogTable):
         if not ok_fid_sets:
             fid_set = ()
             self.log("No acceptable fid sets (off-CCD or spoiled by field stars)")
-
         # If no acq stars then just pick the first allowed fid set.
-        elif self.acqs is None:
+        elif self.acqs is None and (not hasattr(self, "guide_cands") or
+                                   self.guide_cands is None):
             fid_set = ok_fid_sets[0]
-            self.log(f"No acq stars available, using first OK fid set {fid_set}")
+            self.log(f"No acq/guide stars available, using first OK fid set {fid_set}")
 
         else:
             spoils_any_acq = {}
@@ -261,11 +259,12 @@ class FidTable(ACACatalogTable):
             for fid_set in ok_fid_sets:
                 self.log(f"Checking fid set {fid_set} for acq star spoilers", level=1)
                 for fid_id in fid_set:
-                    if fid_id not in spoils_any_acq:
-                        fid = cand_fids.get_id(fid_id)
-                        spoils_any_acq[fid_id] = any(
-                            self.spoils(fid, acq, acq["halfw"]) for acq in self.acqs
-                        )
+                    if hasattr(self, "acqs") and self.acqs is not None:
+                        if fid_id not in spoils_any_acq:
+                            fid = cand_fids.get_id(fid_id)
+                            spoils_any_acq[fid_id] = any(
+                                self.spoils(fid, acq, acq["halfw"]) for acq in self.acqs
+                            )
                     if hasattr(self, "guide_cands") and self.guide_cands is not None:
                         if fid_id not in spoils_any_guide_cand:
                             fid = cand_fids.get_id(fid_id)
@@ -280,11 +279,11 @@ class FidTable(ACACatalogTable):
                             )
                             if np.any(fid_trap):
                                 spoils_any_guide_cand[fid_id] = True
-                    if spoils_any_acq[fid_id]:
+                    if fid_id in spoils_any_acq and spoils_any_acq[fid_id]:
                         # Loser, don't bother with the rest.
                         self.log(f"Fid {fid_id} spoils an acq star", level=2)
                         break
-                    if spoils_any_guide_cand[fid_id]:
+                    if fid_id in spoils_any_guide_cand and spoils_any_guide_cand[fid_id]:
                         # Loser, don't bother with the rest.
                         self.log(f"Fid {fid_id} spoils a guide candidate", level=2)
                         break
@@ -306,7 +305,6 @@ class FidTable(ACACatalogTable):
         idxs = [cand_fids.get_id_idx(fid_id) for fid_id in sorted(fid_set)]
         for name, col in cand_fids.columns.items():
             self[name] = col[idxs]
-
         self.cand_fids = cand_fids
 
     def spoils(self, fid, acq, box_size):
@@ -513,9 +511,9 @@ class FidTable(ACACatalogTable):
 
             # For the rare case when a fid is in a fid_trap region and there is
             # a potential guide candidate that would trigger the fid trap effect,
-            # add a large penalty to the spoiler score.
+            # set the spoiler_score to the highest allowed value.
             if fid_trap_spoiler:
-                fid["spoiler_score"] += 10
+                fid["spoiler_score"] = 12
 
             if fid["spoiler_score"] != 0:
                 self.log(

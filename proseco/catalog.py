@@ -147,7 +147,7 @@ def _get_aca_catalog(**kwargs):
 
     if aca.optimize:
         aca.log("Starting optimize_acqs_fids")
-        aca.optimize_acqs_fids(**kwargs)
+        aca.optimize_acqs_fids(initial_guide_cands=initial_guide_cands, **kwargs)
 
     aca.acqs.fid_set = aca.fids["id"]
 
@@ -416,7 +416,7 @@ class ACATable(ACACatalogTable):
         self.acqs.make_report(rootdir=rootdir)
         self.guides.make_report(rootdir=rootdir)
 
-    def optimize_acqs_fids(self, guides=None, **kwargs):
+    def optimize_acqs_fids(self, initial_guide_cands=None, **kwargs):
         """
         Concurrently optimize acqs and fids in the case where there is not
         already a good (no spoilers) fid set available.
@@ -447,6 +447,7 @@ class ACATable(ACACatalogTable):
 
         no_fid_guides = get_guide_catalog(
             stars=acqs.stars,
+            initial_guide_cands=initial_guide_cands,
             **kwargs,
         )
 
@@ -507,6 +508,7 @@ class ACATable(ACACatalogTable):
                 local_guides = get_guide_catalog(
                     stars=acqs.stars,
                     fids=fids_for_set,
+                    initial_guide_cands=initial_guide_cands,
                     **kwargs,
                 )
                 local_t_ccd_applied = get_t_ccds_bonus(
