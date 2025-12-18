@@ -597,6 +597,17 @@ class ACATable(ACACatalogTable):
             # P2 given the fid spoiler score.
             from . import characteristics_acq as ACQ
 
+            # For spoiler scores >= 12 (e.g., fid trap or 3 red spoilers), treat as
+            # unacceptable and skip this group. The fid_acq_stages table has score=12
+            # as the maximum with all min_P2 values of -1.0, effectively rejecting it.
+            if spoiler_score >= 12:
+                self.log(
+                    f"Spoiler score {spoiler_score} >= 12, skipping this fid set group",
+                    level=1,
+                )
+                stage_min_P2 = -1.0  # Set to mark as unacceptable
+                continue
+
             stage = ACQ.fid_acq_stages.loc[spoiler_score]
             stage_min_P2 = stage["min_P2"](opt_P2)
             self.log(

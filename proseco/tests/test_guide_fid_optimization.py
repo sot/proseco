@@ -125,8 +125,8 @@ def test_fid_trap_optimize():
         for rec in aca.log_info["events"]
         if "optimize_acqs_fids" == rec["func"]
     ]
-    assert len(log_opt) == 14
-    assert "fid_ids=(1, 3, 5) N opt runs=10" in log_opt[-1]
+    assert len(log_opt) == 26
+    assert "fid_ids=(1, 3, 5) N opt runs=20" in log_opt[-1]
 
 
 def test_fid_spoil_short_circuits_optimization():

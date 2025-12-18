@@ -465,7 +465,7 @@ class FidTable(ACACatalogTable):
         It also sets the 'spoiler_score' based on:
         - 1 for yellow spoiler (4 <= star_mag - fid_mag < 5)
         - 4 for red spoiler (star_mag - fid_mag < 4)
-        - 12 for fid trap effect (when guide_cands are provided and fid triggers trap)
+        - 12 for fid trap effect
 
         The spoiler score is used later to choose an acceptable set of fids and acq stars.
 
