@@ -55,6 +55,7 @@ def get_t_ccds_bonus(mags, t_ccd, dyn_bgd_n_faint, dyn_bgd_dt_ccd):
     :param mags: array of star magnitudes
     :param t_ccd: single T_ccd value (degC)
     :param dyn_bgd_n_faint: number of faintest stars to apply bonus
+    :param dyn_bgd_dt_ccd: temperature offset to apply for dynamic background bonus (degC)
     :returns: array of t_ccds (matching ``mags``) with dynamic background bonus applied
     """
     t_ccds = np.full_like(mags, t_ccd)
@@ -73,6 +74,24 @@ def get_t_ccds_bonus(mags, t_ccd, dyn_bgd_n_faint, dyn_bgd_dt_ccd):
 
 
 def get_guide_candidates(obsid=0, **kwargs):
+    """
+    Get initial guide star candidates.
+
+    This function creates a GuideTable and performs the initial filtering
+    to generate candidate guide stars. Unlike get_guide_catalog(), this does
+    not apply fid-related filtering or run the full search stages.
+
+    :param obsid: obsid (default=0)
+    :param att: attitude (any object that can initialize Quat)
+    :param t_ccd: ACA CCD temperature (degC)
+    :param date: date of acquisition (any DateTime-compatible format)
+    :param dither: dither size (float or 2-element sequence (dither_y, dither_z), arcsec)
+    :param stars: astropy.Table of AGASC stars (will be fetched from agasc if None)
+    :param dark: ACAImage of dark map (fetched based on time and t_ccd if None)
+    :param **kwargs: additional keyword arguments passed to GuideTable
+
+    :returns: GuideTable with cand_guides attribute populated
+    """
     guides = GuideTable()
     guides.set_attrs_from_kwargs(obsid=obsid, **kwargs)
     guides.set_stars()
@@ -304,7 +323,17 @@ class GuideTable(ACACatalogTable):
                 row["type"] = "GFM"  # Guide From Monitor, changed in merge_catalog
 
     def filter_candidates_for_fids(self, cand_guides):
-        """Filter candidate guide stars for fiducial traps and direct fid spoilage."""
+        """
+        Filter candidate guide stars with regard to the selected fid lights.
+
+        This method removes guide star candidates that would spoil or be spoiled by
+        fid lights
+        1. Fid trap effect: candidates that trigger readout artifacts from fid lights
+        2. Direct spoiling: candidates too close to fid lights (within spoiler margin)
+
+        :param cand_guides: Table of candidate guide stars
+        :returns: filtered Table of candidate guide stars with spoiled stars removed
+        """
         if self.fids is None or len(self.fids) == 0:
             return cand_guides
 

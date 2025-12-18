@@ -420,10 +420,13 @@ class ACATable(ACACatalogTable):
         Concurrently optimize acqs and fids in the case where there is not
         already a good (no spoilers) fid set available.
 
-        This updates the acqs and fids tables in place.
+        This updates the acqs and fids tables in place. The optimization considers
+        both acquisition star probability (P2) and guide star count to find the
+        best fid set.
 
-        :param acqs: AcqTable object
-        :param fids: FidTable object
+        :param initial_guide_cands: Table of initial guide candidates (typically from
+            get_guide_candidates()). If None, guide candidates are generated internally.
+        :param **kwargs: additional keyword arguments passed to get_guide_catalog()
         """
         acqs = self.acqs
         fids = self.fids

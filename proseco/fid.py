@@ -454,14 +454,19 @@ class FidTable(ACACatalogTable):
             return False
 
     def set_spoilers_score(self, fid):
-        """Get stars within FID.spoiler_margin (50 arcsec) + dither.  Starcheck uses
-        25" but this seems small: 20" (4 pix) positional err + 4 pixel readout
-        halfw + 2 pixel PSF width of spoiler star.
+        """
+        Get stars within FID.spoiler_margin (50 arcsec) + dither and check for fid trap.
+
+        Starcheck uses 25" but this seems small: 20" (4 pix) positional err + 4 pixel
+        readout halfw + 2 pixel PSF width of spoiler star.
 
         This sets the 'spoilers' column value to a table of spoilers stars (usually empty).
 
-        If also sets the 'spoiler_score' to 1 if there is a yellow spoiler
-        (4 <= star_mag - fid_mag < 5) or 4 for red spoiler (star_mag - fid_mag < 4).
+        It also sets the 'spoiler_score' based on:
+        - 1 for yellow spoiler (4 <= star_mag - fid_mag < 5)
+        - 4 for red spoiler (star_mag - fid_mag < 4)
+        - 12 for fid trap effect (when guide_cands are provided and fid triggers trap)
+
         The spoiler score is used later to choose an acceptable set of fids and acq stars.
 
         :param fid: fid light (FidTable Row)
