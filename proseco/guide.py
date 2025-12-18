@@ -132,17 +132,13 @@ def get_guide_catalog(obsid=0, initial_guide_cands=None, **kwargs):
         if hasattr(guides, "fids") and guides.fids is not None and len(guides.fids) > 0:
             guides.cand_guides = guides.filter_candidates_for_fids(guides.cand_guides)
 
+        # Filter candidates for monitor keep-out zones
+        guides.cand_guides = guides.filter_candidates_for_monitors(guides.cand_guides)
+
         # Put back any include/excludes
         guides.process_include_ids(guides.cand_guides, guides.stars)
         guides.process_exclude_ids(guides.cand_guides)
 
-
-    # Get the brightest 2x2 in the dark map for each candidate and save value and location
-    imp_mag, imp_row, imp_col = get_imposter_mags(guides.cand_guides, guides.dark, guides.dither)
-    guides.cand_guides["imp_mag"] = imp_mag
-    guides.cand_guides["imp_r"] = imp_row
-    guides.cand_guides["imp_c"] = imp_col
-    guides.log("Getting pseudo-mag of brightest pixel 2x2 in candidate region")
 
     # Run through search stages to select stars
     STAR_PAIR_DIST_CACHE.clear()
@@ -276,23 +272,8 @@ class GuideTable(ACACatalogTable):
 
         monitors = self.mons.monitors
         is_mon = np.isin(monitors["function"], [MonFunc.MON_FIXED, MonFunc.MON_TRACK])
-        if np.any(is_mon):
-            # For MON fixed and tracked, the dark cal map gets hacked to make a
-            # local blob of hot pixels. Make a copy to avoid modifying the global
-            # dark map which is shared by reference between acqs, guides and fids.
-            self.dark = self.dark.copy()
 
         for monitor in monitors[is_mon]:
-            # Make a square blob of saturated pixels that will keep away any
-            # star selection.
-            is_track = monitor["function"] == MonFunc.MON_TRACK
-            dr = int(4 + np.ceil(self.dither.row if is_track else 0))
-            dc = int(4 + np.ceil(self.dither.col if is_track else 0))
-            row, col = int(monitor["row"]) + 512, int(monitor["col"]) + 512
-            self.dark[row - dr : row + dr, col - dc : col + dc] = (
-                ACA.bad_pixel_dark_current
-            )
-
             # Reduce n_guide for each MON. On input the n_guide arg is the
             # number of GUI + MON, but for guide selection we need to make the
             # MON slots unavailable.
@@ -307,19 +288,12 @@ class GuideTable(ACACatalogTable):
     def process_monitors_post(self):
         """Post-processing of monitor windows.
 
-        - Clean up fake stars from stars and cand_guides
-        - Restore the dark current map
         - Set type, sz, res, dim columns for relevant entries to reflect
           status as monitor or guide-from-monitor in the guides catalog.
         """
         # No action required if there are no monitor stars requested
         if self.mons is None or self.mons.monitors is None:
             return
-
-        # Mon window processing munges the dark cal to impose a keep-out zone.
-        # Put the dark current back to the standard one if possible
-        if self.acqs is not None:
-            self.dark = self.acqs.dark
 
         # Find the guide stars that are actually from a MON request (converted
         # to guide) and set the size and type.
@@ -359,6 +333,44 @@ class GuideTable(ACACatalogTable):
                     }
                 )
             cand_guides = cand_guides[~spoiled]
+        return cand_guides
+
+    def filter_candidates_for_monitors(self, cand_guides):
+        """Filter candidate guide stars that fall in monitor window keep-out zones.
+
+        This directly excludes candidates near MON_FIXED and MON_TRACK windows,
+        replacing the old approach of modifying the dark map.
+        """
+        if self.mons is None or self.mons.monitors is None:
+            return cand_guides
+
+        monitors = self.mons.monitors
+        is_mon = np.isin(monitors["function"], [MonFunc.MON_FIXED, MonFunc.MON_TRACK])
+
+        for monitor in monitors[is_mon]:
+            is_track = monitor["function"] == MonFunc.MON_TRACK
+            # Keep-out zone in pixels
+            dr = 4 + np.ceil(self.dither.row if is_track else 0)
+            dc = 4 + np.ceil(self.dither.col if is_track else 0)
+
+            # Find candidates in the keep-out zone plus a pad
+            monitor_pad = 6
+            drow = np.abs(cand_guides["row"] - monitor["row"])
+            dcol = np.abs(cand_guides["col"] - monitor["col"])
+            in_keepout = (drow < dr + monitor_pad) & (dcol < dc + monitor_pad)
+
+            for star_id in cand_guides["id"][in_keepout]:
+                self.reject(
+                    {
+                        "stage": 0,
+                        "type": "monitor keepout",
+                        "id": star_id,
+                        "monitor_id": monitor["id"],
+                        "text": f"Cand {star_id} rejected. In monitor {monitor['id']} keep-out zone",
+                    }
+                )
+            cand_guides = cand_guides[~in_keepout]
+
         return cand_guides
 
     def get_img_size(self, n_fids=None):
@@ -1035,6 +1047,9 @@ class GuideTable(ACACatalogTable):
 
         cand_guides = self.filter_candidates_for_fids(cand_guides)
 
+        # Filter candidates in monitor keep-out zones
+        cand_guides = self.filter_candidates_for_monitors(cand_guides)
+
         if len(self.jupiter) > 0:
             from proseco.jupiter import check_spoiled_by_jupiter
 
@@ -1053,6 +1068,13 @@ class GuideTable(ACACatalogTable):
 
         # Deal with exclude_ids by cutting from the candidate list
         self.process_exclude_ids(cand_guides)
+
+        # Get the brightest 2x2 in the dark map for each candidate and save value and location
+        imp_mag, imp_row, imp_col = get_imposter_mags(cand_guides, self.dark, self.dither)
+        cand_guides["imp_mag"] = imp_mag
+        cand_guides["imp_r"] = imp_row
+        cand_guides["imp_c"] = imp_col
+        self.log("Getting pseudo-mag of brightest pixel 2x2 in candidate region")
 
         return cand_guides
 
