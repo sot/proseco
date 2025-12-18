@@ -50,6 +50,7 @@ def miniagasc_1p7(monkeypatch):
     agasc_file = get_agasc_filename("miniagasc_*", version="1p7")
     monkeypatch.setenv("AGASC_HDF5_FILE", agasc_file)
 
+
 @pytest.fixture(autouse=True)
 def use_kadi_flight_scenario(monkeypatch):
-    monkeypatch.setenv("KADI_SCENARIO", "flight" )
+    monkeypatch.setenv("KADI_SCENARIO", "flight")

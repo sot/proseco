@@ -38,12 +38,7 @@ def test_allowed_kwargs():
     }
 
     new_kwargs = FidTable.allowed_kwargs - ACACatalogTable.allowed_kwargs
-    assert new_kwargs == {
-        "acqs",
-        "include_ids",
-        "exclude_ids",
-        "guide_cands"
-    }
+    assert new_kwargs == {"acqs", "include_ids", "exclude_ids", "guide_cands"}
 
 
 @pytest.mark.skipif(not HAS_SC_ARCHIVE, reason="Test requires starcheck archive")

@@ -15,9 +15,9 @@ from cxotime import CxoTimeLike
 from . import characteristics as ACA
 from . import characteristics_acq as ACQ
 from . import characteristics_fid as FID
+from . import guide
 from .core import ACACatalogTable, AliasAttribute, MetaAttribute
 from .jupiter import is_spoiled_by_jupiter
-from . import guide
 
 
 def get_fid_catalog(obsid=0, **kwargs):

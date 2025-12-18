@@ -139,7 +139,6 @@ def get_guide_catalog(obsid=0, initial_guide_cands=None, **kwargs):
         guides.process_include_ids(guides.cand_guides, guides.stars)
         guides.process_exclude_ids(guides.cand_guides)
 
-
     # Run through search stages to select stars
     STAR_PAIR_DIST_CACHE.clear()
     selected = guides.run_search_stages()
@@ -274,13 +273,13 @@ class GuideTable(ACACatalogTable):
         monitors = self.mons.monitors
         is_mon = np.isin(monitors["function"], [MonFunc.MON_FIXED, MonFunc.MON_TRACK])
 
-        for monitor in monitors[is_mon]:
-            # Reduce n_guide for each MON. On input the n_guide arg is the
-            # number of GUI + MON, but for guide selection we need to make the
-            # MON slots unavailable.
-            self.n_guide -= 1
-            if self.n_guide < 2:
-                raise ValueError("too many MON requests leaving < 2 guide stars")
+        # Reduce n_guide for each MON. On input the n_guide arg is the
+        # number of GUI + MON, but for guide selection we need to make the
+        # MON slots unavailable.
+        n_mon = np.count_nonzero(is_mon)
+        self.n_guide -= n_mon
+        if self.n_guide < 2:
+            raise ValueError("too many MON requests leaving < 2 guide stars")
 
         is_guide = monitors["function"] == MonFunc.GUIDE
         for monitor in monitors[is_guide]:
@@ -375,7 +374,8 @@ class GuideTable(ACACatalogTable):
                         "type": "monitor keepout",
                         "id": star_id,
                         "monitor_id": monitor["id"],
-                        "text": f"Cand {star_id} rejected. In monitor {monitor['id']} keep-out zone",
+                        "text": f"Cand {star_id} rejected. "
+                        f"In monitor {monitor['id']} keep-out zone",
                     }
                 )
             all_in_keepout |= in_keepout
@@ -1080,7 +1080,9 @@ class GuideTable(ACACatalogTable):
         self.process_exclude_ids(cand_guides)
 
         # Get the brightest 2x2 in the dark map for each candidate and save value and location
-        imp_mag, imp_row, imp_col = get_imposter_mags(cand_guides, self.dark, self.dither)
+        imp_mag, imp_row, imp_col = get_imposter_mags(
+            cand_guides, self.dark, self.dither
+        )
         cand_guides["imp_mag"] = imp_mag
         cand_guides["imp_r"] = imp_row
         cand_guides["imp_c"] = imp_col
