@@ -17,6 +17,7 @@ from . import characteristics_acq as ACQ
 from . import characteristics_fid as FID
 from .core import ACACatalogTable, AliasAttribute, MetaAttribute
 from .jupiter import is_spoiled_by_jupiter
+from . import guide
 
 
 def get_fid_catalog(obsid=0, **kwargs):
@@ -273,8 +274,6 @@ class FidTable(ACACatalogTable):
                                 self.spoils(fid, guide, 25)
                                 for guide in self.guide_cands
                             )
-                            from proseco import guide
-
                             fid_trap, _ = guide.check_fid_trap(
                                 self.guide_cands, [fid], self.dither_guide
                             )
@@ -467,6 +466,7 @@ class FidTable(ACACatalogTable):
 
         :param fid: fid light (FidTable Row)
         """
+
         stars = self.stars[ACQ.spoiler_star_cols]
         dither = self.dither_guide
         fid_trap_spoiler = False

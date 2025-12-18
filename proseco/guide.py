@@ -129,7 +129,7 @@ def get_guide_catalog(obsid=0, initial_guide_cands=None, **kwargs):
         guides.cand_guides = initial_guide_cands
 
         # Refilter candidates for the current fid set if needed
-        if hasattr(guides, "fids") and guides.fids is not None and len(guides.fids) > 0:
+        if guides.fids is not None and len(guides.fids) > 0:
             guides.cand_guides = guides.filter_candidates_for_fids(guides.cand_guides)
 
         # Filter candidates for monitor keep-out zones
@@ -252,6 +252,7 @@ class GuideTable(ACACatalogTable):
     cand_guides = MetaAttribute(is_kwarg=False)
     reject_info = MetaAttribute(default=[], is_kwarg=False)
     img_size = ImgSizeMetaAttribute()
+    fids = MetaAttribute(default=None)
 
     def reject(self, reject):
         """
@@ -305,17 +306,20 @@ class GuideTable(ACACatalogTable):
 
     def filter_candidates_for_fids(self, cand_guides):
         """Filter candidate guide stars for fiducial traps and direct fid spoilage."""
-        if not hasattr(self, "fids") or self.fids is None or len(self.fids) == 0:
+        if self.fids is None or len(self.fids) == 0:
             return cand_guides
 
-        # Handle the fid trap as a separate step
+        # Collect all rows to exclude, then filter once at the end
+        all_spoiled = np.zeros(len(cand_guides), dtype=bool)
+
+        # Handle the fid trap
         fid_trap_spoilers, fid_rej = check_fid_trap(
             cand_guides, fids=self.fids, dither=self.dither
         )
         for rej in fid_rej:
             rej["stage"] = 0
             self.reject(rej)
-            cand_guides = cand_guides[~fid_trap_spoilers]
+        all_spoiled |= fid_trap_spoilers
 
         # Exclude guide stars directly spoiled by fid lights
         spoiler_margin = FID.spoiler_margin + self.dither + 25
@@ -332,8 +336,10 @@ class GuideTable(ACACatalogTable):
                         "text": f"Cand {star_id} rejected.  Spoiled by fid {fid['id']}",
                     }
                 )
-            cand_guides = cand_guides[~spoiled]
-        return cand_guides
+            all_spoiled |= spoiled
+
+        # Filter once with combined mask
+        return cand_guides[~all_spoiled]
 
     def filter_candidates_for_monitors(self, cand_guides):
         """Filter candidate guide stars that fall in monitor window keep-out zones.
@@ -346,6 +352,9 @@ class GuideTable(ACACatalogTable):
 
         monitors = self.mons.monitors
         is_mon = np.isin(monitors["function"], [MonFunc.MON_FIXED, MonFunc.MON_TRACK])
+
+        # Collect all rows to exclude, then filter once at the end
+        all_in_keepout = np.zeros(len(cand_guides), dtype=bool)
 
         for monitor in monitors[is_mon]:
             is_track = monitor["function"] == MonFunc.MON_TRACK
@@ -369,9 +378,10 @@ class GuideTable(ACACatalogTable):
                         "text": f"Cand {star_id} rejected. In monitor {monitor['id']} keep-out zone",
                     }
                 )
-            cand_guides = cand_guides[~in_keepout]
+            all_in_keepout |= in_keepout
 
-        return cand_guides
+        # Filter once with combined mask
+        return cand_guides[~all_in_keepout]
 
     def get_img_size(self, n_fids=None):
         """Get guide image readout size from ``img_size`` and ``n_fids``.
@@ -1085,7 +1095,9 @@ class GuideTable(ACACatalogTable):
         :param cand_guides: Table of candidate stars
         :returns: boolean mask where True means star is in bad star list
         """
-        bad = np.isin(cand_guides["id"], list(ACA.bad_star_set))
+        # Convert to list once - LazyDict caches the data but list() still creates overhead
+        bad_star_ids = list(ACA.bad_star_set.keys())
+        bad = np.isin(cand_guides["id"], bad_star_ids)
 
         # Set any matching bad stars as bad for plotting
         for bad_id in cand_guides["id"][bad]:

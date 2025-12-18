@@ -11,7 +11,6 @@ from proseco.characteristics import MonFunc
 
 from . import __version__ as VERSION
 from . import characteristics as ACA
-from . import characteristics_acq as ACQ
 from . import get_aca_catalog as _get_aca_catalog_package
 from .acq import AcqTable, get_acq_catalog, get_maxmag
 from .core import (
@@ -593,6 +592,8 @@ class ACATable(ACACatalogTable):
 
             # Get the row of the fid / acq stages table to determine the required minimum
             # P2 given the fid spoiler score.
+            from . import characteristics_acq as ACQ
+
             stage = ACQ.fid_acq_stages.loc[spoiler_score]
             stage_min_P2 = stage["min_P2"](opt_P2)
             self.log(
