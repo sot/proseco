@@ -82,8 +82,7 @@ def get_guide_candidates(obsid=0, **kwargs):
     guides.process_monitors_pre()
 
     # Do a first cut of the stars to get a set of reasonable candidates
-    cand_guides = guides.get_initial_guide_candidates()
-    guides.cand_guides = cand_guides
+    guides.cand_guides = guides.get_initial_guide_candidates()
     return guides
 
 
@@ -123,12 +122,11 @@ def get_guide_catalog(obsid=0, initial_guide_cands=None, **kwargs):
     guides.set_attrs_from_kwargs(obsid=obsid, **kwargs)
     guides.set_stars()
 
-    # Process monitor window requests, converting them into fake stars that
-    # are added to the include_ids list.
-    guides.process_monitors_pre()
-
     # Do a first cut of the stars to get a set of reasonable candidates
     if initial_guide_cands is None:
+        # First - process monitor windows to add any monitor stars to include_ids
+        # If initial_guide_cands is provided, this was already done, so skip it.
+        guides.process_monitors_pre()
         guides.cand_guides = guides.get_initial_guide_candidates()
     else:
         guides.cand_guides = initial_guide_cands
