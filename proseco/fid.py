@@ -75,6 +75,7 @@ def get_fid_catalog(obsid=0, **kwargs):
     fids.set_slot_column()
     return fids
 
+
 class FidTable(ACACatalogTable):
     # Define base set of allowed keyword args to __init__. Subsequent MetaAttribute
     # or AliasAttribute properties will add to this.
@@ -248,8 +249,9 @@ class FidTable(ACACatalogTable):
             fid_set = ()
             self.log("No acceptable fid sets (off-CCD or spoiled by field stars)")
         # If no acq stars then just pick the first allowed fid set.
-        elif self.acqs is None and (not hasattr(self, "guide_cands") or
-                                   self.guide_cands is None):
+        elif self.acqs is None and (
+            not hasattr(self, "guide_cands") or self.guide_cands is None
+        ):
             fid_set = ok_fid_sets[0]
             self.log(f"No acq/guide stars available, using first OK fid set {fid_set}")
 
@@ -283,7 +285,10 @@ class FidTable(ACACatalogTable):
                         # Loser, don't bother with the rest.
                         self.log(f"Fid {fid_id} spoils an acq star", level=2)
                         break
-                    if fid_id in spoils_any_guide_cand and spoils_any_guide_cand[fid_id]:
+                    if (
+                        fid_id in spoils_any_guide_cand
+                        and spoils_any_guide_cand[fid_id]
+                    ):
                         # Loser, don't bother with the rest.
                         self.log(f"Fid {fid_id} spoils a guide candidate", level=2)
                         break

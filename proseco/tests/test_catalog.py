@@ -704,8 +704,9 @@ def test_fid_trap_effect():
     # Note that the fid lights need to be included, as guide/fid light optimization
     # would otherwise unselect fid 6 and thus not apply the trap effect exclusion
     # to star 367674552.
-    cat = get_aca_catalog(obsid=1576, include_ids_fid=[1, 5, 6],
-                          stars=stars, raise_exc=True)
+    cat = get_aca_catalog(
+        obsid=1576, include_ids_fid=[1, 5, 6], stars=stars, raise_exc=True
+    )
     assert 367674552 not in cat.guides["id"]
 
     # Obsid 2365
@@ -719,8 +720,9 @@ def test_fid_trap_effect():
     # Specify att kwarg explicitly to override what is found in mica.starcheck
     # And include fid lights to ensure optimization applies the trap effect exclusion,
     # otherwise fid 6 would be unselected and star 1184897704 would not be excluded.
-    cat = get_aca_catalog(obsid=2365, stars=stars, raise_exc=True,
-                          att=att, include_ids_fid=[1, 5, 6])
+    cat = get_aca_catalog(
+        obsid=2365, stars=stars, raise_exc=True, att=att, include_ids_fid=[1, 5, 6]
+    )
     assert 1184897704 not in cat.guides["id"]
 
 

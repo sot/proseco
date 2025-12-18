@@ -151,8 +151,9 @@ def get_guide_catalog(obsid=0, initial_guide_cands=None, **kwargs):
                         "text": f"Cand {star_id} rejected.  In exclude_ids",
                     }
                 )
-                guides.cand_guides = guides.cand_guides[guides.cand_guides["id"] != star_id]
-
+                guides.cand_guides = guides.cand_guides[
+                    guides.cand_guides["id"] != star_id
+                ]
 
     # Run through search stages to select stars
     STAR_PAIR_DIST_CACHE.clear()
