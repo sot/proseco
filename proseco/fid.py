@@ -90,6 +90,7 @@ class FidTable(ACACatalogTable):
 
     cand_fids = MetaAttribute(is_kwarg=False)
     cand_fid_sets = MetaAttribute(is_kwarg=False)
+    guide_cands = MetaAttribute(default=None)
 
     required_attrs = (
         "att",
@@ -249,9 +250,7 @@ class FidTable(ACACatalogTable):
             fid_set = ()
             self.log("No acceptable fid sets (off-CCD or spoiled by field stars)")
         # If no acq stars then just pick the first allowed fid set.
-        elif self.acqs is None and (
-            not hasattr(self, "guide_cands") or self.guide_cands is None
-        ):
+        elif self.acqs is None and self.guide_cands is None:
             fid_set = ok_fid_sets[0]
             self.log(f"No acq/guide stars available, using first OK fid set {fid_set}")
 
@@ -261,13 +260,13 @@ class FidTable(ACACatalogTable):
             for fid_set in ok_fid_sets:
                 self.log(f"Checking fid set {fid_set} for acq star spoilers", level=1)
                 for fid_id in fid_set:
-                    if hasattr(self, "acqs") and self.acqs is not None:
+                    if self.acqs is not None:
                         if fid_id not in spoils_any_acq:
                             fid = cand_fids.get_id(fid_id)
                             spoils_any_acq[fid_id] = any(
                                 self.spoils(fid, acq, acq["halfw"]) for acq in self.acqs
                             )
-                    if hasattr(self, "guide_cands") and self.guide_cands is not None:
+                    if self.guide_cands is not None:
                         if fid_id not in spoils_any_guide_cand:
                             fid = cand_fids.get_id(fid_id)
                             spoils_any_guide_cand[fid_id] = any(
@@ -395,10 +394,8 @@ class FidTable(ACACatalogTable):
 
         cand_fids["idx"] = np.arange(len(cand_fids), dtype=np.int64)
 
-        # If stars are available then find stars that are bad for fid.
-        if self.stars or (
-            hasattr(self, "guide_cands") and self.guide_cands is not None
-        ):
+        # If stars or guide candidates are available then find stars that are bad for fid.
+        if self.stars or self.guide_cands is not None:
             for fid in cand_fids:
                 self.set_spoilers_score(fid)
 
@@ -471,21 +468,16 @@ class FidTable(ACACatalogTable):
         :param fid: fid light (FidTable Row)
         """
         stars = self.stars[ACQ.spoiler_star_cols]
-        guide_cands = None
-        fid_trap_spoiler = False
         dither = self.dither_guide
+        fid_trap_spoiler = False
 
-        if hasattr(self, "guide_cands"):
-            guide_cands = self.guide_cands
+        # Run guide star fid_trap checks if guide candidates are available
+        if self.guide_cands is not None:
+            from proseco import guide
 
-            # Run guide star fid_trap checks
-            fid_trap_spoiler = False
-            if guide_cands is not None:
-                from proseco import guide
-
-                fid_trap, _ = guide.check_fid_trap(guide_cands, [fid], dither)
-                if np.any(fid_trap):
-                    fid_trap_spoiler = True
+            fid_trap, _ = guide.check_fid_trap(self.guide_cands, [fid], dither)
+            if np.any(fid_trap):
+                fid_trap_spoiler = True
 
         # Potential spoiler by position
         spoil = (
