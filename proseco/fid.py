@@ -227,7 +227,8 @@ class FidTable(ACACatalogTable):
 
         - No field stars spoil any of the fid lights
         - Fid lights are not search spoilers for any of the current acq stars
-        -
+        - The fid set does not include any fid lights in the trap region if there
+        are guide candidates that would trigger the fid trap effect.
 
         If not possible then the table is still zero length and we will need to
         fall through to the optimization process.
