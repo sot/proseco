@@ -445,7 +445,9 @@ class ACATable(ACACatalogTable):
             self.log("No acq-fid optimization required")
             return
 
+        # Only do these imports if it turns out we need optimization.
         from chandra_aca.star_probs import guide_count
+        from . import characteristics_acq as ACQ
 
         no_fid_guides = get_guide_catalog(
             stars=acqs.stars,
@@ -606,8 +608,6 @@ class ACATable(ACACatalogTable):
 
             # Get the row of the fid / acq stages table to determine the required minimum
             # P2 given the fid spoiler score.
-            from . import characteristics_acq as ACQ
-
             stage = ACQ.fid_acq_stages.loc[spoiler_score]
             stage_min_P2 = stage["min_P2"](opt_P2)
             self.log(
