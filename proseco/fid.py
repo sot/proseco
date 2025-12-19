@@ -225,20 +225,24 @@ class FidTable(ACACatalogTable):
         """Set initial fid catalog (fid set) if possible to the first set which is
         "perfect":
 
-        - No field stars spoiler any of the fid lights
+        - No field stars spoil any of the fid lights
         - Fid lights are not search spoilers for any of the current acq stars
+        -
 
         If not possible then the table is still zero length and we will need to
         fall through to the optimization process.
 
         """
-        # Start by getting the id of every fid that has a zero spoiler score,
-        # meaning no star spoils the fid as set previously in get_initial_candidates.
+        # Start by getting the id of every fid that has a zero spoiler score and
+        # is not affected by fid trap, meaning no star spoils the fid as set
+        # previously in get_initial_candidates.
         cand_fids = self.cand_fids
         unspoiled_fid_ids = set(
-            fid["id"] for fid in cand_fids if fid["spoiler_score"] == 0
+            fid["id"]
+            for fid in cand_fids
+            if fid["spoiler_score"] == 0 and not fid["fid_trap_spoiler"]
         )
-
+        print(f"Unspoiled fid ids: {unspoiled_fid_ids}")
         # Get list of fid_sets that are consistent with candidate fids. These
         # fid sets are the combinations of 3 (or 2) fid lights in preferred
         # order.
@@ -250,7 +254,7 @@ class FidTable(ACACatalogTable):
         if not ok_fid_sets:
             fid_set = ()
             self.log("No acceptable fid sets (off-CCD or spoiled by field stars)")
-        # If no acq stars then just pick the first allowed fid set.
+        # If no stars then just pick the first allowed fid set.
         elif self.acqs is None and self.guide_cands is None:
             fid_set = ok_fid_sets[0]
             self.log(f"No acq/guide stars available, using first OK fid set {fid_set}")
@@ -360,6 +364,7 @@ class FidTable(ACACatalogTable):
         cand_fids["mag"] = np.full(shape, FID.fid_mag)  # 7.000
         cand_fids["spoilers"] = np.full(shape, None)  # Filled in with Table of spoilers
         cand_fids["spoiler_score"] = np.full(shape, 0, dtype=np.int64)
+        cand_fids["fid_trap_spoiler"] = np.full(shape, False, dtype=bool)
 
         self.log(f"Initial candidate fid ids are {cand_fids['id'].tolist()}")
 
@@ -465,7 +470,9 @@ class FidTable(ACACatalogTable):
         It also sets the 'spoiler_score' based on:
         - 1 for yellow spoiler (4 <= star_mag - fid_mag < 5)
         - 4 for red spoiler (star_mag - fid_mag < 4)
-        - 12 for fid trap effect
+
+        Additionally, if the fid is in the fid_trap region and there is a potential guide
+        candidate that would trigger the fid trap effect, the 'fid_trap_spoiler' flag is set.
 
         The spoiler score is used later to choose an acceptable set of fids and acq stars.
 
@@ -474,7 +481,6 @@ class FidTable(ACACatalogTable):
 
         stars = self.stars[ACQ.spoiler_star_cols]
         dither = self.dither_guide
-        fid_trap_spoiler = False
 
         # Run guide star fid_trap checks if guide candidates are available
         if self.guide_cands is not None:
@@ -482,14 +488,18 @@ class FidTable(ACACatalogTable):
 
             fid_trap, _ = guide.check_fid_trap(self.guide_cands, [fid], dither)
             if np.any(fid_trap):
-                fid_trap_spoiler = True
+                fid["fid_trap_spoiler"] = True
+                self.log(
+                    f"Fid {fid['id']} spoiled by fid trap potential from guide candidates",
+                    level=1,
+                )
 
         # Potential spoiler by position
         spoil = (
             np.abs(stars["yang"] - fid["yang"]) < FID.spoiler_margin + dither.y
         ) & (np.abs(stars["zang"] - fid["zang"]) < FID.spoiler_margin + dither.z)
 
-        if not np.any(spoil) and not fid_trap_spoiler:
+        if not np.any(spoil):
             # Make an empty table with same columns
             fid["spoilers"] = []
         else:
@@ -510,12 +520,6 @@ class FidTable(ACACatalogTable):
                 fid["spoiler_score"] = 4
             elif np.any(yellow):
                 fid["spoiler_score"] = 1
-
-            # For the rare case when a fid is in a fid_trap region and there is
-            # a potential guide candidate that would trigger the fid trap effect,
-            # set the spoiler_score to the highest allowed value.
-            if fid_trap_spoiler:
-                fid["spoiler_score"] = 12
 
             if fid["spoiler_score"] != 0:
                 self.log(

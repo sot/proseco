@@ -462,14 +462,13 @@ class ACATable(ACACatalogTable):
             no_fid_guides.dyn_bgd_dt_ccd,
         )
         opt_guide_count = guide_count(no_fid_guides["mag"], t_ccd_applied)
+        self.log(f"No-fid optimum: P2={opt_P2:.2f} guide_count={opt_guide_count:.2f}")
+
         orig_acq_idxs = acqs["idx"].tolist()
         orig_acq_halfws = acqs["halfw"].tolist()
 
-        self.log(
-            f"Starting opt_P2={opt_P2:.2f}: ids={orig_acq_idxs} halfws={orig_acq_halfws}"
-        )
+        self.log(f"acq ids={orig_acq_idxs} halfws={orig_acq_halfws}")
 
-        # If not at least 2 fids then punt on optimization.
         cand_fids = fids.cand_fids
 
         # Get list of fid_sets that are consistent with candidate fids. These
@@ -480,11 +479,17 @@ class ACATable(ACACatalogTable):
             spoiler_score = sum(
                 cand_fids.get_id(fid_id)["spoiler_score"] for fid_id in fid_set
             )
-            rows.append((fid_set, spoiler_score))
+            fid_trap_score = sum(
+                cand_fids.get_id(fid_id)["fid_trap_spoiler"].astype(int)
+                for fid_id in fid_set
+            )
+            rows.append((fid_set, spoiler_score, fid_trap_score))
 
         # Make a table to keep track of candidate fid_sets along with the
         # ranking metric P2 and the acq catalog info halfws and star ids.
-        fid_sets = Table(rows=rows, names=("fid_ids", "spoiler_score"))
+        fid_sets = Table(
+            rows=rows, names=("fid_ids", "spoiler_score", "fid_trap_score")
+        )
         fid_sets["P2"] = -99.0  # Marker for unfilled values
         fid_sets["guide_count"] = -99.0
         fid_sets["acq_halfws"] = None
@@ -492,14 +497,19 @@ class ACATable(ACACatalogTable):
 
         # Group the table into groups by spoiler score.  This preserves the
         # original fid set ordering within a group.
-        fid_sets = fid_sets.group_by("spoiler_score")
+        fid_sets = fid_sets.group_by(("spoiler_score", "fid_trap_score"))
 
         # Iterate through each spoiler_score group and then within that iterate
         # over each fid set.
         n_tries = 0
         for fid_set_group in fid_sets.groups:
             spoiler_score = fid_set_group["spoiler_score"][0]
-            self.log(f"Checking fid sets with spoiler_score={spoiler_score}", level=1)
+            fid_trap_score = fid_set_group["fid_trap_score"][0]
+            self.log(
+                f"Checking fid sets with spoiler_score={spoiler_score} "
+                f"fid_trap_score={fid_trap_score}",
+                level=1,
+            )
 
             for fid_set in fid_set_group:
                 # get the rows of candidate fids that correspond to the fid_ids
@@ -561,6 +571,7 @@ class ACATable(ACACatalogTable):
                 )
 
                 if found_good_set:
+                    self.log("Found acceptable fid set - stopping search")
                     break
                 else:
                     # Put the catalog back to the original no-fid optimum and continue
@@ -597,17 +608,9 @@ class ACATable(ACACatalogTable):
             # P2 given the fid spoiler score.
             from . import characteristics_acq as ACQ
 
-            # For spoiler scores >= 12 (e.g., fid trap or 3 red spoilers), treat as
-            # unacceptable and skip this group. The fid_acq_stages table has score=12
+            # For spoiler scores == 12 (e.g., fid trap or 3 red spoilers), treat as
+            # unacceptable. The fid_acq_stages table has score=12
             # as the maximum with all min_P2 values of -1.0, effectively rejecting it.
-            if spoiler_score >= 12:
-                self.log(
-                    f"Spoiler score {spoiler_score} >= 12, skipping this fid set group",
-                    level=1,
-                )
-                stage_min_P2 = -1.0  # Set to mark as unacceptable
-                continue
-
             stage = ACQ.fid_acq_stages.loc[spoiler_score]
             stage_min_P2 = stage["min_P2"](opt_P2)
             self.log(
@@ -618,6 +621,7 @@ class ACATable(ACACatalogTable):
 
             # If we have a winner then use that.
             if (best_P2 >= stage_min_P2) and np.any(passable):
+                self.log("Found acceptable acq-fid combination - stopping search")
                 break
 
         # Set the acqs table to the best catalog
