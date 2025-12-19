@@ -151,7 +151,7 @@ def get_guide_catalog(obsid=0, initial_guide_cands=None, **kwargs):
         if guides.fids is not None and len(guides.fids) > 0:
             guides.cand_guides = guides.filter_candidates_for_fids(guides.cand_guides)
 
-        # Filter candidates for monitor keep-out zones
+        # Refilter candidates for monitor keep-out zones
         guides.cand_guides = guides.filter_candidates_for_monitors(guides.cand_guides)
 
         # Put back any include/excludes
@@ -994,15 +994,18 @@ class GuideTable(ACACatalogTable):
         `has_spoiler_in_box` method and is the first of many spoiler checks.  This spoiler
         check is not stage dependent.
 
-        9. Filters the candidates to remova any that are spoiled by the fid trap (using
-        `check_fid_trap` method).
+        9. Filters the candidates to remove any that are spoiled by fid lights (either
+        directly or via the fid trap).  This uses the `filter_candidates_for_fids` method.
 
-        10. Puts any force include candidates from the include_ids parameter back in the candidate
+        10. Filters the candidates to remove any that are in monitor window
+        keep-out zones.
+
+        11. Puts any force include candidates from the include_ids parameter back in the candidate
         list if they were filtered out by an earlier filter in this routine.
 
-        11. Filters/removes any candidates that are force excluded (in exclude_ids).
+        12. Filters/removes any candidates that are force excluded (in exclude_ids).
 
-        12. Uses the local dark current around each candidate to calculate an "imposter mag"
+        13. Uses the local dark current around each candidate to calculate an "imposter mag"
         describing the brightest 2x2 in the region the star would dither over.  This is
         saved to the candidate star table.
 
