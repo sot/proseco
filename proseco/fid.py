@@ -242,7 +242,7 @@ class FidTable(ACACatalogTable):
             for fid in cand_fids
             if fid["spoiler_score"] == 0 and not fid["fid_trap_spoiler"]
         )
-        print(f"Unspoiled fid ids: {unspoiled_fid_ids}")
+
         # Get list of fid_sets that are consistent with candidate fids. These
         # fid sets are the combinations of 3 (or 2) fid lights in preferred
         # order.
