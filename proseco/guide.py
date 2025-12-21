@@ -147,6 +147,12 @@ def get_guide_catalog(obsid=0, initial_guide_cands=None, **kwargs):
     else:
         guides.cand_guides = initial_guide_cands
 
+        # Initialize or clear stage and stat values stored on the candidates
+        # for any previous run
+        guides.cand_guides["stage"] = -1
+        for stage_idx in range(len(GUIDE.stages)):
+            guides.cand_guides[f"stat_{stage_idx+1}"] = 0
+
         # Refilter candidates for the current fid set if needed
         if guides.fids is not None and len(guides.fids) > 0:
             guides.cand_guides = guides.filter_candidates_for_fids(guides.cand_guides)
@@ -288,6 +294,9 @@ class GuideTable(ACACatalogTable):
         # No action required if there are no monitor stars requested
         if self.mons is None or self.mons.monitors is None:
             return
+
+        monitors = self.mons.monitors
+        is_mon = np.isin(monitors["function"], [MonFunc.MON_FIXED, MonFunc.MON_TRACK])
 
         monitors = self.mons.monitors
         is_mon = np.isin(monitors["function"], [MonFunc.MON_FIXED, MonFunc.MON_TRACK])
@@ -767,7 +776,7 @@ class GuideTable(ACACatalogTable):
 
         # Adopt the SAUSAGE convention of a bit array for errors
         # Not all items will be checked for each star (allow short circuit)
-        scol = "stat_{}".format(stage["Stage"])
+        scol =  f"stat_{stage["Stage"]}"
         cand_guides[scol] = 0
 
         n_sigma = stage["SigErrMultiplier"]
@@ -913,12 +922,35 @@ class GuideTable(ACACatalogTable):
         :param stars: stars table
 
         """
+
         row_max = CCD["row_max"] - CCD["row_pad"] - CCD["window_pad"]
         col_max = CCD["col_max"] - CCD["col_pad"] - CCD["window_pad"]
 
         ok = (np.abs(stars["row"]) < row_max) & (np.abs(stars["col"]) < col_max)
 
-        super().process_include_ids(cand_guides, stars[ok])
+        # Let's get a smaller set of the possible stars in the field and
+        # populate the imposter mags for them and initialize other columns
+        isin_mask = np.isin(stars["id"], self.include_ids, assume_unique=True)
+        new_stars = stars[isin_mask & ok].copy()
+
+        # Now compute imposter mags for these stars
+        if len(new_stars) > 0:
+            imp_mag, imp_row, imp_col = get_imposter_mags(
+            new_stars, self.dark, self.dither
+            )
+            new_stars["imp_mag"] = imp_mag
+            new_stars["imp_r"] = imp_row
+            new_stars["imp_c"] = imp_col
+
+            # And add the other standard columns
+            # I'd like to add stage set to -1 and stat_1 to stat_6 set to 0
+            new_stars["stage"] = -1
+            for stage_num in range(1, len(GUIDE.stages) + 1):
+                scol = f"stat_{stage_num}"
+                new_stars[scol] = 0
+
+        self.log(f"In process_include_ids trying to include {self.include_ids}")
+        super().process_include_ids(cand_guides, new_stars)
 
     def process_exclude_ids(self, cand_guides):
         """
@@ -1043,6 +1075,15 @@ class GuideTable(ACACatalogTable):
             f"{len(cand_guides)} candidate guide stars"
         )
 
+        # Add extra columns used by guide selection to the candidate table
+        cand_guides["stage"] = -1
+        for stage_num in range(1, len(GUIDE.stages) + 1):
+            scol = f"stat_{stage_num}"
+            cand_guides[scol] = 0
+        cand_guides["imp_mag"] = np.nan
+        cand_guides["imp_r"] = np.nan
+        cand_guides["imp_c"] = np.nan
+
         bp, bp_rej = spoiled_by_bad_pixel(cand_guides, self.dither)
         for rej in bp_rej:
             rej["stage"] = 0
@@ -1103,7 +1144,7 @@ class GuideTable(ACACatalogTable):
                 for rej in jupiter_rej:
                     rej["stage"] = 0
                     self.reject(rej)
-                cand_guides = cand_guides[~spoiled_by_jupiter]
+            cand_guides = cand_guides[~spoiled_by_jupiter]
 
         # Deal with include_ids by putting them back in candidate table if necessary
         self.process_include_ids(cand_guides, stars)
