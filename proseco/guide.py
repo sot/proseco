@@ -151,7 +151,7 @@ def get_guide_catalog(obsid=0, initial_guide_cands=None, **kwargs):
         # for any previous run
         guides.cand_guides["stage"] = -1
         for stage_idx in range(len(GUIDE.stages)):
-            guides.cand_guides[f"stat_{stage_idx+1}"] = 0
+            guides.cand_guides[f"stat_{stage_idx + 1}"] = 0
 
         # Refilter candidates for the current fid set if needed
         if guides.fids is not None and len(guides.fids) > 0:
@@ -776,7 +776,7 @@ class GuideTable(ACACatalogTable):
 
         # Adopt the SAUSAGE convention of a bit array for errors
         # Not all items will be checked for each star (allow short circuit)
-        scol =  f"stat_{stage["Stage"]}"
+        scol = f"stat_{stage['Stage']}"
         cand_guides[scol] = 0
 
         n_sigma = stage["SigErrMultiplier"]
@@ -936,7 +936,7 @@ class GuideTable(ACACatalogTable):
         # Now compute imposter mags for these stars
         if len(new_stars) > 0:
             imp_mag, imp_row, imp_col = get_imposter_mags(
-            new_stars, self.dark, self.dither
+                new_stars, self.dark, self.dither
             )
             new_stars["imp_mag"] = imp_mag
             new_stars["imp_r"] = imp_row

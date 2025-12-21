@@ -485,7 +485,6 @@ class FidTable(ACACatalogTable):
 
         # Run guide star fid_trap checks if guide candidates are available
         if self.guide_cands is not None:
-
             fid_trap, _ = guide.check_fid_trap(self.guide_cands, [fid], dither)
             if np.any(fid_trap):
                 fid["fid_trap_spoiler"] = True
