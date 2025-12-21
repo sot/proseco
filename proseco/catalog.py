@@ -447,7 +447,6 @@ class ACATable(ACACatalogTable):
 
         # Only do these imports if it turns out we need optimization.
         from chandra_aca.star_probs import guide_count
-
         from . import characteristics_acq as ACQ
 
         no_fid_guides = get_guide_catalog(
