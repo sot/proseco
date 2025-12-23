@@ -276,8 +276,8 @@ class FidTable(ACACatalogTable):
                         if fid_id not in spoils_any_guide_cand:
                             fid = cand_fids.get_id(fid_id)
                             spoils_any_guide_cand[fid_id] = any(
-                                self.spoils(fid, guide, 25)
-                                for guide in self.guide_cands
+                                self.spoils(fid, guide_cand, 25)
+                                for guide_cand in self.guide_cands
                             )
                             fid_trap, _ = guide.check_fid_trap(
                                 self.guide_cands, [fid], self.dither_guide

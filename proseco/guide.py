@@ -109,9 +109,9 @@ def get_guide_catalog(obsid=0, initial_guide_cands=None, **kwargs):
     ``att``, ``t_ccd``, ``date``, and ``dither`` will
     be fetched via ``mica.starcheck`` if not explicitly provided here.
 
-    If ``guides`` is provided as an argument, it is assumed to be a
-    GuideTable that has already been initialized with stars and initial
-    candidate guide stars.
+    If ``initial_guide_cands`` is provided as an argument, it is assumed to be a
+    Astropy Table that has already been initialized with stars and initial
+    candidate guide stars (typically from a previous call to get_initial_guide_candidates).
 
     :param obsid: obsid (default=0)
     :param att: attitude (any object that can initialize Quat)

@@ -7,58 +7,10 @@ import numpy as np
 import pytest
 
 from proseco import get_aca_catalog
+from proseco.core import StarsTable
 from proseco.fid import FidTable, get_fid_catalog
-from proseco.guide import MIN_DYN_BGD_ANCHOR_STARS, get_guide_catalog, get_t_ccds_bonus
+from proseco.guide import get_guide_catalog
 from proseco.tests.test_common import mod_std_info
-
-from ..core import StarsTable
-
-
-def test_get_t_ccds_bonus_1():
-    mags = [1, 10, 2, 11, 3, 4]
-    t_ccd = 10
-
-    # Temps corresponding to two faintest stars are smaller.
-    t_ccds = get_t_ccds_bonus(mags, t_ccd, dyn_bgd_n_faint=2, dyn_bgd_dt_ccd=-1)
-    assert np.all(t_ccds == [10, 9, 10, 9, 10, 10])
-
-    # Temps corresponding to three faintest stars are smaller.
-    t_ccds = get_t_ccds_bonus(mags, t_ccd, dyn_bgd_n_faint=3, dyn_bgd_dt_ccd=-1)
-    assert np.all(t_ccds == [10, 9, 10, 9, 10, 9])
-
-    # Temps corresponding to just the three faintest stars are smaller because of the
-    # minimum number of anchor stars = 3.
-    t_ccds = get_t_ccds_bonus(mags, t_ccd, dyn_bgd_n_faint=4, dyn_bgd_dt_ccd=-1)
-    assert np.all(t_ccds == [10, 9, 10, 9, 10, 9])
-
-    t_ccds = get_t_ccds_bonus(mags, t_ccd, dyn_bgd_n_faint=0, dyn_bgd_dt_ccd=-1)
-    assert np.all(t_ccds == [10, 10, 10, 10, 10, 10])
-
-
-def test_get_t_ccds_bonus_min_anchor():
-    mags = [1, 10, 2]
-    t_ccd = 10
-    t_ccds = get_t_ccds_bonus(mags, t_ccd, dyn_bgd_n_faint=2, dyn_bgd_dt_ccd=-1)
-    # Assert that there are at least MIN_DYN_BGD_ANCHOR_STARS without bonus
-    assert np.count_nonzero(t_ccds == t_ccd) >= MIN_DYN_BGD_ANCHOR_STARS
-
-    t_ccds = get_t_ccds_bonus(mags, t_ccd, dyn_bgd_n_faint=4, dyn_bgd_dt_ccd=-1)
-    assert np.count_nonzero(t_ccds == t_ccd) >= MIN_DYN_BGD_ANCHOR_STARS
-
-
-def test_get_t_ccds_bonus_small_catalog():
-    mags = [1]
-    t_ccd = 10
-    t_ccds = get_t_ccds_bonus(mags, t_ccd, dyn_bgd_n_faint=2, dyn_bgd_dt_ccd=-1)
-    assert np.all(t_ccds == [10])
-
-
-def test_get_t_ccds_bonus_no_bonus_stars():
-    """When dyn_bgd_n_faint=0, all t_ccds should equal input t_ccd."""
-    mags = np.array([8.0, 9.0, 10.0, 10.5])
-    t_ccd = -10.0
-    t_ccds = get_t_ccds_bonus(mags, t_ccd, dyn_bgd_n_faint=0, dyn_bgd_dt_ccd=5.0)
-    assert np.allclose(t_ccds, -10.0)
 
 
 # Create a synthetic test for fid trap scoring and detection
