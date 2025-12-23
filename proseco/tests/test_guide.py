@@ -16,6 +16,7 @@ from ..characteristics_guide import mag_spoiler
 from ..core import StarsTable
 from ..guide import (
     GUIDE,
+    MIN_DYN_BGD_ANCHOR_STARS,
     GuideTable,
     check_column_spoilers,
     check_mag_spoilers,
@@ -23,12 +24,60 @@ from ..guide import (
     get_ax_range,
     get_guide_catalog,
     get_pixmag_for_offset,
+    get_t_ccds_bonus,
     run_cluster_checks,
 )
 from ..report_guide import make_report
 from .test_common import DARK40, OBS_INFO, STD_INFO, mod_std_info
 
 HAS_SC_ARCHIVE = Path(mica.starcheck.starcheck.FILES["data_root"]).exists()
+
+
+def test_get_t_ccds_bonus_1():
+    mags = [1, 10, 2, 11, 3, 4]
+    t_ccd = 10
+
+    # Temps corresponding to two faintest stars are equal to t_ccd + dt_ccd
+    t_ccds = get_t_ccds_bonus(mags, t_ccd, dyn_bgd_n_faint=2, dyn_bgd_dt_ccd=-1)
+    assert np.all(t_ccds == [10, 9, 10, 9, 10, 10])
+
+    # Temps corresponding to three faintest stars are equal to t_ccd + dt_ccd
+    t_ccds = get_t_ccds_bonus(mags, t_ccd, dyn_bgd_n_faint=3, dyn_bgd_dt_ccd=-1)
+    assert np.all(t_ccds == [10, 9, 10, 9, 10, 9])
+
+    # Temps corresponding to just the three faintest stars are equal to t_ccd +
+    # dt_ccd because of the minimum number of anchor stars = 3.
+    t_ccds = get_t_ccds_bonus(mags, t_ccd, dyn_bgd_n_faint=4, dyn_bgd_dt_ccd=-1)
+    assert np.all(t_ccds == [10, 9, 10, 9, 10, 9])
+
+    t_ccds = get_t_ccds_bonus(mags, t_ccd, dyn_bgd_n_faint=0, dyn_bgd_dt_ccd=-1)
+    assert np.all(t_ccds == [10, 10, 10, 10, 10, 10])
+
+
+def test_get_t_ccds_bonus_min_anchor():
+    mags = [1, 10, 2]
+    t_ccd = 10
+    t_ccds = get_t_ccds_bonus(mags, t_ccd, dyn_bgd_n_faint=2, dyn_bgd_dt_ccd=-1)
+    # Assert that there are at least MIN_DYN_BGD_ANCHOR_STARS without bonus
+    assert np.count_nonzero(t_ccds == t_ccd) >= MIN_DYN_BGD_ANCHOR_STARS
+
+    t_ccds = get_t_ccds_bonus(mags, t_ccd, dyn_bgd_n_faint=4, dyn_bgd_dt_ccd=-1)
+    assert np.count_nonzero(t_ccds == t_ccd) >= MIN_DYN_BGD_ANCHOR_STARS
+
+
+def test_get_t_ccds_bonus_small_catalog():
+    mags = [1]
+    t_ccd = 10
+    t_ccds = get_t_ccds_bonus(mags, t_ccd, dyn_bgd_n_faint=2, dyn_bgd_dt_ccd=-1)
+    assert np.all(t_ccds == [10])
+
+
+def test_get_t_ccds_bonus_no_bonus_stars():
+    """When dyn_bgd_n_faint=0, all t_ccds should equal input t_ccd."""
+    mags = np.array([8.0, 9.0, 10.0, 10.5])
+    t_ccd = -10.0
+    t_ccds = get_t_ccds_bonus(mags, t_ccd, dyn_bgd_n_faint=0, dyn_bgd_dt_ccd=5.0)
+    assert np.allclose(t_ccds, -10.0)
 
 
 def test_select(proseco_agasc_1p7):

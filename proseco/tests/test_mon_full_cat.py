@@ -193,3 +193,79 @@ def test_mon_takes_guide():
 
     assert aca[TEST_COLS + ["mag"]].pformat() == exp
     assert aca.n_guide == 4  # One of 5 available guide slots becomes a MON
+
+
+def test_mon_takes_guide2():
+    """Test that commanding a MON on top of a potential GUI star correctly
+    precludes use of that star and takes one of the available n_guide slots.
+
+    Also checks that when a MON is identified as a star in the catalog, the
+    'id' and 'mag' correspond to the catalog. This overrides the mag in
+    `monitors`.
+
+    Unlike test_mon_takes_guide here the MON is AUTO rather than MON_TRACK.
+    Unlike test_full_catalog, here the MON position coincides with a star in
+    the catalog but that star is not a GUI candidate because of its CLASS.
+    """
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(
+        n_stars=4, mag=6.5 + np.arange(4) * 0.5, id=np.arange(100000, 100004)
+    )
+    stars.add_fake_star(yang=750, zang=750, mag=8.0, id=100005, CLASS=3)
+    monitors = [[750, 750, MonCoord.YAGZAG, 8.123, MonFunc.AUTO]]
+
+    aca = get_aca_catalog(
+        **mod_std_info(att=stars.att, n_fid=0, n_guide=5, n_acq=5),
+        stars=stars,
+        monitors=monitors,
+    )
+
+    # This has 4 + 1 stars in the "guide" catalog, where the MON has taken one slot.
+    exp = [
+        "slot idx   id   type  sz   yang     zang   dim res halfw  mag ",
+        "---- --- ------ ---- --- -------- -------- --- --- ----- -----",
+        "   0   1 100000  BOT 8x8  1500.00     0.00  28   1   160  6.50",
+        "   1   2 100001  BOT 8x8     0.00  1500.00  28   1   160  7.00",
+        "   2   3 100002  BOT 8x8 -1500.00     0.00  28   1   160  7.50",
+        "   3   4 100003  BOT 8x8     0.00 -1500.00  28   1   160  8.00",
+        "   7   5 100005  MON 8x8   750.00   750.00   0   0    20  8.00",
+    ]
+
+    assert aca[TEST_COLS + ["mag"]].pformat() == exp
+    assert aca.n_guide == 4  # One of 5 available guide slots becomes a MON
+
+
+def test_obsid_30843():
+    """
+    Test real case with obsid 30843 with an automatic monitor request that
+    ends up as a MON.  This test most closely matches test_mon_takes_guide2 but
+    uses real data and was the basis for discovering/fixing the issue.
+    """
+    args = {
+        "obsid": 30843.0,
+        "raise_exc": True,
+        "att": [-0.50655663, -0.04177606, 0.85826295, 0.07099192],
+        "date": "2025:074:22:39:37.088",
+        "detector": "ACIS-S",
+        "dither_acq": [15.9984, 15.9984],
+        "dither_guide": [15.9984, 15.9984],
+        "focus_offset": 0.0,
+        "man_angle": 124.90441066524069,
+        "n_acq": 8,
+        "n_fid": 3,
+        "n_guide": 5,
+        "sim_offset": -2442.0,
+        "t_ccd_acq": -6.367734460876512,
+        "t_ccd_guide": -3.9378722816242115,
+        "dyn_bgd_n_faint": 2,
+        "dyn_bgd_dt_ccd": -4.0,
+        "target_offset": [0.0, 0.0],
+        "target_name": "WR 25",
+        "duration": 39000.0,
+        "man_angle_next": 157.2577020420281,
+        "monitors": [[161.043292, -59.719753, 0.0, 8.8, 0.0]],
+    }
+    aca = get_aca_catalog(**args)
+    mon_id = 1130642984
+    assert mon_id in aca["id"]
+    assert mon_id in aca.mons["id"]
