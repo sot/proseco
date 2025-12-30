@@ -266,35 +266,40 @@ class FidTable(ACACatalogTable):
             for fid_set in ok_fid_sets:
                 self.log(f"Checking fid set {fid_set} for acq star spoilers", level=1)
                 for fid_id in fid_set:
+                    if (fid_id in spoils_any_acq) or (fid_id in spoils_any_guide_cand):
+                        self.log(f"Fid {fid_id} known already spoiled", level=2)
+                        break
                     if self.acqs is not None:
                         if fid_id not in spoils_any_acq:
                             fid = cand_fids.get_id(fid_id)
-                            spoils_any_acq[fid_id] = any(
+                            if any(
                                 self.spoils(fid, acq, acq["halfw"]) for acq in self.acqs
-                            )
+                            ):
+                                spoils_any_acq[fid_id] = True
+                                self.log(f"Fid {fid_id} spoils an acq star", level=2)
+                                break
                     if self.guide_cands is not None:
                         if fid_id not in spoils_any_guide_cand:
                             fid = cand_fids.get_id(fid_id)
-                            spoils_any_guide_cand[fid_id] = any(
+                            if any(
                                 self.spoils(fid, guide_cand, 25)
                                 for guide_cand in self.guide_cands
-                            )
+                            ):
+                                spoils_any_guide_cand[fid_id] = True
+                                self.log(
+                                    f"Fid {fid_id} spoils a guide candidate", level=2
+                                )
+                                break
                             fid_trap, _ = guide.check_fid_trap(
                                 self.guide_cands, [fid], self.dither_guide
                             )
                             if np.any(fid_trap):
                                 spoils_any_guide_cand[fid_id] = True
-                    if fid_id in spoils_any_acq and spoils_any_acq[fid_id]:
-                        # Loser, don't bother with the rest.
-                        self.log(f"Fid {fid_id} spoils an acq star", level=2)
-                        break
-                    if (
-                        fid_id in spoils_any_guide_cand
-                        and spoils_any_guide_cand[fid_id]
-                    ):
-                        # Loser, don't bother with the rest.
-                        self.log(f"Fid {fid_id} spoils a guide candidate", level=2)
-                        break
+                                self.log(
+                                    f"Fid {fid_id} spoils a guide candidate via trap",
+                                    level=2,
+                                )
+                                break
                 else:
                     # We have a winner, none of the fid_ids in current fid set
                     # will spoil any acquisition star.  Break out of loop with
