@@ -474,22 +474,11 @@ class ACATable(ACACatalogTable):
 
         cand_fids = fids.cand_fids
 
-        # Calculate the min yang or zang distance to the closest no-fid acq star
-        # for each candidate fid
-        dists_to_acq = {}
-        for fid in cand_fids:
-            dyangs = np.abs(fid["yang"] - acqs["yang"])
-            dzangs = np.abs(fid["zang"] - acqs["zang"])
-            min_dist = np.min([np.min(dyangs), np.min(dzangs)])
-            dists_to_acq[fid["id"]] = min_dist
-
         # Get list of fid_sets that are consistent with candidate fids. These
         # fid sets are the combinations of 3 (or 2) fid lights in preferred
         # order.
         rows = []
         for fid_set in fids.cand_fid_sets:
-            min_dist = min([dists_to_acq[fid_id] for fid_id in fid_set])
-
             spoiler_score = sum(
                 cand_fids.get_id(fid_id)["spoiler_score"] for fid_id in fid_set
             )
@@ -497,20 +486,17 @@ class ACATable(ACACatalogTable):
                 cand_fids.get_id(fid_id)["fid_trap_spoiler"].astype(int)
                 for fid_id in fid_set
             )
-            rows.append((fid_set, spoiler_score, fid_trap_score, min_dist))
+            rows.append((fid_set, spoiler_score, fid_trap_score))
 
         # Make a table to keep track of candidate fid_sets along with the
         # ranking metric P2 and the acq catalog info halfws and star ids.
         fid_sets = Table(
-            rows=rows,
-            names=("fid_ids", "spoiler_score", "fid_trap_score", "min_dist_to_acq"),
+            rows=rows, names=("fid_ids", "spoiler_score", "fid_trap_score")
         )
         fid_sets["P2"] = -99.0  # Marker for unfilled values
         fid_sets["guide_count"] = -99.0
         fid_sets["acq_halfws"] = None
         fid_sets["acq_idxs"] = None
-
-        fid_sets.sort("min_dist_to_acq", reverse=True)  # Try closest fids first
 
         # Group the table into groups by spoiler score.  This preserves the
         # original fid set ordering within a group.
