@@ -550,7 +550,8 @@ class ACATable(ACACatalogTable):
 
         self.log(
             f"Best acq-fid set: P2={best_P2:.2f} "
-            f"acq_idxs={best_acq_idxs} halfws={best_acq_halfws} fid_ids={acqs.fid_set} N opt runs={n_tries}"
+            f"acq_idxs={best_acq_idxs} halfws={best_acq_halfws} fid_ids={acqs.fid_set} "
+            f"N opt runs={n_tries}"
         )
 
         if best_P2 < stage_min_P2:
