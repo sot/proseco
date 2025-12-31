@@ -433,6 +433,7 @@ class ACATable(ACACatalogTable):
             or len(self.fids.cand_fids) == 0
             or len(self.fids.cand_fid_sets) == 0
         ):
+            self.log("No acq-fid optimization required")
             return
 
         # Start with the no-fids optimum catalog and save required info to restore
@@ -470,11 +471,13 @@ class ACATable(ACACatalogTable):
 
         # Iterate through each spoiler_score group and then within that iterate
         # over each fid set.
+        n_tries = 0
         for fid_set_group in fid_sets.groups:
             spoiler_score = fid_set_group["spoiler_score"][0]
             self.log(f"Checking fid sets with spoiler_score={spoiler_score}", level=1)
 
             for fid_set in fid_set_group:
+                n_tries += 1
                 # Set the internal acqs fid set.  This does validation of the set
                 # and also calls update_p_acq_column().
                 acqs.fid_set = fid_set["fid_ids"]
@@ -547,7 +550,7 @@ class ACATable(ACACatalogTable):
 
         self.log(
             f"Best acq-fid set: P2={best_P2:.2f} "
-            f"acq_idxs={best_acq_idxs} halfws={best_acq_halfws} fid_ids={acqs.fid_set}"
+            f"acq_idxs={best_acq_idxs} halfws={best_acq_halfws} fid_ids={acqs.fid_set} N opt runs={n_tries}"
         )
 
         if best_P2 < stage_min_P2:
