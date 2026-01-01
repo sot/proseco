@@ -11,9 +11,10 @@ from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
 from chandra_aca.transform import count_rate_to_mag, mag_to_count_rate
 from Quaternion import Quat
 
-from ..characteristics import CCD
+from ..characteristics import CCD, MonCoord, MonFunc
 from ..characteristics_guide import mag_spoiler
 from ..core import StarsTable
+from ..fid import get_fid_catalog
 from ..guide import (
     GUIDE,
     MIN_DYN_BGD_ANCHOR_STARS,
@@ -22,11 +23,13 @@ from ..guide import (
     check_mag_spoilers,
     check_spoil_contrib,
     get_ax_range,
+    get_guide_candidates,
     get_guide_catalog,
     get_pixmag_for_offset,
     get_t_ccds_bonus,
     run_cluster_checks,
 )
+from ..monitor import get_mon_catalog
 from ..report_guide import make_report
 from .test_common import DARK40, OBS_INFO, STD_INFO, mod_std_info
 
@@ -912,6 +915,165 @@ def test_get_ax_range():
         # Confirm the range does not contain more than 2 pix extra on either side
         assert n + extent + 2 > plus
         assert n - extent - 2 < minus
+
+
+def test_filter_candidates_for_fids():
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(n_stars=4)
+
+    args = mod_std_info(detector="ACIS-I", include_ids_fid=[6])
+    fids = get_fid_catalog(stars=stars, guide_cands=stars, **args)
+
+    # For the nominal ACIS-I FID 6 position here of -69.87 345.27
+    # a star will cause the fid trap if it has about the same distance
+    # to the register as the fid distance to the trap.
+    # Either positive or negative row works so this test is parameterized.
+    stars.add_fake_star(id=1001, mag=7.0, row=200, col=400)
+
+    initial_guide_cands = get_guide_candidates(stars=stars, **args)
+    guide = get_guide_catalog(
+        stars=stars, initial_guide_cands=initial_guide_cands, **args
+    )
+    # Stub in fids to guide for filtering test
+    guide.fids = fids
+    # Confirm the trap star is in the candidates before filtering.
+    assert 1001 in guide.cand_guides["id"]
+    # Run the filtering.
+    filtered = guide.filter_candidates_for_fids(guide.cand_guides)
+    assert 1001 not in filtered["id"]
+
+
+def test_filter_candidates_for_monitors():
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(n_stars=4)
+    args = mod_std_info(detector="ACIS-I")
+
+    monitors = [[50, -50, MonCoord.ROWCOL, 7.5, MonFunc.MON_TRACK]]
+    mons = get_mon_catalog(monitors=monitors, **args)
+
+    stars.add_fake_star(id=1001, mag=7.5, row=50, col=-50)
+
+    initial_guide_cands = get_guide_candidates(stars=stars, **args)
+    guide_with_mons = get_guide_catalog(
+        stars=stars, initial_guide_cands=initial_guide_cands, mons=mons, **args
+    )
+    # The monitor window with MON_TRACK should exclude the star
+    assert 1001 not in guide_with_mons.cand_guides["id"]
+    assert 1001 not in guide_with_mons["id"]
+    # But it should still be in the initial candidates as the later filtering
+    # does not modify that table.
+    assert 1001 in initial_guide_cands["id"]
+
+    guide_without_mons = get_guide_catalog(
+        stars=stars, initial_guide_cands=initial_guide_cands, **args
+    )
+    # Without monitors, the star should be present in the initial candidates
+    # and in the selected table.
+    assert 1001 in guide_without_mons.cand_guides["id"]
+    assert 1001 in guide_without_mons["id"]
+    assert 1001 in initial_guide_cands["id"]
+
+
+def test_initial_guide_candidate_reuse():
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(n_stars=5, mag=[8, 9, 9.5, 10, 10.5])
+    kwargs = mod_std_info(
+        att=stars.att,
+        n_guide=5,
+    )
+    # Get initial guide candidates
+    initial_guide_cands = get_guide_candidates(stars=stars, **kwargs)
+
+    # Add 2 bright stars
+    stars.add_fake_star(id=1001, mag=6.0, yang=0, zang=0)
+    stars.add_fake_star(id=1002, mag=6.5, yang=100, zang=100)
+
+    # Select guide stars using initial candidates
+    guides_with_reuse = get_guide_catalog(
+        stars=stars, initial_guide_cands=initial_guide_cands, **kwargs
+    )
+
+    # Confirm that the initial candidates were reused and the new bright stars
+    # were not selected even though they are brighter and in stars
+    assert 1001 not in guides_with_reuse["id"]
+    assert 1002 not in guides_with_reuse["id"]
+
+    guides_without_reuse = get_guide_catalog(stars=stars, **kwargs)
+    # Confirm that the new bright stars were selected when not reusing initial candidates
+    assert 1001 in guides_without_reuse["id"]
+    assert 1002 in guides_without_reuse["id"]
+
+
+def test_initial_guide_candidate_reuse_with_fids():
+    stars = StarsTable.empty()
+    kwargs = mod_std_info(detector="ACIS-I")
+    fids = get_fid_catalog(stars=stars, **kwargs)
+
+    stars.add_fake_constellation(n_stars=3, mag=7)
+    # add one star that would spoil a fid light
+    stars.add_fake_star(id=1001, mag=7.0, row=fids[0]["row"], col=fids[0]["col"])
+
+    # Get initial guide candidates
+    initial_guide_cands = get_guide_candidates(stars=stars, **kwargs)
+
+    guides_with_fids = get_guide_catalog(
+        stars=stars, initial_guide_cands=initial_guide_cands, fids=fids, **kwargs
+    )
+    assert 1001 not in guides_with_fids["id"]
+
+    # Select guide stars using initial candidates
+    guides_no_fids = get_guide_catalog(
+        stars=stars,
+        initial_guide_cands=initial_guide_cands,
+        **kwargs,
+    )
+    # Confirm that the fid-spoiling star was selected when no fids are present
+    # and that it still exists in the initial candidates
+    assert 1001 in guides_no_fids["id"]
+    assert 1001 in initial_guide_cands["id"]
+
+
+def test_process_include_ids_columns():
+    """Test that process_include_ids properly initializes columns for include_ids stars.
+
+    This verifies that when stars are added via include_ids, they have the imposter
+    magnitude columns properly initialized and not NaN or zero.  They aren't used
+    for force-included stars anyway, but might as well go through the motions.
+    """
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(n_stars=5, mag=[8, 9, 9.5, 10, 10.5])
+    # Add a star that would normally be filtered out (too faint or bad position)
+    # but we'll force include it
+    stars.add_fake_star(id=999999, mag=11.0, yang=500, zang=500)
+    kwargs = mod_std_info(
+        att=stars.att,
+        n_guide=5,
+    )
+    guide_cands = get_guide_candidates(stars=stars, **kwargs)
+
+    assert 999999 not in guide_cands["id"]
+    kwargs = mod_std_info(
+        att=stars.att,
+        n_guide=5,
+        include_ids_guide=[999999],  # Force include the faint star
+    )
+
+    guides = get_guide_catalog(stars=stars, initial_guide_cands=guide_cands, **kwargs)
+
+    # Verify the star was included
+    assert 999999 in guides.cand_guides["id"]
+
+    # Get the row for the included star
+    idx = np.where(guides.cand_guides["id"] == 999999)[0][0]
+    included_star = guides.cand_guides[idx]
+
+    # Verify imposter magnitude columns are initialized and not NaN or zero
+    assert not np.isnan(included_star["imp_mag"])
+    assert included_star["imp_mag"] != 0.0
+    assert not np.isnan(included_star["imp_r"])
+    assert included_star["imp_r"] != 0.0
+    assert not np.isnan(included_star["imp_c"])
+    assert included_star["imp_c"] != 0.0
 
 
 def test_make_report_guide(tmpdir):
