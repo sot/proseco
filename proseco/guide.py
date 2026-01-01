@@ -922,6 +922,8 @@ class GuideTable(ACACatalogTable):
         :param stars: stars table
 
         """
+        if len(self.include_ids) == 0:
+            return
 
         row_max = CCD["row_max"] - CCD["row_pad"] - CCD["window_pad"]
         col_max = CCD["col_max"] - CCD["col_pad"] - CCD["window_pad"]
