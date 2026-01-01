@@ -90,15 +90,14 @@ def get_guide_candidates(obsid=0, **kwargs):
     :param dark: ACAImage of dark map (fetched based on time and t_ccd if None)
     :param **kwargs: additional keyword arguments passed to GuideTable
 
-    :returns: GuideTable with cand_guides attribute populated
+    :returns: astropy table of candidate guide stars
     """
     guides = GuideTable()
     guides.set_attrs_from_kwargs(obsid=obsid, **kwargs)
     guides.set_stars()
 
     # Do a first cut of the stars to get a set of reasonable candidates.
-    guides.cand_guides = guides.get_initial_guide_candidates()
-    return guides
+    return guides.get_initial_guide_candidates()
 
 
 def get_guide_catalog(obsid=0, initial_guide_cands=None, **kwargs):

@@ -133,8 +133,7 @@ def _get_aca_catalog(**kwargs):
         aca.dark_date = aca.acqs.dark_date
 
     # Get initial guide candidates
-    guides = get_guide_candidates(stars=aca.acqs.stars, **kwargs)
-    initial_guide_cands = guides.cand_guides
+    initial_guide_cands = get_guide_candidates(stars=aca.acqs.stars, **kwargs)
 
     # Note that aca.acqs.stars is a filtered version of aca.stars and includes
     # only stars that are in or near ACA FOV.  Use this for fids and guides stars.
