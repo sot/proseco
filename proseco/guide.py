@@ -146,12 +146,6 @@ def get_guide_catalog(obsid=0, initial_guide_cands=None, **kwargs):
     else:
         guides.cand_guides = initial_guide_cands
 
-        # Initialize or clear stage and stat values stored on the candidates
-        # for any previous run
-        guides.cand_guides["stage"] = -1
-        for stage_idx in range(len(GUIDE.stages)):
-            guides.cand_guides[f"stat_{stage_idx + 1}"] = 0
-
         # Refilter candidates for the current fid set if needed
         if guides.fids is not None and len(guides.fids) > 0:
             guides.cand_guides = guides.filter_candidates_for_fids(guides.cand_guides)
@@ -162,6 +156,13 @@ def get_guide_catalog(obsid=0, initial_guide_cands=None, **kwargs):
         # Put back any include/excludes
         guides.process_include_ids(guides.cand_guides, guides.stars)
         guides.process_exclude_ids(guides.cand_guides)
+
+        # Initialize or clear stage and stat values stored on the candidates
+        # for any previous run. Do this after filtering since those operations
+        # create new tables.
+        guides.cand_guides["stage"] = -1
+        for stage_idx in range(len(GUIDE.stages)):
+            guides.cand_guides[f"stat_{stage_idx + 1}"] = 0
 
     # Run through search stages to select stars
     STAR_PAIR_DIST_CACHE.clear()
