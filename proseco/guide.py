@@ -951,6 +951,9 @@ class GuideTable(ACACatalogTable):
                 scol = f"stat_{stage_num}"
                 new_stars[scol] = 0
 
+            # Reorder columns to match cand_guides
+            new_stars = new_stars[cand_guides.colnames]
+
         self.log(f"In process_include_ids trying to include {self.include_ids}")
         super().process_include_ids(cand_guides, new_stars)
 
