@@ -896,16 +896,19 @@ def test_edge_star(dither):
     assert len(guides) == 4
 
 
-monitor_cases = [{"yang": 300, "zang": 500, "selected": False},
-                 {"yang": 234, "zang": 500, "selected": False},
-                 {"yang": 233, "zang": 500, "selected": True},
-                 {"yang": 358, "zang": 500, "selected": False},
-                 {"yang": 359, "zang": 500, "selected": True},
-                 {"yang": 300, "zang": 436, "selected": True},
-                 {"yang": 300, "zang": 437, "selected": False},
-                 {"yang": 300, "zang": 562, "selected": True},
-                 {"yang": 300, "zang": 561, "selected": False},
-                 ]
+monitor_cases = [
+    {"yang": 300, "zang": 500, "selected": False},
+    {"yang": 233, "zang": 500, "selected": False},
+    {"yang": 232, "zang": 500, "selected": True},
+    {"yang": 367, "zang": 500, "selected": False},
+    {"yang": 368, "zang": 500, "selected": True},
+    {"yang": 300, "zang": 432, "selected": True},
+    {"yang": 300, "zang": 433, "selected": False},
+    {"yang": 300, "zang": 568, "selected": True},
+    {"yang": 300, "zang": 567, "selected": False},
+]
+
+
 @pytest.mark.parametrize("case", monitor_cases)
 def test_monitor_star_keepout(case):
     mon_y = 300
@@ -914,8 +917,12 @@ def test_monitor_star_keepout(case):
     stars = StarsTable.empty()
     stars.add_fake_constellation(n_stars=5, mag=8)
     stars.add_fake_star(id=star_id, yang=case["yang"], zang=case["zang"], mag=6.0)
-    kwargs = mod_std_info(att=stars.att, n_fid=0, n_guide=5,
-                          monitors=[[mon_y, mon_z, MonCoord.YAGZAG, 6.0, MonFunc.MON_TRACK]])
+    kwargs = mod_std_info(
+        att=stars.att,
+        n_fid=0,
+        n_guide=5,
+        monitors=[[mon_y, mon_z, MonCoord.YAGZAG, 6.0, MonFunc.MON_TRACK]],
+    )
     mons = get_mon_catalog(**kwargs)
     guide = get_guide_catalog(
         **mod_std_info(att=stars.att, n_fid=0, n_guide=5),
