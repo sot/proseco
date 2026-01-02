@@ -400,7 +400,7 @@ class GuideTable(ACACatalogTable):
             dc = 4 + np.ceil(self.dither.col if is_track else 0)
 
             # Find candidates in the keep-out zone plus a pad
-            monitor_pad = 6
+            monitor_pad = 7.5
             drow = np.abs(cand_guides["row"] - monitor["row"])
             dcol = np.abs(cand_guides["col"] - monitor["col"])
             in_keepout = (drow < dr + monitor_pad) & (dcol < dc + monitor_pad)
