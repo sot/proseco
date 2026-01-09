@@ -1763,7 +1763,7 @@ class AcqProbs:
                     f"not a candidate"
                 )
             else:
-                if fids.spoils(fid, self.acq, box_size):
+                if fids.spoils(fid, self.acq, box_size, fids.dither_acq):
                     p_fid_id_spoiler = 0.0
 
             self._p_fid_id_spoiler[box_size, fid_id] = p_fid_id_spoiler
