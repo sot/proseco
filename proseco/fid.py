@@ -270,36 +270,35 @@ class FidTable(ACACatalogTable):
                         self.log(f"Fid {fid_id} known already spoiled", level=2)
                         break
                     if self.acqs is not None:
-                        if fid_id not in spoils_any_acq:
-                            fid = cand_fids.get_id(fid_id)
-                            if any(
-                                self.spoils(fid, acq, acq["halfw"]) for acq in self.acqs
-                            ):
-                                spoils_any_acq[fid_id] = True
-                                self.log(f"Fid {fid_id} spoils an acq star", level=2)
-                                break
+                        fid = cand_fids.get_id(fid_id)
+                        if any(
+                            self.spoils(fid, acq, acq["halfw"], self.dither_acq) for acq in self.acqs
+                        ):
+                            spoils_any_acq[fid_id] = True
+                            self.log(f"Fid {fid_id} spoils an acq star", level=2)
+                            break
                     if self.guide_cands is not None:
-                        if fid_id not in spoils_any_guide_cand:
-                            fid = cand_fids.get_id(fid_id)
-                            if any(
-                                self.spoils(fid, guide_cand, 25)
-                                for guide_cand in self.guide_cands
-                            ):
-                                spoils_any_guide_cand[fid_id] = True
-                                self.log(
-                                    f"Fid {fid_id} spoils a guide candidate", level=2
-                                )
-                                break
-                            fid_trap, _ = guide.check_fid_trap(
-                                self.guide_cands, [fid], self.dither_guide
+                        fid = cand_fids.get_id(fid_id)
+                        if any(
+                            # For guide candidates use 25" box size.
+                            self.spoils(fid, guide_cand, 25, self.dither_guide)
+                            for guide_cand in self.guide_cands
+                        ):
+                            spoils_any_guide_cand[fid_id] = True
+                            self.log(
+                                f"Fid {fid_id} spoils a guide candidate", level=2
                             )
-                            if np.any(fid_trap):
-                                spoils_any_guide_cand[fid_id] = True
-                                self.log(
-                                    f"Fid {fid_id} spoils a guide candidate via trap",
-                                    level=2,
-                                )
-                                break
+                            break
+                        fid_trap, _ = guide.check_fid_trap(
+                            self.guide_cands, [fid], self.dither_guide
+                        )
+                        if np.any(fid_trap):
+                            spoils_any_guide_cand[fid_id] = True
+                            self.log(
+                                f"Fid {fid_id} spoils a guide candidate via trap",
+                                level=2,
+                            )
+                            break
                 else:
                     # We have a winner, none of the fid_ids in current fid set
                     # will spoil any acquisition star.  Break out of loop with
@@ -320,7 +319,7 @@ class FidTable(ACACatalogTable):
             self[name] = col[idxs]
         self.cand_fids = cand_fids
 
-    def spoils(self, fid, acq, box_size):
+    def spoils(self, fid, star, box_size, dither):
         """
         Return true if ``fid`` could be within ``acq`` search box.
 
@@ -332,14 +331,15 @@ class FidTable(ACACatalogTable):
         - Dither amplitude (since OBC adjusts search box for dither)
 
         :param fid: fid light (FidTable Row)
-        :param acq: acq star (AcqTable Row)
+        :param star: star (AcqTable Row or GuideTable Row)
         :param box_size: box size (arcsec)
+        :param dither: dither size (ACABox, arcsec)
 
-        :returns: True if ``fid`` could be within ``acq`` search box
+        :returns: True if ``fid`` could be within ``star`` search box
         """
-        spoiler_margin = FID.spoiler_margin + self.dither_acq + box_size
-        dy = np.abs(fid["yang"] - acq["yang"])
-        dz = np.abs(fid["zang"] - acq["zang"])
+        spoiler_margin = FID.spoiler_margin + dither + box_size
+        dy = np.abs(fid["yang"] - star["yang"])
+        dz = np.abs(fid["zang"] - star["zang"])
         return dy < spoiler_margin.y and dz < spoiler_margin.z
 
     def get_fid_candidates(self):
