@@ -1193,6 +1193,8 @@ def check_fid_trap(cand_stars, fids, dither):
     """
     Search for guide stars that would cause the fid trap issue and mark as spoilers.
 
+    The "fid trap" issue is documented at https://cxc.cfa.harvard.edu/mta/ASPECT/aca_weird_pixels/ .
+
     :param cand_stars: candidate star Table
     :param fids: fid Table
     :param dither: dither ACABox

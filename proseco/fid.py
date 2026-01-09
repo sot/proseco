@@ -479,6 +479,9 @@ class FidTable(ACACatalogTable):
         Additionally, if the fid is in the fid_trap region and there is a potential guide
         candidate that would trigger the fid trap effect, the 'fid_trap_spoiler' flag is set.
 
+        See  https://cxc.cfa.harvard.edu/mta/ASPECT/aca_weird_pixels/ for more information on the
+        "fid trap" issue.
+
         The spoiler score is used later to choose an acceptable set of fids and acq stars.
 
         :param fid: fid light (FidTable Row)
