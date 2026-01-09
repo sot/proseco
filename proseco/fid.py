@@ -272,7 +272,8 @@ class FidTable(ACACatalogTable):
                     if self.acqs is not None:
                         fid = cand_fids.get_id(fid_id)
                         if any(
-                            self.spoils(fid, acq, acq["halfw"], self.dither_acq) for acq in self.acqs
+                            self.spoils(fid, acq, acq["halfw"], self.dither_acq)
+                            for acq in self.acqs
                         ):
                             spoils_any_acq[fid_id] = True
                             self.log(f"Fid {fid_id} spoils an acq star", level=2)
@@ -285,9 +286,7 @@ class FidTable(ACACatalogTable):
                             for guide_cand in self.guide_cands
                         ):
                             spoils_any_guide_cand[fid_id] = True
-                            self.log(
-                                f"Fid {fid_id} spoils a guide candidate", level=2
-                            )
+                            self.log(f"Fid {fid_id} spoils a guide candidate", level=2)
                             break
                         fid_trap, _ = guide.check_fid_trap(
                             self.guide_cands, [fid], self.dither_guide
