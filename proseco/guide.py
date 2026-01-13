@@ -1180,6 +1180,7 @@ class GuideTable(ACACatalogTable):
         self.process_include_ids(cand_guides, stars)
 
         # Deal with exclude_ids by cutting from the candidate list
+        # This works in-place on cand_guides.
         self.process_exclude_ids(cand_guides)
 
         # Get the brightest 2x2 in the dark map for each candidate and save value and location
