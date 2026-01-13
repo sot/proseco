@@ -475,7 +475,6 @@ class ACATable(ACACatalogTable):
             no_fid_guides.dyn_bgd_dt_ccd,
         )
         opt_guide_count = guide_count(no_fid_guides["mag"], t_ccd_applied)
-        self.log(f"No-fid optimum: P2={opt_P2:.2f} guide_count={opt_guide_count:.2f}")
 
         orig_acq_idxs = acqs["idx"].tolist()
         orig_acq_halfws = acqs["halfw"].tolist()
