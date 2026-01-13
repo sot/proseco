@@ -133,6 +133,12 @@ def _get_aca_catalog(**kwargs):
         aca.dark_date = aca.acqs.dark_date
 
     # Get initial guide candidates
+    # This set of candidates is selected without considering fid lights, and
+    # this set of candidates (saved as an ImmutableGuideCandidates object) is
+    # reused in fid, guide star selection, and fid optimization processing
+    # (if necessary). The "somewhat expensive" operation of reviewing star
+    # candidates for guide star criteria and nearby imposters is done only
+    # once per call to get_aca_catalog().
     initial_guide_cands = get_guide_candidates(stars=aca.acqs.stars, **kwargs)
 
     # Note that aca.acqs.stars is a filtered version of aca.stars and includes
