@@ -991,7 +991,10 @@ def test_filter_candidates_for_monitors():
 
     initial_guide_cands = get_guide_candidates(stars=stars, **args)
     guide_with_mons = get_guide_catalog(
-        stars=stars, initial_guide_cands=initial_guide_cands.to_table(), mons=mons, **args
+        stars=stars,
+        initial_guide_cands=initial_guide_cands.to_table(),
+        mons=mons,
+        **args,
     )
     # The monitor window with MON_TRACK should exclude the star
     assert 1001 not in guide_with_mons.cand_guides["id"]
@@ -1097,7 +1100,10 @@ def test_initial_guide_candidate_reuse_with_fids():
     initial_guide_cands = get_guide_candidates(stars=stars, **kwargs)
 
     guides_with_fids = get_guide_catalog(
-        stars=stars, initial_guide_cands=initial_guide_cands.to_table(), fids=fids, **kwargs
+        stars=stars,
+        initial_guide_cands=initial_guide_cands.to_table(),
+        fids=fids,
+        **kwargs,
     )
     assert 1001 not in guides_with_fids["id"]
 
@@ -1140,7 +1146,9 @@ def test_process_include_ids_columns():
         include_ids_guide=[999999],  # Force include the faint star
     )
 
-    guides = get_guide_catalog(stars=stars, initial_guide_cands=guide_cands.to_table(), **kwargs)
+    guides = get_guide_catalog(
+        stars=stars, initial_guide_cands=guide_cands.to_table(), **kwargs
+    )
 
     # Verify the star was included
     assert 999999 in guides.cand_guides["id"]
