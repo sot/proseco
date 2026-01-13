@@ -998,7 +998,8 @@ def test_filter_candidates_for_monitors():
     assert 1001 not in guide_with_mons["id"]
     # But it should still be in the initial candidates as the later filtering
     # does not modify that table.
-    assert 1001 in initial_guide_cands["id"]
+    initial_guide_cands_table1 = initial_guide_cands.to_table()
+    assert 1001 in initial_guide_cands_table1["id"]
 
     guide_without_mons = get_guide_catalog(
         stars=stars, initial_guide_cands=initial_guide_cands, **args
@@ -1007,7 +1008,8 @@ def test_filter_candidates_for_monitors():
     # and in the selected table.
     assert 1001 in guide_without_mons.cand_guides["id"]
     assert 1001 in guide_without_mons["id"]
-    assert 1001 in initial_guide_cands["id"]
+    initial_guide_cands_table2 = initial_guide_cands.to_table()
+    assert 1001 in initial_guide_cands_table2["id"]
 
 
 def test_initial_guide_candidate_reuse():
@@ -1040,6 +1042,47 @@ def test_initial_guide_candidate_reuse():
     assert 1002 in guides_without_reuse["id"]
 
 
+def test_initial_guide_cands_immutability():
+    """Test that ImmutableGuideCandidates is truly immutable and safe to reuse."""
+    from proseco.guide import ImmutableGuideCandidates
+    from dataclasses import FrozenInstanceError
+
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(n_stars=5, mag=[8, 9, 9.5, 10, 10.5])
+    kwargs = mod_std_info(att=stars.att, n_guide=5)
+
+    # Get initial guide candidates
+    initial_guide_cands = get_guide_candidates(stars=stars, **kwargs)
+
+    # Verify it returns ImmutableGuideCandidates
+    assert isinstance(initial_guide_cands, ImmutableGuideCandidates)
+
+    # Verify it's frozen - attempts to modify should raise FrozenInstanceError
+    with pytest.raises(FrozenInstanceError):
+        initial_guide_cands.colnames = ("modified",)
+
+    with pytest.raises(FrozenInstanceError):
+        initial_guide_cands.data = ((1, 2, 3),)
+
+    # Save original data for comparison
+    original_colnames = initial_guide_cands.colnames
+    original_data = initial_guide_cands.data
+    original_len = len(initial_guide_cands)
+
+    # Use it in multiple catalog selections
+    for _ in range(3):
+        guides = get_guide_catalog(
+            stars=stars, initial_guide_cands=initial_guide_cands, **kwargs
+        )
+        # Verify the guides table is mutable (as expected)
+        assert isinstance(guides, Table)
+
+    # Verify initial_guide_cands remains unchanged
+    assert initial_guide_cands.colnames == original_colnames
+    assert initial_guide_cands.data == original_data
+    assert len(initial_guide_cands) == original_len
+
+
 def test_initial_guide_candidate_reuse_with_fids():
     stars = StarsTable.empty()
     kwargs = mod_std_info(detector="ACIS-I")
@@ -1066,7 +1109,8 @@ def test_initial_guide_candidate_reuse_with_fids():
     # Confirm that the fid-spoiling star was selected when no fids are present
     # and that it still exists in the initial candidates
     assert 1001 in guides_no_fids["id"]
-    assert 1001 in initial_guide_cands["id"]
+    initial_guide_cands_table = initial_guide_cands.to_table()
+    assert 1001 in initial_guide_cands_table["id"]
 
 
 def test_process_include_ids_columns():
@@ -1087,7 +1131,8 @@ def test_process_include_ids_columns():
     )
     guide_cands = get_guide_candidates(stars=stars, **kwargs)
 
-    assert 999999 not in guide_cands["id"]
+    guide_cands_table = guide_cands.to_table()
+    assert 999999 not in guide_cands_table["id"]
     kwargs = mod_std_info(
         att=stars.att,
         n_guide=5,

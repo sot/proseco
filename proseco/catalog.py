@@ -139,7 +139,7 @@ def _get_aca_catalog(**kwargs):
     # only stars that are in or near ACA FOV.  Use this for fids and guides stars.
     aca.log("Starting get_fid_catalog")
     aca.fids = get_fid_catalog(
-        stars=aca.acqs.stars, acqs=aca.acqs, guide_cands=initial_guide_cands, **kwargs
+        stars=aca.acqs.stars, acqs=aca.acqs, guide_cands=initial_guide_cands.to_table(), **kwargs
     )
     aca.acqs.fids = aca.fids
 

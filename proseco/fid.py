@@ -37,7 +37,7 @@ def get_fid_catalog(obsid=0, **kwargs):
     :param focus_offset: SIM focus offset [steps] (default=0)
     :param sim_offset: SIM translation offset from nominal [steps] (default=0)
     :param acqs: AcqTable catalog.  Optional but needed for actual fid selection.
-    :param guide_cands: GuideTable of initial guide candidates (used for star spoilers)
+    :param guide_cands: Table of initial guide candidates (used for star spoilers)
     :param stars: stars table.  Defaults to acqs.stars if available.
     :param dither_acq: acq dither size (2-element sequence (y, z), arcsec)
     :param dither_guide: guide dither size (2-element sequence (y, z), arcsec)
