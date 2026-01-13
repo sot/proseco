@@ -140,9 +140,8 @@ def get_guide_catalog(obsid=0, initial_guide_cands=None, **kwargs):
     ``att``, ``t_ccd``, ``date``, and ``dither`` will
     be fetched via ``mica.starcheck`` if not explicitly provided here.
 
-    If ``initial_guide_cands`` is provided as an argument, it is assumed to be an
-    ImmutableGuideCandidates object (typically from a previous call to
-    get_guide_candidates()).
+    If ``initial_guide_cands`` is provided as an argument, it is assumed to be a
+    Table of initial guide candidates (typically from get_guide_candidates().to_table()).
 
     :param obsid: obsid (default=0)
     :param att: attitude (any object that can initialize Quat)
@@ -152,7 +151,7 @@ def get_guide_catalog(obsid=0, initial_guide_cands=None, **kwargs):
     :param n_guide: number of guide stars to attempt to get
     :param fids: selected fids (used for guide star exclusion)
     :param stars: astropy.Table of AGASC stars (will be fetched from agasc if None)
-    :param initial_guide_cands: ImmutableGuideCandidates object from get_guide_candidates()
+    :param initial_guide_cands: Table of initial guide candidates from get_guide_candidates().to_table()
         (if None, a new one is created)
     :param include_ids: list of AGASC IDs of stars to include in guide catalog
     :param exclude_ids: list of AGASC IDs of stars to exclude from guide catalog
@@ -174,8 +173,8 @@ def get_guide_catalog(obsid=0, initial_guide_cands=None, **kwargs):
     if initial_guide_cands is None:
         guides.cand_guides = guides.get_initial_guide_candidates()
     else:
-        # Convert immutable candidates back to a mutable table for processing
-        guides.cand_guides = initial_guide_cands.to_table()
+        # Use the provided initial guide candidates table
+        guides.cand_guides = initial_guide_cands
 
         # Refilter candidates for the current fid set if needed
         if guides.fids is not None and len(guides.fids) > 0:

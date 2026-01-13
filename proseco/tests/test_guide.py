@@ -968,7 +968,7 @@ def test_filter_candidates_for_fids():
 
     initial_guide_cands = get_guide_candidates(stars=stars, **args)
     guide = get_guide_catalog(
-        stars=stars, initial_guide_cands=initial_guide_cands, **args
+        stars=stars, initial_guide_cands=initial_guide_cands.to_table(), **args
     )
     # Stub in fids to guide for filtering test
     guide.fids = fids
@@ -991,7 +991,7 @@ def test_filter_candidates_for_monitors():
 
     initial_guide_cands = get_guide_candidates(stars=stars, **args)
     guide_with_mons = get_guide_catalog(
-        stars=stars, initial_guide_cands=initial_guide_cands, mons=mons, **args
+        stars=stars, initial_guide_cands=initial_guide_cands.to_table(), mons=mons, **args
     )
     # The monitor window with MON_TRACK should exclude the star
     assert 1001 not in guide_with_mons.cand_guides["id"]
@@ -1002,7 +1002,7 @@ def test_filter_candidates_for_monitors():
     assert 1001 in initial_guide_cands_table1["id"]
 
     guide_without_mons = get_guide_catalog(
-        stars=stars, initial_guide_cands=initial_guide_cands, **args
+        stars=stars, initial_guide_cands=initial_guide_cands.to_table(), **args
     )
     # Without monitors, the star should be present in the initial candidates
     # and in the selected table.
@@ -1028,7 +1028,7 @@ def test_initial_guide_candidate_reuse():
 
     # Select guide stars using initial candidates
     guides_with_reuse = get_guide_catalog(
-        stars=stars, initial_guide_cands=initial_guide_cands, **kwargs
+        stars=stars, initial_guide_cands=initial_guide_cands.to_table(), **kwargs
     )
 
     # Confirm that the initial candidates were reused and the new bright stars
@@ -1073,7 +1073,7 @@ def test_initial_guide_cands_immutability():
     # Use it in multiple catalog selections
     for _ in range(3):
         guides = get_guide_catalog(
-            stars=stars, initial_guide_cands=initial_guide_cands, **kwargs
+            stars=stars, initial_guide_cands=initial_guide_cands.to_table(), **kwargs
         )
         # Verify the guides table is mutable (as expected)
         assert isinstance(guides, Table)
@@ -1097,14 +1097,14 @@ def test_initial_guide_candidate_reuse_with_fids():
     initial_guide_cands = get_guide_candidates(stars=stars, **kwargs)
 
     guides_with_fids = get_guide_catalog(
-        stars=stars, initial_guide_cands=initial_guide_cands, fids=fids, **kwargs
+        stars=stars, initial_guide_cands=initial_guide_cands.to_table(), fids=fids, **kwargs
     )
     assert 1001 not in guides_with_fids["id"]
 
     # Select guide stars using initial candidates
     guides_no_fids = get_guide_catalog(
         stars=stars,
-        initial_guide_cands=initial_guide_cands,
+        initial_guide_cands=initial_guide_cands.to_table(),
         **kwargs,
     )
     # Confirm that the fid-spoiling star was selected when no fids are present
@@ -1140,7 +1140,7 @@ def test_process_include_ids_columns():
         include_ids_guide=[999999],  # Force include the faint star
     )
 
-    guides = get_guide_catalog(stars=stars, initial_guide_cands=guide_cands, **kwargs)
+    guides = get_guide_catalog(stars=stars, initial_guide_cands=guide_cands.to_table(), **kwargs)
 
     # Verify the star was included
     assert 999999 in guides.cand_guides["id"]

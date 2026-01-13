@@ -154,7 +154,7 @@ def _get_aca_catalog(**kwargs):
 
     if aca.optimize:
         aca.log("Starting optimize_acqs_fids")
-        aca.optimize_acqs_fids(initial_guide_cands=initial_guide_cands, **kwargs)
+        aca.optimize_acqs_fids(initial_guide_cands=initial_guide_cands.to_table(), **kwargs)
 
     aca.acqs.fid_set = aca.fids["id"]
 
@@ -166,7 +166,7 @@ def _get_aca_catalog(**kwargs):
         stars=aca.acqs.stars,
         fids=aca.fids,
         mons=aca.mons,
-        initial_guide_cands=initial_guide_cands,
+        initial_guide_cands=initial_guide_cands.to_table(),
         img_size=img_size_guide,
         **kwargs,
     )
