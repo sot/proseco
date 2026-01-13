@@ -468,13 +468,13 @@ class ACATable(ACACatalogTable):
 
         # Start with the no-fids optimum catalog and save required info to restore
         opt_P2 = -acqs.get_log_p_2_or_fewer()
-        t_ccd_applied = get_t_ccds_bonus(
+        t_ccds_bonus = get_t_ccds_bonus(
             no_fid_guides["mag"],
             no_fid_guides.t_ccd,
             no_fid_guides.dyn_bgd_n_faint,
             no_fid_guides.dyn_bgd_dt_ccd,
         )
-        opt_guide_count = guide_count(no_fid_guides["mag"], t_ccd_applied)
+        opt_guide_count = guide_count(no_fid_guides["mag"], t_ccds_bonus)
 
         orig_acq_idxs = acqs["idx"].tolist()
         orig_acq_halfws = acqs["halfw"].tolist()
@@ -539,15 +539,13 @@ class ACATable(ACACatalogTable):
                     initial_guide_cands=initial_guide_cands,
                     **kwargs,
                 )
-                local_t_ccd_applied = get_t_ccds_bonus(
+                local_t_ccds_bonus = get_t_ccds_bonus(
                     local_guides["mag"],
                     local_guides.t_ccd,
                     local_guides.dyn_bgd_n_faint,
                     local_guides.dyn_bgd_dt_ccd,
                 )
-                local_guide_count = guide_count(
-                    local_guides["mag"], local_t_ccd_applied
-                )
+                local_guide_count = guide_count(local_guides["mag"], local_t_ccds_bonus)
                 # Set the internal acqs fid set.  This does validation of the set
                 # and also calls update_p_acq_column().
                 acqs.fid_set = fid_set["fid_ids"]
