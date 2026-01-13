@@ -968,7 +968,7 @@ def test_filter_candidates_for_fids():
 
     initial_guide_cands = get_guide_candidates(stars=stars, **args)
     guide = get_guide_catalog(
-        stars=stars, initial_guide_cands=initial_guide_cands.to_table(), **args
+        stars=stars, initial_guide_cands=initial_guide_cands.copy(), **args
     )
     # Stub in fids to guide for filtering test
     guide.fids = fids
@@ -992,7 +992,7 @@ def test_filter_candidates_for_monitors():
     initial_guide_cands = get_guide_candidates(stars=stars, **args)
     guide_with_mons = get_guide_catalog(
         stars=stars,
-        initial_guide_cands=initial_guide_cands.to_table(),
+        initial_guide_cands=initial_guide_cands.copy(),
         mons=mons,
         **args,
     )
@@ -1001,17 +1001,17 @@ def test_filter_candidates_for_monitors():
     assert 1001 not in guide_with_mons["id"]
     # But it should still be in the initial candidates as the later filtering
     # does not modify that table.
-    initial_guide_cands_table1 = initial_guide_cands.to_table()
+    initial_guide_cands_table1 = initial_guide_cands.copy()
     assert 1001 in initial_guide_cands_table1["id"]
 
     guide_without_mons = get_guide_catalog(
-        stars=stars, initial_guide_cands=initial_guide_cands.to_table(), **args
+        stars=stars, initial_guide_cands=initial_guide_cands.copy(), **args
     )
     # Without monitors, the star should be present in the initial candidates
     # and in the selected table.
     assert 1001 in guide_without_mons.cand_guides["id"]
     assert 1001 in guide_without_mons["id"]
-    initial_guide_cands_table2 = initial_guide_cands.to_table()
+    initial_guide_cands_table2 = initial_guide_cands.copy()
     assert 1001 in initial_guide_cands_table2["id"]
 
 
@@ -1031,7 +1031,7 @@ def test_initial_guide_candidate_reuse():
 
     # Select guide stars using initial candidates
     guides_with_reuse = get_guide_catalog(
-        stars=stars, initial_guide_cands=initial_guide_cands.to_table(), **kwargs
+        stars=stars, initial_guide_cands=initial_guide_cands.copy(), **kwargs
     )
 
     # Confirm that the initial candidates were reused and the new bright stars
@@ -1045,45 +1045,63 @@ def test_initial_guide_candidate_reuse():
     assert 1002 in guides_without_reuse["id"]
 
 
-def test_initial_guide_cands_immutability():
-    """Test that ImmutableGuideCandidates is truly immutable and safe to reuse."""
-    from dataclasses import FrozenInstanceError
-
-    from proseco.guide import ImmutableGuideCandidates
+def test_initial_guide_cands_do_not_change():
+    """Test that .copy() prevents modifications to initial guide candidates."""
 
     stars = StarsTable.empty()
-    stars.add_fake_constellation(n_stars=5, mag=[8, 9, 9.5, 10, 10.5])
+    stars.add_fake_constellation(n_stars=6, mag=[8, 9, 9.5, 10, 10.5, 11])
     kwargs = mod_std_info(att=stars.att, n_guide=5)
 
     # Get initial guide candidates
     initial_guide_cands = get_guide_candidates(stars=stars, **kwargs)
 
-    # Verify it returns ImmutableGuideCandidates
-    assert isinstance(initial_guide_cands, ImmutableGuideCandidates)
+    # Verify it returns an Astropy Table
+    assert isinstance(initial_guide_cands, Table)
 
-    # Verify it's frozen - attempts to modify should raise FrozenInstanceError
-    with pytest.raises(FrozenInstanceError):
-        initial_guide_cands.colnames = ("modified",)
-
-    with pytest.raises(FrozenInstanceError):
-        initial_guide_cands.data = ((1, 2, 3),)
-
-    # Save original data for comparison
-    original_colnames = initial_guide_cands.colnames
-    original_data = initial_guide_cands.data
+    # Save original state for comparison
+    original_ids = set(initial_guide_cands["id"])
     original_len = len(initial_guide_cands)
+    original_colnames = list(initial_guide_cands.colnames)
 
-    # Use it in multiple catalog selections
+    # Use it in multiple catalog selections with .copy()
     for _ in range(3):
         guides = get_guide_catalog(
-            stars=stars, initial_guide_cands=initial_guide_cands.to_table(), **kwargs
+            stars=stars, initial_guide_cands=initial_guide_cands.copy(), **kwargs
         )
         # Verify the guides table is mutable (as expected)
         assert isinstance(guides, Table)
 
-    # Verify initial_guide_cands remains unchanged
-    assert initial_guide_cands.colnames == original_colnames
-    assert initial_guide_cands.data == original_data
+    # Verify initial_guide_cands remains unchanged after using .copy()
+    assert set(initial_guide_cands["id"]) == original_ids
+    assert len(initial_guide_cands) == original_len
+    assert list(initial_guide_cands.colnames) == original_colnames
+
+    # Now test the in-place modification behavior directly by calling process_exclude_ids
+    # This demonstrates why .copy() is necessary when reusing candidate tables
+    from proseco.guide import GuideTable
+
+    initial_guide_cands_nocopy = get_guide_candidates(stars=stars, **kwargs)
+    original_len_nocopy = len(initial_guide_cands_nocopy)
+    original_ids_nocopy = set(initial_guide_cands_nocopy["id"])
+
+    # Get one of the candidate IDs to exclude
+    exclude_id = initial_guide_cands_nocopy["id"][0]
+
+    # Create a GuideTable instance and call process_exclude_ids directly
+    guides_test = GuideTable()
+    guides_test.set_attrs_from_kwargs(stars=stars, exclude_ids_guide=[exclude_id], **kwargs)
+
+    # Call process_exclude_ids which modifies the table in-place via remove_rows()
+    guides_test.process_exclude_ids(initial_guide_cands_nocopy)
+
+    # Verify that initial_guide_cands_nocopy WAS modified when not using .copy()
+    # The excluded star should be removed from the original table
+    assert len(initial_guide_cands_nocopy) == original_len_nocopy - 1
+    assert exclude_id not in initial_guide_cands_nocopy["id"]
+    assert set(initial_guide_cands_nocopy["id"]) != original_ids_nocopy
+
+    # Verify the first test's table is STILL unchanged (wasn't affected by nocopy test)
+    assert set(initial_guide_cands["id"]) == original_ids
     assert len(initial_guide_cands) == original_len
 
 
@@ -1101,7 +1119,7 @@ def test_initial_guide_candidate_reuse_with_fids():
 
     guides_with_fids = get_guide_catalog(
         stars=stars,
-        initial_guide_cands=initial_guide_cands.to_table(),
+        initial_guide_cands=initial_guide_cands.copy(),
         fids=fids,
         **kwargs,
     )
@@ -1110,13 +1128,13 @@ def test_initial_guide_candidate_reuse_with_fids():
     # Select guide stars using initial candidates
     guides_no_fids = get_guide_catalog(
         stars=stars,
-        initial_guide_cands=initial_guide_cands.to_table(),
+        initial_guide_cands=initial_guide_cands.copy(),
         **kwargs,
     )
     # Confirm that the fid-spoiling star was selected when no fids are present
     # and that it still exists in the initial candidates
     assert 1001 in guides_no_fids["id"]
-    initial_guide_cands_table = initial_guide_cands.to_table()
+    initial_guide_cands_table = initial_guide_cands.copy()
     assert 1001 in initial_guide_cands_table["id"]
 
 
@@ -1138,7 +1156,7 @@ def test_process_include_ids_columns():
     )
     guide_cands = get_guide_candidates(stars=stars, **kwargs)
 
-    guide_cands_table = guide_cands.to_table()
+    guide_cands_table = guide_cands.copy()
     assert 999999 not in guide_cands_table["id"]
     kwargs = mod_std_info(
         att=stars.att,
@@ -1147,7 +1165,7 @@ def test_process_include_ids_columns():
     )
 
     guides = get_guide_catalog(
-        stars=stars, initial_guide_cands=guide_cands.to_table(), **kwargs
+        stars=stars, initial_guide_cands=guide_cands.copy(), **kwargs
     )
 
     # Verify the star was included

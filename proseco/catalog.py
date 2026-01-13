@@ -134,12 +134,13 @@ def _get_aca_catalog(**kwargs):
 
     # Get initial guide candidates
     # This set of candidates is selected without considering fid lights, and
-    # this set of candidates (saved as an ImmutableGuideCandidates object) is
-    # reused in fid, guide star selection, and fid optimization processing
-    # (if necessary). The "somewhat expensive" operation of reviewing star
-    # candidates for guide star criteria and nearby imposters is done only
-    # once per call to get_aca_catalog().
-    initial_guide_cands = get_guide_candidates(stars=aca.acqs.stars, **kwargs)
+    # this set of candidates is reused in fid, guide star selection, and fid
+    # optimization processing (if necessary). The "somewhat expensive" operation
+    # of reviewing star candidates for guide star criteria and nearby imposters
+    # is done only once per call to get_aca_catalog().
+    # Use .copy() when passing to functions to prevent modification.
+    initial_guide_cands = get_guide_candidates(stars=aca.acqs.stars,
+                                               **kwargs).copy()
 
     # Note that aca.acqs.stars is a filtered version of aca.stars and includes
     # only stars that are in or near ACA FOV.  Use this for fids and guides stars.
@@ -147,7 +148,7 @@ def _get_aca_catalog(**kwargs):
     aca.fids = get_fid_catalog(
         stars=aca.acqs.stars,
         acqs=aca.acqs,
-        guide_cands=initial_guide_cands.to_table(),
+        guide_cands=initial_guide_cands.copy(),
         **kwargs,
     )
     aca.acqs.fids = aca.fids
@@ -155,7 +156,7 @@ def _get_aca_catalog(**kwargs):
     if aca.optimize:
         aca.log("Starting optimize_acqs_fids")
         aca.optimize_acqs_fids(
-            initial_guide_cands=initial_guide_cands.to_table(), **kwargs
+            initial_guide_cands=initial_guide_cands.copy(), **kwargs
         )
 
     aca.acqs.fid_set = aca.fids["id"]
@@ -168,7 +169,7 @@ def _get_aca_catalog(**kwargs):
         stars=aca.acqs.stars,
         fids=aca.fids,
         mons=aca.mons,
-        initial_guide_cands=initial_guide_cands.to_table(),
+        initial_guide_cands=initial_guide_cands.copy(),
         img_size=img_size_guide,
         **kwargs,
     )

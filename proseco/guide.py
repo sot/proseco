@@ -1,8 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-from dataclasses import dataclass
 from itertools import combinations
-from typing import Tuple
 
 import chandra_aca.aca_image
 import numpy as np
@@ -71,41 +69,14 @@ def get_t_ccds_bonus(mags, t_ccd, dyn_bgd_n_faint, dyn_bgd_dt_ccd):
     return t_ccds
 
 
-@dataclass(frozen=True)
-class ImmutableGuideCandidates:
-    """
-    Immutable container for guide star candidates.
-
-    This structure ensures that initial guide candidates can be safely reused
-    across multiple get_guide_catalog() calls during fid selection and
-    optimization without risk of modification.
-    """
-
-    colnames: Tuple[str, ...]
-    data: Tuple[Tuple, ...]  # Tuple of tuples (one per row)
-
-    def to_table(self):
-        """Convert back to mutable Astropy Table for processing."""
-
-        # Reconstruct columns from the immutable data
-        columns = {name: [] for name in self.colnames}
-        for row in self.data:
-            for name, value in zip(self.colnames, row):
-                columns[name].append(value)
-        return Table(columns, names=list(self.colnames))
-
-    def __len__(self):
-        return len(self.data)
-
-
 def get_guide_candidates(obsid=0, **kwargs):
     """
-    Get initial guide star candidates as an immutable structure.
+    Get initial guide star candidates.
 
     This function creates a GuideTable and performs the initial filtering
-    to generate candidate guide stars. The returned ImmutableGuideCandidates
-    object is safe to reuse across multiple calls to get_guide_catalog()
-    during optimization.
+    to generate candidate guide stars. The returned Table can be reused
+    across multiple calls to get_guide_catalog() during optimization by
+    passing a copy (via .copy()) to prevent modification.
 
     This explicitly ignores fid lights and monitor windows requests; these
     considerations are handled later in get_guide_catalog().
@@ -119,28 +90,26 @@ def get_guide_candidates(obsid=0, **kwargs):
     :param dark: ACAImage of dark map (fetched based on time and t_ccd if None)
     :param **kwargs: additional keyword arguments passed to GuideTable
 
-    :returns: ImmutableGuideCandidates object
+    :returns: Astropy Table of initial guide candidates
     """
     guides = GuideTable()
     kwargs["fids"] = None
-    kwargs["mons"] = None
     guides.set_attrs_from_kwargs(obsid=obsid, **kwargs)
     guides.set_stars()
 
     # Do a first cut of the stars to get a set of reasonable candidates.
     cand_guides = guides.get_initial_guide_candidates()
 
-    # And for the candidates list, we do want it to have any manual include
-    # or exclude ids applied, so do that processing here.
+    # For the candidates table, we do want it to have any manual include
+    # or exclude ids applied, so do that processing here.  For example, if
+    # the user wants to manually include a guide star, that star should be
+    # explicitly included in the initial candidates list so that it can be
+    # "considered" by the fid selection and optimization later.
     # These operations work in-place on cand_guides.
     guides.process_include_ids(cand_guides, guides.stars)
     guides.process_exclude_ids(cand_guides)
 
-    # Convert to immutable structure
-    colnames = tuple(cand_guides.colnames)
-    data = tuple(tuple(row) for row in cand_guides)
-
-    return ImmutableGuideCandidates(colnames=colnames, data=data)
+    return cand_guides
 
 
 def get_guide_catalog(obsid=0, initial_guide_cands=None, **kwargs):
@@ -152,7 +121,7 @@ def get_guide_catalog(obsid=0, initial_guide_cands=None, **kwargs):
     be fetched via ``mica.starcheck`` if not explicitly provided here.
 
     If ``initial_guide_cands`` is provided as an argument, it is assumed to be a
-    Table of initial guide candidates (typically from get_guide_candidates().to_table()).
+    Table of initial guide candidates (typically from get_guide_candidates().copy()).
 
     :param obsid: obsid (default=0)
     :param att: attitude (any object that can initialize Quat)
@@ -195,6 +164,12 @@ def get_guide_catalog(obsid=0, initial_guide_cands=None, **kwargs):
     guides.cand_guides = guides.filter_candidates_for_monitors(guides.cand_guides)
 
     # Put back any include/excludes
+    # Note explicitly that the monitor star processing in process_monitors_pre()
+    # can add stars to include_ids.  In the standard flow in get_aca_catalog,
+    # that means that the initial guide candidates selection did not have those
+    # include_ids applied, so we need to do it here. The exclude_ids is probably
+    # not necessary to re-apply, but do it for symmetry.
+    # These operations work in-place on guides.cand_guides.
     guides.process_include_ids(guides.cand_guides, guides.stars)
     guides.process_exclude_ids(guides.cand_guides)
 
@@ -961,6 +936,12 @@ class GuideTable(ACACatalogTable):
         if len(self.include_ids) == 0:
             return
 
+        # Check to see if the include_ids are already in cand_guides
+        missing_ids = [star_id for star_id in self.include_ids if star_id not in cand_guides["id"]]
+        if len(missing_ids) == 0:
+            self.log(f"All include_ids already in candidate list: {self.include_ids}")
+            return
+
         row_max = CCD["row_max"] - CCD["row_pad"] - CCD["window_pad"]
         col_max = CCD["col_max"] - CCD["col_pad"] - CCD["window_pad"]
 
@@ -968,7 +949,7 @@ class GuideTable(ACACatalogTable):
 
         # Let's get a smaller set of the possible stars in the field and
         # populate the imposter mags for them and initialize other columns
-        isin_mask = np.isin(stars["id"], self.include_ids, assume_unique=True)
+        isin_mask = np.isin(stars["id"], missing_ids, assume_unique=True)
         new_stars = stars[isin_mask & ok].copy()
 
         # Now compute imposter mags for these stars
