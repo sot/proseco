@@ -107,6 +107,9 @@ def get_guide_candidates(obsid=0, **kwargs):
     object is safe to reuse across multiple calls to get_guide_catalog()
     during optimization.
 
+    This explicitly ignores fid lights and monitor windows requests; these
+    considerations are handled later in get_guide_catalog().
+
     :param obsid: obsid (default=0)
     :param att: attitude (any object that can initialize Quat)
     :param t_ccd: ACA CCD temperature (degC)
@@ -119,15 +122,23 @@ def get_guide_candidates(obsid=0, **kwargs):
     :returns: ImmutableGuideCandidates object
     """
     guides = GuideTable()
+    kwargs["fids"] = None
+    kwargs["mons"] = None
     guides.set_attrs_from_kwargs(obsid=obsid, **kwargs)
     guides.set_stars()
 
     # Do a first cut of the stars to get a set of reasonable candidates.
-    cand_table = guides.get_initial_guide_candidates()
+    cand_guides = guides.get_initial_guide_candidates()
+
+    # And for the candidates list, we do want it to have any manual include
+    # or exclude ids applied, so do that processing here.
+    # These operations work in-place on cand_guides.
+    guides.process_include_ids(cand_guides, guides.stars)
+    guides.process_exclude_ids(cand_guides)
 
     # Convert to immutable structure
-    colnames = tuple(cand_table.colnames)
-    data = tuple(tuple(row) for row in cand_table)
+    colnames = tuple(cand_guides.colnames)
+    data = tuple(tuple(row) for row in cand_guides)
 
     return ImmutableGuideCandidates(colnames=colnames, data=data)
 
@@ -176,16 +187,16 @@ def get_guide_catalog(obsid=0, initial_guide_cands=None, **kwargs):
         # Use the provided initial guide candidates table
         guides.cand_guides = initial_guide_cands
 
-        # Refilter candidates for the current fid set if needed
-        if guides.fids is not None and len(guides.fids) > 0:
-            guides.cand_guides = guides.filter_candidates_for_fids(guides.cand_guides)
+    # Refilter candidates for the current fid set if needed
+    if guides.fids is not None and len(guides.fids) > 0:
+        guides.cand_guides = guides.filter_candidates_for_fids(guides.cand_guides)
 
-        # Refilter candidates for monitor keep-out zones
-        guides.cand_guides = guides.filter_candidates_for_monitors(guides.cand_guides)
+    # Refilter candidates for monitor keep-out zones
+    guides.cand_guides = guides.filter_candidates_for_monitors(guides.cand_guides)
 
-        # Put back any include/excludes
-        guides.process_include_ids(guides.cand_guides, guides.stars)
-        guides.process_exclude_ids(guides.cand_guides)
+    # Put back any include/excludes
+    guides.process_include_ids(guides.cand_guides, guides.stars)
+    guides.process_exclude_ids(guides.cand_guides)
 
     # Run through search stages to select stars
     STAR_PAIR_DIST_CACHE.clear()
@@ -1056,18 +1067,10 @@ class GuideTable(ACACatalogTable):
         `has_spoiler_in_box` method and is the first of many spoiler checks.  This spoiler
         check is not stage dependent.
 
-        9. Filters the candidates to remove any that are spoiled by fid lights (either
-        directly or via the fid trap).  This uses the `filter_candidates_for_fids` method.
+        9. If Jupiter is present, filters the candidates to remove any that are within
+        15 columns of Jupiter.
 
-        10. Filters the candidates to remove any that are in monitor window
-        keep-out zones.
-
-        11. Puts any force include candidates from the include_ids parameter back in the candidate
-        list if they were filtered out by an earlier filter in this routine.
-
-        12. Filters/removes any candidates that are force excluded (in exclude_ids).
-
-        13. Uses the local dark current around each candidate to calculate an "imposter mag"
+        10. Uses the local dark current around each candidate to calculate an "imposter mag"
         describing the brightest 2x2 in the region the star would dither over.  This is
         saved to the candidate star table.
 
@@ -1158,11 +1161,6 @@ class GuideTable(ACACatalogTable):
             f"{len(cand_guides)} candidate guide stars"
         )
 
-        cand_guides = self.filter_candidates_for_fids(cand_guides)
-
-        # Filter candidates in monitor keep-out zones
-        cand_guides = self.filter_candidates_for_monitors(cand_guides)
-
         if len(self.jupiter) > 0:
             from proseco.jupiter import check_spoiled_by_jupiter
 
@@ -1175,13 +1173,6 @@ class GuideTable(ACACatalogTable):
                     rej["stage"] = 0
                     self.reject(rej)
                 cand_guides = cand_guides[~spoiled_by_jupiter]
-
-        # Deal with include_ids by putting them back in candidate table if necessary
-        self.process_include_ids(cand_guides, stars)
-
-        # Deal with exclude_ids by cutting from the candidate list
-        # This works in-place on cand_guides.
-        self.process_exclude_ids(cand_guides)
 
         # Get the brightest 2x2 in the dark map for each candidate and save value and location
         imp_mag, imp_row, imp_col = get_imposter_mags(
