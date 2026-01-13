@@ -609,9 +609,9 @@ class ACATable(ACACatalogTable):
             )
             if np.any(passable):
                 fid_sets_passable = fid_sets[passable]
-                best_idx = np.argmax(fid_sets_passable["P2"])
-                best_P2 = fid_sets_passable["P2"][best_idx]
-                best_idx = np.where(passable)[0][best_idx]
+                best_idx_passable = np.argmax(fid_sets_passable["P2"])
+                best_P2 = fid_sets_passable["P2"][best_idx_passable]
+                best_idx = np.where(passable)[0][best_idx_passable]
 
             # If none passable then just get the best P2
             else:
