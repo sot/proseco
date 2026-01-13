@@ -1,7 +1,7 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-from typing import TYPE_CHECKING
 from itertools import combinations
+from typing import TYPE_CHECKING
 
 import chandra_aca.aca_image
 import numpy as np
