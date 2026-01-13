@@ -96,7 +96,8 @@ def get_guide_candidates(obsid=0, **kwargs):
     :returns: Astropy Table of initial guide candidates
     """
     guides = GuideTable()
-    kwargs["fids"] = None
+    kwargs.pop("fids", None)
+    kwargs.pop("mons", None)
     guides.set_attrs_from_kwargs(obsid=obsid, **kwargs)
     guides.set_stars()
 
