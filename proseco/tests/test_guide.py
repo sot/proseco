@@ -1044,8 +1044,9 @@ def test_initial_guide_candidate_reuse():
 
 def test_initial_guide_cands_immutability():
     """Test that ImmutableGuideCandidates is truly immutable and safe to reuse."""
-    from proseco.guide import ImmutableGuideCandidates
     from dataclasses import FrozenInstanceError
+
+    from proseco.guide import ImmutableGuideCandidates
 
     stars = StarsTable.empty()
     stars.add_fake_constellation(n_stars=5, mag=[8, 9, 9.5, 10, 10.5])

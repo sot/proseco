@@ -1,12 +1,12 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-from astropy.table import Table
 from dataclasses import dataclass
 from itertools import combinations
-from typing import TYPE_CHECKING, Tuple
+from typing import Tuple
 
 import chandra_aca.aca_image
 import numpy as np
+from astropy.table import Table
 from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
 from chandra_aca.transform import (
     count_rate_to_mag,
@@ -27,7 +27,6 @@ from .core import (
     get_dim_res,
     get_img_size,
 )
-
 
 CCD = ACA.CCD
 APL = AcaPsfLibrary()
