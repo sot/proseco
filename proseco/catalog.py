@@ -139,8 +139,7 @@ def _get_aca_catalog(**kwargs):
     # of reviewing star candidates for guide star criteria and nearby imposters
     # is done only once per call to get_aca_catalog().
     # Use .copy() when passing to functions to prevent modification.
-    initial_guide_cands = get_guide_candidates(stars=aca.acqs.stars,
-                                               **kwargs).copy()
+    initial_guide_cands = get_guide_candidates(stars=aca.acqs.stars, **kwargs).copy()
 
     # Note that aca.acqs.stars is a filtered version of aca.stars and includes
     # only stars that are in or near ACA FOV.  Use this for fids and guides stars.
@@ -155,9 +154,7 @@ def _get_aca_catalog(**kwargs):
 
     if aca.optimize:
         aca.log("Starting optimize_acqs_fids")
-        aca.optimize_acqs_fids(
-            initial_guide_cands=initial_guide_cands.copy(), **kwargs
-        )
+        aca.optimize_acqs_fids(initial_guide_cands=initial_guide_cands.copy(), **kwargs)
 
     aca.acqs.fid_set = aca.fids["id"]
 

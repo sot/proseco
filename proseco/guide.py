@@ -1,10 +1,10 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
+from typing import TYPE_CHECKING
 from itertools import combinations
 
 import chandra_aca.aca_image
 import numpy as np
-from astropy.table import Table
 from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
 from chandra_aca.transform import (
     count_rate_to_mag,
@@ -13,6 +13,9 @@ from chandra_aca.transform import (
 )
 
 from proseco.characteristics import MonFunc
+
+if TYPE_CHECKING:
+    from astropy.table import Table
 
 from . import characteristics as ACA
 from . import characteristics_fid as FID
@@ -937,7 +940,9 @@ class GuideTable(ACACatalogTable):
             return
 
         # Check to see if the include_ids are already in cand_guides
-        missing_ids = [star_id for star_id in self.include_ids if star_id not in cand_guides["id"]]
+        missing_ids = [
+            star_id for star_id in self.include_ids if star_id not in cand_guides["id"]
+        ]
         if len(missing_ids) == 0:
             self.log(f"All include_ids already in candidate list: {self.include_ids}")
             return

@@ -1089,7 +1089,9 @@ def test_initial_guide_cands_do_not_change():
 
     # Create a GuideTable instance and call process_exclude_ids directly
     guides_test = GuideTable()
-    guides_test.set_attrs_from_kwargs(stars=stars, exclude_ids_guide=[exclude_id], **kwargs)
+    guides_test.set_attrs_from_kwargs(
+        stars=stars, exclude_ids_guide=[exclude_id], **kwargs
+    )
 
     # Call process_exclude_ids which modifies the table in-place via remove_rows()
     guides_test.process_exclude_ids(initial_guide_cands_nocopy)
