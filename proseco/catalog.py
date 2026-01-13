@@ -479,9 +479,11 @@ class ACATable(ACACatalogTable):
         orig_acq_idxs = acqs["idx"].tolist()
         orig_acq_halfws = acqs["halfw"].tolist()
 
-        self.log(f"Starting conditions: P2={opt_P2:.2f} guide_count={opt_guide_count:.2f}
+        self.log(
+            f"Starting conditions: P2={opt_P2:.2f} guide_count={opt_guide_count:.2f}"
+        )
         self.log(f"  acq ids={orig_acq_idxs} halfws={orig_acq_halfws}")
-        self.log(f"  guide ids={no_fid_guides["idx"].tolist()}")
+        self.log(f"  guide ids={no_fid_guides['idx'].tolist()}")
 
         cand_fids = fids.cand_fids
 
