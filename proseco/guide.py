@@ -1179,7 +1179,6 @@ class GuideTable(ACACatalogTable):
         :param cand_guides: Table of candidate stars
         :returns: boolean mask where True means star is in bad star list
         """
-        # Convert to list once - LazyDict caches the data but list() still creates overhead
         bad_star_ids = list(ACA.bad_star_set)
         bad = np.isin(cand_guides["id"], bad_star_ids)
 
