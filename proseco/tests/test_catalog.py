@@ -38,11 +38,7 @@ def test_allowed_kwargs():
     }
 
     new_kwargs = FidTable.allowed_kwargs - ACACatalogTable.allowed_kwargs
-    assert new_kwargs == {
-        "acqs",
-        "include_ids",
-        "exclude_ids",
-    }
+    assert new_kwargs == {"acqs", "include_ids", "exclude_ids", "guide_cands"}
 
 
 @pytest.mark.skipif(not HAS_SC_ARCHIVE, reason="Test requires starcheck archive")
@@ -701,7 +697,12 @@ def test_fid_trap_effect():
     agasc_ids = [367148872, 367139768, 367144424, 367674552, 367657896]
     att = [10.659376, 40.980028, 181.012903]
     stars = StarsTable.from_agasc_ids(att, agasc_ids)
-    cat = get_aca_catalog(obsid=1576, stars=stars, raise_exc=True)
+    # Note that the fid lights need to be included, as guide/fid light optimization
+    # would otherwise unselect fid 6 and thus not apply the trap effect exclusion
+    # to star 367674552.
+    cat = get_aca_catalog(
+        obsid=1576, include_ids_fid=[1, 5, 6], stars=stars, raise_exc=True
+    )
     assert 367674552 not in cat.guides["id"]
 
     # Obsid 2365
@@ -713,7 +714,11 @@ def test_fid_trap_effect():
     stars = StarsTable.from_agasc_ids(att, agasc_ids)
 
     # Specify att kwarg explicitly to override what is found in mica.starcheck
-    cat = get_aca_catalog(obsid=2365, stars=stars, raise_exc=True, att=att)
+    # And include fid lights to ensure optimization applies the trap effect exclusion,
+    # otherwise fid 6 would be unselected and star 1184897704 would not be excluded.
+    cat = get_aca_catalog(
+        obsid=2365, stars=stars, raise_exc=True, att=att, include_ids_fid=[1, 5, 6]
+    )
     assert 1184897704 not in cat.guides["id"]
 
 

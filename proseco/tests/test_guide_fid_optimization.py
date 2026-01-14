@@ -1,0 +1,166 @@
+# Licensed under a 3-clause BSD style license - see LICENSE.rst
+"""
+Tests for guide candidate awareness in fid selection and acq-fid-guide optimization.
+"""
+
+import numpy as np
+import pytest
+
+from proseco import get_aca_catalog
+from proseco.core import StarsTable
+from proseco.fid import FidTable, get_fid_catalog
+from proseco.guide import get_guide_catalog
+from proseco.tests.test_common import mod_std_info
+
+
+# Create a synthetic test for fid trap scoring and detection
+@pytest.mark.parametrize("row", [-200, 200])
+def test_fid_trap_scoring(row):
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(n_stars=4)
+    # For the nominal ACIS-I FID 6 position here of -69.87 345.27
+    # a star will cause the fid trap if it has about the same distance
+    # to the register as the fid distance to the trap.
+    # Either positive or negative row works so this test is parameterized.
+    stars.add_fake_star(id=1001, mag=7.0, row=row, col=400)
+    args = mod_std_info(detector="ACIS-I")
+    fids = get_fid_catalog(stars=stars, guide_cands=stars, **args)
+    assert fids.cand_fids.get_id(6)["fid_trap_spoiler"]
+    # And for these cases, confirm 6 is not selected
+    assert 6 not in fids["id"]
+
+
+trap_test_cases = [
+    {"spoil_mags": [8, 10, 11, 8, 10, 11], "expected_fids": [2, 3, 5]},
+    {"spoil_mags": [11, 8, 10, 10, 8, 10], "expected_fids": [1, 3, 4]},
+    {"spoil_mags": [11, 7, 11, 7, 7, 11], "expected_fids": [1, 3, 6]},
+]
+
+
+@pytest.mark.parametrize("case", trap_test_cases)
+def test_fid_trap_optimize(case):
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(n_stars=1, mag=[7.0])
+
+    # For the nominal ACIS-I FID 6 position here of -69.87 345.27
+    # a star will cause the fid trap if it has about the same distance
+    # to the register as the fid distance to the trap.
+    # So this places a star to spoil fid 6 via the fid trap if used
+    # as a guide star.
+    stars.add_fake_star(id=1001, mag=7.0, row=200, col=400)
+    kwargs = mod_std_info(detector="ACIS-I", t_ccd=-5)
+
+    initial_fids = get_fid_catalog(stars=stars, **kwargs)
+
+    # Now, spoil all of the candidate fids on purpose so that optimization
+    # is required.  These stars are all theoretically fine for acquisition and guide
+    # so optimization is going to need to decide to use the fid or the
+    # star in each case.
+    for fid, mag in zip(initial_fids.cand_fids, case["spoil_mags"]):
+        stars.add_fake_star(
+            id=2000 + fid["id"],
+            mag=mag,
+            row=fid["row"],
+            col=fid["col"],
+        )
+
+    fids = get_fid_catalog(stars=stars, guide_cands=stars, **kwargs)
+    # No fids should be selected as all are spoiled
+    assert len(fids) == 0
+
+    # However, the full catalog selection should select a fid catalog
+    # via optimization.
+    aca = get_aca_catalog(stars=stars, **kwargs, optimize=True)
+    assert len(aca.fids) == kwargs["n_fid"]
+
+    # The selected fids should match expected
+    assert set(aca.fids["id"]) == set(case["expected_fids"])
+
+    # And none of the fid spoiler stars for the 3 selected fids should be
+    # used as guide stars in the the catalog
+    for fid in aca.fids:
+        dys = np.abs(fid["yang"] - aca.guides["yang"])
+        dzs = np.abs(fid["zang"] - aca.guides["zang"])
+        spoiled = (dys < 5) & (dzs < 5)
+        assert not np.any(spoiled)
+
+    # And if fid 6 is used the trap star should not be used as a guide
+    if 6 in aca.fids["id"]:
+        assert 1001 not in aca.guides["id"]
+
+    # And the log should show that optimization occurred
+    log_opt = [
+        rec["data"]
+        for rec in aca.log_info["events"]
+        if "optimize_acqs_fids" == rec["func"]
+    ]
+    assert len(log_opt) > 2
+
+
+def test_fid_spoil_short_circuits_optimization():
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(n_stars=4, mag=[8, 9, 9.5, 10])
+
+    # For the nominal ACIS-I FID 6 position here of -69.87 345.27
+    # a star will cause the fid trap if it has about the same distance
+    # to the register as the fid distance to the trap.
+    # Either positive or negative row works so this test is parameterized.
+    stars.add_fake_star(id=1001, mag=7.0, row=200, col=400)
+    kwargs = mod_std_info(detector="ACIS-I")
+
+    aca = get_aca_catalog(stars=stars, **kwargs, optimize=True)
+    assert 6 not in aca.fids["id"]
+
+    # And the log should show that the optimization function was called but not needed
+    log_opt = [
+        rec["data"]
+        for rec in aca.log_info["events"]
+        if "optimize_acqs_fids" == rec["func"]
+    ]
+    assert "No acq-fid optimization required" == log_opt[-1]
+
+
+guide_test_cases = [
+    {"mags": [6, 6, 7, 7, 8, 8], "expected_fids": [3, 5, 6]},
+    {"mags": [10, 6, 6, 10, 9, 9], "expected_fids": [1, 4, 5]},
+    {"mags": [8, 8, 8, 8, 8, 8], "expected_fids": [1, 5, 6]},
+    {"mags": [10, 10, 10, 6, 6, 6], "expected_fids": [1, 2, 3]},
+]
+
+
+@pytest.mark.parametrize("case", guide_test_cases)
+def test_guide_fid_optimization(case):
+    stars = StarsTable.empty()
+    kwargs = mod_std_info(detector="ACIS-I")
+    initial_fids = get_fid_catalog(stars=stars, **kwargs)
+    # Now, spoil all of the candidate fids on purpose with bright stars
+    for fid, mag in zip(initial_fids.cand_fids, case["mags"]):
+        stars.add_fake_star(
+            id=2000 + fid["id"],
+            mag=mag,
+            row=fid["row"],
+            col=fid["col"],
+        )
+    aca = get_aca_catalog(stars=stars, **kwargs, optimize=True)
+    assert len(aca.fids) == kwargs["n_fid"]
+    assert set(aca.fids["id"]) == set(case["expected_fids"])
+
+
+def test_backward_compatibility_no_guide_cands():
+    """Verify that fid selection works without guide_cands (backward compat)."""
+    kwargs = mod_std_info(n_fid=3)
+
+    # Call without guide_cands argument (old behavior)
+    fids = get_fid_catalog(**kwargs)
+
+    assert isinstance(fids, FidTable)
+
+
+def test_guide_catalog_without_guides_arg():
+    """Verify get_guide_catalog works without initial_guide_cands argument (backward compat)."""
+    kwargs = mod_std_info(n_guide=5)
+
+    # Call without guides argument (old behavior)
+    guides = get_guide_catalog(**kwargs)
+
+    assert len(guides) > 0 or len(guides.cand_guides) > 0

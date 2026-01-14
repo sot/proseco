@@ -14,7 +14,11 @@ from chandra_aca.transform import (
 
 from proseco.characteristics import MonFunc
 
+if TYPE_CHECKING:
+    from astropy.table import Table
+
 from . import characteristics as ACA
+from . import characteristics_fid as FID
 from . import characteristics_guide as GUIDE
 from .core import (
     ACACatalogTable,
@@ -25,23 +29,103 @@ from .core import (
     get_img_size,
 )
 
-if TYPE_CHECKING:
-    from astropy.table import Table
-
-
 CCD = ACA.CCD
 APL = AcaPsfLibrary()
 
 STAR_PAIR_DIST_CACHE = {}
 
 
-def get_guide_catalog(obsid=0, **kwargs):
+# Minimum number of "anchor stars" that are always evaluated *without* the bonus
+# from dynamic background when dyn_bgd_n_faint > 0. This is mostly to avoid the
+# situation where 4 stars are selected and 2 are faint bonus stars. In this case
+# there would be only 2 anchor stars that ensure good tracking even without
+# dyn bgd.
+MIN_DYN_BGD_ANCHOR_STARS = 3
+
+
+def get_t_ccds_bonus(mags, t_ccd, dyn_bgd_n_faint, dyn_bgd_dt_ccd):
+    """Return array of t_ccds with dynamic background bonus applied.
+
+    This adds ``dyn_bgd_dt_ccd`` to the effective CCD temperature for the
+    ``dyn_bgd_n_faint`` faintest stars, ensuring that at least MIN_DYN_BGD_ANCHOR_STARS
+    are evaluated without the bonus. See:
+    https://nbviewer.org/urls/cxc.harvard.edu/mta/ASPECT/ipynb/misc/guide-count-dyn-bgd.ipynb
+
+    :param mags: array of star magnitudes
+    :param t_ccd: single T_ccd value (degC)
+    :param dyn_bgd_n_faint: number of faintest stars to apply bonus
+    :param dyn_bgd_dt_ccd: temperature offset to apply for dynamic background bonus (degC)
+    :returns: array of t_ccds (matching ``mags``) with dynamic background bonus applied
+    """
+    t_ccds = np.full_like(mags, t_ccd)
+
+    # If no bonus stars then just return the input t_ccd broadcast to all stars
+    if dyn_bgd_n_faint == 0:
+        return t_ccds
+
+    idxs = np.argsort(mags)
+    n_faint = min(dyn_bgd_n_faint, len(t_ccds))
+    idx_bonus = max(len(t_ccds) - n_faint, MIN_DYN_BGD_ANCHOR_STARS)
+    for idx in idxs[idx_bonus:]:
+        t_ccds[idx] += dyn_bgd_dt_ccd
+
+    return t_ccds
+
+
+def get_guide_candidates(obsid=0, **kwargs):
+    """
+    Get initial guide star candidates.
+
+    This function creates a GuideTable and performs the initial filtering
+    to generate candidate guide stars. The returned Table can be reused
+    across multiple calls to get_guide_catalog() during optimization by
+    passing a copy (via .copy()) to prevent modification.
+
+    This explicitly ignores fid lights and monitor windows requests; these
+    considerations are handled later in get_guide_catalog().
+
+    :param obsid: obsid (default=0)
+    :param att: attitude (any object that can initialize Quat)
+    :param t_ccd: ACA CCD temperature (degC)
+    :param date: date of acquisition (any DateTime-compatible format)
+    :param dither: dither size (float or 2-element sequence (dither_y, dither_z), arcsec)
+    :param stars: astropy.Table of AGASC stars (will be fetched from agasc if None)
+    :param dark: ACAImage of dark map (fetched based on time and t_ccd if None)
+    :param **kwargs: additional keyword arguments passed to GuideTable
+
+    :returns: Astropy Table of initial guide candidates
+    """
+    guides = GuideTable()
+    kwargs.pop("fids", None)
+    kwargs.pop("mons", None)
+    guides.set_attrs_from_kwargs(obsid=obsid, **kwargs)
+    guides.set_stars()
+
+    # Do a first cut of the stars to get a set of reasonable candidates.
+    cand_guides = guides.get_initial_guide_candidates()
+
+    # For the candidates table, we do want it to have any manual include
+    # or exclude ids applied, so do that processing here.  For example, if
+    # the user wants to manually include a guide star, that star should be
+    # explicitly included in the initial candidates list so that it can be
+    # "considered" by the fid selection and optimization later.
+    # These operations work in-place on cand_guides.
+    guides.process_include_ids(cand_guides, guides.stars)
+    guides.process_exclude_ids(cand_guides)
+
+    return cand_guides
+
+
+def get_guide_catalog(obsid=0, initial_guide_cands=None, **kwargs):
     """
     Get a catalog of guide stars
 
     If ``obsid`` corresponds to an already-scheduled obsid then the parameters
     ``att``, ``t_ccd``, ``date``, and ``dither`` will
     be fetched via ``mica.starcheck`` if not explicitly provided here.
+
+    If ``initial_guide_cands`` is provided as an argument, it is assumed to be a
+    Table of initial guide candidates (typically from get_guide_candidates().copy()).
 
     :param obsid: obsid (default=0)
     :param att: attitude (any object that can initialize Quat)
@@ -51,6 +135,8 @@ def get_guide_catalog(obsid=0, **kwargs):
     :param n_guide: number of guide stars to attempt to get
     :param fids: selected fids (used for guide star exclusion)
     :param stars: astropy.Table of AGASC stars (will be fetched from agasc if None)
+    :param initial_guide_cands: Astropy Table of initial guide candidates
+        (if None, a new one is created)
     :param include_ids: list of AGASC IDs of stars to include in guide catalog
     :param exclude_ids: list of AGASC IDs of stars to exclude from guide catalog
     :param dark: ACAImage of dark map (fetched based on time and t_ccd if None)
@@ -58,24 +144,41 @@ def get_guide_catalog(obsid=0, **kwargs):
 
     :returns: GuideTable of acquisition stars
     """
-    STAR_PAIR_DIST_CACHE.clear()
 
     guides = GuideTable()
     guides.set_attrs_from_kwargs(obsid=obsid, **kwargs)
     guides.set_stars()
 
     # Process monitor window requests, converting them into fake stars that
-    # are added to the include_ids list.
+    # are added to the include_ids list. This also modifies n_guide.
     guides.process_monitors_pre()
 
     # Do a first cut of the stars to get a set of reasonable candidates
-    guides.cand_guides = guides.get_initial_guide_candidates()
+    if initial_guide_cands is None:
+        guides.cand_guides = guides.get_initial_guide_candidates()
+    else:
+        # Use the provided initial guide candidates table
+        guides.cand_guides = initial_guide_cands
 
-    # Process guide-from-monitor requests by finding corresponding star in
-    # cand_guides and adding to the include_ids list.
-    # guides.process_monitors_pre2()
+    # Refilter candidates for the current fid set if needed
+    if guides.fids is not None and len(guides.fids) > 0:
+        guides.cand_guides = guides.filter_candidates_for_fids(guides.cand_guides)
+
+    # Refilter candidates for monitor keep-out zones
+    guides.cand_guides = guides.filter_candidates_for_monitors(guides.cand_guides)
+
+    # Put back any include/excludes
+    # Note explicitly that the monitor star processing in process_monitors_pre()
+    # can add stars to include_ids.  In the standard flow in get_aca_catalog,
+    # that means that the initial guide candidates selection did not have those
+    # include_ids applied, so we need to do it here. The exclude_ids is probably
+    # not necessary to re-apply, but do it for symmetry.
+    # These operations work in-place on guides.cand_guides.
+    guides.process_include_ids(guides.cand_guides, guides.stars)
+    guides.process_exclude_ids(guides.cand_guides)
 
     # Run through search stages to select stars
+    STAR_PAIR_DIST_CACHE.clear()
     selected = guides.run_search_stages()
 
     # Transfer to table (which at this point is an empty table)
@@ -186,6 +289,7 @@ class GuideTable(ACACatalogTable):
     cand_guides = MetaAttribute(is_kwarg=False)
     reject_info = MetaAttribute(default=[], is_kwarg=False)
     img_size = ImgSizeMetaAttribute()
+    fids = MetaAttribute(default=None)
 
     def reject(self, reject):
         """
@@ -206,29 +310,17 @@ class GuideTable(ACACatalogTable):
 
         monitors = self.mons.monitors
         is_mon = np.isin(monitors["function"], [MonFunc.MON_FIXED, MonFunc.MON_TRACK])
-        if np.any(is_mon):
-            # For MON fixed and tracked, the dark cal map gets hacked to make a
-            # local blob of hot pixels. Make a copy to avoid modifying the global
-            # dark map which is shared by reference between acqs, guides and fids.
-            self.dark = self.dark.copy()
 
-        for monitor in monitors[is_mon]:
-            # Make a square blob of saturated pixels that will keep away any
-            # star selection.
-            is_track = monitor["function"] == MonFunc.MON_TRACK
-            dr = int(4 + np.ceil(self.dither.row if is_track else 0))
-            dc = int(4 + np.ceil(self.dither.col if is_track else 0))
-            row, col = int(monitor["row"]) + 512, int(monitor["col"]) + 512
-            self.dark[row - dr : row + dr, col - dc : col + dc] = (
-                ACA.bad_pixel_dark_current
-            )
+        monitors = self.mons.monitors
+        is_mon = np.isin(monitors["function"], [MonFunc.MON_FIXED, MonFunc.MON_TRACK])
 
-            # Reduce n_guide for each MON. On input the n_guide arg is the
-            # number of GUI + MON, but for guide selection we need to make the
-            # MON slots unavailable.
-            self.n_guide -= 1
-            if self.n_guide < 2:
-                raise ValueError("too many MON requests leaving < 2 guide stars")
+        # Reduce n_guide for each MON. On input the n_guide arg is the
+        # number of GUI + MON, but for guide selection we need to make the
+        # MON slots unavailable.
+        n_mon = np.count_nonzero(is_mon)
+        self.n_guide -= n_mon
+        if self.n_guide < 2:
+            raise ValueError("too many MON requests leaving < 2 guide stars")
 
         is_guide = monitors["function"] == MonFunc.GUIDE
         for monitor in monitors[is_guide]:
@@ -237,19 +329,12 @@ class GuideTable(ACACatalogTable):
     def process_monitors_post(self):
         """Post-processing of monitor windows.
 
-        - Clean up fake stars from stars and cand_guides
-        - Restore the dark current map
         - Set type, sz, res, dim columns for relevant entries to reflect
           status as monitor or guide-from-monitor in the guides catalog.
         """
         # No action required if there are no monitor stars requested
         if self.mons is None or self.mons.monitors is None:
             return
-
-        # Mon window processing munges the dark cal to impose a keep-out zone.
-        # Put the dark current back to the standard one if possible
-        if self.acqs is not None:
-            self.dark = self.acqs.dark
 
         # Find the guide stars that are actually from a MON request (converted
         # to guide) and set the size and type.
@@ -258,6 +343,98 @@ class GuideTable(ACACatalogTable):
                 row = self.get_id(monitor["id"])
                 row["sz"] = "8x8"
                 row["type"] = "GFM"  # Guide From Monitor, changed in merge_catalog
+
+    def filter_candidates_for_fids(self, cand_guides):
+        """
+        Filter candidate guide stars with regard to the selected fid lights.
+
+        This method removes guide star candidates that would spoil or be spoiled by
+        fid lights
+        1. Fid trap effect: candidates that trigger readout artifacts from fid lights
+        2. Direct spoiling: candidates too close to fid lights (within spoiler margin)
+
+        :param cand_guides: Table of candidate guide stars
+        :returns: filtered Table of candidate guide stars with spoiled stars removed
+        """
+        if self.fids is None or len(self.fids) == 0:
+            return cand_guides
+
+        # Collect all rows to exclude, then filter once at the end
+        all_spoiled = np.zeros(len(cand_guides), dtype=bool)
+
+        # Handle the fid trap
+        fid_trap_spoilers, fid_rej = check_fid_trap(
+            cand_guides, fids=self.fids, dither=self.dither
+        )
+        for rej in fid_rej:
+            rej["stage"] = 0
+            self.reject(rej)
+        all_spoiled |= fid_trap_spoilers
+
+        # Exclude guide stars directly spoiled by fid lights
+        spoiler_margin = FID.spoiler_margin + self.dither + 25
+        for fid in self.fids:
+            dy = np.abs(fid["yang"] - cand_guides["yang"])
+            dz = np.abs(fid["zang"] - cand_guides["zang"])
+            spoiled = (dy < spoiler_margin.y) & (dz < spoiler_margin.z)
+            for star_id in cand_guides["id"][spoiled]:
+                self.reject(
+                    {
+                        "stage": 0,
+                        "type": "spoiled by fid",
+                        "id": star_id,
+                        "text": f"Cand {star_id} rejected.  Spoiled by fid {fid['id']}",
+                    }
+                )
+            all_spoiled |= spoiled
+
+        # Filter once with combined mask
+        return cand_guides[~all_spoiled]
+
+    def filter_candidates_for_monitors(self, cand_guides):
+        """Filter candidate guide stars that fall in monitor window keep-out zones.
+
+        This directly excludes candidates near MON_FIXED and MON_TRACK windows,
+        replacing the old approach of modifying the dark map.
+        """
+        if self.mons is None or self.mons.monitors is None:
+            return cand_guides
+
+        monitors = self.mons.monitors
+        is_mon = np.isin(monitors["function"], [MonFunc.MON_FIXED, MonFunc.MON_TRACK])
+
+        # Collect all rows to exclude, then filter once at the end
+        all_in_keepout = np.zeros(len(cand_guides), dtype=bool)
+
+        for monitor in monitors[is_mon]:
+            is_track = monitor["function"] == MonFunc.MON_TRACK
+            # Keep-out zone in pixels
+            dr = 4 + np.ceil(self.dither.row if is_track else 0)
+            dc = 4 + np.ceil(self.dither.col if is_track else 0)
+
+            # Find candidates in the keep-out zone plus a pad
+            # The 7.5 pixel pad was selected to at least cover the previous dark-map
+            # modification approach
+            monitor_pad = 7.5
+            drow = np.abs(cand_guides["row"] - monitor["row"])
+            dcol = np.abs(cand_guides["col"] - monitor["col"])
+            in_keepout = (drow < dr + monitor_pad) & (dcol < dc + monitor_pad)
+
+            for star_id in cand_guides["id"][in_keepout]:
+                self.reject(
+                    {
+                        "stage": 0,
+                        "type": "monitor keepout",
+                        "id": star_id,
+                        "monitor_id": monitor["id"],
+                        "text": f"Cand {star_id} rejected. "
+                        f"In monitor {monitor['id']} keep-out zone",
+                    }
+                )
+            all_in_keepout |= in_keepout
+
+        # Filter once with combined mask
+        return cand_guides[~all_in_keepout]
 
     def get_img_size(self, n_fids=None):
         """Get guide image readout size from ``img_size`` and ``n_fids``.
@@ -614,7 +791,7 @@ class GuideTable(ACACatalogTable):
 
         # Adopt the SAUSAGE convention of a bit array for errors
         # Not all items will be checked for each star (allow short circuit)
-        scol = "stat_{}".format(stage["Stage"])
+        scol = f"stat_{stage['Stage']}"
         cand_guides[scol] = 0
 
         n_sigma = stage["SigErrMultiplier"]
@@ -760,12 +937,72 @@ class GuideTable(ACACatalogTable):
         :param stars: stars table
 
         """
+        if len(self.include_ids) == 0:
+            return
+
+        # Check to see if the include_ids are already in cand_guides
+        missing_ids = [
+            star_id for star_id in self.include_ids if star_id not in cand_guides["id"]
+        ]
+        if len(missing_ids) == 0:
+            self.log(f"All include_ids already in candidate list: {self.include_ids}")
+            return
+
         row_max = CCD["row_max"] - CCD["row_pad"] - CCD["window_pad"]
         col_max = CCD["col_max"] - CCD["col_pad"] - CCD["window_pad"]
 
         ok = (np.abs(stars["row"]) < row_max) & (np.abs(stars["col"]) < col_max)
 
-        super().process_include_ids(cand_guides, stars[ok])
+        # Let's get a smaller set of the possible stars in the field and
+        # populate the imposter mags for them and initialize other columns
+        isin_mask = np.isin(stars["id"], missing_ids, assume_unique=True)
+        new_stars = stars[isin_mask & ok].copy()
+
+        # Now compute imposter mags for these stars
+        if len(new_stars) > 0:
+            imp_mag, imp_row, imp_col = get_imposter_mags(
+                new_stars, self.dark, self.dither
+            )
+            new_stars["imp_mag"] = imp_mag
+            new_stars["imp_r"] = imp_row
+            new_stars["imp_c"] = imp_col
+
+            # And add the other standard columns
+            # I'd like to add stage set to -1 and stat_1 to stat_6 set to 0
+            new_stars["stage"] = -1
+            for stage_num in range(1, len(GUIDE.stages) + 1):
+                scol = f"stat_{stage_num}"
+                new_stars[scol] = 0
+
+            # Reorder columns to match cand_guides
+            new_stars = new_stars[cand_guides.colnames]
+
+        self.log(f"In process_include_ids trying to include {self.include_ids}")
+        super().process_include_ids(cand_guides, new_stars)
+
+    def process_exclude_ids(self, cand_guides):
+        """
+        Remove any stars from cand_guides that are in exclude_ids.
+
+        This works in-place on cand_guides.
+
+        :param cand_guides: candidate guide stars table
+        """
+        # Deal with exclude_ids by removing rows from the candidate list
+        # This works in-place on cand_guides
+        for star_id in self.exclude_ids:
+            if star_id in cand_guides["id"]:
+                self.reject(
+                    {
+                        "stage": 0,
+                        "type": "exclude_id",
+                        "id": star_id,
+                        "text": f"Cand {star_id} rejected.  In exclude_ids",
+                    }
+                )
+                # Remove the row in-place
+                idx = np.where(cand_guides["id"] == star_id)[0]
+                cand_guides.remove_rows(idx)
 
     def get_candidates_mask(self, stars):
         """Get base filter for acceptable candidates.
@@ -817,22 +1054,16 @@ class GuideTable(ACACatalogTable):
         `has_spoiler_in_box` method and is the first of many spoiler checks.  This spoiler
         check is not stage dependent.
 
-        9. Filters the candidates to remova any that are spoiled by the fid trap (using
-        `check_fid_trap` method).
+        9. If Jupiter is present, filters the candidates to remove any that are within
+        15 columns of Jupiter.
 
-        10. Puts any force include candidates from the include_ids parameter back in the candidate
-        list if they were filtered out by an earlier filter in this routine.
-
-        11. Filters/removes any candidates that are force excluded (in exclude_ids).
-
-        12. Uses the local dark current around each candidate to calculate an "imposter mag"
+        10. Uses the local dark current around each candidate to calculate an "imposter mag"
         describing the brightest 2x2 in the region the star would dither over.  This is
         saved to the candidate star table.
 
 
         """
         stars = self.stars
-        dark = self.dark
 
         # Mark stars that are off chip
         offchip = (np.abs(stars["row"]) > CCD["row_max"]) | (
@@ -863,6 +1094,15 @@ class GuideTable(ACACatalogTable):
             f"Reduced star list from {len(stars)} to "
             f"{len(cand_guides)} candidate guide stars"
         )
+
+        # Add extra columns used by guide selection to the candidate table
+        cand_guides["stage"] = -1
+        for stage_num in range(1, len(GUIDE.stages) + 1):
+            scol = f"stat_{stage_num}"
+            cand_guides[scol] = 0
+        cand_guides["imp_mag"] = np.nan
+        cand_guides["imp_r"] = np.nan
+        cand_guides["imp_c"] = np.nan
 
         bp, bp_rej = spoiled_by_bad_pixel(cand_guides, self.dither)
         for rej in bp_rej:
@@ -908,14 +1148,6 @@ class GuideTable(ACACatalogTable):
             f"{len(cand_guides)} candidate guide stars"
         )
 
-        fid_trap_spoilers, fid_rej = check_fid_trap(
-            cand_guides, fids=self.fids, dither=self.dither
-        )
-        for rej in fid_rej:
-            rej["stage"] = 0
-            self.reject(rej)
-        cand_guides = cand_guides[~fid_trap_spoilers]
-
         if len(self.jupiter) > 0:
             from proseco.jupiter import check_spoiled_by_jupiter
 
@@ -929,24 +1161,10 @@ class GuideTable(ACACatalogTable):
                     self.reject(rej)
                 cand_guides = cand_guides[~spoiled_by_jupiter]
 
-        # Deal with include_ids by putting them back in candidate table if necessary
-        self.process_include_ids(cand_guides, stars)
-
-        # Deal with exclude_ids by cutting from the candidate list
-        for star_id in self.exclude_ids:
-            if star_id in cand_guides["id"]:
-                self.reject(
-                    {
-                        "stage": 0,
-                        "type": "exclude_id",
-                        "id": star_id,
-                        "text": f"Cand {star_id} rejected.  In exclude_ids",
-                    }
-                )
-                cand_guides = cand_guides[cand_guides["id"] != star_id]
-
         # Get the brightest 2x2 in the dark map for each candidate and save value and location
-        imp_mag, imp_row, imp_col = get_imposter_mags(cand_guides, dark, self.dither)
+        imp_mag, imp_row, imp_col = get_imposter_mags(
+            cand_guides, self.dark, self.dither
+        )
         cand_guides["imp_mag"] = imp_mag
         cand_guides["imp_r"] = imp_row
         cand_guides["imp_c"] = imp_col
@@ -961,7 +1179,8 @@ class GuideTable(ACACatalogTable):
         :param cand_guides: Table of candidate stars
         :returns: boolean mask where True means star is in bad star list
         """
-        bad = np.isin(cand_guides["id"], list(ACA.bad_star_set))
+        bad_star_ids = list(ACA.bad_star_set)
+        bad = np.isin(cand_guides["id"], bad_star_ids)
 
         # Set any matching bad stars as bad for plotting
         for bad_id in cand_guides["id"][bad]:
@@ -974,6 +1193,8 @@ class GuideTable(ACACatalogTable):
 def check_fid_trap(cand_stars, fids, dither):
     """
     Search for guide stars that would cause the fid trap issue and mark as spoilers.
+
+    The "fid trap" issue is documented at https://cxc.cfa.harvard.edu/mta/ASPECT/aca_weird_pixels/ .
 
     :param cand_stars: candidate star Table
     :param fids: fid Table
