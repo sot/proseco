@@ -4,13 +4,13 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>proseco.tests.test_guide &#8212; proseco 5.16.0 documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=fa44fd50" />
+    <title>proseco.tests.test_guide &#8212; proseco 5.18.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../../_static/bootstrap-astropy.css?v=f4f7060c" />
     
-    <script src="../../../_static/documentation_options.js?v=f23352e5"></script>
-    <script src="../../../_static/doctools.js?v=888ff710"></script>
-    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/documentation_options.js?v=35f5b738"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script type="text/javascript" src="../../../_static/sidebar.js"></script>
     <script type="text/javascript" src="../../../_static/copybutton.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
@@ -44,7 +44,7 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../../index.html">proseco 5.16.0 documentation</a>
+	<a href="../../../index.html">proseco 5.18.0 documentation</a>
 	 &#187;
       </li>
       <li><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
@@ -62,39 +62,95 @@
   <h1>Source code for proseco.tests.test_guide</h1><div class="highlight"><pre>
 <span></span><span class="c1"># Licensed under a 3-clause BSD style license - see LICENSE.rst</span>
 
-<span class="kn">import</span> <span class="nn">itertools</span>
-<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">itertools</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
-<span class="kn">import</span> <span class="nn">mica.starcheck</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">pytest</span>
-<span class="kn">from</span> <span class="nn">astropy.table</span> <span class="kn">import</span> <span class="n">Table</span>
-<span class="kn">from</span> <span class="nn">chandra_aca.aca_image</span> <span class="kn">import</span> <span class="n">ACAImage</span><span class="p">,</span> <span class="n">AcaPsfLibrary</span>
-<span class="kn">from</span> <span class="nn">chandra_aca.transform</span> <span class="kn">import</span> <span class="n">count_rate_to_mag</span><span class="p">,</span> <span class="n">mag_to_count_rate</span>
-<span class="kn">from</span> <span class="nn">Quaternion</span> <span class="kn">import</span> <span class="n">Quat</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">mica.starcheck</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">astropy.table</span><span class="w"> </span><span class="kn">import</span> <span class="n">Table</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">chandra_aca.aca_image</span><span class="w"> </span><span class="kn">import</span> <span class="n">ACAImage</span><span class="p">,</span> <span class="n">AcaPsfLibrary</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">chandra_aca.transform</span><span class="w"> </span><span class="kn">import</span> <span class="n">count_rate_to_mag</span><span class="p">,</span> <span class="n">mag_to_count_rate</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">Quaternion</span><span class="w"> </span><span class="kn">import</span> <span class="n">Quat</span>
 
-<span class="kn">from</span> <span class="nn">..characteristics</span> <span class="kn">import</span> <span class="n">CCD</span>
-<span class="kn">from</span> <span class="nn">..characteristics_guide</span> <span class="kn">import</span> <span class="n">mag_spoiler</span>
-<span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">StarsTable</span>
-<span class="kn">from</span> <span class="nn">..guide</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..characteristics</span><span class="w"> </span><span class="kn">import</span> <span class="n">CCD</span><span class="p">,</span> <span class="n">MonCoord</span><span class="p">,</span> <span class="n">MonFunc</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..characteristics_guide</span><span class="w"> </span><span class="kn">import</span> <span class="n">mag_spoiler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core</span><span class="w"> </span><span class="kn">import</span> <span class="n">StarsTable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..fid</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_fid_catalog</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..guide</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">GUIDE</span><span class="p">,</span>
+    <span class="n">MIN_DYN_BGD_ANCHOR_STARS</span><span class="p">,</span>
+    <span class="n">GuideTable</span><span class="p">,</span>
     <span class="n">check_column_spoilers</span><span class="p">,</span>
     <span class="n">check_mag_spoilers</span><span class="p">,</span>
     <span class="n">check_spoil_contrib</span><span class="p">,</span>
     <span class="n">get_ax_range</span><span class="p">,</span>
+    <span class="n">get_guide_candidates</span><span class="p">,</span>
     <span class="n">get_guide_catalog</span><span class="p">,</span>
     <span class="n">get_pixmag_for_offset</span><span class="p">,</span>
-    <span class="n">run_select_checks</span><span class="p">,</span>
+    <span class="n">get_t_ccds_bonus</span><span class="p">,</span>
+    <span class="n">run_cluster_checks</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">..report_guide</span> <span class="kn">import</span> <span class="n">make_report</span>
-<span class="kn">from</span> <span class="nn">.test_common</span> <span class="kn">import</span> <span class="n">DARK40</span><span class="p">,</span> <span class="n">OBS_INFO</span><span class="p">,</span> <span class="n">STD_INFO</span><span class="p">,</span> <span class="n">mod_std_info</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..monitor</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_mon_catalog</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..report_guide</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_report</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.test_common</span><span class="w"> </span><span class="kn">import</span> <span class="n">DARK40</span><span class="p">,</span> <span class="n">OBS_INFO</span><span class="p">,</span> <span class="n">STD_INFO</span><span class="p">,</span> <span class="n">mod_std_info</span>
 
 <span class="n">HAS_SC_ARCHIVE</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">mica</span><span class="o">.</span><span class="n">starcheck</span><span class="o">.</span><span class="n">starcheck</span><span class="o">.</span><span class="n">FILES</span><span class="p">[</span><span class="s2">&quot;data_root&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">test_get_t_ccds_bonus_1</span><span class="p">():</span>
+    <span class="n">mags</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">]</span>
+    <span class="n">t_ccd</span> <span class="o">=</span> <span class="mi">10</span>
+
+    <span class="c1"># Temps corresponding to two faintest stars are equal to t_ccd + dt_ccd</span>
+    <span class="n">t_ccds</span> <span class="o">=</span> <span class="n">get_t_ccds_bonus</span><span class="p">(</span><span class="n">mags</span><span class="p">,</span> <span class="n">t_ccd</span><span class="p">,</span> <span class="n">dyn_bgd_n_faint</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">dyn_bgd_dt_ccd</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">t_ccds</span> <span class="o">==</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">])</span>
+
+    <span class="c1"># Temps corresponding to three faintest stars are equal to t_ccd + dt_ccd</span>
+    <span class="n">t_ccds</span> <span class="o">=</span> <span class="n">get_t_ccds_bonus</span><span class="p">(</span><span class="n">mags</span><span class="p">,</span> <span class="n">t_ccd</span><span class="p">,</span> <span class="n">dyn_bgd_n_faint</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">dyn_bgd_dt_ccd</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">t_ccds</span> <span class="o">==</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">9</span><span class="p">])</span>
+
+    <span class="c1"># Temps corresponding to just the three faintest stars are equal to t_ccd +</span>
+    <span class="c1"># dt_ccd because of the minimum number of anchor stars = 3.</span>
+    <span class="n">t_ccds</span> <span class="o">=</span> <span class="n">get_t_ccds_bonus</span><span class="p">(</span><span class="n">mags</span><span class="p">,</span> <span class="n">t_ccd</span><span class="p">,</span> <span class="n">dyn_bgd_n_faint</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">dyn_bgd_dt_ccd</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">t_ccds</span> <span class="o">==</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">9</span><span class="p">])</span>
+
+    <span class="n">t_ccds</span> <span class="o">=</span> <span class="n">get_t_ccds_bonus</span><span class="p">(</span><span class="n">mags</span><span class="p">,</span> <span class="n">t_ccd</span><span class="p">,</span> <span class="n">dyn_bgd_n_faint</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">dyn_bgd_dt_ccd</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">t_ccds</span> <span class="o">==</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">])</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_get_t_ccds_bonus_min_anchor</span><span class="p">():</span>
+    <span class="n">mags</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>
+    <span class="n">t_ccd</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="n">t_ccds</span> <span class="o">=</span> <span class="n">get_t_ccds_bonus</span><span class="p">(</span><span class="n">mags</span><span class="p">,</span> <span class="n">t_ccd</span><span class="p">,</span> <span class="n">dyn_bgd_n_faint</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">dyn_bgd_dt_ccd</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># Assert that there are at least MIN_DYN_BGD_ANCHOR_STARS without bonus</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">t_ccds</span> <span class="o">==</span> <span class="n">t_ccd</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">MIN_DYN_BGD_ANCHOR_STARS</span>
+
+    <span class="n">t_ccds</span> <span class="o">=</span> <span class="n">get_t_ccds_bonus</span><span class="p">(</span><span class="n">mags</span><span class="p">,</span> <span class="n">t_ccd</span><span class="p">,</span> <span class="n">dyn_bgd_n_faint</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">dyn_bgd_dt_ccd</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">t_ccds</span> <span class="o">==</span> <span class="n">t_ccd</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">MIN_DYN_BGD_ANCHOR_STARS</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_get_t_ccds_bonus_small_catalog</span><span class="p">():</span>
+    <span class="n">mags</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">t_ccd</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="n">t_ccds</span> <span class="o">=</span> <span class="n">get_t_ccds_bonus</span><span class="p">(</span><span class="n">mags</span><span class="p">,</span> <span class="n">t_ccd</span><span class="p">,</span> <span class="n">dyn_bgd_n_faint</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">dyn_bgd_dt_ccd</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">t_ccds</span> <span class="o">==</span> <span class="p">[</span><span class="mi">10</span><span class="p">])</span>
+
+
+<div class="viewcode-block" id="test_get_t_ccds_bonus_no_bonus_stars">
+<a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_guide.test_get_t_ccds_bonus_no_bonus_stars">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_get_t_ccds_bonus_no_bonus_stars</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;When dyn_bgd_n_faint=0, all t_ccds should equal input t_ccd.&quot;&quot;&quot;</span>
+    <span class="n">mags</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">8.0</span><span class="p">,</span> <span class="mf">9.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">,</span> <span class="mf">10.5</span><span class="p">])</span>
+    <span class="n">t_ccd</span> <span class="o">=</span> <span class="o">-</span><span class="mf">10.0</span>
+    <span class="n">t_ccds</span> <span class="o">=</span> <span class="n">get_t_ccds_bonus</span><span class="p">(</span><span class="n">mags</span><span class="p">,</span> <span class="n">t_ccd</span><span class="p">,</span> <span class="n">dyn_bgd_n_faint</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">dyn_bgd_dt_ccd</span><span class="o">=</span><span class="mf">5.0</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">t_ccds</span><span class="p">,</span> <span class="o">-</span><span class="mf">10.0</span><span class="p">)</span></div>
+
+
+
 <div class="viewcode-block" id="test_select">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_guide.test_select">[docs]</a>
-<span class="k">def</span> <span class="nf">test_select</span><span class="p">(</span><span class="n">proseco_agasc_1p7</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_select</span><span class="p">(</span><span class="n">proseco_agasc_1p7</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Regression test that 5 expected agasc ids are selected at an arbitrary ra/dec/roll .</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -109,7 +165,7 @@
 <div class="viewcode-block" id="test_obsid_19461">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_guide.test_obsid_19461">[docs]</a>
 <span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">skipif</span><span class="p">(</span><span class="ow">not</span> <span class="n">HAS_SC_ARCHIVE</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s2">&quot;Test requires starcheck archive&quot;</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">test_obsid_19461</span><span class="p">(</span><span class="n">proseco_agasc_1p7</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_obsid_19461</span><span class="p">(</span><span class="n">proseco_agasc_1p7</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Regression tests that 5 expected agasc ids are selected in a poor star field</span>
 <span class="sd">    corresponding to obsid 19461.</span>
@@ -122,7 +178,7 @@
 
 <div class="viewcode-block" id="test_common_column_obsid_19904">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_guide.test_common_column_obsid_19904">[docs]</a>
-<span class="k">def</span> <span class="nf">test_common_column_obsid_19904</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_common_column_obsid_19904</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Confirm in a specific configuration that a star with a column spoiler,</span>
 <span class="sd">    1091705224, is not selected.  This test limits the star field</span>
@@ -157,7 +213,7 @@
 <div class="viewcode-block" id="test_common_column">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_guide.test_common_column">[docs]</a>
 <span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span><span class="s2">&quot;case&quot;</span><span class="p">,</span> <span class="n">comm_cases</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">test_common_column</span><span class="p">(</span><span class="n">case</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_common_column</span><span class="p">(</span><span class="n">case</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test check_column_spoilers method using constructed two-star cases.</span>
 <span class="sd">    The check_column_spoilers method uses n_sigma on MAG_ACA_ERR, but this test</span>
@@ -174,7 +230,7 @@
 
 <div class="viewcode-block" id="test_box_mag_spoiler">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_guide.test_box_mag_spoiler">[docs]</a>
-<span class="k">def</span> <span class="nf">test_box_mag_spoiler</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_box_mag_spoiler</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test spoiled star rejection by manipulating a star position and magnitude</span>
 <span class="sd">    to make it spoil another star in a specific attitude/config.</span>
@@ -206,7 +262,7 @@
 
 <div class="viewcode-block" id="test_region_contrib">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_guide.test_region_contrib">[docs]</a>
-<span class="k">def</span> <span class="nf">test_region_contrib</span><span class="p">(</span><span class="n">proseco_agasc_1p7</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_region_contrib</span><span class="p">(</span><span class="n">proseco_agasc_1p7</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Regression test of stars rejected by contributing starlight to readout region.</span>
 
 <span class="sd">    Scenario test for too much light contribution by a spoiler star unto the</span>
@@ -245,7 +301,7 @@
 
 <div class="viewcode-block" id="test_bad_star_list">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_guide.test_bad_star_list">[docs]</a>
-<span class="k">def</span> <span class="nf">test_bad_star_list</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_bad_star_list</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Test that a star with ID in the bad star list is not selected.&quot;&quot;&quot;</span>
     <span class="n">bad_id</span> <span class="o">=</span> <span class="mi">39980640</span>
     <span class="n">dark</span> <span class="o">=</span> <span class="n">DARK40</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
@@ -264,7 +320,7 @@
 
 <div class="viewcode-block" id="test_color1_0p7">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_guide.test_color1_0p7">[docs]</a>
-<span class="k">def</span> <span class="nf">test_color1_0p7</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_color1_0p7</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Test that a star with COLOR1=0.7 is not selected&quot;&quot;&quot;</span>
     <span class="n">dark</span> <span class="o">=</span> <span class="n">DARK40</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
     <span class="n">stars</span> <span class="o">=</span> <span class="n">StarsTable</span><span class="o">.</span><span class="n">empty</span><span class="p">()</span>
@@ -283,7 +339,7 @@
 
 <div class="viewcode-block" id="test_avoid_trap">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_guide.test_avoid_trap">[docs]</a>
-<span class="k">def</span> <span class="nf">test_avoid_trap</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_avoid_trap</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Set up a scenario where a star is selected fine at one roll, and then</span>
 <span class="sd">    confirm that it is not selected when roll places it on the trap.</span>
@@ -316,7 +372,7 @@
 <div class="viewcode-block" id="test_big_dither">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_guide.test_big_dither">[docs]</a>
 <span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">skipif</span><span class="p">(</span><span class="ow">not</span> <span class="n">HAS_SC_ARCHIVE</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s2">&quot;Test requires starcheck archive&quot;</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">test_big_dither</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_big_dither</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Regression test that the expected set of agasc ids selected for &quot;big</span>
 <span class="sd">    dither&quot; obsid 20168 are selected.</span>
 
@@ -329,7 +385,7 @@
 
 <div class="viewcode-block" id="test_check_pixmag_offset">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_guide.test_check_pixmag_offset">[docs]</a>
-<span class="k">def</span> <span class="nf">test_check_pixmag_offset</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_check_pixmag_offset</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Test the get_pixmag_for_offset guide function.</span>
 
 <span class="sd">    get_pixmag_for_offset returns the magnitude required for an individual</span>
@@ -379,7 +435,7 @@
 
 <div class="viewcode-block" id="test_check_spoil_contrib">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_guide.test_check_spoil_contrib">[docs]</a>
-<span class="k">def</span> <span class="nf">test_check_spoil_contrib</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_check_spoil_contrib</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Construct a case where a star spoils the edge of the 8x8 (edge and then background pixel).</span>
 
@@ -409,7 +465,7 @@
 
 <div class="viewcode-block" id="test_check_spoiler_cases">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_guide.test_check_spoiler_cases">[docs]</a>
-<span class="k">def</span> <span class="nf">test_check_spoiler_cases</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_check_spoiler_cases</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Regression test guide star selection against a star and a spoiler</span>
 
@@ -476,7 +532,7 @@
 
 <div class="viewcode-block" id="test_overlap_spoiler">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_guide.test_overlap_spoiler">[docs]</a>
-<span class="k">def</span> <span class="nf">test_overlap_spoiler</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_overlap_spoiler</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Add a brighter &quot;spoiler&quot; that is a good guide star and confirm the test for</span>
 <span class="sd">    overlapping selected stars works until just past (12 pixels).</span>
@@ -504,7 +560,7 @@
 
 <div class="viewcode-block" id="test_overlap_spoiler_include">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_guide.test_overlap_spoiler_include">[docs]</a>
-<span class="k">def</span> <span class="nf">test_overlap_spoiler_include</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_overlap_spoiler_include</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Add test for overlap-star handling in cases where one or both</span>
 <span class="sd">    stars is in includes_ids_guide.</span>
@@ -569,7 +625,7 @@
 <div class="viewcode-block" id="test_pix_spoiler">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_guide.test_pix_spoiler">[docs]</a>
 <span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span><span class="s2">&quot;case&quot;</span><span class="p">,</span> <span class="n">pix_cases</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">test_pix_spoiler</span><span class="p">(</span><span class="n">case</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_pix_spoiler</span><span class="p">(</span><span class="n">case</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Check that for various dither configurations, a hot pixel near a star will</span>
 <span class="sd">    result in that star not being selected.</span>
@@ -597,7 +653,7 @@
 
 <div class="viewcode-block" id="test_check_mag_spoilers">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_guide.test_check_mag_spoilers">[docs]</a>
-<span class="k">def</span> <span class="nf">test_check_mag_spoilers</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_check_mag_spoilers</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Check that spoiling stars that should spoil a candidated due to the</span>
 <span class="sd">    mag/line test actually spoil the candidate star.</span>
@@ -635,7 +691,7 @@
 
 <div class="viewcode-block" id="test_warnings">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_guide.test_warnings">[docs]</a>
-<span class="k">def</span> <span class="nf">test_warnings</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_warnings</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test that the ACACatalogTable warnings infrastructure works via a</span>
 <span class="sd">    specific expected warning in get_guide_catalog (too few stars selected).</span>
@@ -651,9 +707,125 @@
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">make_fake_guides</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">mags</span><span class="p">,</span> <span class="n">ids</span><span class="p">):</span>
+    <span class="n">stars</span> <span class="o">=</span> <span class="n">StarsTable</span><span class="o">.</span><span class="n">empty</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">mags</span><span class="p">,</span> <span class="n">ids</span><span class="p">):</span>
+        <span class="n">stars</span><span class="o">.</span><span class="n">add_fake_star</span><span class="p">(</span><span class="n">row</span><span class="o">=</span><span class="n">r</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">mag</span><span class="o">=</span><span class="n">m</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">stars</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_select_catalog_prefers_best_cluster</span><span class="p">():</span>
+    <span class="c1"># Make 5 stars, 3 close together, 2 far apart</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">300</span><span class="p">,</span> <span class="o">-</span><span class="mi">300</span><span class="p">]</span>
+    <span class="n">cols</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="o">-</span><span class="mi">20</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">mags</span> <span class="o">=</span> <span class="p">[</span><span class="mi">7</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">7</span><span class="p">]</span>
+    <span class="n">ids</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">]</span>
+    <span class="n">stars</span> <span class="o">=</span> <span class="n">make_fake_guides</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">mags</span><span class="p">,</span> <span class="n">ids</span><span class="p">)</span>
+    <span class="n">guides</span> <span class="o">=</span> <span class="n">GuideTable</span><span class="p">()</span>
+    <span class="n">guides</span><span class="o">.</span><span class="n">n_guide</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="n">guides</span><span class="o">.</span><span class="n">cand_guides</span> <span class="o">=</span> <span class="n">stars</span>
+    <span class="n">guides</span><span class="o">.</span><span class="n">stars</span> <span class="o">=</span> <span class="n">stars</span>
+
+    <span class="c1"># Should select the 3 most separated stars (not all clustered)</span>
+    <span class="n">selected</span> <span class="o">=</span> <span class="n">guides</span><span class="o">.</span><span class="n">select_catalog</span><span class="p">(</span><span class="n">stars</span><span class="p">)</span>
+    <span class="c1"># The selected IDs should include the far-apart stars</span>
+    <span class="k">assert</span> <span class="nb">set</span><span class="p">(</span><span class="n">selected</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="nb">set</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">])</span> <span class="ow">or</span> <span class="nb">set</span><span class="p">(</span><span class="n">selected</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="nb">set</span><span class="p">(</span>
+        <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">]</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_select_catalog_honors_include_ids</span><span class="p">():</span>
+    <span class="c1"># Make 4 stars, force include one that would otherwise fail cluster check</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">300</span><span class="p">,</span> <span class="o">-</span><span class="mi">300</span><span class="p">]</span>
+    <span class="n">cols</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">mags</span> <span class="o">=</span> <span class="p">[</span><span class="mi">7</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">7</span><span class="p">]</span>
+    <span class="n">ids</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">]</span>
+    <span class="n">stars</span> <span class="o">=</span> <span class="n">make_fake_guides</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">mags</span><span class="p">,</span> <span class="n">ids</span><span class="p">)</span>
+    <span class="n">guides</span> <span class="o">=</span> <span class="n">GuideTable</span><span class="p">()</span>
+    <span class="n">guides</span><span class="o">.</span><span class="n">n_guide</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="n">guides</span><span class="o">.</span><span class="n">cand_guides</span> <span class="o">=</span> <span class="n">stars</span>
+    <span class="n">guides</span><span class="o">.</span><span class="n">stars</span> <span class="o">=</span> <span class="n">stars</span>
+
+    <span class="n">selected1</span> <span class="o">=</span> <span class="n">guides</span><span class="o">.</span><span class="n">select_catalog</span><span class="p">(</span><span class="n">stars</span><span class="p">)</span>
+    <span class="c1"># The id 2 star should not be present</span>
+    <span class="k">assert</span> <span class="mi">2</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">selected1</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span>
+
+    <span class="n">guides</span><span class="o">.</span><span class="n">include_ids</span> <span class="o">=</span> <span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">selected2</span> <span class="o">=</span> <span class="n">guides</span><span class="o">.</span><span class="n">select_catalog</span><span class="p">(</span><span class="n">stars</span><span class="p">)</span>
+    <span class="c1"># The forced-included star should be present</span>
+    <span class="k">assert</span> <span class="mi">2</span> <span class="ow">in</span> <span class="n">selected2</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_select_catalog_jupiter_weighted</span><span class="p">():</span>
+    <span class="c1"># Make 3 stars, Jupiter present, only one combo passes jupiter check</span>
+    <span class="c1"># These stars are not spoiled directly by Jupiter.</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mi">20</span><span class="p">,</span> <span class="mi">300</span><span class="p">,</span> <span class="o">-</span><span class="mi">300</span><span class="p">]</span>
+    <span class="n">cols</span> <span class="o">=</span> <span class="p">[</span><span class="mi">100</span><span class="p">,</span> <span class="o">-</span><span class="mi">50</span><span class="p">,</span> <span class="o">-</span><span class="mi">100</span><span class="p">]</span>
+    <span class="n">mags</span> <span class="o">=</span> <span class="p">[</span><span class="mi">7</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">7</span><span class="p">]</span>
+    <span class="n">ids</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+    <span class="n">stars</span> <span class="o">=</span> <span class="n">make_fake_guides</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">mags</span><span class="p">,</span> <span class="n">ids</span><span class="p">)</span>
+    <span class="n">guides</span> <span class="o">=</span> <span class="n">GuideTable</span><span class="p">()</span>
+    <span class="n">guides</span><span class="o">.</span><span class="n">n_guide</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">guides</span><span class="o">.</span><span class="n">cand_guides</span> <span class="o">=</span> <span class="n">stars</span>
+    <span class="n">guides</span><span class="o">.</span><span class="n">stars</span> <span class="o">=</span> <span class="n">stars</span>
+
+    <span class="n">selected1</span> <span class="o">=</span> <span class="n">guides</span><span class="o">.</span><span class="n">select_catalog</span><span class="p">(</span><span class="n">stars</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="nb">set</span><span class="p">(</span><span class="n">selected1</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="nb">set</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
+
+    <span class="c1"># Simulate Jupiter data so only stars on opposite sides pass</span>
+    <span class="c1"># For testing this accesses the internal _jupiter attribute</span>
+    <span class="c1"># directly, but this is not part of the public API.</span>
+    <span class="n">guides</span><span class="o">.</span><span class="n">_jupiter</span> <span class="o">=</span> <span class="n">Table</span><span class="p">([{</span><span class="s2">&quot;row&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">100</span><span class="p">],</span> <span class="s2">&quot;col&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">]}])</span>
+    <span class="n">selected2</span> <span class="o">=</span> <span class="n">guides</span><span class="o">.</span><span class="n">select_catalog</span><span class="p">(</span><span class="n">stars</span><span class="p">)</span>
+    <span class="c1"># Should select the combo that passes the Jupiter check</span>
+    <span class="k">assert</span> <span class="nb">set</span><span class="p">(</span><span class="n">selected2</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="nb">set</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_select_catalog_fallback</span><span class="p">():</span>
+    <span class="c1"># No combination passes cluster or Jupiter check</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">cols</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">mags</span> <span class="o">=</span> <span class="p">[</span><span class="mi">7</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">7</span><span class="p">]</span>
+    <span class="n">ids</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+    <span class="n">stars</span> <span class="o">=</span> <span class="n">make_fake_guides</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">mags</span><span class="p">,</span> <span class="n">ids</span><span class="p">)</span>
+    <span class="n">guides</span> <span class="o">=</span> <span class="n">GuideTable</span><span class="p">()</span>
+    <span class="n">guides</span><span class="o">.</span><span class="n">n_guide</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">guides</span><span class="o">.</span><span class="n">cand_guides</span> <span class="o">=</span> <span class="n">stars</span>
+    <span class="n">guides</span><span class="o">.</span><span class="n">stars</span> <span class="o">=</span> <span class="n">stars</span>
+
+    <span class="n">selected</span> <span class="o">=</span> <span class="n">guides</span><span class="o">.</span><span class="n">select_catalog</span><span class="p">(</span><span class="n">stars</span><span class="p">)</span>
+    <span class="c1"># Should return the first available set</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">selected</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+
+    <span class="c1"># And there should be a 0 score log entry</span>
+    <span class="k">assert</span> <span class="p">(</span>
+        <span class="n">guides</span><span class="o">.</span><span class="n">log_info</span><span class="p">[</span><span class="s2">&quot;events&quot;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;data&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;Selected stars with weighted score 0&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># And that this still works if there are no &quot;combinations to check&quot;</span>
+    <span class="n">guides</span><span class="o">.</span><span class="n">n_guide</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="n">selected3</span> <span class="o">=</span> <span class="n">guides</span><span class="o">.</span><span class="n">select_catalog</span><span class="p">(</span><span class="n">stars</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">selected3</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
+    <span class="k">assert</span> <span class="p">(</span>
+        <span class="n">guides</span><span class="o">.</span><span class="n">log_info</span><span class="p">[</span><span class="s2">&quot;events&quot;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;data&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;Selected stars with weighted score 0&quot;</span>
+    <span class="p">)</span>
+    <span class="k">assert</span> <span class="n">guides</span><span class="o">.</span><span class="n">log_info</span><span class="p">[</span><span class="s2">&quot;events&quot;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;tried_combinations&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span>
+
+    <span class="c1"># If we have more force-included stars than n_guide, we should hit the</span>
+    <span class="c1"># full fallback text as no combination will be evaluated.</span>
+    <span class="n">guides</span><span class="o">.</span><span class="n">n_guide</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">guides</span><span class="o">.</span><span class="n">include_ids</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+    <span class="n">selected3</span> <span class="o">=</span> <span class="n">guides</span><span class="o">.</span><span class="n">select_catalog</span><span class="p">(</span><span class="n">stars</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">selected3</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+    <span class="k">assert</span> <span class="n">guides</span><span class="o">.</span><span class="n">log_info</span><span class="p">[</span><span class="s2">&quot;events&quot;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;data&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="p">(</span>
+        <span class="s2">&quot;WARNING: No combination satisfied any checks, returning first available set&quot;</span>
+    <span class="p">)</span>
+    <span class="k">assert</span> <span class="n">guides</span><span class="o">.</span><span class="n">log_info</span><span class="p">[</span><span class="s2">&quot;events&quot;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;tried_combinations&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span>
+
+
 <div class="viewcode-block" id="test_guides_include_exclude">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_guide.test_guides_include_exclude">[docs]</a>
-<span class="k">def</span> <span class="nf">test_guides_include_exclude</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_guides_include_exclude</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test include and exclude stars for guide.  This uses a catalog with 11 stars:</span>
 <span class="sd">    - 8 bright stars from 7.0 to 7.7 mag, where the 7.0 is EXCLUDED</span>
@@ -698,7 +870,15 @@
     <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="n">id_</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">guides</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">id_</span> <span class="ow">in</span> <span class="n">exclude_ids</span><span class="p">)</span>
 
     <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">guides</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="p">[</span><span class="mi">9</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">])</span>
-    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">guides</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">],</span> <span class="p">[</span><span class="mf">10.0</span><span class="p">,</span> <span class="mf">12.0</span><span class="p">,</span> <span class="mf">7.1</span><span class="p">,</span> <span class="mf">7.2</span><span class="p">,</span> <span class="mf">7.3</span><span class="p">,</span> <span class="mf">7.4</span><span class="p">,</span> <span class="mf">7.5</span><span class="p">,</span> <span class="mf">7.6</span><span class="p">])</span></div>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">guides</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">],</span> <span class="p">[</span><span class="mf">10.0</span><span class="p">,</span> <span class="mf">12.0</span><span class="p">,</span> <span class="mf">7.1</span><span class="p">,</span> <span class="mf">7.2</span><span class="p">,</span> <span class="mf">7.3</span><span class="p">,</span> <span class="mf">7.4</span><span class="p">,</span> <span class="mf">7.5</span><span class="p">,</span> <span class="mf">7.6</span><span class="p">])</span>
+
+    <span class="c1"># Now force-include more stars that n_guide</span>
+    <span class="n">include_ids</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">]</span>
+    <span class="n">guides2</span> <span class="o">=</span> <span class="n">get_guide_catalog</span><span class="p">(</span>
+        <span class="o">**</span><span class="n">mod_std_info</span><span class="p">(</span><span class="n">n_guide</span><span class="o">=</span><span class="mi">6</span><span class="p">),</span> <span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span> <span class="n">include_ids</span><span class="o">=</span><span class="n">include_ids</span>
+    <span class="p">)</span>
+    <span class="c1"># And confirm there are just 6 guide stars</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">guides2</span><span class="p">)</span> <span class="o">==</span> <span class="mi">6</span></div>
 
 
 
@@ -707,7 +887,7 @@
 
 <div class="viewcode-block" id="test_guides_include_bad">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_guide.test_guides_include_bad">[docs]</a>
-<span class="k">def</span> <span class="nf">test_guides_include_bad</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_guides_include_bad</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test include stars for guide where star is bad for some reason.</span>
 
@@ -750,7 +930,7 @@
 
 <div class="viewcode-block" id="test_guides_include_close">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_guide.test_guides_include_close">[docs]</a>
-<span class="k">def</span> <span class="nf">test_guides_include_close</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_guides_include_close</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test force include stars where they would not be selected due to</span>
 <span class="sd">    clustering.</span>
@@ -768,9 +948,8 @@
 
     <span class="n">cat1</span> <span class="o">=</span> <span class="n">get_guide_catalog</span><span class="p">(</span><span class="o">**</span><span class="n">mod_std_info</span><span class="p">(</span><span class="n">n_guide</span><span class="o">=</span><span class="mi">5</span><span class="p">),</span> <span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">)</span>
 
-    <span class="c1"># Run the cluster checks and confirm all 3 pass</span>
-    <span class="n">cat1_pass</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">run_select_checks</span><span class="p">(</span><span class="n">cat1</span><span class="p">)</span>
-    <span class="k">assert</span> <span class="n">cat1_pass</span> <span class="o">==</span> <span class="mi">3</span>
+    <span class="n">cluster_check_sum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">run_cluster_checks</span><span class="p">(</span><span class="n">cat1</span><span class="p">))</span>
+    <span class="k">assert</span> <span class="n">cluster_check_sum</span> <span class="o">==</span> <span class="mi">3</span>
 
     <span class="c1"># Confirm that only bright stars are used</span>
     <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">cat1</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mf">7.0</span><span class="p">)</span> <span class="o">==</span> <span class="mi">5</span>
@@ -784,9 +963,9 @@
     <span class="p">)</span>
 
     <span class="c1"># Run the cluster checks and confirm all 3 fail</span>
-    <span class="n">cat2_pass</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">run_select_checks</span><span class="p">(</span><span class="n">cat2</span><span class="p">)</span>
-    <span class="k">assert</span> <span class="n">cat2_pass</span> <span class="o">==</span> <span class="mi">0</span>
-    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">include_ids</span><span class="p">,</span> <span class="n">cat2</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]))</span>
+    <span class="n">cluster_check_sum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">run_cluster_checks</span><span class="p">(</span><span class="n">cat2</span><span class="p">))</span>
+    <span class="k">assert</span> <span class="n">cluster_check_sum</span> <span class="o">==</span> <span class="mi">0</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">include_ids</span><span class="p">,</span> <span class="n">cat2</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]))</span>
     <span class="c1"># And confirm that only one of the bright stars is used</span>
     <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">cat2</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mf">7.0</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span></div>
 
@@ -795,7 +974,7 @@
 <div class="viewcode-block" id="test_edge_star">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_guide.test_edge_star">[docs]</a>
 <span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span><span class="s2">&quot;dither&quot;</span><span class="p">,</span> <span class="n">dither_cases</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">test_edge_star</span><span class="p">(</span><span class="n">dither</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_edge_star</span><span class="p">(</span><span class="n">dither</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Add stars right at row and col max for various dithers.</span>
 <span class="sd">    This test both confirms that the dark map extraction doesn&#39;t break and that</span>
@@ -848,9 +1027,45 @@
 
 
 
+<span class="n">monitor_cases</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span><span class="s2">&quot;yang&quot;</span><span class="p">:</span> <span class="mi">300</span><span class="p">,</span> <span class="s2">&quot;zang&quot;</span><span class="p">:</span> <span class="mi">500</span><span class="p">,</span> <span class="s2">&quot;selected&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;yang&quot;</span><span class="p">:</span> <span class="mi">233</span><span class="p">,</span> <span class="s2">&quot;zang&quot;</span><span class="p">:</span> <span class="mi">500</span><span class="p">,</span> <span class="s2">&quot;selected&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;yang&quot;</span><span class="p">:</span> <span class="mi">232</span><span class="p">,</span> <span class="s2">&quot;zang&quot;</span><span class="p">:</span> <span class="mi">500</span><span class="p">,</span> <span class="s2">&quot;selected&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;yang&quot;</span><span class="p">:</span> <span class="mi">367</span><span class="p">,</span> <span class="s2">&quot;zang&quot;</span><span class="p">:</span> <span class="mi">500</span><span class="p">,</span> <span class="s2">&quot;selected&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;yang&quot;</span><span class="p">:</span> <span class="mi">368</span><span class="p">,</span> <span class="s2">&quot;zang&quot;</span><span class="p">:</span> <span class="mi">500</span><span class="p">,</span> <span class="s2">&quot;selected&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;yang&quot;</span><span class="p">:</span> <span class="mi">300</span><span class="p">,</span> <span class="s2">&quot;zang&quot;</span><span class="p">:</span> <span class="mi">432</span><span class="p">,</span> <span class="s2">&quot;selected&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;yang&quot;</span><span class="p">:</span> <span class="mi">300</span><span class="p">,</span> <span class="s2">&quot;zang&quot;</span><span class="p">:</span> <span class="mi">433</span><span class="p">,</span> <span class="s2">&quot;selected&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;yang&quot;</span><span class="p">:</span> <span class="mi">300</span><span class="p">,</span> <span class="s2">&quot;zang&quot;</span><span class="p">:</span> <span class="mi">568</span><span class="p">,</span> <span class="s2">&quot;selected&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;yang&quot;</span><span class="p">:</span> <span class="mi">300</span><span class="p">,</span> <span class="s2">&quot;zang&quot;</span><span class="p">:</span> <span class="mi">567</span><span class="p">,</span> <span class="s2">&quot;selected&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">},</span>
+<span class="p">]</span>
+
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span><span class="s2">&quot;case&quot;</span><span class="p">,</span> <span class="n">monitor_cases</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_monitor_star_keepout</span><span class="p">(</span><span class="n">case</span><span class="p">):</span>
+    <span class="n">mon_y</span> <span class="o">=</span> <span class="mi">300</span>
+    <span class="n">mon_z</span> <span class="o">=</span> <span class="mi">500</span>
+    <span class="n">star_id</span> <span class="o">=</span> <span class="mi">999999</span>
+    <span class="n">stars</span> <span class="o">=</span> <span class="n">StarsTable</span><span class="o">.</span><span class="n">empty</span><span class="p">()</span>
+    <span class="n">stars</span><span class="o">.</span><span class="n">add_fake_constellation</span><span class="p">(</span><span class="n">n_stars</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">mag</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+    <span class="n">stars</span><span class="o">.</span><span class="n">add_fake_star</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">star_id</span><span class="p">,</span> <span class="n">yang</span><span class="o">=</span><span class="n">case</span><span class="p">[</span><span class="s2">&quot;yang&quot;</span><span class="p">],</span> <span class="n">zang</span><span class="o">=</span><span class="n">case</span><span class="p">[</span><span class="s2">&quot;zang&quot;</span><span class="p">],</span> <span class="n">mag</span><span class="o">=</span><span class="mf">6.0</span><span class="p">)</span>
+    <span class="n">kwargs</span> <span class="o">=</span> <span class="n">mod_std_info</span><span class="p">(</span>
+        <span class="n">att</span><span class="o">=</span><span class="n">stars</span><span class="o">.</span><span class="n">att</span><span class="p">,</span>
+        <span class="n">n_fid</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">n_guide</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+        <span class="n">monitors</span><span class="o">=</span><span class="p">[[</span><span class="n">mon_y</span><span class="p">,</span> <span class="n">mon_z</span><span class="p">,</span> <span class="n">MonCoord</span><span class="o">.</span><span class="n">YAGZAG</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">,</span> <span class="n">MonFunc</span><span class="o">.</span><span class="n">MON_TRACK</span><span class="p">]],</span>
+    <span class="p">)</span>
+    <span class="n">mons</span> <span class="o">=</span> <span class="n">get_mon_catalog</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">guide</span> <span class="o">=</span> <span class="n">get_guide_catalog</span><span class="p">(</span>
+        <span class="o">**</span><span class="n">mod_std_info</span><span class="p">(</span><span class="n">att</span><span class="o">=</span><span class="n">stars</span><span class="o">.</span><span class="n">att</span><span class="p">,</span> <span class="n">n_fid</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_guide</span><span class="o">=</span><span class="mi">5</span><span class="p">),</span>
+        <span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span>
+        <span class="n">mons</span><span class="o">=</span><span class="n">mons</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="n">star_id</span> <span class="ow">in</span> <span class="n">guide</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="n">case</span><span class="p">[</span><span class="s2">&quot;selected&quot;</span><span class="p">]</span>
+
+
 <div class="viewcode-block" id="test_get_ax_range">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_guide.test_get_ax_range">[docs]</a>
-<span class="k">def</span> <span class="nf">test_get_ax_range</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_get_ax_range</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Confirm that the ranges from get_ax_range are reasonable for a variety of</span>
 <span class="sd">    center pixel locations and extents (extent = 4 + pix_dither)</span>
@@ -872,9 +1087,248 @@
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">test_filter_candidates_for_fids</span><span class="p">():</span>
+    <span class="n">stars</span> <span class="o">=</span> <span class="n">StarsTable</span><span class="o">.</span><span class="n">empty</span><span class="p">()</span>
+    <span class="n">stars</span><span class="o">.</span><span class="n">add_fake_constellation</span><span class="p">(</span><span class="n">n_stars</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+    <span class="n">args</span> <span class="o">=</span> <span class="n">mod_std_info</span><span class="p">(</span><span class="n">detector</span><span class="o">=</span><span class="s2">&quot;ACIS-I&quot;</span><span class="p">,</span> <span class="n">include_ids_fid</span><span class="o">=</span><span class="p">[</span><span class="mi">6</span><span class="p">])</span>
+    <span class="n">fids</span> <span class="o">=</span> <span class="n">get_fid_catalog</span><span class="p">(</span><span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span> <span class="n">guide_cands</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span> <span class="o">**</span><span class="n">args</span><span class="p">)</span>
+
+    <span class="c1"># For the nominal ACIS-I FID 6 position here of -69.87 345.27</span>
+    <span class="c1"># a star will cause the fid trap if it has about the same distance</span>
+    <span class="c1"># to the register as the fid distance to the trap.</span>
+    <span class="c1"># Either positive or negative row works so this test is parameterized.</span>
+    <span class="n">stars</span><span class="o">.</span><span class="n">add_fake_star</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">1001</span><span class="p">,</span> <span class="n">mag</span><span class="o">=</span><span class="mf">7.0</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">400</span><span class="p">)</span>
+
+    <span class="n">initial_guide_cands</span> <span class="o">=</span> <span class="n">get_guide_candidates</span><span class="p">(</span><span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span> <span class="o">**</span><span class="n">args</span><span class="p">)</span>
+    <span class="n">guide</span> <span class="o">=</span> <span class="n">get_guide_catalog</span><span class="p">(</span>
+        <span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span> <span class="n">initial_guide_cands</span><span class="o">=</span><span class="n">initial_guide_cands</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="o">**</span><span class="n">args</span>
+    <span class="p">)</span>
+    <span class="c1"># Stub in fids to guide for filtering test</span>
+    <span class="n">guide</span><span class="o">.</span><span class="n">fids</span> <span class="o">=</span> <span class="n">fids</span>
+    <span class="c1"># Confirm the trap star is in the candidates before filtering.</span>
+    <span class="k">assert</span> <span class="mi">1001</span> <span class="ow">in</span> <span class="n">guide</span><span class="o">.</span><span class="n">cand_guides</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span>
+    <span class="c1"># Run the filtering.</span>
+    <span class="n">filtered</span> <span class="o">=</span> <span class="n">guide</span><span class="o">.</span><span class="n">filter_candidates_for_fids</span><span class="p">(</span><span class="n">guide</span><span class="o">.</span><span class="n">cand_guides</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="mi">1001</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">filtered</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_filter_candidates_for_monitors</span><span class="p">():</span>
+    <span class="n">stars</span> <span class="o">=</span> <span class="n">StarsTable</span><span class="o">.</span><span class="n">empty</span><span class="p">()</span>
+    <span class="n">stars</span><span class="o">.</span><span class="n">add_fake_constellation</span><span class="p">(</span><span class="n">n_stars</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">mod_std_info</span><span class="p">(</span><span class="n">detector</span><span class="o">=</span><span class="s2">&quot;ACIS-I&quot;</span><span class="p">)</span>
+
+    <span class="n">monitors</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">50</span><span class="p">,</span> <span class="o">-</span><span class="mi">50</span><span class="p">,</span> <span class="n">MonCoord</span><span class="o">.</span><span class="n">ROWCOL</span><span class="p">,</span> <span class="mf">7.5</span><span class="p">,</span> <span class="n">MonFunc</span><span class="o">.</span><span class="n">MON_TRACK</span><span class="p">]]</span>
+    <span class="n">mons</span> <span class="o">=</span> <span class="n">get_mon_catalog</span><span class="p">(</span><span class="n">monitors</span><span class="o">=</span><span class="n">monitors</span><span class="p">,</span> <span class="o">**</span><span class="n">args</span><span class="p">)</span>
+
+    <span class="n">stars</span><span class="o">.</span><span class="n">add_fake_star</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">1001</span><span class="p">,</span> <span class="n">mag</span><span class="o">=</span><span class="mf">7.5</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">col</span><span class="o">=-</span><span class="mi">50</span><span class="p">)</span>
+
+    <span class="n">initial_guide_cands</span> <span class="o">=</span> <span class="n">get_guide_candidates</span><span class="p">(</span><span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span> <span class="o">**</span><span class="n">args</span><span class="p">)</span>
+    <span class="n">guide_with_mons</span> <span class="o">=</span> <span class="n">get_guide_catalog</span><span class="p">(</span>
+        <span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span>
+        <span class="n">initial_guide_cands</span><span class="o">=</span><span class="n">initial_guide_cands</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span>
+        <span class="n">mons</span><span class="o">=</span><span class="n">mons</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">args</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># The monitor window with MON_TRACK should exclude the star</span>
+    <span class="k">assert</span> <span class="mi">1001</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">guide_with_mons</span><span class="o">.</span><span class="n">cand_guides</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="mi">1001</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">guide_with_mons</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span>
+    <span class="c1"># But it should still be in the initial candidates as the later filtering</span>
+    <span class="c1"># does not modify that table.</span>
+    <span class="n">initial_guide_cands_table1</span> <span class="o">=</span> <span class="n">initial_guide_cands</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="mi">1001</span> <span class="ow">in</span> <span class="n">initial_guide_cands_table1</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span>
+
+    <span class="n">guide_without_mons</span> <span class="o">=</span> <span class="n">get_guide_catalog</span><span class="p">(</span>
+        <span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span> <span class="n">initial_guide_cands</span><span class="o">=</span><span class="n">initial_guide_cands</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="o">**</span><span class="n">args</span>
+    <span class="p">)</span>
+    <span class="c1"># Without monitors, the star should be present in the initial candidates</span>
+    <span class="c1"># and in the selected table.</span>
+    <span class="k">assert</span> <span class="mi">1001</span> <span class="ow">in</span> <span class="n">guide_without_mons</span><span class="o">.</span><span class="n">cand_guides</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="mi">1001</span> <span class="ow">in</span> <span class="n">guide_without_mons</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span>
+    <span class="n">initial_guide_cands_table2</span> <span class="o">=</span> <span class="n">initial_guide_cands</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="mi">1001</span> <span class="ow">in</span> <span class="n">initial_guide_cands_table2</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_initial_guide_candidate_reuse</span><span class="p">():</span>
+    <span class="n">stars</span> <span class="o">=</span> <span class="n">StarsTable</span><span class="o">.</span><span class="n">empty</span><span class="p">()</span>
+    <span class="n">stars</span><span class="o">.</span><span class="n">add_fake_constellation</span><span class="p">(</span><span class="n">n_stars</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">mag</span><span class="o">=</span><span class="p">[</span><span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mf">9.5</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mf">10.5</span><span class="p">])</span>
+    <span class="n">kwargs</span> <span class="o">=</span> <span class="n">mod_std_info</span><span class="p">(</span>
+        <span class="n">att</span><span class="o">=</span><span class="n">stars</span><span class="o">.</span><span class="n">att</span><span class="p">,</span>
+        <span class="n">n_guide</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># Get initial guide candidates</span>
+    <span class="n">initial_guide_cands</span> <span class="o">=</span> <span class="n">get_guide_candidates</span><span class="p">(</span><span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="c1"># Add 2 bright stars</span>
+    <span class="n">stars</span><span class="o">.</span><span class="n">add_fake_star</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">1001</span><span class="p">,</span> <span class="n">mag</span><span class="o">=</span><span class="mf">6.0</span><span class="p">,</span> <span class="n">yang</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">zang</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">stars</span><span class="o">.</span><span class="n">add_fake_star</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">1002</span><span class="p">,</span> <span class="n">mag</span><span class="o">=</span><span class="mf">6.5</span><span class="p">,</span> <span class="n">yang</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">zang</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+
+    <span class="c1"># Select guide stars using initial candidates</span>
+    <span class="n">guides_with_reuse</span> <span class="o">=</span> <span class="n">get_guide_catalog</span><span class="p">(</span>
+        <span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span> <span class="n">initial_guide_cands</span><span class="o">=</span><span class="n">initial_guide_cands</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Confirm that the initial candidates were reused and the new bright stars</span>
+    <span class="c1"># were not selected even though they are brighter and in stars</span>
+    <span class="k">assert</span> <span class="mi">1001</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">guides_with_reuse</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="mi">1002</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">guides_with_reuse</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span>
+
+    <span class="n">guides_without_reuse</span> <span class="o">=</span> <span class="n">get_guide_catalog</span><span class="p">(</span><span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="c1"># Confirm that the new bright stars were selected when not reusing initial candidates</span>
+    <span class="k">assert</span> <span class="mi">1001</span> <span class="ow">in</span> <span class="n">guides_without_reuse</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="mi">1002</span> <span class="ow">in</span> <span class="n">guides_without_reuse</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="test_initial_guide_cands_do_not_change">
+<a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_guide.test_initial_guide_cands_do_not_change">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_initial_guide_cands_do_not_change</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test that .copy() prevents modifications to initial guide candidates.&quot;&quot;&quot;</span>
+
+    <span class="n">stars</span> <span class="o">=</span> <span class="n">StarsTable</span><span class="o">.</span><span class="n">empty</span><span class="p">()</span>
+    <span class="n">stars</span><span class="o">.</span><span class="n">add_fake_constellation</span><span class="p">(</span><span class="n">n_stars</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">mag</span><span class="o">=</span><span class="p">[</span><span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mf">9.5</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mf">10.5</span><span class="p">,</span> <span class="mi">11</span><span class="p">])</span>
+    <span class="n">kwargs</span> <span class="o">=</span> <span class="n">mod_std_info</span><span class="p">(</span><span class="n">att</span><span class="o">=</span><span class="n">stars</span><span class="o">.</span><span class="n">att</span><span class="p">,</span> <span class="n">n_guide</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+
+    <span class="c1"># Get initial guide candidates</span>
+    <span class="n">initial_guide_cands</span> <span class="o">=</span> <span class="n">get_guide_candidates</span><span class="p">(</span><span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="c1"># Verify it returns an Astropy Table</span>
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">initial_guide_cands</span><span class="p">,</span> <span class="n">Table</span><span class="p">)</span>
+
+    <span class="c1"># Save original state for comparison</span>
+    <span class="n">original_ids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">initial_guide_cands</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">])</span>
+    <span class="n">original_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">initial_guide_cands</span><span class="p">)</span>
+    <span class="n">original_colnames</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">initial_guide_cands</span><span class="o">.</span><span class="n">colnames</span><span class="p">)</span>
+
+    <span class="c1"># Use it in multiple catalog selections with .copy()</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+        <span class="n">guides</span> <span class="o">=</span> <span class="n">get_guide_catalog</span><span class="p">(</span>
+            <span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span> <span class="n">initial_guide_cands</span><span class="o">=</span><span class="n">initial_guide_cands</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span>
+        <span class="c1"># Verify the guides table is mutable (as expected)</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">guides</span><span class="p">,</span> <span class="n">Table</span><span class="p">)</span>
+
+    <span class="c1"># Verify initial_guide_cands remains unchanged after using .copy()</span>
+    <span class="k">assert</span> <span class="nb">set</span><span class="p">(</span><span class="n">initial_guide_cands</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="n">original_ids</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">initial_guide_cands</span><span class="p">)</span> <span class="o">==</span> <span class="n">original_len</span>
+    <span class="k">assert</span> <span class="nb">list</span><span class="p">(</span><span class="n">initial_guide_cands</span><span class="o">.</span><span class="n">colnames</span><span class="p">)</span> <span class="o">==</span> <span class="n">original_colnames</span>
+
+    <span class="c1"># Now test the in-place modification behavior directly by calling process_exclude_ids</span>
+    <span class="c1"># This demonstrates why .copy() is necessary when reusing candidate tables</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">proseco.guide</span><span class="w"> </span><span class="kn">import</span> <span class="n">GuideTable</span>
+
+    <span class="n">initial_guide_cands_nocopy</span> <span class="o">=</span> <span class="n">get_guide_candidates</span><span class="p">(</span><span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">original_len_nocopy</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">initial_guide_cands_nocopy</span><span class="p">)</span>
+    <span class="n">original_ids_nocopy</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">initial_guide_cands_nocopy</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">])</span>
+
+    <span class="c1"># Get one of the candidate IDs to exclude</span>
+    <span class="n">exclude_id</span> <span class="o">=</span> <span class="n">initial_guide_cands_nocopy</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="c1"># Create a GuideTable instance and call process_exclude_ids directly</span>
+    <span class="n">guides_test</span> <span class="o">=</span> <span class="n">GuideTable</span><span class="p">()</span>
+    <span class="n">guides_test</span><span class="o">.</span><span class="n">set_attrs_from_kwargs</span><span class="p">(</span>
+        <span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span> <span class="n">exclude_ids_guide</span><span class="o">=</span><span class="p">[</span><span class="n">exclude_id</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Call process_exclude_ids which modifies the table in-place via remove_rows()</span>
+    <span class="n">guides_test</span><span class="o">.</span><span class="n">process_exclude_ids</span><span class="p">(</span><span class="n">initial_guide_cands_nocopy</span><span class="p">)</span>
+
+    <span class="c1"># Verify that initial_guide_cands_nocopy WAS modified when not using .copy()</span>
+    <span class="c1"># The excluded star should be removed from the original table</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">initial_guide_cands_nocopy</span><span class="p">)</span> <span class="o">==</span> <span class="n">original_len_nocopy</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="k">assert</span> <span class="n">exclude_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">initial_guide_cands_nocopy</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="nb">set</span><span class="p">(</span><span class="n">initial_guide_cands_nocopy</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">])</span> <span class="o">!=</span> <span class="n">original_ids_nocopy</span>
+
+    <span class="c1"># Verify the first test&#39;s table is STILL unchanged (wasn&#39;t affected by nocopy test)</span>
+    <span class="k">assert</span> <span class="nb">set</span><span class="p">(</span><span class="n">initial_guide_cands</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="n">original_ids</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">initial_guide_cands</span><span class="p">)</span> <span class="o">==</span> <span class="n">original_len</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_initial_guide_candidate_reuse_with_fids</span><span class="p">():</span>
+    <span class="n">stars</span> <span class="o">=</span> <span class="n">StarsTable</span><span class="o">.</span><span class="n">empty</span><span class="p">()</span>
+    <span class="n">kwargs</span> <span class="o">=</span> <span class="n">mod_std_info</span><span class="p">(</span><span class="n">detector</span><span class="o">=</span><span class="s2">&quot;ACIS-I&quot;</span><span class="p">)</span>
+    <span class="n">fids</span> <span class="o">=</span> <span class="n">get_fid_catalog</span><span class="p">(</span><span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="n">stars</span><span class="o">.</span><span class="n">add_fake_constellation</span><span class="p">(</span><span class="n">n_stars</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">mag</span><span class="o">=</span><span class="mi">7</span><span class="p">)</span>
+    <span class="c1"># add one star that would spoil a fid light</span>
+    <span class="n">stars</span><span class="o">.</span><span class="n">add_fake_star</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">1001</span><span class="p">,</span> <span class="n">mag</span><span class="o">=</span><span class="mf">7.0</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="n">fids</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;row&quot;</span><span class="p">],</span> <span class="n">col</span><span class="o">=</span><span class="n">fids</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;col&quot;</span><span class="p">])</span>
+
+    <span class="c1"># Get initial guide candidates</span>
+    <span class="n">initial_guide_cands</span> <span class="o">=</span> <span class="n">get_guide_candidates</span><span class="p">(</span><span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="n">guides_with_fids</span> <span class="o">=</span> <span class="n">get_guide_catalog</span><span class="p">(</span>
+        <span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span>
+        <span class="n">initial_guide_cands</span><span class="o">=</span><span class="n">initial_guide_cands</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span>
+        <span class="n">fids</span><span class="o">=</span><span class="n">fids</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">assert</span> <span class="mi">1001</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">guides_with_fids</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span>
+
+    <span class="c1"># Select guide stars using initial candidates</span>
+    <span class="n">guides_no_fids</span> <span class="o">=</span> <span class="n">get_guide_catalog</span><span class="p">(</span>
+        <span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span>
+        <span class="n">initial_guide_cands</span><span class="o">=</span><span class="n">initial_guide_cands</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># Confirm that the fid-spoiling star was selected when no fids are present</span>
+    <span class="c1"># and that it still exists in the initial candidates</span>
+    <span class="k">assert</span> <span class="mi">1001</span> <span class="ow">in</span> <span class="n">guides_no_fids</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span>
+    <span class="n">initial_guide_cands_table</span> <span class="o">=</span> <span class="n">initial_guide_cands</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="mi">1001</span> <span class="ow">in</span> <span class="n">initial_guide_cands_table</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="test_process_include_ids_columns">
+<a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_guide.test_process_include_ids_columns">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_process_include_ids_columns</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test that process_include_ids properly initializes columns for include_ids stars.</span>
+
+<span class="sd">    This verifies that when stars are added via include_ids, they have the imposter</span>
+<span class="sd">    magnitude columns properly initialized and not NaN or zero.  They aren&#39;t used</span>
+<span class="sd">    for force-included stars anyway, but might as well go through the motions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">stars</span> <span class="o">=</span> <span class="n">StarsTable</span><span class="o">.</span><span class="n">empty</span><span class="p">()</span>
+    <span class="n">stars</span><span class="o">.</span><span class="n">add_fake_constellation</span><span class="p">(</span><span class="n">n_stars</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">mag</span><span class="o">=</span><span class="p">[</span><span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mf">9.5</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mf">10.5</span><span class="p">])</span>
+    <span class="c1"># Add a star that would normally be filtered out (too faint or bad position)</span>
+    <span class="c1"># but we&#39;ll force include it</span>
+    <span class="n">stars</span><span class="o">.</span><span class="n">add_fake_star</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">999999</span><span class="p">,</span> <span class="n">mag</span><span class="o">=</span><span class="mf">11.0</span><span class="p">,</span> <span class="n">yang</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">zang</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+    <span class="n">kwargs</span> <span class="o">=</span> <span class="n">mod_std_info</span><span class="p">(</span>
+        <span class="n">att</span><span class="o">=</span><span class="n">stars</span><span class="o">.</span><span class="n">att</span><span class="p">,</span>
+        <span class="n">n_guide</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">guide_cands</span> <span class="o">=</span> <span class="n">get_guide_candidates</span><span class="p">(</span><span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="n">guide_cands_table</span> <span class="o">=</span> <span class="n">guide_cands</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="mi">999999</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">guide_cands_table</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span>
+    <span class="n">kwargs</span> <span class="o">=</span> <span class="n">mod_std_info</span><span class="p">(</span>
+        <span class="n">att</span><span class="o">=</span><span class="n">stars</span><span class="o">.</span><span class="n">att</span><span class="p">,</span>
+        <span class="n">n_guide</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+        <span class="n">include_ids_guide</span><span class="o">=</span><span class="p">[</span><span class="mi">999999</span><span class="p">],</span>  <span class="c1"># Force include the faint star</span>
+    <span class="p">)</span>
+
+    <span class="n">guides</span> <span class="o">=</span> <span class="n">get_guide_catalog</span><span class="p">(</span>
+        <span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span> <span class="n">initial_guide_cands</span><span class="o">=</span><span class="n">guide_cands</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Verify the star was included</span>
+    <span class="k">assert</span> <span class="mi">999999</span> <span class="ow">in</span> <span class="n">guides</span><span class="o">.</span><span class="n">cand_guides</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span>
+
+    <span class="c1"># Get the row for the included star</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">guides</span><span class="o">.</span><span class="n">cand_guides</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">999999</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">included_star</span> <span class="o">=</span> <span class="n">guides</span><span class="o">.</span><span class="n">cand_guides</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+
+    <span class="c1"># Verify imposter magnitude columns are initialized and not NaN or zero</span>
+    <span class="k">assert</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">included_star</span><span class="p">[</span><span class="s2">&quot;imp_mag&quot;</span><span class="p">])</span>
+    <span class="k">assert</span> <span class="n">included_star</span><span class="p">[</span><span class="s2">&quot;imp_mag&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="mf">0.0</span>
+    <span class="k">assert</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">included_star</span><span class="p">[</span><span class="s2">&quot;imp_r&quot;</span><span class="p">])</span>
+    <span class="k">assert</span> <span class="n">included_star</span><span class="p">[</span><span class="s2">&quot;imp_r&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="mf">0.0</span>
+    <span class="k">assert</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">included_star</span><span class="p">[</span><span class="s2">&quot;imp_c&quot;</span><span class="p">])</span>
+    <span class="k">assert</span> <span class="n">included_star</span><span class="p">[</span><span class="s2">&quot;imp_c&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="mf">0.0</span></div>
+
+
+
 <div class="viewcode-block" id="test_make_report_guide">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_guide.test_make_report_guide">[docs]</a>
-<span class="k">def</span> <span class="nf">test_make_report_guide</span><span class="p">(</span><span class="n">tmpdir</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_make_report_guide</span><span class="p">(</span><span class="n">tmpdir</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test making a guide report.  Use a big-box dither here</span>
 <span class="sd">    to test handling of that in report (after passing through pickle).</span>
@@ -912,7 +1366,7 @@
 
 
 
-<span class="k">def</span> <span class="nf">test_guide_faint_mag_limit</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_guide_faint_mag_limit</span><span class="p">():</span>
     <span class="n">stars</span> <span class="o">=</span> <span class="n">StarsTable</span><span class="o">.</span><span class="n">empty</span><span class="p">()</span>
     <span class="n">ids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
 
@@ -943,7 +1397,7 @@
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
         <div class="sphinxsidebarwrapper"><h3>Page Contents</h3>
 
 
@@ -961,7 +1415,7 @@
     <a href="#">Back to Top</a></p>
   <p>
     &copy; Copyright 2018, Tom Aldcroft, Jean Connelly.<br/>
-    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 7.2.6. &nbsp;
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 9.1.0. &nbsp;
   </p>
 </footer>
   </body>

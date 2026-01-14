@@ -5,13 +5,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>API documentation &#8212; proseco 5.16.0 documentation</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <title>API documentation &#8212; proseco 5.18.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/bootstrap-astropy.css?v=f4f7060c" />
     
-    <script src="_static/documentation_options.js?v=f23352e5"></script>
-    <script src="_static/doctools.js?v=888ff710"></script>
-    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/documentation_options.js?v=35f5b738"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script type="text/javascript" src="_static/sidebar.js"></script>
     <script type="text/javascript" src="_static/copybutton.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -58,7 +58,7 @@
 	 |
       </li>
       <li>
-	<a href="index.html">proseco 5.16.0 documentation</a>
+	<a href="index.html">proseco 5.18.0 documentation</a>
 	 &#187;
       </li>
       
@@ -78,12 +78,12 @@
 <span id="full-catalog"></span><h2>Full catalog<a class="headerlink" href="#module-proseco.catalog" title="Link to this heading">¶</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="proseco.catalog.ACATable">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">proseco.catalog.</span></span><span class="sig-name descname"><span class="pre">ACATable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/catalog.html#ACATable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.catalog.ACATable" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">proseco.catalog.</span></span><span class="sig-name descname"><span class="pre">ACATable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/catalog.html#ACATable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.catalog.ACATable" title="Link to this definition">¶</a></dt>
 <dd><p>Container ACACatalogTable class that has merged guide / acq / fid catalogs
 as attributes and other methods relevant to the merged catalog.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="proseco.catalog.ACATable.empty">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">empty</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/catalog.html#ACATable.empty"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.catalog.ACATable.empty" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">empty</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/catalog.html#ACATable.empty"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.catalog.ACATable.empty" title="Link to this definition">¶</a></dt>
 <dd><p>Return a minimal ACACatalogTable which satisfies API requirements.  Currently
 this means that it has an ‘id’ column which can be examined for length.</p>
 <dl class="field-list simple">
@@ -137,15 +137,19 @@ images in that directory.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="proseco.catalog.ACATable.optimize_acqs_fids">
-<span class="sig-name descname"><span class="pre">optimize_acqs_fids</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/catalog.html#ACATable.optimize_acqs_fids"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.catalog.ACATable.optimize_acqs_fids" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">optimize_acqs_fids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">initial_guide_cands</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/catalog.html#ACATable.optimize_acqs_fids"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.catalog.ACATable.optimize_acqs_fids" title="Link to this definition">¶</a></dt>
 <dd><p>Concurrently optimize acqs and fids in the case where there is not
 already a good (no spoilers) fid set available.</p>
-<p>This updates the acqs and fids tables in place.</p>
+<p>This updates the acqs and fids tables in place. The optimization considers
+both acquisition star probability (P2) and guide star count to find the
+best fid set.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>acqs</strong> – AcqTable object</p></li>
-<li><p><strong>fids</strong> – FidTable object</p></li>
+<li><p><strong>initial_guide_cands</strong> – Table of initial guide candidates (typically from
+get_guide_candidates()). If None, guide candidates are generated internally.</p></li>
+<li><p><strong>**kwargs</strong> – <p>additional keyword arguments passed to get_guide_catalog()</p>
+</p></li>
 </ul>
 </dd>
 </dl>
@@ -180,7 +184,7 @@ temperature.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="proseco.catalog.ObcCat">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">proseco.catalog.</span></span><span class="sig-name descname"><span class="pre">ObcCat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/catalog.html#ObcCat"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.catalog.ObcCat" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">proseco.catalog.</span></span><span class="sig-name descname"><span class="pre">ObcCat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/catalog.html#ObcCat"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.catalog.ObcCat" title="Link to this definition">¶</a></dt>
 <dd><p>Slot-based catalog corresponding to OBC 8-element acq and guide catalogs.</p>
 <p>Each row is a catalog object (acq, guide, fid, mon) with a dict-like
 interface (dict or Table Row). This class is a list subclass with special
@@ -359,7 +363,7 @@ Merged catalog</p>
 <a class="reference external" href="https://docs.google.com/presentation/d/1VtFKAW9he2vWIQAnb6unpK4u1bVAVziIdX9TnqRS3a8">https://docs.google.com/presentation/d/1VtFKAW9he2vWIQAnb6unpK4u1bVAVziIdX9TnqRS3a8</a></p>
 <dl class="py class">
 <dt class="sig sig-object py" id="proseco.acq.AcqTable">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">proseco.acq.</span></span><span class="sig-name descname"><span class="pre">AcqTable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/acq.html#AcqTable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.acq.AcqTable" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">proseco.acq.</span></span><span class="sig-name descname"><span class="pre">AcqTable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/acq.html#AcqTable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.acq.AcqTable" title="Link to this definition">¶</a></dt>
 <dd><p>Catalog of acquisition stars</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="proseco.acq.AcqTable.calc_p_brightest">
@@ -403,7 +407,7 @@ in to the catalog beyond the brightest stars.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="proseco.acq.AcqTable.empty">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">empty</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/acq.html#AcqTable.empty"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.acq.AcqTable.empty" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">empty</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/acq.html#AcqTable.empty"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.acq.AcqTable.empty" title="Link to this definition">¶</a></dt>
 <dd><p>Return a minimal ACACatalogTable which satisfies API requirements.  For AcqTable
 it should have ‘id’ and ‘halfw’ columns.</p>
 <dl class="field-list simple">
@@ -715,7 +719,7 @@ pick up the new fid set.
 
 <dl class="py function">
 <dt class="sig sig-object py" id="proseco.acq.boxes_overlap">
-<span class="sig-prename descclassname"><span class="pre">proseco.acq.</span></span><span class="sig-name descname"><span class="pre">boxes_overlap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">z1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">halfw1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">cand_acqs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#proseco.acq.AcqTable" title="proseco.acq.AcqTable"><span class="pre">AcqTable</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">box_sizes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><span class="pre">list</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">acq_indices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><span class="pre">list</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></span></span><a class="reference internal" href="_modules/proseco/acq.html#boxes_overlap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.acq.boxes_overlap" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">proseco.acq.</span></span><span class="sig-name descname"><span class="pre">boxes_overlap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">z1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">halfw1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">cand_acqs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#proseco.acq.AcqTable" title="proseco.acq.AcqTable"><span class="pre">AcqTable</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">box_sizes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">acq_indices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></span><a class="reference internal" href="_modules/proseco/acq.html#boxes_overlap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.acq.boxes_overlap" title="Link to this definition">¶</a></dt>
 <dd><p>Check if candidate new acq box overlaps with already selected acq boxes.</p>
 <p>This checks for overlaps between the box defined by (y1, z1, halfw1) and the boxes
 defined by the rows in <code class="docutils literal notranslate"><span class="pre">cand_acqs</span></code> (yang and zang) and <code class="docutils literal notranslate"><span class="pre">box_sizes</span></code> with indices
@@ -789,7 +793,7 @@ of the CCD.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="proseco.acq.filter_box_sizes_for_maxmag">
-<span class="sig-prename descclassname"><span class="pre">proseco.acq.</span></span><span class="sig-name descname"><span class="pre">filter_box_sizes_for_maxmag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_err</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">box_sizes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_ccd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/proseco/acq.html#filter_box_sizes_for_maxmag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.acq.filter_box_sizes_for_maxmag" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">proseco.acq.</span></span><span class="sig-name descname"><span class="pre">filter_box_sizes_for_maxmag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_err</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">box_sizes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_ccd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/proseco/acq.html#filter_box_sizes_for_maxmag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.acq.filter_box_sizes_for_maxmag" title="Link to this definition">¶</a></dt>
 <dd><p>Filter the list of box sizes</p>
 <p>First compute the smallest allowed value of MAXMAG for this star, which is
 the star mag + 3 times the star mag error (clipped to be within 0.5 to 1.5
@@ -922,7 +926,7 @@ If not already in acq then call <code class="docutils literal notranslate"><span
 
 <dl class="py function">
 <dt class="sig sig-object py" id="proseco.acq.get_maxmag">
-<span class="sig-prename descclassname"><span class="pre">proseco.acq.</span></span><span class="sig-name descname"><span class="pre">get_maxmag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">box_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_ccd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span></span><a class="reference internal" href="_modules/proseco/acq.html#get_maxmag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.acq.get_maxmag" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">proseco.acq.</span></span><span class="sig-name descname"><span class="pre">get_maxmag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">box_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_ccd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></span><a class="reference internal" href="_modules/proseco/acq.html#get_maxmag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.acq.get_maxmag" title="Link to this definition">¶</a></dt>
 <dd><p>Get maxmag for given box_size and t_ccd.</p>
 <p>This corresponds to the MAXMAG that results in exactly 50 search hits. See
 <a class="reference external" href="https://occweb.cfa.harvard.edu/twiki/bin/view/Aspect/PeaMaxMagTesting">https://occweb.cfa.harvard.edu/twiki/bin/view/Aspect/PeaMaxMagTesting</a>.</p>
@@ -993,7 +997,7 @@ background subtraction and warm pixel corruption of background.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="proseco.acq.load_maxmags">
-<span class="sig-prename descclassname"><span class="pre">proseco.acq.</span></span><span class="sig-name descname"><span class="pre">load_maxmags</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><span class="pre">dict</span></a></span></span><a class="reference internal" href="_modules/proseco/acq.html#load_maxmags"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.acq.load_maxmags" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">proseco.acq.</span></span><span class="sig-name descname"><span class="pre">load_maxmags</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a></span></span><a class="reference internal" href="_modules/proseco/acq.html#load_maxmags"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.acq.load_maxmags" title="Link to this definition">¶</a></dt>
 <dd><p>Load maxmags from disk.</p>
 <p>Maxmag data made with analysis/interpolate-maxmags-contour-plot.ipynb</p>
 </dd></dl>
@@ -1003,7 +1007,7 @@ background subtraction and warm pixel corruption of background.</p>
 <span id="guide"></span><h2>Guide<a class="headerlink" href="#module-proseco.guide" title="Link to this heading">¶</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="proseco.guide.GuideTable">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">proseco.guide.</span></span><span class="sig-name descname"><span class="pre">GuideTable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/guide.html#GuideTable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.guide.GuideTable" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">proseco.guide.</span></span><span class="sig-name descname"><span class="pre">GuideTable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/guide.html#GuideTable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.guide.GuideTable" title="Link to this definition">¶</a></dt>
 <dd><dl class="py method">
 <dt class="sig sig-object py" id="proseco.guide.GuideTable.drop_excess_bonus_stars">
 <span class="sig-name descname"><span class="pre">drop_excess_bonus_stars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">guides</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/guide.html#GuideTable.drop_excess_bonus_stars"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.guide.GuideTable.drop_excess_bonus_stars" title="Link to this definition">¶</a></dt>
@@ -1032,6 +1036,32 @@ tracking space with another. Overlap is defined as being within 12 pixels.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="proseco.guide.GuideTable.filter_candidates_for_fids">
+<span class="sig-name descname"><span class="pre">filter_candidates_for_fids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cand_guides</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/guide.html#GuideTable.filter_candidates_for_fids"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.guide.GuideTable.filter_candidates_for_fids" title="Link to this definition">¶</a></dt>
+<dd><p>Filter candidate guide stars with regard to the selected fid lights.</p>
+<p>This method removes guide star candidates that would spoil or be spoiled by
+fid lights
+1. Fid trap effect: candidates that trigger readout artifacts from fid lights
+2. Direct spoiling: candidates too close to fid lights (within spoiler margin)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cand_guides</strong> – Table of candidate guide stars</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>filtered Table of candidate guide stars with spoiled stars removed</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="proseco.guide.GuideTable.filter_candidates_for_monitors">
+<span class="sig-name descname"><span class="pre">filter_candidates_for_monitors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cand_guides</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/guide.html#GuideTable.filter_candidates_for_monitors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.guide.GuideTable.filter_candidates_for_monitors" title="Link to this definition">¶</a></dt>
+<dd><p>Filter candidate guide stars that fall in monitor window keep-out zones.</p>
+<p>This directly excludes candidates near MON_FIXED and MON_TRACK windows,
+replacing the old approach of modifying the dark map.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="proseco.guide.GuideTable.get_candidates_mask">
 <span class="sig-name descname"><span class="pre">get_candidates_mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stars</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/guide.html#GuideTable.get_candidates_mask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.guide.GuideTable.get_candidates_mask" title="Link to this definition">¶</a></dt>
 <dd><p>Get base filter for acceptable candidates.</p>
@@ -1055,15 +1085,15 @@ defined in <code class="docutils literal notranslate"><span class="pre">core.get
 unless overridden by the PROSECO_OR_IMAGE_SIZE environment variable.</p>
 <p>This requires that the <code class="docutils literal notranslate"><span class="pre">fids</span></code> attribute has been set, normally by
 providing the table as an arg to <code class="docutils literal notranslate"><span class="pre">get_guide_catalog()</span></code>.</p>
-<section id="id1">
-<h3>Parameters<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h3>
+<section id="id3">
+<h3>Parameters<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>n_fids<span class="classifier">int or None</span></dt><dd><p>Number of fids in the catalog</p>
 </dd>
 </dl>
 </section>
-<section id="id2">
-<h3>Returns<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h3>
+<section id="id4">
+<h3>Returns<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>int</dt><dd><p>Guide star image readout size to be used in a catalog</p>
 </dd>
@@ -1096,14 +1126,9 @@ on the star brighter than M magnitudes fainter than the candidate (N is 5 and M 
 from the box_spoiler section of guide characteristics).  This check uses the
 <cite>has_spoiler_in_box</cite> method and is the first of many spoiler checks.  This spoiler
 check is not stage dependent.</p>
-<p>9. Filters the candidates to remova any that are spoiled by the fid trap (using
-<cite>check_fid_trap</cite> method).</p>
-<p>10. Puts any force include candidates from the include_ids parameter back in the candidate
-list if they were filtered out by an earlier filter in this routine.</p>
-<ol class="arabic simple" start="11">
-<li><p>Filters/removes any candidates that are force excluded (in exclude_ids).</p></li>
-</ol>
-<p>12. Uses the local dark current around each candidate to calculate an “imposter mag”
+<p>9. If Jupiter is present, filters the candidates to remove any that are within
+15 columns of Jupiter.</p>
+<p>10. Uses the local dark current around each candidate to calculate an “imposter mag”
 describing the brightest 2x2 in the region the star would dither over.  This is
 saved to the candidate star table.</p>
 </dd></dl>
@@ -1136,6 +1161,18 @@ in that directory.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="proseco.guide.GuideTable.process_exclude_ids">
+<span class="sig-name descname"><span class="pre">process_exclude_ids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cand_guides</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/guide.html#GuideTable.process_exclude_ids"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.guide.GuideTable.process_exclude_ids" title="Link to this definition">¶</a></dt>
+<dd><p>Remove any stars from cand_guides that are in exclude_ids.</p>
+<p>This works in-place on cand_guides.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cand_guides</strong> – candidate guide stars table</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="proseco.guide.GuideTable.process_include_ids">
 <span class="sig-name descname"><span class="pre">process_include_ids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cand_guides</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stars</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/guide.html#GuideTable.process_include_ids"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.guide.GuideTable.process_include_ids" title="Link to this definition">¶</a></dt>
 <dd><p>Ensure that the cand_guides table has stars that were forced to be included.</p>
@@ -1154,8 +1191,6 @@ in that directory.</p>
 <span class="sig-name descname"><span class="pre">process_monitors_post</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/guide.html#GuideTable.process_monitors_post"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.guide.GuideTable.process_monitors_post" title="Link to this definition">¶</a></dt>
 <dd><p>Post-processing of monitor windows.</p>
 <ul class="simple">
-<li><p>Clean up fake stars from stars and cand_guides</p></li>
-<li><p>Restore the dark current map</p></li>
 <li><p>Set type, sz, res, dim columns for relevant entries to reflect
 status as monitor or guide-from-monitor in the guides catalog.</p></li>
 </ul>
@@ -1275,10 +1310,16 @@ is set for the stage.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="proseco.guide.GuideTable.select_catalog">
 <span class="sig-name descname"><span class="pre">select_catalog</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stage_cands</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/guide.html#GuideTable.select_catalog"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.guide.GuideTable.select_catalog" title="Link to this definition">¶</a></dt>
-<dd><p>For the candidates selected at any stage (stage-assigned candidates?) select the
-first combination that satisfies the most number of extra tests.
-Here the extra tests are just the 3 checks for guide stars that are
-too tightly clustered.</p>
+<dd><p>Select a catalog from the candidates.</p>
+<p>For the candidates selected at any stage, select the first combination that satisfies
+either all of the additional checks or the most checks.  The checks are manually weighted
+so that the jupiter check is weighted more heavily than the cluster checks (but
+the jupiter check only applies if jupiter is present).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>stage_cands</strong> – Table of stage-selected candidates</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -1307,6 +1348,7 @@ between the star and the readout register, i.e. Column Spoilers.</p>
 <dt class="sig sig-object py" id="proseco.guide.check_fid_trap">
 <span class="sig-prename descclassname"><span class="pre">proseco.guide.</span></span><span class="sig-name descname"><span class="pre">check_fid_trap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cand_stars</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fids</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dither</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/guide.html#check_fid_trap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.guide.check_fid_trap" title="Link to this definition">¶</a></dt>
 <dd><p>Search for guide stars that would cause the fid trap issue and mark as spoilers.</p>
+<p>The “fid trap” issue is documented at <a class="reference external" href="https://cxc.cfa.harvard.edu/mta/ASPECT/aca_weird_pixels/">https://cxc.cfa.harvard.edu/mta/ASPECT/aca_weird_pixels/</a> .</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1412,12 +1454,42 @@ at least the requested extent.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="proseco.guide.get_guide_candidates">
+<span class="sig-prename descclassname"><span class="pre">proseco.guide.</span></span><span class="sig-name descname"><span class="pre">get_guide_candidates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obsid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/guide.html#get_guide_candidates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.guide.get_guide_candidates" title="Link to this definition">¶</a></dt>
+<dd><p>Get initial guide star candidates.</p>
+<p>This function creates a GuideTable and performs the initial filtering
+to generate candidate guide stars. The returned Table can be reused
+across multiple calls to get_guide_catalog() during optimization by
+passing a copy (via .copy()) to prevent modification.</p>
+<p>This explicitly ignores fid lights and monitor windows requests; these
+considerations are handled later in get_guide_catalog().</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obsid</strong> – obsid (default=0)</p></li>
+<li><p><strong>att</strong> – attitude (any object that can initialize Quat)</p></li>
+<li><p><strong>t_ccd</strong> – ACA CCD temperature (degC)</p></li>
+<li><p><strong>date</strong> – date of acquisition (any DateTime-compatible format)</p></li>
+<li><p><strong>dither</strong> – dither size (float or 2-element sequence (dither_y, dither_z), arcsec)</p></li>
+<li><p><strong>stars</strong> – astropy.Table of AGASC stars (will be fetched from agasc if None)</p></li>
+<li><p><strong>dark</strong> – ACAImage of dark map (fetched based on time and t_ccd if None)</p></li>
+<li><p><strong>**kwargs</strong> – <p>additional keyword arguments passed to GuideTable</p>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Astropy Table of initial guide candidates</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="proseco.guide.get_guide_candidates_mask">
-<span class="sig-prename descclassname"><span class="pre">proseco.guide.</span></span><span class="sig-name descname"><span class="pre">get_guide_candidates_mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stars</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Table</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_ccd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-10.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dyn_bgd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/proseco/guide.html#get_guide_candidates_mask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.guide.get_guide_candidates_mask" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">proseco.guide.</span></span><span class="sig-name descname"><span class="pre">get_guide_candidates_mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stars</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Table</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_ccd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-10.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dyn_bgd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/proseco/guide.html#get_guide_candidates_mask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.guide.get_guide_candidates_mask" title="Link to this definition">¶</a></dt>
 <dd><p>Get filter on <code class="docutils literal notranslate"><span class="pre">stars</span></code> for acceptable guide candidates.</p>
 <p>This does not include spatial filtering.</p>
-<section id="id3">
-<h3>Parameters<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h3>
+<section id="id7">
+<h3>Parameters<a class="headerlink" href="#id7" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>stars<span class="classifier">Table</span></dt><dd><p>Table of stars</p>
 </dd>
@@ -1427,8 +1499,8 @@ at least the requested extent.</p>
 </dd>
 </dl>
 </section>
-<section id="id4">
-<h3>Returns<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h3>
+<section id="id8">
+<h3>Returns<a class="headerlink" href="#id8" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>ok<span class="classifier">np.array of bool</span></dt><dd><p>Mask of acceptable stars</p>
 </dd>
@@ -1438,11 +1510,13 @@ at least the requested extent.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="proseco.guide.get_guide_catalog">
-<span class="sig-prename descclassname"><span class="pre">proseco.guide.</span></span><span class="sig-name descname"><span class="pre">get_guide_catalog</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obsid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/guide.html#get_guide_catalog"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.guide.get_guide_catalog" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">proseco.guide.</span></span><span class="sig-name descname"><span class="pre">get_guide_catalog</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obsid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_guide_cands</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/guide.html#get_guide_catalog"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.guide.get_guide_catalog" title="Link to this definition">¶</a></dt>
 <dd><p>Get a catalog of guide stars</p>
 <p>If <code class="docutils literal notranslate"><span class="pre">obsid</span></code> corresponds to an already-scheduled obsid then the parameters
 <code class="docutils literal notranslate"><span class="pre">att</span></code>, <code class="docutils literal notranslate"><span class="pre">t_ccd</span></code>, <code class="docutils literal notranslate"><span class="pre">date</span></code>, and <code class="docutils literal notranslate"><span class="pre">dither</span></code> will
 be fetched via <code class="docutils literal notranslate"><span class="pre">mica.starcheck</span></code> if not explicitly provided here.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">initial_guide_cands</span></code> is provided as an argument, it is assumed to be a
+Table of initial guide candidates (typically from get_guide_candidates().copy()).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1454,6 +1528,8 @@ be fetched via <code class="docutils literal notranslate"><span class="pre">mica
 <li><p><strong>n_guide</strong> – number of guide stars to attempt to get</p></li>
 <li><p><strong>fids</strong> – selected fids (used for guide star exclusion)</p></li>
 <li><p><strong>stars</strong> – astropy.Table of AGASC stars (will be fetched from agasc if None)</p></li>
+<li><p><strong>initial_guide_cands</strong> – Astropy Table of initial guide candidates
+(if None, a new one is created)</p></li>
 <li><p><strong>include_ids</strong> – list of AGASC IDs of stars to include in guide catalog</p></li>
 <li><p><strong>exclude_ids</strong> – list of AGASC IDs of stars to exclude from guide catalog</p></li>
 <li><p><strong>dark</strong> – ACAImage of dark map (fetched based on time and t_ccd if None)</p></li>
@@ -1508,6 +1584,29 @@ spoil_cnts = mag_to_count_rate(cand_mag) * (offset / (15 - offset))</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="proseco.guide.get_t_ccds_bonus">
+<span class="sig-prename descclassname"><span class="pre">proseco.guide.</span></span><span class="sig-name descname"><span class="pre">get_t_ccds_bonus</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mags</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_ccd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dyn_bgd_n_faint</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dyn_bgd_dt_ccd</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/guide.html#get_t_ccds_bonus"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.guide.get_t_ccds_bonus" title="Link to this definition">¶</a></dt>
+<dd><p>Return array of t_ccds with dynamic background bonus applied.</p>
+<p>This adds <code class="docutils literal notranslate"><span class="pre">dyn_bgd_dt_ccd</span></code> to the effective CCD temperature for the
+<code class="docutils literal notranslate"><span class="pre">dyn_bgd_n_faint</span></code> faintest stars, ensuring that at least MIN_DYN_BGD_ANCHOR_STARS
+are evaluated without the bonus. See:
+<a class="reference external" href="https://nbviewer.org/urls/cxc.harvard.edu/mta/ASPECT/ipynb/misc/guide-count-dyn-bgd.ipynb">https://nbviewer.org/urls/cxc.harvard.edu/mta/ASPECT/ipynb/misc/guide-count-dyn-bgd.ipynb</a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mags</strong> – array of star magnitudes</p></li>
+<li><p><strong>t_ccd</strong> – single T_ccd value (degC)</p></li>
+<li><p><strong>dyn_bgd_n_faint</strong> – number of faintest stars to apply bonus</p></li>
+<li><p><strong>dyn_bgd_dt_ccd</strong> – temperature offset to apply for dynamic background bonus (degC)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>array of t_ccds (matching <code class="docutils literal notranslate"><span class="pre">mags</span></code>) with dynamic background bonus applied</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="proseco.guide.has_spoiler_in_box">
 <span class="sig-prename descclassname"><span class="pre">proseco.guide.</span></span><span class="sig-name descname"><span class="pre">has_spoiler_in_box</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cand_guides</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stars</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">halfbox</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">magdiff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-4</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/guide.html#has_spoiler_in_box"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.guide.has_spoiler_in_box" title="Link to this definition">¶</a></dt>
 <dd><p>Check each candidate star for spoilers that would fall in a box centered on the star.
@@ -1530,15 +1629,14 @@ and a list of dicts with reject debug info</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="proseco.guide.run_select_checks">
-<span class="sig-prename descclassname"><span class="pre">proseco.guide.</span></span><span class="sig-name descname"><span class="pre">run_select_checks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cand_guide_set</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/guide.html#run_select_checks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.guide.run_select_checks" title="Link to this definition">¶</a></dt>
-<dd><p>Run boolean checks on a combination of candidate guide stars.
-Returns a sum of the status of the checks and the number of checks run.</p>
-<p>Presently this runs three checks to confirm that the set of stars
-is not too tightly packed.</p>
+<dt class="sig sig-object py" id="proseco.guide.run_cluster_checks">
+<span class="sig-prename descclassname"><span class="pre">proseco.guide.</span></span><span class="sig-name descname"><span class="pre">run_cluster_checks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cand_guide_set</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/guide.html#run_cluster_checks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.guide.run_cluster_checks" title="Link to this definition">¶</a></dt>
+<dd><p>Perform cluster checks on a combination of candidate guide stars.</p>
+<p>This performs a set of specific cluster checks on the provided cand_guide_set
+and returns a list of bools, one for each cluster check run.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>tuple (status sum, number of tests run)</p>
+<dd class="field-odd"><p>list of bools, one for each cluster check run</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1567,7 +1665,7 @@ list of dicts of reject debug info</p>
 <p>Get a catalog of fid lights.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="proseco.fid.FidTable">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">proseco.fid.</span></span><span class="sig-name descname"><span class="pre">FidTable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/fid.html#FidTable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.fid.FidTable" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">proseco.fid.</span></span><span class="sig-name descname"><span class="pre">FidTable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/fid.html#FidTable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.fid.FidTable" title="Link to this definition">¶</a></dt>
 <dd><dl class="py method">
 <dt class="sig sig-object py" id="proseco.fid.FidTable.get_cand_fid_sets">
 <span class="sig-name descname"><span class="pre">get_cand_fid_sets</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/fid.html#FidTable.get_cand_fid_sets"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.fid.FidTable.get_cand_fid_sets" title="Link to this definition">¶</a></dt>
@@ -1624,9 +1722,11 @@ impacted by a bad pixel.</p>
 <dd><p>Set initial fid catalog (fid set) if possible to the first set which is
 “perfect”:</p>
 <ul class="simple">
-<li><p>No field stars spoiler any of the fid lights</p></li>
+<li><p>No field stars spoil any of the fid lights</p></li>
 <li><p>Fid lights are not search spoilers for any of the current acq stars</p></li>
+<li><p>The fid set does not include any fid lights in the trap region if there</p></li>
 </ul>
+<p>are guide candidates that would trigger the fid trap effect.</p>
 <p>If not possible then the table is still zero length and we will need to
 fall through to the optimization process.</p>
 </dd></dl>
@@ -1640,13 +1740,18 @@ fall through to the optimization process.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="proseco.fid.FidTable.set_spoilers_score">
 <span class="sig-name descname"><span class="pre">set_spoilers_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fid</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/fid.html#FidTable.set_spoilers_score"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.fid.FidTable.set_spoilers_score" title="Link to this definition">¶</a></dt>
-<dd><p>Get stars within FID.spoiler_margin (50 arcsec) + dither.  Starcheck uses
-25” but this seems small: 20” (4 pix) positional err + 4 pixel readout
-halfw + 2 pixel PSF width of spoiler star.</p>
+<dd><p>Get stars within FID.spoiler_margin (50 arcsec) + dither and check for fid trap.</p>
+<p>Starcheck uses 25” but this seems small: 20” (4 pix) positional err + 4 pixel
+readout halfw + 2 pixel PSF width of spoiler star.</p>
 <p>This sets the ‘spoilers’ column value to a table of spoilers stars (usually empty).</p>
-<p>If also sets the ‘spoiler_score’ to 1 if there is a yellow spoiler
-(4 &lt;= star_mag - fid_mag &lt; 5) or 4 for red spoiler (star_mag - fid_mag &lt; 4).
-The spoiler score is used later to choose an acceptable set of fids and acq stars.</p>
+<p>It also sets the ‘spoiler_score’ based on:
+- 1 for yellow spoiler (4 &lt;= star_mag - fid_mag &lt; 5)
+- 4 for red spoiler (star_mag - fid_mag &lt; 4)</p>
+<p>Additionally, if the fid is in the fid_trap region and there is a potential guide
+candidate that would trigger the fid trap effect, the ‘fid_trap_spoiler’ flag is set.</p>
+<p>See  <a class="reference external" href="https://cxc.cfa.harvard.edu/mta/ASPECT/aca_weird_pixels/">https://cxc.cfa.harvard.edu/mta/ASPECT/aca_weird_pixels/</a> for more information on the
+“fid trap” issue.</p>
+<p>The spoiler score is used later to choose an acceptable set of fids and acq stars.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>fid</strong> – fid light (FidTable Row)</p>
@@ -1656,7 +1761,7 @@ The spoiler score is used later to choose an acceptable set of fids and acq star
 
 <dl class="py method">
 <dt class="sig sig-object py" id="proseco.fid.FidTable.spoils">
-<span class="sig-name descname"><span class="pre">spoils</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">box_size</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/fid.html#FidTable.spoils"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.fid.FidTable.spoils" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">spoils</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">star</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">box_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dither</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/fid.html#FidTable.spoils"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.fid.FidTable.spoils" title="Link to this definition">¶</a></dt>
 <dd><p>Return true if <code class="docutils literal notranslate"><span class="pre">fid</span></code> could be within <code class="docutils literal notranslate"><span class="pre">acq</span></code> search box.</p>
 <p>Includes:
 - 20” (4 pix) positional err on fid light
@@ -1668,12 +1773,13 @@ The spoiler score is used later to choose an acceptable set of fids and acq star
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>fid</strong> – fid light (FidTable Row)</p></li>
-<li><p><strong>acq</strong> – acq star (AcqTable Row)</p></li>
+<li><p><strong>star</strong> – star (AcqTable Row or GuideTable Row)</p></li>
 <li><p><strong>box_size</strong> – box size (arcsec)</p></li>
+<li><p><strong>dither</strong> – dither size (ACABox, arcsec)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>True if <code class="docutils literal notranslate"><span class="pre">fid</span></code> could be within <code class="docutils literal notranslate"><span class="pre">acq</span></code> search box</p>
+<dd class="field-even"><p>True if <code class="docutils literal notranslate"><span class="pre">fid</span></code> could be within <code class="docutils literal notranslate"><span class="pre">star</span></code> search box</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1699,6 +1805,7 @@ and acq stars is peformed.</p>
 <li><p><strong>focus_offset</strong> – SIM focus offset [steps] (default=0)</p></li>
 <li><p><strong>sim_offset</strong> – SIM translation offset from nominal [steps] (default=0)</p></li>
 <li><p><strong>acqs</strong> – AcqTable catalog.  Optional but needed for actual fid selection.</p></li>
+<li><p><strong>guide_cands</strong> – Table of initial guide candidates (used for star spoilers)</p></li>
 <li><p><strong>stars</strong> – stars table.  Defaults to acqs.stars if available.</p></li>
 <li><p><strong>dither_acq</strong> – acq dither size (2-element sequence (y, z), arcsec)</p></li>
 <li><p><strong>dither_guide</strong> – guide dither size (2-element sequence (y, z), arcsec)</p></li>
@@ -1717,7 +1824,7 @@ the id (aka index), no fids will be selected.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="proseco.fid.get_fid_positions">
-<span class="sig-prename descclassname"><span class="pre">proseco.fid.</span></span><span class="sig-name descname"><span class="pre">get_fid_positions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">detector</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">focus_offset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_offset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_ccd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CxoTime</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">_SupportsArray</span><span class="p"><span class="pre">[</span></span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.13)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">_NestedSequence</span><span class="p"><span class="pre">[</span></span><span class="pre">_SupportsArray</span><span class="p"><span class="pre">[</span></span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.13)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#complex" title="(in Python v3.13)"><span class="pre">complex</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes" title="(in Python v3.13)"><span class="pre">bytes</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">_NestedSequence</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#complex" title="(in Python v3.13)"><span class="pre">complex</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes" title="(in Python v3.13)"><span class="pre">bytes</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.13)"><span class="pre">tuple</span></a></span></span><a class="reference internal" href="_modules/proseco/fid.html#get_fid_positions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.fid.get_fid_positions" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">proseco.fid.</span></span><span class="sig-name descname"><span class="pre">get_fid_positions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">detector</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">focus_offset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_offset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_ccd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CxoTime</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Buffer" title="(in Python v3.14)"><span class="pre">Buffer</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">_SupportsArray</span><span class="p"><span class="pre">[</span></span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">_NestedSequence</span><span class="p"><span class="pre">[</span></span><span class="pre">_SupportsArray</span><span class="p"><span class="pre">[</span></span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#complex" title="(in Python v3.14)"><span class="pre">complex</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes" title="(in Python v3.14)"><span class="pre">bytes</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">_NestedSequence</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#complex" title="(in Python v3.14)"><span class="pre">complex</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes" title="(in Python v3.14)"><span class="pre">bytes</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a></span></span><a class="reference internal" href="_modules/proseco/fid.html#get_fid_positions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.fid.get_fid_positions" title="Link to this definition">¶</a></dt>
 <dd><p>Calculate the fid light positions for all fids for <code class="docutils literal notranslate"><span class="pre">detector</span></code>.</p>
 <p>This is adapted from the Matlab
 <a class="reference external" href="mailto:MissionScheduling/stars/StarSelector/&#37;&#52;&#48;StarSelector/private/fidPositions&#46;m">MissionScheduling/stars/StarSelector/<span>&#64;</span>StarSelector/private/fidPositions<span>&#46;</span>m</a>:</p>
@@ -1728,7 +1835,7 @@ the id (aka index), no fids will be selected.</p></li>
     <span class="n">error</span><span class="p">(</span><span class="s1">&#39;Focus is out of range&#39;</span><span class="p">);</span>
 <span class="n">end</span>
 
-<span class="o">%</span><span class="n">find</span> <span class="n">translation</span> <span class="kn">from</span> <span class="nn">sim</span> <span class="n">offset</span>
+<span class="o">%</span><span class="n">find</span> <span class="n">translation</span> <span class="kn">from</span><span class="w"> </span><span class="nn">sim</span> <span class="n">offset</span>
 <span class="n">stepsize</span> <span class="o">=</span> <span class="n">characteristics</span><span class="o">.</span><span class="n">Science</span><span class="o">.</span><span class="n">Sim</span><span class="o">.</span><span class="n">stepsize</span><span class="p">;</span>
 <span class="n">zshift</span> <span class="o">=</span> <span class="n">SIfield</span><span class="o">.</span><span class="n">fidpos</span><span class="p">(:,</span><span class="mi">2</span><span class="p">)</span><span class="o">-</span><span class="n">simoffset</span><span class="o">*</span><span class="n">stepsize</span><span class="p">;</span>
 
@@ -1759,7 +1866,7 @@ are supplied and the <code class="docutils literal notranslate"><span class="pre
 <span id="core"></span><h2>Core<a class="headerlink" href="#module-proseco.core" title="Link to this heading">¶</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="proseco.core.ACACatalogTable">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">proseco.core.</span></span><span class="sig-name descname"><span class="pre">ACACatalogTable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/core.html#ACACatalogTable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.ACACatalogTable" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">proseco.core.</span></span><span class="sig-name descname"><span class="pre">ACACatalogTable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/core.html#ACACatalogTable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.ACACatalogTable" title="Link to this definition">¶</a></dt>
 <dd><p>Base class for representing ACA catalogs in star selection.  This
 can apply to acq, guide and fid entries.</p>
 <p>Features:
@@ -1769,7 +1876,7 @@ can apply to acq, guide and fid entries.</p>
 - Predefined formatting for nicer representations</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="proseco.core.ACACatalogTable.empty">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">empty</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/core.html#ACACatalogTable.empty"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.ACACatalogTable.empty" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">empty</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/core.html#ACACatalogTable.empty"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.ACACatalogTable.empty" title="Link to this definition">¶</a></dt>
 <dd><p>Return a minimal ACACatalogTable which satisfies API requirements.  Currently
 this means that it has an ‘id’ column which can be examined for length.</p>
 <dl class="field-list simple">
@@ -1781,7 +1888,7 @@ this means that it has an ‘id’ column which can be examined for length.</p>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="proseco.core.ACACatalogTable.exception">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">exception</span></span><a class="headerlink" href="#proseco.core.ACACatalogTable.exception" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">exception</span></span><a class="headerlink" href="#proseco.core.ACACatalogTable.exception" title="Link to this definition">¶</a></dt>
 <dd><p>Return string traceback of a top-level caught exception, or “” (empty
 string) if no exception has been caught.  Mostly for use in Matlab
 interface.</p>
@@ -1789,7 +1896,7 @@ interface.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="proseco.core.ACACatalogTable.from_pickle">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_pickle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obsid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rootdir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/core.html#ACACatalogTable.from_pickle"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.ACACatalogTable.from_pickle" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_pickle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obsid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rootdir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/core.html#ACACatalogTable.from_pickle"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.ACACatalogTable.from_pickle" title="Link to this definition">¶</a></dt>
 <dd><dl class="simple">
 <dt>Construct table from pickle file in</dt><dd><p><code class="docutils literal notranslate"><span class="pre">&lt;rootdir&gt;/obs&lt;obsid&gt;/&lt;name&gt;.pkl</span></code></p>
 </dd>
@@ -1847,20 +1954,18 @@ is typically, but not required to be, a string).</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="proseco.core.ACACatalogTable.pformat">
 <span class="sig-name descname"><span class="pre">pformat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/core.html#ACACatalogTable.pformat"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.ACACatalogTable.pformat" title="Link to this definition">¶</a></dt>
-<dd><dl>
-<dt>Return a list of lines for the formatted string representation of</dt><dd><p>the table.</p>
-<p>If no value of <code class="docutils literal notranslate"><span class="pre">max_lines</span></code> is supplied then the height of the
+<dd><p>Return a list of lines for the formatted string representation of
+the table.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">max_lines=None</span></code> is supplied then the height of the
 screen terminal is used to set <code class="docutils literal notranslate"><span class="pre">max_lines</span></code>.  If the terminal
-height cannot be determined then the default is taken from the
-configuration item <code class="docutils literal notranslate"><span class="pre">astropy.conf.max_lines</span></code>.  If a negative
-value of <code class="docutils literal notranslate"><span class="pre">max_lines</span></code> is supplied then there is no line limit
-applied.</p>
+height cannot be determined then the default will be
+determined using the <code class="docutils literal notranslate"><span class="pre">astropy.conf.max_lines</span></code> configuration
+item. If a negative value of <code class="docutils literal notranslate"><span class="pre">max_lines</span></code> is supplied then
+there is no line limit applied (default).</p>
 <p>The same applies for <code class="docutils literal notranslate"><span class="pre">max_width</span></code> except the configuration item  is
 <code class="docutils literal notranslate"><span class="pre">astropy.conf.max_width</span></code>.</p>
-</dd>
-</dl>
-<section id="id5">
-<h3>Parameters<a class="headerlink" href="#id5" title="Link to this heading">¶</a></h3>
+<section id="id9">
+<h3>Parameters<a class="headerlink" href="#id9" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>max_lines<span class="classifier">int or None</span></dt><dd><p>Maximum number of rows to output</p>
 </dd>
@@ -1891,8 +1996,8 @@ None.</p>
 </dd>
 </dl>
 </section>
-<section id="id6">
-<h3>Returns<a class="headerlink" href="#id6" title="Link to this heading">¶</a></h3>
+<section id="id10">
+<h3>Returns<a class="headerlink" href="#id10" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>lines<span class="classifier">list</span></dt><dd><p>Formatted table as a list of strings.</p>
 </dd>
@@ -1918,8 +2023,7 @@ None.</p>
 <dt class="sig sig-object py" id="proseco.core.ACACatalogTable.pprint">
 <span class="sig-name descname"><span class="pre">pprint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/core.html#ACACatalogTable.pprint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.ACACatalogTable.pprint" title="Link to this definition">¶</a></dt>
 <dd><p>Print a formatted string representation of the table.</p>
-<blockquote>
-<div><p>If no value of <code class="docutils literal notranslate"><span class="pre">max_lines</span></code> is supplied then the height of the
+<p>If no value of <code class="docutils literal notranslate"><span class="pre">max_lines</span></code> is supplied then the height of the
 screen terminal is used to set <code class="docutils literal notranslate"><span class="pre">max_lines</span></code>.  If the terminal
 height cannot be determined then the default is taken from the
 configuration item <code class="docutils literal notranslate"><span class="pre">astropy.conf.max_lines</span></code>.  If a negative
@@ -1927,9 +2031,8 @@ value of <code class="docutils literal notranslate"><span class="pre">max_lines<
 applied.</p>
 <p>The same applies for max_width except the configuration item is
 <code class="docutils literal notranslate"><span class="pre">astropy.conf.max_width</span></code>.</p>
-</div></blockquote>
-<section id="id7">
-<h3>Parameters<a class="headerlink" href="#id7" title="Link to this heading">¶</a></h3>
+<section id="id11">
+<h3>Parameters<a class="headerlink" href="#id11" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>max_lines<span class="classifier">int or None</span></dt><dd><p>Maximum number of lines in table output.</p>
 </dd>
@@ -1970,7 +2073,7 @@ columns.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="proseco.core.ACACatalogTable.set_stars">
-<span class="sig-name descname"><span class="pre">set_stars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acqs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_near_fov</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></span><a class="reference internal" href="_modules/proseco/core.html#ACACatalogTable.set_stars"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.ACACatalogTable.set_stars" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">set_stars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acqs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_near_fov</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="_modules/proseco/core.html#ACACatalogTable.set_stars"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.ACACatalogTable.set_stars" title="Link to this definition">¶</a></dt>
 <dd><p>Set the object <code class="docutils literal notranslate"><span class="pre">stars</span></code> attribute to an appropriate StarsTable object.</p>
 <p>If <code class="docutils literal notranslate"><span class="pre">acqs</span></code> is defined that will be a previously computed AcqTable with
 <code class="docutils literal notranslate"><span class="pre">stars</span></code> already available, so use that.</p>
@@ -2000,7 +2103,7 @@ columns.</p>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="proseco.core.ACACatalogTable.warnings">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">warnings</span></span><a class="headerlink" href="#proseco.core.ACACatalogTable.warnings" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">warnings</span></span><a class="headerlink" href="#proseco.core.ACACatalogTable.warnings" title="Link to this definition">¶</a></dt>
 <dd><p>Return list of warnings in the event log.  This returns just the
 string message without context.</p>
 </dd></dl>
@@ -2009,7 +2112,7 @@ string message without context.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="proseco.core.AliasAttribute">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">proseco.core.</span></span><span class="sig-name descname"><span class="pre">AliasAttribute</span></span><a class="reference internal" href="_modules/proseco/core.html#AliasAttribute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.AliasAttribute" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">proseco.core.</span></span><span class="sig-name descname"><span class="pre">AliasAttribute</span></span><a class="reference internal" href="_modules/proseco/core.html#AliasAttribute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.AliasAttribute" title="Link to this definition">¶</a></dt>
 <dd><p>Descriptor to define class attributes which can be accessed via
 either &lt;name&gt; or &lt;name&gt;_&lt;subclass&gt;.</p>
 <p>For instance the <code class="docutils literal notranslate"><span class="pre">dither</span></code> attribute is found in both AcqTable and
@@ -2025,7 +2128,7 @@ or <code class="docutils literal notranslate"><span class="pre">dither_acq</span
 
 <dl class="py class">
 <dt class="sig sig-object py" id="proseco.core.BaseCatalogTable">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">proseco.core.</span></span><span class="sig-name descname"><span class="pre">BaseCatalogTable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/core.html#BaseCatalogTable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.BaseCatalogTable" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">proseco.core.</span></span><span class="sig-name descname"><span class="pre">BaseCatalogTable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/core.html#BaseCatalogTable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.BaseCatalogTable" title="Link to this definition">¶</a></dt>
 <dd><p>Base class for representing star catalogs or ACA (guide/acq/fid) catalogs.</p>
 <p>Features:
 - Inherits from astropy Table
@@ -2033,13 +2136,13 @@ or <code class="docutils literal notranslate"><span class="pre">dither_acq</span
 - Indexing on ‘id’ column</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="proseco.core.BaseCatalogTable.bad_stars">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">bad_stars</span></span><a class="headerlink" href="#proseco.core.BaseCatalogTable.bad_stars" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">bad_stars</span></span><a class="headerlink" href="#proseco.core.BaseCatalogTable.bad_stars" title="Link to this definition">¶</a></dt>
 <dd><p>Back-compatibility property for bad_stars_mask</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="proseco.core.BaseCatalogTable.bad_stars_mask">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">bad_stars_mask</span></span><a class="headerlink" href="#proseco.core.BaseCatalogTable.bad_stars_mask" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">bad_stars_mask</span></span><a class="headerlink" href="#proseco.core.BaseCatalogTable.bad_stars_mask" title="Link to this definition">¶</a></dt>
 <dd><p>Mask of stars that are not acceptable candidates for the parent class.  This
 basically applies to guide and acq, though ACACatalog uses a hybrid of
 those two.</p>
@@ -2121,7 +2224,7 @@ return ID for corresponding MON star (default=False)</p></li>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="proseco.core.StarsTable">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">proseco.core.</span></span><span class="sig-name descname"><span class="pre">StarsTable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/core.html#StarsTable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.StarsTable" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">proseco.core.</span></span><span class="sig-name descname"><span class="pre">StarsTable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/core.html#StarsTable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.StarsTable" title="Link to this definition">¶</a></dt>
 <dd><p>Table of stars for use in proseco.</p>
 <p>This is meant to be created only with available class methods:</p>
 <ul class="simple">
@@ -2204,7 +2307,7 @@ to default “good”” values that will preclude initial exclusion of the star
 
 <dl class="py method">
 <dt class="sig sig-object py" id="proseco.core.StarsTable.empty">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">empty</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">att</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0,</span> <span class="pre">0,</span> <span class="pre">0)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/core.html#StarsTable.empty"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.StarsTable.empty" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">empty</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">att</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0,</span> <span class="pre">0,</span> <span class="pre">0)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/core.html#StarsTable.empty"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.StarsTable.empty" title="Link to this definition">¶</a></dt>
 <dd><p>Return an empty StarsTable suitable for generating synthetic tables.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2218,7 +2321,7 @@ to default “good”” values that will preclude initial exclusion of the star
 
 <dl class="py method">
 <dt class="sig sig-object py" id="proseco.core.StarsTable.from_agasc">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_agasc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">att</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radius</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/core.html#StarsTable.from_agasc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.StarsTable.from_agasc" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_agasc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">att</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radius</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/core.html#StarsTable.from_agasc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.StarsTable.from_agasc" title="Link to this definition">¶</a></dt>
 <dd><p>Get AGASC stars in the ACA FOV.  This uses the proseco-AGASC, so only stars
 within 3-sigma of 11.5 mag or those nearby a potential guide/acq star are
 included.</p>
@@ -2242,7 +2345,7 @@ be set with the AGASC_DIR env var.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="proseco.core.StarsTable.from_agasc_ids">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_agasc_ids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">att</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">agasc_ids</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/core.html#StarsTable.from_agasc_ids"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.StarsTable.from_agasc_ids" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_agasc_ids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">att</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">agasc_ids</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/core.html#StarsTable.from_agasc_ids"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.StarsTable.from_agasc_ids" title="Link to this definition">¶</a></dt>
 <dd><p>Get AGASC stars in the ACA FOV using a list of AGASC IDs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2261,7 +2364,7 @@ be set with the AGASC_DIR env var.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="proseco.core.StarsTable.from_stars">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_stars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">att</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stars</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#proseco.core.StarsTable" title="proseco.core.StarsTable"><span class="pre">StarsTable</span></a></span></span><a class="reference internal" href="_modules/proseco/core.html#StarsTable.from_stars"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.StarsTable.from_stars" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_stars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">att</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stars</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#proseco.core.StarsTable" title="proseco.core.StarsTable"><span class="pre">StarsTable</span></a></span></span><a class="reference internal" href="_modules/proseco/core.html#StarsTable.from_stars"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.StarsTable.from_stars" title="Link to this definition">¶</a></dt>
 <dd><p>Return a StarsTable from an existing AGASC stars query.  This just updates
 columns in place.</p>
 <p>If <code class="docutils literal notranslate"><span class="pre">stars</span></code> is a StarsTable, the attitude of that object <code class="docutils literal notranslate"><span class="pre">stars.att</span></code> must
@@ -2387,15 +2490,15 @@ image size.</p>
 overridden by setting the <code class="docutils literal notranslate"><span class="pre">PROSECO_OR_IMAGE_SIZE</span></code> environment
 variable to “4”, “6” or “8”. As a reminder the <code class="docutils literal notranslate"><span class="pre">img_size_guide</span></code> parameter
 of <code class="docutils literal notranslate"><span class="pre">get_aca_catalog</span></code> can also be set.</p>
-<section id="id8">
-<h3>Parameters<a class="headerlink" href="#id8" title="Link to this heading">¶</a></h3>
+<section id="id12">
+<h3>Parameters<a class="headerlink" href="#id12" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>n_fids<span class="classifier">int</span></dt><dd><p>Number of fids in the catalog</p>
 </dd>
 </dl>
 </section>
-<section id="id9">
-<h3>Returns<a class="headerlink" href="#id9" title="Link to this heading">¶</a></h3>
+<section id="id13">
+<h3>Returns<a class="headerlink" href="#id13" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>int</dt><dd><p>Guide star image readout size to be used in a catalog (6 or 8)</p>
 </dd>
@@ -2446,8 +2549,8 @@ one day).</p>
 <dd><p>Return a dict with the include_ids_acq, include_halfws_acq and include_ids_guide
 lists for the as-run flight catalog of <code class="docutils literal notranslate"><span class="pre">obsid</span></code>.  Useful for forcing catalog.</p>
 <p>Example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">proseco</span> <span class="kn">import</span> <span class="n">get_aca_catalog</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">proseco.core</span> <span class="kn">import</span> <span class="n">includes_for_obsid</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">proseco</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_aca_catalog</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">proseco.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">includes_for_obsid</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">obsid</span> <span class="o">=</span> <span class="mi">8008</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">aca</span> <span class="o">=</span> <span class="n">get_aca_catalog</span><span class="p">(</span><span class="n">obsid</span><span class="p">,</span> <span class="o">**</span><span class="n">includes_for_obsid</span><span class="p">(</span><span class="n">obsid</span><span class="p">))</span>
 </pre></div>
@@ -2484,7 +2587,7 @@ lists for the as-run flight catalog of <code class="docutils literal notranslate
 <span id="diff"></span><h2>Diff<a class="headerlink" href="#module-proseco.diff" title="Link to this heading">¶</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="proseco.diff.CatalogDiff">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">proseco.diff.</span></span><span class="sig-name descname"><span class="pre">CatalogDiff</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_html</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/diff.html#CatalogDiff"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.diff.CatalogDiff" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">proseco.diff.</span></span><span class="sig-name descname"><span class="pre">CatalogDiff</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_html</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/diff.html#CatalogDiff"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.diff.CatalogDiff" title="Link to this definition">¶</a></dt>
 <dd><p>Represent an ACA catalog diff as either HTML or plain text</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="proseco.diff.CatalogDiff.write">
@@ -2581,7 +2684,7 @@ Dict of column names and format specifiers</p></li>
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
         <div class="sphinxsidebarwrapper"><h3>Page Contents</h3>
 <ul>
 <li><a class="reference internal" href="#">API documentation</a><ul>
@@ -2647,11 +2750,14 @@ Dict of column names and format specifiers</p></li>
 <li><a class="reference internal" href="#proseco.guide.GuideTable"><code class="docutils literal notranslate"><span class="pre">GuideTable</span></code></a><ul>
 <li><a class="reference internal" href="#proseco.guide.GuideTable.drop_excess_bonus_stars"><code class="docutils literal notranslate"><span class="pre">GuideTable.drop_excess_bonus_stars()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.guide.GuideTable.exclude_overlaps"><code class="docutils literal notranslate"><span class="pre">GuideTable.exclude_overlaps()</span></code></a></li>
+<li><a class="reference internal" href="#proseco.guide.GuideTable.filter_candidates_for_fids"><code class="docutils literal notranslate"><span class="pre">GuideTable.filter_candidates_for_fids()</span></code></a></li>
+<li><a class="reference internal" href="#proseco.guide.GuideTable.filter_candidates_for_monitors"><code class="docutils literal notranslate"><span class="pre">GuideTable.filter_candidates_for_monitors()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.guide.GuideTable.get_candidates_mask"><code class="docutils literal notranslate"><span class="pre">GuideTable.get_candidates_mask()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.guide.GuideTable.get_img_size"><code class="docutils literal notranslate"><span class="pre">GuideTable.get_img_size()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.guide.GuideTable.get_initial_guide_candidates"><code class="docutils literal notranslate"><span class="pre">GuideTable.get_initial_guide_candidates()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.guide.GuideTable.in_bad_star_list"><code class="docutils literal notranslate"><span class="pre">GuideTable.in_bad_star_list()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.guide.GuideTable.make_report"><code class="docutils literal notranslate"><span class="pre">GuideTable.make_report()</span></code></a></li>
+<li><a class="reference internal" href="#proseco.guide.GuideTable.process_exclude_ids"><code class="docutils literal notranslate"><span class="pre">GuideTable.process_exclude_ids()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.guide.GuideTable.process_include_ids"><code class="docutils literal notranslate"><span class="pre">GuideTable.process_include_ids()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.guide.GuideTable.process_monitors_post"><code class="docutils literal notranslate"><span class="pre">GuideTable.process_monitors_post()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.guide.GuideTable.reject"><code class="docutils literal notranslate"><span class="pre">GuideTable.reject()</span></code></a></li>
@@ -2667,12 +2773,14 @@ Dict of column names and format specifiers</p></li>
 <li><a class="reference internal" href="#proseco.guide.check_spoil_contrib"><code class="docutils literal notranslate"><span class="pre">check_spoil_contrib()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.guide.dist2"><code class="docutils literal notranslate"><span class="pre">dist2()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.guide.get_ax_range"><code class="docutils literal notranslate"><span class="pre">get_ax_range()</span></code></a></li>
+<li><a class="reference internal" href="#proseco.guide.get_guide_candidates"><code class="docutils literal notranslate"><span class="pre">get_guide_candidates()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.guide.get_guide_candidates_mask"><code class="docutils literal notranslate"><span class="pre">get_guide_candidates_mask()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.guide.get_guide_catalog"><code class="docutils literal notranslate"><span class="pre">get_guide_catalog()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.guide.get_imposter_mags"><code class="docutils literal notranslate"><span class="pre">get_imposter_mags()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.guide.get_pixmag_for_offset"><code class="docutils literal notranslate"><span class="pre">get_pixmag_for_offset()</span></code></a></li>
+<li><a class="reference internal" href="#proseco.guide.get_t_ccds_bonus"><code class="docutils literal notranslate"><span class="pre">get_t_ccds_bonus()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.guide.has_spoiler_in_box"><code class="docutils literal notranslate"><span class="pre">has_spoiler_in_box()</span></code></a></li>
-<li><a class="reference internal" href="#proseco.guide.run_select_checks"><code class="docutils literal notranslate"><span class="pre">run_select_checks()</span></code></a></li>
+<li><a class="reference internal" href="#proseco.guide.run_cluster_checks"><code class="docutils literal notranslate"><span class="pre">run_cluster_checks()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.guide.spoiled_by_bad_pixel"><code class="docutils literal notranslate"><span class="pre">spoiled_by_bad_pixel()</span></code></a></li>
 </ul>
 </li>
@@ -2791,7 +2899,7 @@ Dict of column names and format specifiers</p></li>
     <a href="#">Back to Top</a></p>
   <p>
     &copy; Copyright 2018, Tom Aldcroft, Jean Connelly.<br/>
-    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 7.2.6. &nbsp;
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 9.1.0. &nbsp;
   </p>
 </footer>
   </body>

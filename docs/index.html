@@ -5,13 +5,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Proseco &#8212; proseco 5.16.0 documentation</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <title>Proseco &#8212; proseco 5.18.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/bootstrap-astropy.css?v=f4f7060c" />
     
-    <script src="_static/documentation_options.js?v=f23352e5"></script>
-    <script src="_static/doctools.js?v=888ff710"></script>
-    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/documentation_options.js?v=35f5b738"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script type="text/javascript" src="_static/sidebar.js"></script>
     <script type="text/javascript" src="_static/copybutton.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -51,7 +51,7 @@
 	</a>
       </li>
       <li>
-	<a href="#">proseco 5.16.0 documentation</a>
+	<a href="#">proseco 5.18.0 documentation</a>
 	 &#187;
       </li>
       
@@ -250,7 +250,7 @@ easiest strategy is to simply provide the <code class="docutils literal notransl
 will then fetch all necessary data via the <code class="docutils literal notranslate"><span class="pre">mica.starcheck</span></code> archive.  This
 requires installation of the <code class="docutils literal notranslate"><span class="pre">cmd_states.db3</span></code> and <code class="docutils literal notranslate"><span class="pre">starcheck.db3</span></code> data
 files into the correct locations.  See <a class="reference internal" href="#data-requirements">Data requirements</a> for details.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">proseco.catalog</span> <span class="kn">import</span> <span class="n">get_aca_catalog</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">proseco.catalog</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_aca_catalog</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">aca</span> <span class="o">=</span> <span class="n">get_aca_catalog</span><span class="p">(</span><span class="mi">19387</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">aca</span>
 <span class="go">&lt;ACACatalogTable length=11&gt;</span>
@@ -355,13 +355,13 @@ This can accept a list of lists (or 2-d array of floats) in the form:</p>
 (<code class="docutils literal notranslate"><span class="pre">np.array(monitors)</span></code>) which will have shape <code class="docutils literal notranslate"><span class="pre">(N,</span> <span class="pre">5)</span></code> where <code class="docutils literal notranslate"><span class="pre">N</span></code> is the number of
 monitor windows. Enumeration codes related to the <code class="docutils literal notranslate"><span class="pre">monitors</span></code> keyword are
 defined in the module <code class="docutils literal notranslate"><span class="pre">proseco.characteristics</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MonFunc</span><span class="p">:</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">MonFunc</span><span class="p">:</span>
     <span class="n">AUTO</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">GUIDE</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">MON_TRACK</span> <span class="o">=</span> <span class="mi">2</span>
     <span class="n">MON_FIXED</span> <span class="o">=</span> <span class="mi">3</span>
 
-<span class="k">class</span> <span class="nc">MonCoord</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MonCoord</span><span class="p">:</span>
     <span class="n">RADEC</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">ROWCOL</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">YAGZAG</span> <span class="o">=</span> <span class="mi">2</span>
@@ -522,12 +522,14 @@ catalog merging.</p></li>
 <li class="toctree-l3"><a class="reference internal" href="api.html#proseco.guide.check_spoil_contrib"><code class="docutils literal notranslate"><span class="pre">check_spoil_contrib()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="api.html#proseco.guide.dist2"><code class="docutils literal notranslate"><span class="pre">dist2()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="api.html#proseco.guide.get_ax_range"><code class="docutils literal notranslate"><span class="pre">get_ax_range()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.guide.get_guide_candidates"><code class="docutils literal notranslate"><span class="pre">get_guide_candidates()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="api.html#proseco.guide.get_guide_candidates_mask"><code class="docutils literal notranslate"><span class="pre">get_guide_candidates_mask()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="api.html#proseco.guide.get_guide_catalog"><code class="docutils literal notranslate"><span class="pre">get_guide_catalog()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="api.html#proseco.guide.get_imposter_mags"><code class="docutils literal notranslate"><span class="pre">get_imposter_mags()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="api.html#proseco.guide.get_pixmag_for_offset"><code class="docutils literal notranslate"><span class="pre">get_pixmag_for_offset()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.guide.get_t_ccds_bonus"><code class="docutils literal notranslate"><span class="pre">get_t_ccds_bonus()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="api.html#proseco.guide.has_spoiler_in_box"><code class="docutils literal notranslate"><span class="pre">has_spoiler_in_box()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.guide.run_select_checks"><code class="docutils literal notranslate"><span class="pre">run_select_checks()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#proseco.guide.run_cluster_checks"><code class="docutils literal notranslate"><span class="pre">run_cluster_checks()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="api.html#proseco.guide.spoiled_by_bad_pixel"><code class="docutils literal notranslate"><span class="pre">spoiled_by_bad_pixel()</span></code></a></li>
 </ul>
 </li>
@@ -657,14 +659,17 @@ catalog merging.</p></li>
 <li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_guide.test_common_column_obsid_19904"><code class="docutils literal notranslate"><span class="pre">test_common_column_obsid_19904()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_guide.test_edge_star"><code class="docutils literal notranslate"><span class="pre">test_edge_star()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_guide.test_get_ax_range"><code class="docutils literal notranslate"><span class="pre">test_get_ax_range()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_guide.test_get_t_ccds_bonus_no_bonus_stars"><code class="docutils literal notranslate"><span class="pre">test_get_t_ccds_bonus_no_bonus_stars()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_guide.test_guides_include_bad"><code class="docutils literal notranslate"><span class="pre">test_guides_include_bad()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_guide.test_guides_include_close"><code class="docutils literal notranslate"><span class="pre">test_guides_include_close()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_guide.test_guides_include_exclude"><code class="docutils literal notranslate"><span class="pre">test_guides_include_exclude()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_guide.test_initial_guide_cands_do_not_change"><code class="docutils literal notranslate"><span class="pre">test_initial_guide_cands_do_not_change()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_guide.test_make_report_guide"><code class="docutils literal notranslate"><span class="pre">test_make_report_guide()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_guide.test_obsid_19461"><code class="docutils literal notranslate"><span class="pre">test_obsid_19461()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_guide.test_overlap_spoiler"><code class="docutils literal notranslate"><span class="pre">test_overlap_spoiler()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_guide.test_overlap_spoiler_include"><code class="docutils literal notranslate"><span class="pre">test_overlap_spoiler_include()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_guide.test_pix_spoiler"><code class="docutils literal notranslate"><span class="pre">test_pix_spoiler()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_guide.test_process_include_ids_columns"><code class="docutils literal notranslate"><span class="pre">test_process_include_ids_columns()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_guide.test_region_contrib"><code class="docutils literal notranslate"><span class="pre">test_region_contrib()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_guide.test_select"><code class="docutils literal notranslate"><span class="pre">test_select()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="unit_tests.html#proseco.tests.test_guide.test_warnings"><code class="docutils literal notranslate"><span class="pre">test_warnings()</span></code></a></li>
@@ -714,7 +719,7 @@ catalog merging.</p></li>
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
         <div class="sphinxsidebarwrapper"><h3>Page Contents</h3>
 <ul>
 <li><a class="reference internal" href="#">Proseco</a><ul>
@@ -763,7 +768,7 @@ catalog merging.</p></li>
     <a href="#">Back to Top</a></p>
   <p>
     &copy; Copyright 2018, Tom Aldcroft, Jean Connelly.<br/>
-    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 7.2.6. &nbsp;
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 9.1.0. &nbsp;
   </p>
 </footer>
   </body>

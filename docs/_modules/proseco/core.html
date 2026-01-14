@@ -4,13 +4,13 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>proseco.core &#8212; proseco 5.16.0 documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <title>proseco.core &#8212; proseco 5.18.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/bootstrap-astropy.css?v=f4f7060c" />
     
-    <script src="../../_static/documentation_options.js?v=f23352e5"></script>
-    <script src="../../_static/doctools.js?v=888ff710"></script>
-    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/documentation_options.js?v=35f5b738"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script type="text/javascript" src="../../_static/sidebar.js"></script>
     <script type="text/javascript" src="../../_static/copybutton.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
@@ -44,7 +44,7 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../index.html">proseco 5.16.0 documentation</a>
+	<a href="../../index.html">proseco 5.18.0 documentation</a>
 	 &#187;
       </li>
       <li><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
@@ -62,22 +62,22 @@
   <h1>Source code for proseco.core</h1><div class="highlight"><pre>
 <span></span><span class="c1"># Licensed under a 3-clause BSD style license - see LICENSE.rst</span>
 
-<span class="kn">import</span> <span class="nn">functools</span>
-<span class="kn">import</span> <span class="nn">inspect</span>
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">pickle</span>
-<span class="kn">import</span> <span class="nn">re</span>
-<span class="kn">import</span> <span class="nn">time</span>
-<span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">copy</span>
-<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TypeAlias</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">functools</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">copy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">TypeAlias</span>
 
-<span class="kn">import</span> <span class="nn">agasc</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">astropy.table</span> <span class="kn">import</span> <span class="n">Column</span><span class="p">,</span> <span class="n">Row</span><span class="p">,</span> <span class="n">Table</span>
-<span class="kn">from</span> <span class="nn">chandra_aca.aca_image</span> <span class="kn">import</span> <span class="n">AcaPsfLibrary</span>
-<span class="kn">from</span> <span class="nn">chandra_aca.transform</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">agasc</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">astropy.table</span><span class="w"> </span><span class="kn">import</span> <span class="n">Column</span><span class="p">,</span> <span class="n">Row</span><span class="p">,</span> <span class="n">Table</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">chandra_aca.aca_image</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcaPsfLibrary</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">chandra_aca.transform</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">count_rate_to_mag</span><span class="p">,</span>
     <span class="n">mag_to_count_rate</span><span class="p">,</span>
     <span class="n">pixels_to_yagzag</span><span class="p">,</span>
@@ -85,11 +85,11 @@
     <span class="n">yagzag_to_pixels</span><span class="p">,</span>
     <span class="n">yagzag_to_radec</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">mica.archive.aca_dark</span> <span class="kn">import</span> <span class="n">get_dark_cal_id</span><span class="p">,</span> <span class="n">get_dark_cal_image</span>
-<span class="kn">from</span> <span class="nn">Quaternion</span> <span class="kn">import</span> <span class="n">Quat</span>
-<span class="kn">from</span> <span class="nn">scipy.interpolate</span> <span class="kn">import</span> <span class="n">interp1d</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mica.archive.aca_dark</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_dark_cal_id</span><span class="p">,</span> <span class="n">get_dark_cal_image</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">Quaternion</span><span class="w"> </span><span class="kn">import</span> <span class="n">Quat</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.interpolate</span><span class="w"> </span><span class="kn">import</span> <span class="n">interp1d</span>
 
-<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">characteristics</span> <span class="k">as</span> <span class="n">ACA</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">characteristics</span> <span class="k">as</span> <span class="n">ACA</span>
 
 <span class="c1"># For testing this is used to cache fid tables for a detector</span>
 <span class="n">FIDS_CACHE</span> <span class="o">=</span> <span class="p">{}</span>
@@ -99,8 +99,11 @@
 <span class="n">get_dark_cal_image</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">6</span><span class="p">)(</span><span class="n">get_dark_cal_image</span><span class="p">)</span>
 <span class="n">get_dark_cal_id</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">6</span><span class="p">)(</span><span class="n">get_dark_cal_id</span><span class="p">)</span>
 
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">proseco.characteristics_jupiter</span><span class="w"> </span><span class="kn">import</span> <span class="n">JupiterPositionTable</span>
 
-<span class="k">def</span> <span class="nf">to_python</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">to_python</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">val</span> <span class="o">=</span> <span class="n">val</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
     <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
@@ -118,7 +121,7 @@
 
 <div class="viewcode-block" id="table_to_html">
 <a class="viewcode-back" href="../../api.html#proseco.core.table_to_html">[docs]</a>
-<span class="k">def</span> <span class="nf">table_to_html</span><span class="p">(</span><span class="n">tbl</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">table_to_html</span><span class="p">(</span><span class="n">tbl</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Make an HTML representation of a table</span>
 
@@ -142,7 +145,7 @@
 
 
 
-<span class="k">def</span> <span class="nf">_get_bgd</span><span class="p">(</span><span class="n">img</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_bgd</span><span class="p">(</span><span class="n">img</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Helper function to compute the mean of the two largest values in</span>
 <span class="sd">    the background pixels.  This is a very conservative upper limit and</span>
@@ -156,7 +159,7 @@
 
 <div class="viewcode-block" id="calc_spoiler_impact">
 <a class="viewcode-back" href="../../api.html#proseco.core.calc_spoiler_impact">[docs]</a>
-<span class="k">def</span> <span class="nf">calc_spoiler_impact</span><span class="p">(</span><span class="n">star</span><span class="p">,</span> <span class="n">stars</span><span class="p">,</span> <span class="n">dark_bgd</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">calc_spoiler_impact</span><span class="p">(</span><span class="n">star</span><span class="p">,</span> <span class="n">stars</span><span class="p">,</span> <span class="n">dark_bgd</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Calculate the centroid shift and relative image brightness change</span>
 <span class="sd">    for ``star`` when nearby ``stars`` are included.  The assumption</span>
@@ -241,14 +244,14 @@
 
 
 <span class="nd">@functools</span><span class="o">.</span><span class="n">lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">get_starcheck_catalog</span><span class="p">(</span><span class="n">obsid</span><span class="p">):</span>
-    <span class="kn">from</span> <span class="nn">mica.starcheck</span> <span class="kn">import</span> <span class="n">get_starcheck_catalog</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_starcheck_catalog</span><span class="p">(</span><span class="n">obsid</span><span class="p">):</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">mica.starcheck</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_starcheck_catalog</span>
 
     <span class="k">return</span> <span class="n">get_starcheck_catalog</span><span class="p">(</span><span class="n">obsid</span><span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">ACABox</span><span class="p">:</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ACABox</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Class to represent a box half width amplitude.  Can be initialized with</span>
 <span class="sd">        either a two-element sequence (y, z) or a scalar (which applies</span>
@@ -262,43 +265,41 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">z</span> <span class="o">=</span> <span class="n">size</span><span class="o">.</span><span class="n">z</span>
             <span class="k">return</span>
 
+        <span class="k">if</span> <span class="n">size</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">size</span> <span class="o">=</span> <span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
+
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">size</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">size</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;size arg must be either a scalar or a two-element sequence&quot;</span>
+                <span class="p">)</span>
         <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
-            <span class="c1"># len(scalar) raises TypeError</span>
-            <span class="k">if</span> <span class="n">size</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">size</span> <span class="o">=</span> <span class="mi">20</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">size</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">z</span> <span class="o">=</span> <span class="n">size</span>
-        <span class="k">except</span> <span class="ne">AssertionError</span><span class="p">:</span>
-            <span class="c1"># Has a length but it is not 2</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;size arg must be either a scalar or a two-element sequence&quot;</span>
-            <span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">z</span> <span class="o">=</span> <span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="c1"># len(scalar) raises TypeError, turn it into a 2-tuple</span>
+            <span class="n">size</span> <span class="o">=</span> <span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">z</span> <span class="o">=</span> <span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">row</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">row</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">/</span> <span class="mi">5</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">col</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">col</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">z</span> <span class="o">/</span> <span class="mi">5</span>
 
-    <span class="k">def</span> <span class="nf">max</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">max</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">z</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">ACABox</span><span class="p">):</span>
             <span class="n">other</span> <span class="o">=</span> <span class="n">ACABox</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">y</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">z</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">z</span>
 
-    <span class="k">def</span> <span class="fm">__ne__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__ne__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
         <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span> <span class="o">==</span> <span class="n">other</span>
 
-    <span class="k">def</span> <span class="fm">__gt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__gt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns True if either component is larger.  This is somewhat</span>
 <span class="sd">        specific to how boxes are used in intruder processing.</span>
@@ -307,21 +308,24 @@
             <span class="n">other</span> <span class="o">=</span> <span class="n">ACABox</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">&gt;</span> <span class="n">other</span><span class="o">.</span><span class="n">y</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">z</span> <span class="o">&gt;</span> <span class="n">other</span><span class="o">.</span><span class="n">z</span>
 
-    <span class="k">def</span> <span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">ACABox</span><span class="p">):</span>
             <span class="n">other</span> <span class="o">=</span> <span class="n">ACABox</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">ACABox</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">+</span> <span class="n">other</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">z</span> <span class="o">+</span> <span class="n">other</span><span class="o">.</span><span class="n">z</span><span class="p">))</span>
 
-    <span class="k">def</span> <span class="fm">__radd__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__radd__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__add__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">hash</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">z</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;&lt;ACABox y=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="si">}</span><span class="s2"> z=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">z</span><span class="si">}</span><span class="s2">&gt;&quot;</span>
 
 
 <div class="viewcode-block" id="AliasAttribute">
 <a class="viewcode-back" href="../../api.html#proseco.core.AliasAttribute">[docs]</a>
-<span class="k">class</span> <span class="nc">AliasAttribute</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AliasAttribute</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Descriptor to define class attributes which can be accessed via</span>
 <span class="sd">    either &lt;name&gt; or &lt;name&gt;_&lt;subclass&gt;.</span>
 
@@ -338,7 +342,7 @@
 <span class="sd">    ``Table`` in the subclass name, so GuideTable =&gt; &#39;guide&#39;.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__get__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">owner</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__get__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">owner</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">instance</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># When called without an instance, return self to allow access</span>
             <span class="c1"># to descriptor attributes.</span>
@@ -346,23 +350,23 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">alias</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__set__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__set__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="nb">setattr</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">alias</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">__set_name__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">owner</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__set_name__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">owner</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">owner</span><span class="o">.</span><span class="vm">__name__</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;Table&quot;</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">alias</span> <span class="o">=</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;_&quot;</span> <span class="o">+</span> <span class="n">owner</span><span class="o">.</span><span class="vm">__name__</span><span class="p">[:</span><span class="o">-</span><span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
             <span class="n">owner</span><span class="o">.</span><span class="n">allowed_kwargs</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;can only be used in classes named *Table&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;&lt;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> alias=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">alias</span><span class="si">}</span><span class="s2">&quot;</span></div>
 
 
 
-<span class="k">class</span> <span class="nc">MetaAttribute</span><span class="p">:</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">is_kwarg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">pickle</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MetaAttribute</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">is_kwarg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">pickle</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Descriptor to define ACACatalogTable class attributes which get stored in</span>
 <span class="sd">        the table meta dict and have defined defaults.  Also includes a flag to</span>
@@ -378,7 +382,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">is_kwarg</span> <span class="o">=</span> <span class="n">is_kwarg</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">pickle</span> <span class="o">=</span> <span class="n">pickle</span>
 
-    <span class="k">def</span> <span class="fm">__get__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">owner</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__get__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">owner</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">instance</span><span class="o">.</span><span class="n">meta</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
         <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
@@ -391,28 +395,28 @@
                 <span class="n">instance</span><span class="o">.</span><span class="n">meta</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">default</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">instance</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__set__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__set__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="n">instance</span><span class="o">.</span><span class="n">meta</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
 
-    <span class="k">def</span> <span class="nf">__set_name__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">owner</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__set_name__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">owner</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_kwarg</span><span class="p">:</span>
             <span class="n">owner</span><span class="o">.</span><span class="n">allowed_kwargs</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;&lt;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> name=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> default=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">default</span><span class="si">}</span><span class="s2"> &quot;</span>
             <span class="sa">f</span><span class="s2">&quot;pickle=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pickle</span><span class="si">}</span><span class="s2">&gt;&quot;</span>
         <span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">MonitorsMetaAttribute</span><span class="p">(</span><span class="n">MetaAttribute</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__set__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MonitorsMetaAttribute</span><span class="p">(</span><span class="n">MetaAttribute</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__set__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Table</span><span class="p">):</span>
             <span class="n">colnames</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;coord0&quot;</span><span class="p">,</span> <span class="s2">&quot;coord1&quot;</span><span class="p">,</span> <span class="s2">&quot;coord_type&quot;</span><span class="p">,</span> <span class="s2">&quot;mag&quot;</span><span class="p">,</span> <span class="s2">&quot;function&quot;</span><span class="p">]</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">set</span><span class="p">(</span><span class="n">colnames</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="nb">set</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">colnames</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s1">&#39;monitors input table must have </span><span class="si">{</span><span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">colnames</span><span class="p">)</span><span class="si">}</span><span class="s1"> columns&#39;</span>
+                    <span class="sa">f</span><span class="s2">&quot;monitors input table must have </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">colnames</span><span class="p">)</span><span class="si">}</span><span class="s2"> columns&quot;</span>
                 <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
@@ -435,26 +439,26 @@
         <span class="n">instance</span><span class="o">.</span><span class="n">meta</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
 
 
-<span class="k">class</span> <span class="nc">QuatMetaAttribute</span><span class="p">(</span><span class="n">MetaAttribute</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__set__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">QuatMetaAttribute</span><span class="p">(</span><span class="n">MetaAttribute</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__set__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Quat</span><span class="p">):</span>
             <span class="n">value</span> <span class="o">=</span> <span class="n">Quat</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
         <span class="n">instance</span><span class="o">.</span><span class="n">meta</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
 
 
-<span class="k">class</span> <span class="nc">IntMetaAttribute</span><span class="p">(</span><span class="n">MetaAttribute</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__set__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">IntMetaAttribute</span><span class="p">(</span><span class="n">MetaAttribute</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__set__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="n">instance</span><span class="o">.</span><span class="n">meta</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">IntListMetaAttribute</span><span class="p">(</span><span class="n">MetaAttribute</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__set__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">IntListMetaAttribute</span><span class="p">(</span><span class="n">MetaAttribute</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__set__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="n">instance</span><span class="o">.</span><span class="n">meta</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
 
 
 <div class="viewcode-block" id="BaseCatalogTable">
 <a class="viewcode-back" href="../../api.html#proseco.core.BaseCatalogTable">[docs]</a>
-<span class="k">class</span> <span class="nc">BaseCatalogTable</span><span class="p">(</span><span class="n">Table</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BaseCatalogTable</span><span class="p">(</span><span class="n">Table</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for representing star catalogs or ACA (guide/acq/fid) catalogs.</span>
 
 <span class="sd">    Features:</span>
@@ -467,7 +471,7 @@
     <span class="c1"># Catalog type when plotting (None | &#39;FID&#39; | &#39;ACQ&#39; | &#39;GUI&#39;)</span>
     <span class="n">catalog_type</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="c1"># Make printed table look nicer.  This is defined in advance</span>
@@ -488,7 +492,7 @@
             <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_default_formats</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">format</span>
 
-    <span class="k">def</span> <span class="nf">__getstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__getstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the pickle state from self.</span>
 
 <span class="sd">        The main functionality here is munging ``meta`` to exclude any</span>
@@ -513,7 +517,7 @@
 
         <span class="k">return</span> <span class="n">columns</span><span class="p">,</span> <span class="n">meta</span>
 
-    <span class="k">def</span> <span class="nf">__setstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__setstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Restore object from pickle state.</span>
 
 <span class="sd">        This fixes an upstream issue in astropy.table (as of 3.1) where the</span>
@@ -526,7 +530,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">columns</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">meta</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">make_index</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">make_index</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># Low-tech index to quickly get a row or the row index by `id` column.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_id_index</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_id_index_mon</span> <span class="o">=</span> <span class="p">{}</span>
@@ -540,7 +544,7 @@
 
 <div class="viewcode-block" id="BaseCatalogTable.get_id">
 <a class="viewcode-back" href="../../api.html#proseco.core.BaseCatalogTable.get_id">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">mon</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">mon</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return row corresponding to ``id`` in id column.</span>
 
@@ -555,7 +559,7 @@
 
 <div class="viewcode-block" id="BaseCatalogTable.get_id_idx">
 <a class="viewcode-back" href="../../api.html#proseco.core.BaseCatalogTable.get_id_idx">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_id_idx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">mon</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_id_idx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">mon</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return row corresponding to ``id`` in id column.</span>
 
@@ -570,12 +574,14 @@
 
         <span class="k">try</span><span class="p">:</span>
             <span class="n">idx</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_id_index_mon</span> <span class="k">if</span> <span class="n">mon</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_id_index</span><span class="p">)[</span><span class="nb">id</span><span class="p">]</span>
-            <span class="k">assert</span> <span class="bp">self</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">][</span><span class="n">idx</span><span class="p">]</span> <span class="o">==</span> <span class="nb">id</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">][</span><span class="n">idx</span><span class="p">]</span> <span class="o">!=</span> <span class="nb">id</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">AssertionError</span>
         <span class="k">except</span> <span class="p">(</span><span class="ne">KeyError</span><span class="p">,</span> <span class="ne">IndexError</span><span class="p">,</span> <span class="ne">AssertionError</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">make_index</span><span class="p">()</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">idx</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_id_index_mon</span> <span class="k">if</span> <span class="n">mon</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_id_index</span><span class="p">)[</span><span class="nb">id</span><span class="p">]</span>
-                <span class="k">assert</span> <span class="bp">self</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">][</span><span class="n">idx</span><span class="p">]</span> <span class="o">==</span> <span class="nb">id</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">][</span><span class="n">idx</span><span class="p">]</span> <span class="o">!=</span> <span class="nb">id</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">AssertionError</span>
             <span class="k">except</span> <span class="p">(</span><span class="ne">KeyError</span><span class="p">,</span> <span class="ne">IndexError</span><span class="p">,</span> <span class="ne">AssertionError</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">id</span><span class="si">}</span><span class="s2"> is not in table&quot;</span><span class="p">)</span>
 
@@ -584,7 +590,7 @@
 
 <div class="viewcode-block" id="BaseCatalogTable.get_candidates_mask">
 <a class="viewcode-back" href="../../api.html#proseco.core.BaseCatalogTable.get_candidates_mask">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_candidates_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stars</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_candidates_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stars</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a boolean mask indicating which ``stars`` are acceptable candidates</span>
 <span class="sd">        for the parent class.  This basically applies to guide and acq, though</span>
 <span class="sd">        ACACatalog uses a hybrid of those two.</span>
@@ -600,7 +606,7 @@
 
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">bad_stars_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">bad_stars_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Mask of stars that are not acceptable candidates for the parent class.  This</span>
 <span class="sd">        basically applies to guide and acq, though ACACatalog uses a hybrid of</span>
 <span class="sd">        those two.</span>
@@ -614,25 +620,25 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bad_stars_mask</span>
 
     <span class="nd">@bad_stars_mask</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">bad_stars_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">bad_stars_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_bad_stars_mask</span> <span class="o">=</span> <span class="n">value</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">bad_stars</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">bad_stars</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Back-compatibility property for bad_stars_mask&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bad_stars_mask</span>
 
 <div class="viewcode-block" id="BaseCatalogTable.plot">
 <a class="viewcode-back" href="../../api.html#proseco.core.BaseCatalogTable.plot">[docs]</a>
-    <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Plot the catalog and background stars.</span>
 
 <span class="sd">        :param ax: matplotlib axes object for plotting to (optional)</span>
 <span class="sd">        :param kwargs: other keyword args for plot_stars</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-        <span class="kn">from</span> <span class="nn">chandra_aca.plot</span> <span class="kn">import</span> <span class="n">plot_stars</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">chandra_aca.plot</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_stars</span>
 
         <span class="n">kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;stars&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([]))</span>
 
@@ -651,7 +657,7 @@
 
 <div class="viewcode-block" id="ACACatalogTable">
 <a class="viewcode-back" href="../../api.html#proseco.core.ACACatalogTable">[docs]</a>
-<span class="k">class</span> <span class="nc">ACACatalogTable</span><span class="p">(</span><span class="n">BaseCatalogTable</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ACACatalogTable</span><span class="p">(</span><span class="n">BaseCatalogTable</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Base class for representing ACA catalogs in star selection.  This</span>
 <span class="sd">    can apply to acq, guide and fid entries.</span>
@@ -683,6 +689,8 @@
     <span class="n">t_ccd_acq</span> <span class="o">=</span> <span class="n">MetaAttribute</span><span class="p">()</span>
     <span class="n">t_ccd_guide</span> <span class="o">=</span> <span class="n">MetaAttribute</span><span class="p">()</span>
     <span class="n">date</span> <span class="o">=</span> <span class="n">MetaAttribute</span><span class="p">()</span>
+    <span class="n">duration</span> <span class="o">=</span> <span class="n">MetaAttribute</span><span class="p">()</span>
+    <span class="n">target_name</span> <span class="o">=</span> <span class="n">MetaAttribute</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
     <span class="n">dark_date</span> <span class="o">=</span> <span class="n">MetaAttribute</span><span class="p">()</span>
     <span class="n">dither_acq</span> <span class="o">=</span> <span class="n">MetaAttribute</span><span class="p">()</span>
     <span class="n">dither_guide</span> <span class="o">=</span> <span class="n">MetaAttribute</span><span class="p">()</span>
@@ -706,7 +714,39 @@
     <span class="n">log_info</span> <span class="o">=</span> <span class="n">MetaAttribute</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{},</span> <span class="n">is_kwarg</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">dark</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">jupiter</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;JupiterPositionTable&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_jupiter&quot;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jupiter</span>
+
+        <span class="kn">from</span><span class="w"> </span><span class="nn">proseco.characteristics_jupiter</span><span class="w"> </span><span class="kn">import</span> <span class="n">JupiterPositionTable</span>
+
+        <span class="k">if</span> <span class="s2">&quot;jupiter&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_name</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_jupiter</span> <span class="o">=</span> <span class="n">JupiterPositionTable</span><span class="o">.</span><span class="n">empty</span><span class="p">()</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jupiter</span>
+
+        <span class="kn">from</span><span class="w"> </span><span class="nn">proseco.jupiter</span><span class="w"> </span><span class="kn">import</span> <span class="n">date_is_excluded</span>
+
+        <span class="k">if</span> <span class="n">date_is_excluded</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">date</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_jupiter</span> <span class="o">=</span> <span class="n">JupiterPositionTable</span><span class="o">.</span><span class="n">empty</span><span class="p">()</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jupiter</span>
+
+        <span class="kn">from</span><span class="w"> </span><span class="nn">proseco.jupiter</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_jupiter_position</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_jupiter</span> <span class="o">=</span> <span class="n">get_jupiter_position</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">date</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">duration</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">att</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jupiter</span>
+
+    <span class="nd">@jupiter</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">jupiter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">proseco.characteristics_jupiter</span><span class="w"> </span><span class="kn">import</span> <span class="n">JupiterPositionTable</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_jupiter</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">value</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">JupiterPositionTable</span><span class="p">)</span>
+            <span class="k">else</span> <span class="n">JupiterPositionTable</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">dark</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_dark&quot;</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dark</span>
 
@@ -749,8 +789,9 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dark</span>
 
     <span class="nd">@dark</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">dark</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="k">assert</span> <span class="n">value</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">1024</span><span class="p">,</span> <span class="mi">1024</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">dark</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="p">(</span><span class="mi">1024</span><span class="p">,</span> <span class="mi">1024</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;dark image must be 1024x1024, got </span><span class="si">{</span><span class="n">value</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_dark</span> <span class="o">=</span> <span class="n">value</span>
 
         <span class="c1"># Set pixel regions from ACA.bad_pixels to have acqs.dark=700000 (5.0 mag</span>
@@ -760,7 +801,7 @@
                 <span class="n">ACA</span><span class="o">.</span><span class="n">bad_pixel_dark_current</span>
             <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">set_attrs_from_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_attrs_from_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="c1"># If name is an allowed keyword arg or a settable property on the class</span>
             <span class="c1"># then set now.</span>
@@ -846,7 +887,7 @@
 
 <div class="viewcode-block" id="ACACatalogTable.set_stars">
 <a class="viewcode-back" href="../../api.html#proseco.core.ACACatalogTable.set_stars">[docs]</a>
-    <span class="k">def</span> <span class="nf">set_stars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">acqs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_near_fov</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_stars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">acqs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_near_fov</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the object ``stars`` attribute to an appropriate StarsTable object.</span>
 
 <span class="sd">        If ``acqs`` is defined that will be a previously computed AcqTable with</span>
@@ -875,7 +916,7 @@
 
 <div class="viewcode-block" id="ACACatalogTable.get_catalog_for_plot">
 <a class="viewcode-back" href="../../api.html#proseco.core.ACACatalogTable.get_catalog_for_plot">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_catalog_for_plot</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_catalog_for_plot</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return value of ``catalog`` for plot_stars() call for this object</span>
 
 <span class="sd">        For ACACatalogTable this is the self Table object but with the possibility</span>
@@ -890,7 +931,7 @@
 
 <div class="viewcode-block" id="ACACatalogTable.plot">
 <a class="viewcode-back" href="../../api.html#proseco.core.ACACatalogTable.plot">[docs]</a>
-    <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Plot the catalog and background stars.</span>
 
@@ -910,27 +951,27 @@
 
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">dither</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">dither</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="kc">None</span>
 
     <span class="nd">@dither</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">dither</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">dither</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dither_acq</span> <span class="o">=</span> <span class="n">value</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dither_guide</span> <span class="o">=</span> <span class="n">value</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">t_ccd</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">t_ccd</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># Subclasses must implement.</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
     <span class="nd">@t_ccd</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">t_ccd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">t_ccd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
 <div class="viewcode-block" id="ACACatalogTable.empty">
 <a class="viewcode-back" href="../../api.html#proseco.core.ACACatalogTable.empty">[docs]</a>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">empty</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">empty</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return a minimal ACACatalogTable which satisfies API requirements.  Currently</span>
 <span class="sd">        this means that it has an &#39;id&#39; column which can be examined for length.</span>
@@ -944,40 +985,40 @@
 
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">acqs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">acqs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;acqs&quot;</span><span class="p">)</span>
 
     <span class="nd">@acqs</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">acqs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">acqs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;acqs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">fids</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fids</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;fids&quot;</span><span class="p">)</span>
 
     <span class="nd">@fids</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">fids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;fids&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">guides</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">guides</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;guides&quot;</span><span class="p">)</span>
 
     <span class="nd">@guides</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">guides</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">guides</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;guides&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">mons</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mons</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mons&quot;</span><span class="p">)</span>
 
     <span class="nd">@mons</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">mons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;mons&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
 
 <div class="viewcode-block" id="ACACatalogTable.process_include_ids">
 <a class="viewcode-back" href="../../api.html#proseco.core.ACACatalogTable.process_include_ids">[docs]</a>
-    <span class="k">def</span> <span class="nf">process_include_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cand_stars</span><span class="p">,</span> <span class="n">stars</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process_include_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cand_stars</span><span class="p">,</span> <span class="n">stars</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Ensure that the candidate acqs/guides table has stars that were forced to be included.</span>
 
 <span class="sd">        Updates ``cand_stars`` in place.</span>
@@ -1002,7 +1043,7 @@
 
 <div class="viewcode-block" id="ACACatalogTable.log">
 <a class="viewcode-back" href="../../api.html#proseco.core.ACACatalogTable.log">[docs]</a>
-    <span class="k">def</span> <span class="nf">log</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">log</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add a log event to self.log_info[&#39;events&#39;] include ``data`` (which</span>
 <span class="sd">        is typically, but not required to be, a string).</span>
@@ -1037,7 +1078,7 @@
 
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">warnings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">warnings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return list of warnings in the event log.  This returns just the</span>
 <span class="sd">        string message without context.</span>
@@ -1048,7 +1089,7 @@
         <span class="k">return</span> <span class="n">warns</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">exception</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">exception</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return string traceback of a top-level caught exception, or &quot;&quot; (empty</span>
 <span class="sd">        string) if no exception has been caught.  Mostly for use in Matlab</span>
@@ -1057,10 +1098,10 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;exception&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
 
     <span class="nd">@exception</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">exception</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">exception</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;exception&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
 
-    <span class="k">def</span> <span class="nf">_set_formats</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_set_formats</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># Apply default formats to applicable columns and delete</span>
         <span class="c1"># that default format so it doesn&#39;t get set again next time.</span>
         <span class="n">names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">colnames</span>
@@ -1070,19 +1111,19 @@
 
 <div class="viewcode-block" id="ACACatalogTable.pformat">
 <a class="viewcode-back" href="../../api.html#proseco.core.ACACatalogTable.pformat">[docs]</a>
-    <span class="k">def</span> <span class="nf">pformat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">pformat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_set_formats</span><span class="p">()</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">pformat</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ACACatalogTable.pprint">
 <a class="viewcode-back" href="../../api.html#proseco.core.ACACatalogTable.pprint">[docs]</a>
-    <span class="k">def</span> <span class="nf">pprint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">pprint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_set_formats</span><span class="p">()</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">pprint</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_base_repr_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_base_repr_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_set_formats</span><span class="p">()</span>
 
         <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">colnames</span> <span class="k">if</span> <span class="bp">self</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">kind</span> <span class="o">!=</span> <span class="s2">&quot;O&quot;</span><span class="p">]</span>
@@ -1092,7 +1133,7 @@
 
 <div class="viewcode-block" id="ACACatalogTable.to_pickle">
 <a class="viewcode-back" href="../../api.html#proseco.core.ACACatalogTable.to_pickle">[docs]</a>
-    <span class="k">def</span> <span class="nf">to_pickle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rootdir</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_pickle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rootdir</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Write the catalog table as pickle to:</span>
 <span class="sd">          ``&lt;rootdir&gt;/obs&lt;obsid&gt;/&lt;name&gt;.pkl``</span>
@@ -1100,7 +1141,7 @@
 <span class="sd">        :param rootdir: root directory (default=&#39;.&#39;)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">rootdir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">rootdir</span><span class="p">)</span>
-        <span class="n">outdir</span> <span class="o">=</span> <span class="n">rootdir</span> <span class="o">/</span> <span class="sa">f</span><span class="s1">&#39;obs</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;obsid&quot;</span><span class="p">]</span><span class="si">:</span><span class="s1">05</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="n">outdir</span> <span class="o">=</span> <span class="n">rootdir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;obs</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="p">[</span><span class="s1">&#39;obsid&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">05</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">outdir</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="n">outdir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">()</span>
         <span class="n">outfile</span> <span class="o">=</span> <span class="n">outdir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.pkl&quot;</span>
@@ -1111,7 +1152,7 @@
 <div class="viewcode-block" id="ACACatalogTable.from_pickle">
 <a class="viewcode-back" href="../../api.html#proseco.core.ACACatalogTable.from_pickle">[docs]</a>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">from_pickle</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">obsid</span><span class="p">,</span> <span class="n">rootdir</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_pickle</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">obsid</span><span class="p">,</span> <span class="n">rootdir</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Construct table from pickle file in</span>
 <span class="sd">          ``&lt;rootdir&gt;/obs&lt;obsid&gt;/&lt;name&gt;.pkl``</span>
@@ -1128,7 +1169,7 @@
 
 <div class="viewcode-block" id="ACACatalogTable.has_column_spoiler">
 <a class="viewcode-back" href="../../api.html#proseco.core.ACACatalogTable.has_column_spoiler">[docs]</a>
-    <span class="k">def</span> <span class="nf">has_column_spoiler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cand</span><span class="p">,</span> <span class="n">stars</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">has_column_spoiler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cand</span><span class="p">,</span> <span class="n">stars</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns True if ``cand`` has a column spoiler downstream toward readout</span>
 <span class="sd">        register which is:</span>
@@ -1158,8 +1199,8 @@
 
         <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">bads</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s1">&#39;Candidate object id=</span><span class="si">{</span><span class="n">cand</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1"> rejected due to column spoiler(s) &#39;</span>
-                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">][</span><span class="n">mask</span><span class="p">][</span><span class="n">bads</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;Candidate object id=</span><span class="si">{</span><span class="n">cand</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> rejected due to column spoiler(s) &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">stars</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">][</span><span class="n">mask</span><span class="p">][</span><span class="n">bads</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
                 <span class="nb">id</span><span class="o">=</span><span class="n">cand</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">],</span>
             <span class="p">)</span>
             <span class="k">return</span> <span class="kc">True</span>
@@ -1232,12 +1273,14 @@
         <span class="mf">1.0</span><span class="p">,</span>
     <span class="p">],</span>  <span class="c1"># std-dev</span>
     <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;linear&quot;</span><span class="p">,</span>
+    <span class="n">fill_value</span><span class="o">=</span><span class="s2">&quot;extrapolate&quot;</span><span class="p">,</span>
+    <span class="n">bounds_error</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span>
 
 
 <div class="viewcode-block" id="StarsTable">
 <a class="viewcode-back" href="../../api.html#proseco.core.StarsTable">[docs]</a>
-<span class="k">class</span> <span class="nc">StarsTable</span><span class="p">(</span><span class="n">BaseCatalogTable</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">StarsTable</span><span class="p">(</span><span class="n">BaseCatalogTable</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Table of stars for use in proseco.</span>
 
 <span class="sd">    This is meant to be created only with available class methods:</span>
@@ -1255,19 +1298,19 @@
     <span class="n">allowed_kwargs</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">get_logger</span><span class="p">(</span><span class="n">logger</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_logger</span><span class="p">(</span><span class="n">logger</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">logger</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">logger</span>
         <span class="k">else</span><span class="p">:</span>
 
-            <span class="k">def</span> <span class="nf">null_logger</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>  <span class="c1"># noqa: ARG001</span>
+            <span class="k">def</span><span class="w"> </span><span class="nf">null_logger</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>  <span class="c1"># noqa: ARG001</span>
                 <span class="k">pass</span>
 
             <span class="k">return</span> <span class="n">null_logger</span>
 
 <div class="viewcode-block" id="StarsTable.get_catalog_for_plot">
 <a class="viewcode-back" href="../../api.html#proseco.core.StarsTable.get_catalog_for_plot">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_catalog_for_plot</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_catalog_for_plot</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return value of ``catalog`` for plot_stars() call for this object</span>
 
 <span class="sd">        For StarsTable this is None (no catalog).</span>
@@ -1277,7 +1320,7 @@
 
 <div class="viewcode-block" id="StarsTable.plot">
 <a class="viewcode-back" href="../../api.html#proseco.core.StarsTable.plot">[docs]</a>
-    <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Plot the star field.</span>
 
@@ -1291,7 +1334,7 @@
 <div class="viewcode-block" id="StarsTable.from_agasc">
 <a class="viewcode-back" href="../../api.html#proseco.core.StarsTable.from_agasc">[docs]</a>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">from_agasc</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">att</span><span class="p">,</span> <span class="n">date</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">radius</span><span class="o">=</span><span class="mf">1.2</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_agasc</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">att</span><span class="p">,</span> <span class="n">date</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">radius</span><span class="o">=</span><span class="mf">1.2</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get AGASC stars in the ACA FOV.  This uses the proseco-AGASC, so only stars</span>
 <span class="sd">        within 3-sigma of 11.5 mag or those nearby a potential guide/acq star are</span>
@@ -1330,7 +1373,7 @@
 <div class="viewcode-block" id="StarsTable.from_agasc_ids">
 <a class="viewcode-back" href="../../api.html#proseco.core.StarsTable.from_agasc_ids">[docs]</a>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">from_agasc_ids</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">att</span><span class="p">,</span> <span class="n">agasc_ids</span><span class="p">,</span> <span class="n">date</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_agasc_ids</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">att</span><span class="p">,</span> <span class="n">agasc_ids</span><span class="p">,</span> <span class="n">date</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get AGASC stars in the ACA FOV using a list of AGASC IDs.</span>
 
@@ -1356,7 +1399,7 @@
 <div class="viewcode-block" id="StarsTable.from_stars">
 <a class="viewcode-back" href="../../api.html#proseco.core.StarsTable.from_stars">[docs]</a>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">from_stars</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">att</span><span class="p">,</span> <span class="n">stars</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;StarsTable&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_stars</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">att</span><span class="p">,</span> <span class="n">stars</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;StarsTable&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return a StarsTable from an existing AGASC stars query.  This just updates</span>
 <span class="sd">        columns in place.</span>
@@ -1441,7 +1484,7 @@
 <div class="viewcode-block" id="StarsTable.empty">
 <a class="viewcode-back" href="../../api.html#proseco.core.StarsTable.empty">[docs]</a>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">empty</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">att</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">empty</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">att</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return an empty StarsTable suitable for generating synthetic tables.</span>
 
@@ -1458,7 +1501,7 @@
 
 <div class="viewcode-block" id="StarsTable.add_agasc_id">
 <a class="viewcode-back" href="../../api.html#proseco.core.StarsTable.add_agasc_id">[docs]</a>
-    <span class="k">def</span> <span class="nf">add_agasc_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">agasc_id</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_agasc_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">agasc_id</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add a AGASC star to the current StarsTable.</span>
 
@@ -1470,7 +1513,7 @@
 
 <div class="viewcode-block" id="StarsTable.add_fake_constellation">
 <a class="viewcode-back" href="../../api.html#proseco.core.StarsTable.add_fake_constellation">[docs]</a>
-    <span class="k">def</span> <span class="nf">add_fake_constellation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_stars</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">1500</span><span class="p">,</span> <span class="n">mag</span><span class="o">=</span><span class="mf">7.0</span><span class="p">,</span> <span class="o">**</span><span class="n">attrs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_fake_constellation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_stars</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">1500</span><span class="p">,</span> <span class="n">mag</span><span class="o">=</span><span class="mf">7.0</span><span class="p">,</span> <span class="o">**</span><span class="n">attrs</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add a fake constellation of up to 8 stars consisting of a cross and square::</span>
 
@@ -1531,7 +1574,7 @@
 
 <div class="viewcode-block" id="StarsTable.add_fake_star">
 <a class="viewcode-back" href="../../api.html#proseco.core.StarsTable.add_fake_star">[docs]</a>
-    <span class="k">def</span> <span class="nf">add_fake_star</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">star</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_fake_star</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">star</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add a star to the current StarsTable.</span>
 
@@ -1620,7 +1663,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">add_row</span><span class="p">(</span><span class="n">out</span><span class="p">)</span></div>
 
 
-    <span class="k">def</span> <span class="nf">add_fake_stars_from_fid</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_fake_stars_from_fid</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">fid_id</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="n">offset_y</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
@@ -1633,7 +1676,7 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="n">fids</span> <span class="o">=</span> <span class="n">FIDS_CACHE</span><span class="p">[</span><span class="n">detector</span><span class="p">,</span> <span class="n">sim_offset</span><span class="p">]</span>
         <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-            <span class="kn">from</span> <span class="nn">.fid</span> <span class="kn">import</span> <span class="n">get_fid_catalog</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">.fid</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_fid_catalog</span>
 
             <span class="n">fids</span> <span class="o">=</span> <span class="n">get_fid_catalog</span><span class="p">(</span>
                 <span class="n">att</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
@@ -1662,7 +1705,7 @@
 
 <div class="viewcode-block" id="bin2x2">
 <a class="viewcode-back" href="../../api.html#proseco.core.bin2x2">[docs]</a>
-<span class="k">def</span> <span class="nf">bin2x2</span><span class="p">(</span><span class="n">arr</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">bin2x2</span><span class="p">(</span><span class="n">arr</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Bin 2-d ``arr`` in 2x2 blocks.  Requires that ``arr`` has even shape sizes&quot;&quot;&quot;</span>
     <span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">arr</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span></div>
@@ -1792,7 +1835,7 @@
 
 <div class="viewcode-block" id="get_image_props">
 <a class="viewcode-back" href="../../api.html#proseco.core.get_image_props">[docs]</a>
-<span class="k">def</span> <span class="nf">get_image_props</span><span class="p">(</span><span class="n">ccd_img</span><span class="p">,</span> <span class="n">c_row</span><span class="p">,</span> <span class="n">c_col</span><span class="p">,</span> <span class="n">bgd</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_image_props</span><span class="p">(</span><span class="n">ccd_img</span><span class="p">,</span> <span class="n">c_row</span><span class="p">,</span> <span class="n">c_col</span><span class="p">,</span> <span class="n">bgd</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Do a pseudo-read and compute the background-subtracted magnitude</span>
 <span class="sd">    of the image.  Returns the 8x8 image and mag.</span>
@@ -1825,7 +1868,7 @@
 
 <div class="viewcode-block" id="pea_reject_image">
 <a class="viewcode-back" href="../../api.html#proseco.core.pea_reject_image">[docs]</a>
-<span class="k">def</span> <span class="nf">pea_reject_image</span><span class="p">(</span><span class="n">img</span><span class="p">):</span>  <span class="c1"># noqa: ARG001</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">pea_reject_image</span><span class="p">(</span><span class="n">img</span><span class="p">):</span>  <span class="c1"># noqa: ARG001</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Check if PEA would reject image (too narrow, too peaky, etc)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -1836,7 +1879,7 @@
 
 <div class="viewcode-block" id="get_kwargs_from_starcheck_text">
 <a class="viewcode-back" href="../../api.html#proseco.core.get_kwargs_from_starcheck_text">[docs]</a>
-<span class="k">def</span> <span class="nf">get_kwargs_from_starcheck_text</span><span class="p">(</span><span class="n">obs_text</span><span class="p">,</span> <span class="n">include_cat</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">force_catalog</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_kwargs_from_starcheck_text</span><span class="p">(</span><span class="n">obs_text</span><span class="p">,</span> <span class="n">include_cat</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">force_catalog</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Get proseco kwargs using the exact catalog from the starcheck output text</span>
 <span class="sd">    ``obs_text``.  Mostly copied from annie/annie (should move into mica.starcheck</span>
@@ -1847,10 +1890,10 @@
 <span class="sd">    :param force_catalog: force proseco catalog to match the original catalog</span>
 <span class="sd">    :returns: dict of keyword args corresponding to proseco args</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="kn">import</span> <span class="nn">re</span>
-    <span class="kn">import</span> <span class="nn">textwrap</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">textwrap</span>
 
-    <span class="kn">from</span> <span class="nn">mica.starcheck.starcheck_parser</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">mica.starcheck.starcheck_parser</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
         <span class="n">get_catalog</span><span class="p">,</span>
         <span class="n">get_coords</span><span class="p">,</span>
         <span class="n">get_dither</span><span class="p">,</span>
@@ -1936,19 +1979,19 @@
             <span class="n">kw</span><span class="p">[</span><span class="s2">&quot;cat&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cat</span>
 
         <span class="k">if</span> <span class="n">force_catalog</span><span class="p">:</span>
-            <span class="n">ok</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">cat</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">],</span> <span class="p">(</span><span class="s2">&quot;ACQ&quot;</span><span class="p">,</span> <span class="s2">&quot;BOT&quot;</span><span class="p">))</span>
+            <span class="n">ok</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">cat</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">],</span> <span class="p">(</span><span class="s2">&quot;ACQ&quot;</span><span class="p">,</span> <span class="s2">&quot;BOT&quot;</span><span class="p">))</span>
             <span class="n">kw</span><span class="p">[</span><span class="s2">&quot;n_acq&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">ok</span><span class="p">)</span>
             <span class="n">kw</span><span class="p">[</span><span class="s2">&quot;include_ids_acq&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cat</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">][</span><span class="n">ok</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
             <span class="n">kw</span><span class="p">[</span><span class="s2">&quot;include_halfws_acq&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cat</span><span class="p">[</span><span class="s2">&quot;halfw&quot;</span><span class="p">][</span><span class="n">ok</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
 
-            <span class="n">ok</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">cat</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">],</span> <span class="p">(</span><span class="s2">&quot;GUI&quot;</span><span class="p">,</span> <span class="s2">&quot;BOT&quot;</span><span class="p">))</span>
+            <span class="n">ok</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">cat</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">],</span> <span class="p">(</span><span class="s2">&quot;GUI&quot;</span><span class="p">,</span> <span class="s2">&quot;BOT&quot;</span><span class="p">))</span>
             <span class="c1"># n_guide kwarg needs to include guide stars + MON stars</span>
             <span class="n">kw</span><span class="p">[</span><span class="s2">&quot;n_guide&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">ok</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span>
                 <span class="n">cat</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;MON&quot;</span>
             <span class="p">)</span>
             <span class="n">kw</span><span class="p">[</span><span class="s2">&quot;include_ids_guide&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cat</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">][</span><span class="n">ok</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
 
-            <span class="n">ok</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">cat</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">],</span> <span class="s2">&quot;FID&quot;</span><span class="p">)</span>
+            <span class="n">ok</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">cat</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">],</span> <span class="s2">&quot;FID&quot;</span><span class="p">)</span>
             <span class="n">kw</span><span class="p">[</span><span class="s2">&quot;include_ids_fid&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cat</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">][</span><span class="n">ok</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">kw</span><span class="p">[</span><span class="s2">&quot;n_acq&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">8</span>
@@ -1968,7 +2011,7 @@
 
 <div class="viewcode-block" id="get_monitors">
 <a class="viewcode-back" href="../../api.html#proseco.core.get_monitors">[docs]</a>
-<span class="k">def</span> <span class="nf">get_monitors</span><span class="p">(</span><span class="n">obsid</span><span class="p">,</span> <span class="n">cat</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_monitors</span><span class="p">(</span><span class="n">obsid</span><span class="p">,</span> <span class="n">cat</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Generate a list of monitor requests for an existing catalog</span>
 
@@ -2025,7 +2068,7 @@
 
 <div class="viewcode-block" id="includes_for_obsid">
 <a class="viewcode-back" href="../../api.html#proseco.core.includes_for_obsid">[docs]</a>
-<span class="k">def</span> <span class="nf">includes_for_obsid</span><span class="p">(</span><span class="n">obsid</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">includes_for_obsid</span><span class="p">(</span><span class="n">obsid</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Return a dict with the include_ids_acq, include_halfws_acq and include_ids_guide</span>
 <span class="sd">    lists for the as-run flight catalog of ``obsid``.  Useful for forcing catalog.</span>
@@ -2039,21 +2082,21 @@
 
 <span class="sd">    :param obsid: int, obsid</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="kn">from</span> <span class="nn">mica.starcheck</span> <span class="kn">import</span> <span class="n">get_starcheck_catalog</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">mica.starcheck</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_starcheck_catalog</span>
 
     <span class="n">obs</span> <span class="o">=</span> <span class="n">get_starcheck_catalog</span><span class="p">(</span><span class="n">obsid</span><span class="p">)</span>
 
     <span class="n">cat</span> <span class="o">=</span> <span class="n">obs</span><span class="p">[</span><span class="s2">&quot;cat&quot;</span><span class="p">]</span>
     <span class="n">out</span> <span class="o">=</span> <span class="p">{}</span>
 
-    <span class="n">ok</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">cat</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">],</span> <span class="p">(</span><span class="s2">&quot;ACQ&quot;</span><span class="p">,</span> <span class="s2">&quot;BOT&quot;</span><span class="p">))</span>
+    <span class="n">ok</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">cat</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">],</span> <span class="p">(</span><span class="s2">&quot;ACQ&quot;</span><span class="p">,</span> <span class="s2">&quot;BOT&quot;</span><span class="p">))</span>
     <span class="n">out</span><span class="p">[</span><span class="s2">&quot;include_ids_acq&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cat</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">][</span><span class="n">ok</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
     <span class="n">out</span><span class="p">[</span><span class="s2">&quot;include_halfws_acq&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cat</span><span class="p">[</span><span class="s2">&quot;halfw&quot;</span><span class="p">][</span><span class="n">ok</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
 
-    <span class="n">ok</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">cat</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">],</span> <span class="p">(</span><span class="s2">&quot;GUI&quot;</span><span class="p">,</span> <span class="s2">&quot;BOT&quot;</span><span class="p">))</span>
+    <span class="n">ok</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">cat</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">],</span> <span class="p">(</span><span class="s2">&quot;GUI&quot;</span><span class="p">,</span> <span class="s2">&quot;BOT&quot;</span><span class="p">))</span>
     <span class="n">out</span><span class="p">[</span><span class="s2">&quot;include_ids_guide&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cat</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">][</span><span class="n">ok</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
 
-    <span class="n">ok</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">cat</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">],</span> <span class="p">(</span><span class="s2">&quot;FID&quot;</span><span class="p">))</span>
+    <span class="n">ok</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">cat</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">],</span> <span class="p">(</span><span class="s2">&quot;FID&quot;</span><span class="p">))</span>
     <span class="n">out</span><span class="p">[</span><span class="s2">&quot;include_ids_fid&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cat</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">][</span><span class="n">ok</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
 
     <span class="k">return</span> <span class="n">out</span></div>
@@ -2062,7 +2105,7 @@
 
 <div class="viewcode-block" id="get_dim_res">
 <a class="viewcode-back" href="../../api.html#proseco.core.get_dim_res">[docs]</a>
-<span class="k">def</span> <span class="nf">get_dim_res</span><span class="p">(</span><span class="n">halfws</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_dim_res</span><span class="p">(</span><span class="n">halfws</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Get ACA search command ``dim`` and ``res`` corresponding to ``halfws``</span>
 
 <span class="sd">    From DM11, where ``dim`` is a 6-bit uint and ``res`` is a 1-bit uint with</span>
@@ -2103,7 +2146,7 @@
 
 <div class="viewcode-block" id="get_img_size">
 <a class="viewcode-back" href="../../api.html#proseco.core.get_img_size">[docs]</a>
-<span class="k">def</span> <span class="nf">get_img_size</span><span class="p">(</span><span class="n">n_fids</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_img_size</span><span class="p">(</span><span class="n">n_fids</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Get guide image readout size from ``n_fids``.</span>
 
 <span class="sd">    This is the core definition for the default rule specifying the guide star</span>
@@ -2139,7 +2182,7 @@
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
         <div class="sphinxsidebarwrapper"><h3>Page Contents</h3>
 
 
@@ -2157,7 +2200,7 @@
     <a href="#">Back to Top</a></p>
   <p>
     &copy; Copyright 2018, Tom Aldcroft, Jean Connelly.<br/>
-    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 7.2.6. &nbsp;
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 9.1.0. &nbsp;
   </p>
 </footer>
   </body>

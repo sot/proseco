@@ -4,13 +4,13 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>proseco.tests.test_catalog &#8212; proseco 5.16.0 documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=fa44fd50" />
+    <title>proseco.tests.test_catalog &#8212; proseco 5.18.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../../_static/bootstrap-astropy.css?v=f4f7060c" />
     
-    <script src="../../../_static/documentation_options.js?v=f23352e5"></script>
-    <script src="../../../_static/doctools.js?v=888ff710"></script>
-    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/documentation_options.js?v=35f5b738"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script type="text/javascript" src="../../../_static/sidebar.js"></script>
     <script type="text/javascript" src="../../../_static/copybutton.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
@@ -44,7 +44,7 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../../index.html">proseco 5.16.0 documentation</a>
+	<a href="../../../index.html">proseco 5.18.0 documentation</a>
 	 &#187;
       </li>
       <li><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
@@ -61,23 +61,23 @@
             
   <h1>Source code for proseco.tests.test_catalog</h1><div class="highlight"><pre>
 <span></span><span class="c1"># Licensed under a 3-clause BSD style license - see LICENSE.rst</span>
-<span class="kn">import</span> <span class="nn">copy</span>
-<span class="kn">import</span> <span class="nn">pickle</span>
-<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
-<span class="kn">import</span> <span class="nn">agasc</span>
-<span class="kn">import</span> <span class="nn">matplotlib</span>
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span>
-<span class="kn">import</span> <span class="nn">mica.starcheck</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">pytest</span>
-<span class="kn">from</span> <span class="nn">Quaternion</span> <span class="kn">import</span> <span class="n">Quat</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">agasc</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">mica.starcheck</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">Quaternion</span><span class="w"> </span><span class="kn">import</span> <span class="n">Quat</span>
 
-<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">characteristics</span> <span class="k">as</span> <span class="n">ACA</span>
-<span class="kn">from</span> <span class="nn">..catalog</span> <span class="kn">import</span> <span class="n">ACATable</span><span class="p">,</span> <span class="n">get_aca_catalog</span>
-<span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">ACACatalogTable</span><span class="p">,</span> <span class="n">StarsTable</span><span class="p">,</span> <span class="n">includes_for_obsid</span>
-<span class="kn">from</span> <span class="nn">..fid</span> <span class="kn">import</span> <span class="n">FidTable</span><span class="p">,</span> <span class="n">get_fid_catalog</span>
-<span class="kn">from</span> <span class="nn">.test_common</span> <span class="kn">import</span> <span class="n">DARK40</span><span class="p">,</span> <span class="n">OBS_INFO</span><span class="p">,</span> <span class="n">STD_INFO</span><span class="p">,</span> <span class="n">mod_std_info</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..</span><span class="w"> </span><span class="kn">import</span> <span class="n">characteristics</span> <span class="k">as</span> <span class="n">ACA</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..catalog</span><span class="w"> </span><span class="kn">import</span> <span class="n">ACATable</span><span class="p">,</span> <span class="n">get_aca_catalog</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core</span><span class="w"> </span><span class="kn">import</span> <span class="n">ACACatalogTable</span><span class="p">,</span> <span class="n">StarsTable</span><span class="p">,</span> <span class="n">includes_for_obsid</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..fid</span><span class="w"> </span><span class="kn">import</span> <span class="n">FidTable</span><span class="p">,</span> <span class="n">get_fid_catalog</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.test_common</span><span class="w"> </span><span class="kn">import</span> <span class="n">DARK40</span><span class="p">,</span> <span class="n">OBS_INFO</span><span class="p">,</span> <span class="n">STD_INFO</span><span class="p">,</span> <span class="n">mod_std_info</span>
 
 <span class="c1"># Ensure all plotting is to a non-interactive backend</span>
 <span class="n">matplotlib</span><span class="o">.</span><span class="n">pyplot</span><span class="o">.</span><span class="n">switch_backend</span><span class="p">(</span><span class="s2">&quot;agg&quot;</span><span class="p">)</span>
@@ -90,7 +90,7 @@
 
 <div class="viewcode-block" id="test_allowed_kwargs">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_catalog.test_allowed_kwargs">[docs]</a>
-<span class="k">def</span> <span class="nf">test_allowed_kwargs</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_allowed_kwargs</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Test #332 where allowed_kwargs class attribute is unique for each subclass&quot;&quot;&quot;</span>
     <span class="n">new_kwargs</span> <span class="o">=</span> <span class="n">ACATable</span><span class="o">.</span><span class="n">allowed_kwargs</span> <span class="o">-</span> <span class="n">ACACatalogTable</span><span class="o">.</span><span class="n">allowed_kwargs</span>
     <span class="k">assert</span> <span class="n">new_kwargs</span> <span class="o">==</span> <span class="p">{</span>
@@ -99,19 +99,17 @@
         <span class="s2">&quot;t_ccd_eff_acq&quot;</span><span class="p">,</span>
         <span class="s2">&quot;t_ccd_eff_guide&quot;</span><span class="p">,</span>
         <span class="s2">&quot;t_ccd_penalty_limit&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;duration&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;target_name&quot;</span><span class="p">,</span>
     <span class="p">}</span>
 
     <span class="n">new_kwargs</span> <span class="o">=</span> <span class="n">FidTable</span><span class="o">.</span><span class="n">allowed_kwargs</span> <span class="o">-</span> <span class="n">ACACatalogTable</span><span class="o">.</span><span class="n">allowed_kwargs</span>
-    <span class="k">assert</span> <span class="n">new_kwargs</span> <span class="o">==</span> <span class="p">{</span><span class="s2">&quot;acqs&quot;</span><span class="p">,</span> <span class="s2">&quot;include_ids&quot;</span><span class="p">,</span> <span class="s2">&quot;exclude_ids&quot;</span><span class="p">}</span></div>
+    <span class="k">assert</span> <span class="n">new_kwargs</span> <span class="o">==</span> <span class="p">{</span><span class="s2">&quot;acqs&quot;</span><span class="p">,</span> <span class="s2">&quot;include_ids&quot;</span><span class="p">,</span> <span class="s2">&quot;exclude_ids&quot;</span><span class="p">,</span> <span class="s2">&quot;guide_cands&quot;</span><span class="p">}</span></div>
 
 
 
 <div class="viewcode-block" id="test_get_aca_catalog_49531">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_catalog.test_get_aca_catalog_49531">[docs]</a>
 <span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">skipif</span><span class="p">(</span><span class="ow">not</span> <span class="n">HAS_SC_ARCHIVE</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s2">&quot;Test requires starcheck archive&quot;</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">test_get_aca_catalog_49531</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_get_aca_catalog_49531</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test of getting an ER using the mica.starcheck archive for getting the</span>
 <span class="sd">    obs parameters.  This tests a regression introduced in the acq-fid</span>
@@ -131,7 +129,7 @@
 <span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">skipif</span><span class="p">(</span>
     <span class="ow">not</span> <span class="n">HAS_MAG_SUPPLEMENT</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s2">&quot;No estimated mags in AGASC supplement&quot;</span>
 <span class="p">)</span>
-<span class="k">def</span> <span class="nf">test_get_aca_catalog_20603_with_supplement</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_get_aca_catalog_20603_with_supplement</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Test that results for 20603 are different if the AGASC supplement is used.&quot;&quot;&quot;</span>
     <span class="n">kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
         <span class="n">obsid</span><span class="o">=</span><span class="mi">20603</span><span class="p">,</span>
@@ -158,7 +156,7 @@
 <div class="viewcode-block" id="test_get_aca_catalog_20603">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_catalog.test_get_aca_catalog_20603">[docs]</a>
 <span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">skipif</span><span class="p">(</span><span class="ow">not</span> <span class="n">HAS_SC_ARCHIVE</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s2">&quot;Test requires starcheck archive&quot;</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">test_get_aca_catalog_20603</span><span class="p">(</span><span class="n">proseco_agasc_1p7</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_get_aca_catalog_20603</span><span class="p">(</span><span class="n">proseco_agasc_1p7</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Put it all together.  Regression test for selected stars.&quot;&quot;&quot;</span>
     <span class="c1"># Force not using a bright star so there is a GUI-only (not BOT) star</span>
     <span class="n">aca</span> <span class="o">=</span> <span class="n">get_aca_catalog</span><span class="p">(</span>
@@ -208,7 +206,7 @@
 <div class="viewcode-block" id="test_get_aca_catalog_20259">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_catalog.test_get_aca_catalog_20259">[docs]</a>
 <span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">skipif</span><span class="p">(</span><span class="ow">not</span> <span class="n">HAS_SC_ARCHIVE</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s2">&quot;Test requires starcheck archive&quot;</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">test_get_aca_catalog_20259</span><span class="p">(</span><span class="n">proseco_agasc_1p7</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_get_aca_catalog_20259</span><span class="p">(</span><span class="n">proseco_agasc_1p7</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test obsid 20259 which has two spoiled fids: HRC-2 is yellow and HRC-4 is red.</span>
 <span class="sd">    Expectation is to choose fids 1, 2, 3 (not 4).</span>
@@ -245,7 +243,7 @@
 
 <div class="viewcode-block" id="test_exception_handling">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_catalog.test_exception_handling">[docs]</a>
-<span class="k">def</span> <span class="nf">test_exception_handling</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_exception_handling</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test top-level exception catching.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -278,7 +276,7 @@
 
 
 
-<span class="k">def</span> <span class="nf">test_unhandled_exception</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_unhandled_exception</span><span class="p">():</span>
     <span class="k">with</span> <span class="n">pytest</span><span class="o">.</span><span class="n">raises</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="n">match</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;missing required parameters&quot;</span><span class="p">):</span>
         <span class="c1"># TypeError in get_starcheck_catalog due to NoneType obsid</span>
         <span class="n">get_aca_catalog</span><span class="p">(</span><span class="n">obsid</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">raise_exc</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -295,7 +293,7 @@
 
 <div class="viewcode-block" id="test_no_candidates">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_catalog.test_no_candidates">[docs]</a>
-<span class="k">def</span> <span class="nf">test_no_candidates</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_no_candidates</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test that get_aca_catalog returns a well-formed but zero-length tables for</span>
 <span class="sd">    a star field with no acceptable candidates.</span>
@@ -330,7 +328,7 @@
 <div class="viewcode-block" id="test_big_dither_from_mica_starcheck">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_catalog.test_big_dither_from_mica_starcheck">[docs]</a>
 <span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">skipif</span><span class="p">(</span><span class="ow">not</span> <span class="n">HAS_SC_ARCHIVE</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s2">&quot;Test requires starcheck archive&quot;</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">test_big_dither_from_mica_starcheck</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_big_dither_from_mica_starcheck</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test code that infers dither_acq and dither_guide for a big-dither</span>
 <span class="sd">    observation like 20168.</span>
@@ -346,7 +344,7 @@
 
 <div class="viewcode-block" id="test_pickle">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_catalog.test_pickle">[docs]</a>
-<span class="k">def</span> <span class="nf">test_pickle</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_pickle</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Test that ACA, guide, acq, and fid catalogs round-trip through pickling.</span>
 
 <span class="sd">    Known attributes that do NOT round-trip are below.  None of these are</span>
@@ -403,7 +401,7 @@
 
 <div class="viewcode-block" id="test_copy_deepcopy_pickle">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_catalog.test_copy_deepcopy_pickle">[docs]</a>
-<span class="k">def</span> <span class="nf">test_copy_deepcopy_pickle</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_copy_deepcopy_pickle</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test that copy, deepcopy and pickle all return the expected object which</span>
 <span class="sd">    is independent of the original (where expected).</span>
@@ -412,13 +410,13 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">aca</span> <span class="o">=</span> <span class="n">get_aca_catalog</span><span class="p">(</span><span class="o">**</span><span class="n">STD_INFO</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">f1</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">f1</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
 
     <span class="n">f2</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span>
     <span class="n">f3</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span>
 
-    <span class="k">def</span> <span class="nf">f4</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">f4</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 
     <span class="k">for</span> <span class="n">func</span> <span class="ow">in</span> <span class="p">(</span><span class="n">f1</span><span class="p">,</span> <span class="n">f2</span><span class="p">,</span> <span class="n">f3</span><span class="p">,</span> <span class="n">f4</span><span class="p">):</span>
@@ -443,7 +441,7 @@
 
 <div class="viewcode-block" id="test_clip_maxmag">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_catalog.test_clip_maxmag">[docs]</a>
-<span class="k">def</span> <span class="nf">test_clip_maxmag</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_clip_maxmag</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Test that clipping maxmag for guide and acq stars works&quot;&quot;&quot;</span>
     <span class="n">stars</span> <span class="o">=</span> <span class="n">StarsTable</span><span class="o">.</span><span class="n">empty</span><span class="p">()</span>
     <span class="n">mag0</span> <span class="o">=</span> <span class="p">(</span>
@@ -477,10 +475,10 @@
 
 <div class="viewcode-block" id="test_big_sim_offset">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_catalog.test_big_sim_offset">[docs]</a>
-<span class="k">def</span> <span class="nf">test_big_sim_offset</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_big_sim_offset</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Check getting a catalog for a large SIM offset that means there are</span>
-<span class="sd">    no candidates.</span>
+<span class="sd">    no fid light candidates.</span>
 
 <span class="sd">    Bonus: check that duration and target_name can be set.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -499,11 +497,11 @@
 
 
 
-<span class="k">def</span> <span class="nf">test_optional_penalty_limit</span><span class="p">():</span>
-    <span class="kn">import</span> <span class="nn">json</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_optional_penalty_limit</span><span class="p">():</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 
-    <span class="kn">from</span> <span class="nn">ska_helpers</span> <span class="kn">import</span> <span class="n">chandra_models</span><span class="p">,</span> <span class="n">paths</span>
-    <span class="kn">from</span> <span class="nn">ska_helpers.utils</span> <span class="kn">import</span> <span class="n">temp_env_var</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ska_helpers</span><span class="w"> </span><span class="kn">import</span> <span class="n">chandra_models</span><span class="p">,</span> <span class="n">paths</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ska_helpers.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">temp_env_var</span>
 
     <span class="n">version</span> <span class="o">=</span> <span class="s2">&quot;3.49&quot;</span>
     <span class="n">repo_path</span> <span class="o">=</span> <span class="n">paths</span><span class="o">.</span><span class="n">chandra_models_repo_path</span><span class="p">()</span>
@@ -538,7 +536,7 @@
 <div class="viewcode-block" id="test_calling_with_t_ccd_acq_guide">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_catalog.test_calling_with_t_ccd_acq_guide">[docs]</a>
 <span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span><span class="s2">&quot;call_t_ccd&quot;</span><span class="p">,</span> <span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">])</span>
-<span class="k">def</span> <span class="nf">test_calling_with_t_ccd_acq_guide</span><span class="p">(</span><span class="n">call_t_ccd</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_calling_with_t_ccd_acq_guide</span><span class="p">(</span><span class="n">call_t_ccd</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Test that calling get_aca_catalog with t_ccd or t_ccd_acq/guide args sets all</span>
 <span class="sd">    CCD attributes correctly in the nominal case of a temperature</span>
 <span class="sd">    below the penalty limit.</span>
@@ -591,7 +589,7 @@
 <div class="viewcode-block" id="test_t_ccd_effective_acq_guide">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_catalog.test_t_ccd_effective_acq_guide">[docs]</a>
 <span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span><span class="s2">&quot;t_ccd_case&quot;</span><span class="p">,</span> <span class="n">t_ccd_cases</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">test_t_ccd_effective_acq_guide</span><span class="p">(</span><span class="n">t_ccd_case</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_t_ccd_effective_acq_guide</span><span class="p">(</span><span class="n">t_ccd_case</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Test setting of effective T_ccd temperatures for cases above and</span>
 <span class="sd">    below the penalty limit.</span>
 
@@ -625,7 +623,7 @@
 <div class="viewcode-block" id="test_t_ccd_effective_acq_guide_via_kwarg">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_catalog.test_t_ccd_effective_acq_guide_via_kwarg">[docs]</a>
 <span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span><span class="s2">&quot;t_ccd_case&quot;</span><span class="p">,</span> <span class="n">t_ccd_cases</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">test_t_ccd_effective_acq_guide_via_kwarg</span><span class="p">(</span><span class="n">t_ccd_case</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_t_ccd_effective_acq_guide_via_kwarg</span><span class="p">(</span><span class="n">t_ccd_case</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Test setting of effective T_ccd temperatures for cases above and</span>
 <span class="sd">    below a manually specified limit</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -657,7 +655,7 @@
 
 
 
-<span class="k">def</span> <span class="nf">test_call_args_attr</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_call_args_attr</span><span class="p">():</span>
     <span class="n">aca</span> <span class="o">=</span> <span class="n">get_aca_catalog</span><span class="p">(</span>
         <span class="o">**</span><span class="n">mod_std_info</span><span class="p">(</span><span class="n">optimize</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">n_guide</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_acq</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_fid</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">raise_exc</span><span class="o">=</span><span class="kc">False</span>
     <span class="p">)</span>
@@ -681,7 +679,7 @@
 
 <div class="viewcode-block" id="test_t_ccd_attr">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_catalog.test_t_ccd_attr">[docs]</a>
-<span class="k">def</span> <span class="nf">test_t_ccd_attr</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_t_ccd_attr</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test that a t_ccd kwarg is set to all of the ACACatalogTable attrs</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -706,7 +704,7 @@
 
 <div class="viewcode-block" id="test_t_ccd_acq_attr">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_catalog.test_t_ccd_acq_attr">[docs]</a>
-<span class="k">def</span> <span class="nf">test_t_ccd_acq_attr</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_t_ccd_acq_attr</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test that a t_ccd and t_ccd_acq kwarg are set to all of the expected ACACatalogTable attrs</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -733,7 +731,7 @@
 
 <div class="viewcode-block" id="test_t_ccd_multi_attr">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_catalog.test_t_ccd_multi_attr">[docs]</a>
-<span class="k">def</span> <span class="nf">test_t_ccd_multi_attr</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_t_ccd_multi_attr</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test assignments if t_ccd, t_ccd_acq, and t_ccd_guide supplied as kwargs</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -761,7 +759,7 @@
 
 
 
-<span class="k">def</span> <span class="nf">test_bad_obsid</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_bad_obsid</span><span class="p">():</span>
     <span class="c1"># Expects this to be starcheck catalog</span>
     <span class="n">aca</span> <span class="o">=</span> <span class="n">get_aca_catalog</span><span class="p">(</span><span class="n">obsid</span><span class="o">=</span><span class="s2">&quot;blah blah&quot;</span><span class="p">,</span> <span class="n">raise_exc</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="k">assert</span> <span class="s2">&quot;ValueError: text does not have OBSID&quot;</span> <span class="ow">in</span> <span class="n">aca</span><span class="o">.</span><span class="n">exception</span>
@@ -769,7 +767,7 @@
 
 <div class="viewcode-block" id="test_bad_pixel_dark_current">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_catalog.test_bad_pixel_dark_current">[docs]</a>
-<span class="k">def</span> <span class="nf">test_bad_pixel_dark_current</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_bad_pixel_dark_current</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test avoidance of bad_pixels = [[-245, 0, 454, 454]]</span>
 
@@ -809,7 +807,7 @@
 
 <div class="viewcode-block" id="test_fid_trap_effect">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_catalog.test_fid_trap_effect">[docs]</a>
-<span class="k">def</span> <span class="nf">test_fid_trap_effect</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_fid_trap_effect</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Test that guide stars impacted by fid trap effect are excluded.</span>
 
 <span class="sd">    This uses two flight obsids that showed this issue.  See:</span>
@@ -820,7 +818,12 @@
     <span class="n">agasc_ids</span> <span class="o">=</span> <span class="p">[</span><span class="mi">367148872</span><span class="p">,</span> <span class="mi">367139768</span><span class="p">,</span> <span class="mi">367144424</span><span class="p">,</span> <span class="mi">367674552</span><span class="p">,</span> <span class="mi">367657896</span><span class="p">]</span>
     <span class="n">att</span> <span class="o">=</span> <span class="p">[</span><span class="mf">10.659376</span><span class="p">,</span> <span class="mf">40.980028</span><span class="p">,</span> <span class="mf">181.012903</span><span class="p">]</span>
     <span class="n">stars</span> <span class="o">=</span> <span class="n">StarsTable</span><span class="o">.</span><span class="n">from_agasc_ids</span><span class="p">(</span><span class="n">att</span><span class="p">,</span> <span class="n">agasc_ids</span><span class="p">)</span>
-    <span class="n">cat</span> <span class="o">=</span> <span class="n">get_aca_catalog</span><span class="p">(</span><span class="n">obsid</span><span class="o">=</span><span class="mi">1576</span><span class="p">,</span> <span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span> <span class="n">raise_exc</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># Note that the fid lights need to be included, as guide/fid light optimization</span>
+    <span class="c1"># would otherwise unselect fid 6 and thus not apply the trap effect exclusion</span>
+    <span class="c1"># to star 367674552.</span>
+    <span class="n">cat</span> <span class="o">=</span> <span class="n">get_aca_catalog</span><span class="p">(</span>
+        <span class="n">obsid</span><span class="o">=</span><span class="mi">1576</span><span class="p">,</span> <span class="n">include_ids_fid</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span> <span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span> <span class="n">raise_exc</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
     <span class="k">assert</span> <span class="mi">367674552</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cat</span><span class="o">.</span><span class="n">guides</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span>
 
     <span class="c1"># Obsid 2365</span>
@@ -832,14 +835,18 @@
     <span class="n">stars</span> <span class="o">=</span> <span class="n">StarsTable</span><span class="o">.</span><span class="n">from_agasc_ids</span><span class="p">(</span><span class="n">att</span><span class="p">,</span> <span class="n">agasc_ids</span><span class="p">)</span>
 
     <span class="c1"># Specify att kwarg explicitly to override what is found in mica.starcheck</span>
-    <span class="n">cat</span> <span class="o">=</span> <span class="n">get_aca_catalog</span><span class="p">(</span><span class="n">obsid</span><span class="o">=</span><span class="mi">2365</span><span class="p">,</span> <span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span> <span class="n">raise_exc</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">att</span><span class="o">=</span><span class="n">att</span><span class="p">)</span>
+    <span class="c1"># And include fid lights to ensure optimization applies the trap effect exclusion,</span>
+    <span class="c1"># otherwise fid 6 would be unselected and star 1184897704 would not be excluded.</span>
+    <span class="n">cat</span> <span class="o">=</span> <span class="n">get_aca_catalog</span><span class="p">(</span>
+        <span class="n">obsid</span><span class="o">=</span><span class="mi">2365</span><span class="p">,</span> <span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span> <span class="n">raise_exc</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">att</span><span class="o">=</span><span class="n">att</span><span class="p">,</span> <span class="n">include_ids_fid</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">]</span>
+    <span class="p">)</span>
     <span class="k">assert</span> <span class="mi">1184897704</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cat</span><span class="o">.</span><span class="n">guides</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span></div>
 
 
 
 <div class="viewcode-block" id="test_monitors_and_target_offset_args">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_catalog.test_monitors_and_target_offset_args">[docs]</a>
-<span class="k">def</span> <span class="nf">test_monitors_and_target_offset_args</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_monitors_and_target_offset_args</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test #328 to add monitors and target_offset args to API.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -872,14 +879,14 @@
         <span class="s2">&quot;-1700.0 1900.0          2 7.5        3&quot;</span><span class="p">,</span>
         <span class="s2">&quot;  500.0 -500.0          2 7.5        2&quot;</span><span class="p">,</span>
     <span class="p">]</span>
-    <span class="k">assert</span> <span class="n">aca</span><span class="o">.</span><span class="n">monitors</span><span class="o">.</span><span class="n">pformat_all</span><span class="p">()</span> <span class="o">==</span> <span class="n">exp</span>
+    <span class="k">assert</span> <span class="n">aca</span><span class="o">.</span><span class="n">monitors</span><span class="o">.</span><span class="n">pformat</span><span class="p">()</span> <span class="o">==</span> <span class="n">exp</span>
     <span class="k">assert</span> <span class="n">aca</span><span class="o">.</span><span class="n">target_offset</span> <span class="ow">is</span> <span class="n">target_offset</span></div>
 
 
 
 <div class="viewcode-block" id="test_reject_column_spoilers">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_catalog.test_reject_column_spoilers">[docs]</a>
-<span class="k">def</span> <span class="nf">test_reject_column_spoilers</span><span class="p">(</span><span class="n">disable_fid_offsets</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_reject_column_spoilers</span><span class="p">(</span><span class="n">disable_fid_offsets</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test that column spoiler handling is correct for guide, acq and fid selection.</span>
 <span class="sd">    Also tests not selecting stars that are too bright.</span>
@@ -888,7 +895,7 @@
     <span class="n">fids</span> <span class="o">=</span> <span class="n">get_fid_catalog</span><span class="p">(</span><span class="o">**</span><span class="n">mod_std_info</span><span class="p">(</span><span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span> <span class="n">detector</span><span class="o">=</span><span class="s2">&quot;HRC-I&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">cand_fids</span>
     <span class="n">stars</span><span class="o">.</span><span class="n">add_fake_constellation</span><span class="p">(</span><span class="n">mag</span><span class="o">=</span><span class="mf">8.0</span><span class="p">,</span> <span class="n">n_stars</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">offset</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">drow</span><span class="p">,</span> <span class="n">dcol</span><span class="p">,</span> <span class="n">dmag</span><span class="p">,</span> <span class="n">rmult</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">offset</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">drow</span><span class="p">,</span> <span class="n">dcol</span><span class="p">,</span> <span class="n">dmag</span><span class="p">,</span> <span class="n">rmult</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">id</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">:</span>
             <span class="n">star</span> <span class="o">=</span> <span class="n">fids</span><span class="o">.</span><span class="n">get_id</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -935,7 +942,7 @@
 
 <div class="viewcode-block" id="test_dark_property">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_catalog.test_dark_property">[docs]</a>
-<span class="k">def</span> <span class="nf">test_dark_property</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_dark_property</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test that appropriate temperatures are applied to acq, fid, guide</span>
 <span class="sd">    dark maps.</span>
@@ -959,7 +966,7 @@
 
 <div class="viewcode-block" id="test_dense_star_field_regress">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_catalog.test_dense_star_field_regress">[docs]</a>
-<span class="k">def</span> <span class="nf">test_dense_star_field_regress</span><span class="p">(</span><span class="n">proseco_agasc_1p7</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_dense_star_field_regress</span><span class="p">(</span><span class="n">proseco_agasc_1p7</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test getting stars at the most dense star field in the sky.  Taken from:</span>
 
@@ -991,7 +998,7 @@
 
 <div class="viewcode-block" id="test_aca_acqs_include_exclude">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_catalog.test_aca_acqs_include_exclude">[docs]</a>
-<span class="k">def</span> <span class="nf">test_aca_acqs_include_exclude</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_aca_acqs_include_exclude</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test include and exclude stars.  This uses a catalog with 11 stars:</span>
 <span class="sd">    - 8 bright stars from 7.0 to 7.7 mag, where the 7.0 is EXCLUDED</span>
@@ -1060,7 +1067,7 @@
 
 <div class="viewcode-block" id="test_report_from_objects">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_catalog.test_report_from_objects">[docs]</a>
-<span class="k">def</span> <span class="nf">test_report_from_objects</span><span class="p">(</span><span class="n">tmpdir</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_report_from_objects</span><span class="p">(</span><span class="n">tmpdir</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test making guide and acq reports without the intermediate pickle.</span>
 
@@ -1085,7 +1092,7 @@
 
 <div class="viewcode-block" id="test_force_catalog_from_starcheck">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_catalog.test_force_catalog_from_starcheck">[docs]</a>
-<span class="k">def</span> <span class="nf">test_force_catalog_from_starcheck</span><span class="p">(</span><span class="n">proseco_agasc_1p7</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_force_catalog_from_starcheck</span><span class="p">(</span><span class="n">proseco_agasc_1p7</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test forcing a catalog from starcheck output.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -1165,7 +1172,7 @@
 <div class="viewcode-block" id="test_includes_for_obsid">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_catalog.test_includes_for_obsid">[docs]</a>
 <span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">skipif</span><span class="p">(</span><span class="ow">not</span> <span class="n">HAS_SC_ARCHIVE</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s2">&quot;Test requires starcheck archive&quot;</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">test_includes_for_obsid</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_includes_for_obsid</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test helper function to get the include_* kwargs for forcing a catalog.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -1190,7 +1197,7 @@
 
 
 
-<span class="k">def</span> <span class="nf">test_dark_date_warning</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_dark_date_warning</span><span class="p">():</span>
     <span class="n">aca</span> <span class="o">=</span> <span class="n">get_aca_catalog</span><span class="p">(</span><span class="o">**</span><span class="n">STD_INFO</span><span class="p">)</span>
     <span class="n">acap</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">aca</span><span class="p">))</span>
     <span class="k">assert</span> <span class="n">acap</span><span class="o">.</span><span class="n">dark_date</span> <span class="o">==</span> <span class="s2">&quot;2017:272&quot;</span>
@@ -1207,7 +1214,7 @@
 
 <div class="viewcode-block" id="test_img_size_guide">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_catalog.test_img_size_guide">[docs]</a>
-<span class="k">def</span> <span class="nf">test_img_size_guide</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_img_size_guide</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test img_size_guide for setting guide star readout image size</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -1253,7 +1260,7 @@
 
 <div class="viewcode-block" id="test_img_size_guide_override_with_env">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_catalog.test_img_size_guide_override_with_env">[docs]</a>
-<span class="k">def</span> <span class="nf">test_img_size_guide_override_with_env</span><span class="p">(</span><span class="n">monkeypatch</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_img_size_guide_override_with_env</span><span class="p">(</span><span class="n">monkeypatch</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test img_size_guide for setting guide star readout image size when</span>
 <span class="sd">    PROSECO_OR_IMAGE_SIZE is set.</span>
@@ -1275,7 +1282,7 @@
 
 
 
-<span class="k">def</span> <span class="nf">test_dyn_bgd_star_bonus</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_dyn_bgd_star_bonus</span><span class="p">():</span>
     <span class="n">stars</span> <span class="o">=</span> <span class="n">StarsTable</span><span class="o">.</span><span class="n">empty</span><span class="p">()</span>
 
     <span class="n">stars</span><span class="o">.</span><span class="n">add_fake_constellation</span><span class="p">(</span><span class="n">mag</span><span class="o">=</span><span class="p">[</span><span class="mf">9.5</span><span class="p">]</span> <span class="o">*</span> <span class="mi">3</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span> <span class="n">n_stars</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
@@ -1293,7 +1300,7 @@
     <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">aca_dyn</span><span class="o">.</span><span class="n">guides</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">],</span> <span class="p">[</span><span class="mf">9.5</span><span class="p">,</span> <span class="mf">9.5</span><span class="p">,</span> <span class="mf">9.5</span><span class="p">,</span> <span class="mf">10.3</span><span class="p">,</span> <span class="mf">10.4</span><span class="p">])</span>
 
 
-<span class="k">def</span> <span class="nf">test_man_angle_away</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_man_angle_away</span><span class="p">():</span>
     <span class="n">aca1</span> <span class="o">=</span> <span class="n">get_aca_catalog</span><span class="p">(</span><span class="o">**</span><span class="n">STD_INFO</span><span class="p">)</span>
     <span class="n">aca2</span> <span class="o">=</span> <span class="n">get_aca_catalog</span><span class="p">(</span><span class="o">**</span><span class="n">STD_INFO</span><span class="p">,</span> <span class="n">man_angle_next</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
     <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">aca1</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">aca2</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">])</span>
@@ -1309,7 +1316,7 @@
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
         <div class="sphinxsidebarwrapper"><h3>Page Contents</h3>
 
 
@@ -1327,7 +1334,7 @@
     <a href="#">Back to Top</a></p>
   <p>
     &copy; Copyright 2018, Tom Aldcroft, Jean Connelly.<br/>
-    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 7.2.6. &nbsp;
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 9.1.0. &nbsp;
   </p>
 </footer>
   </body>

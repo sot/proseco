@@ -4,13 +4,13 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>proseco.tests.test_acq &#8212; proseco 5.16.0 documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=fa44fd50" />
+    <title>proseco.tests.test_acq &#8212; proseco 5.18.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../../_static/bootstrap-astropy.css?v=f4f7060c" />
     
-    <script src="../../../_static/documentation_options.js?v=f23352e5"></script>
-    <script src="../../../_static/doctools.js?v=888ff710"></script>
-    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/documentation_options.js?v=35f5b738"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script type="text/javascript" src="../../../_static/sidebar.js"></script>
     <script type="text/javascript" src="../../../_static/copybutton.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
@@ -44,7 +44,7 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../../index.html">proseco 5.16.0 documentation</a>
+	<a href="../../../index.html">proseco 5.18.0 documentation</a>
 	 &#187;
       </li>
       <li><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
@@ -62,22 +62,22 @@
   <h1>Source code for proseco.tests.test_acq</h1><div class="highlight"><pre>
 <span></span><span class="c1"># Licensed under a 3-clause BSD style license - see LICENSE.rst</span>
 
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">pytest</span>
-<span class="kn">import</span> <span class="nn">ska_helpers.utils</span>
-<span class="kn">from</span> <span class="nn">chandra_aca</span> <span class="kn">import</span> <span class="n">star_probs</span>
-<span class="kn">from</span> <span class="nn">chandra_aca.aca_image</span> <span class="kn">import</span> <span class="n">AcaPsfLibrary</span>
-<span class="kn">from</span> <span class="nn">chandra_aca.transform</span> <span class="kn">import</span> <span class="n">mag_to_count_rate</span><span class="p">,</span> <span class="n">yagzag_to_pixels</span>
-<span class="kn">from</span> <span class="nn">Quaternion</span> <span class="kn">import</span> <span class="n">Quat</span>
-<span class="kn">from</span> <span class="nn">ska_helpers</span> <span class="kn">import</span> <span class="n">chandra_models</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ska_helpers.utils</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">chandra_aca</span><span class="w"> </span><span class="kn">import</span> <span class="n">star_probs</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">chandra_aca.aca_image</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcaPsfLibrary</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">chandra_aca.transform</span><span class="w"> </span><span class="kn">import</span> <span class="n">mag_to_count_rate</span><span class="p">,</span> <span class="n">yagzag_to_pixels</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">Quaternion</span><span class="w"> </span><span class="kn">import</span> <span class="n">Quat</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ska_helpers</span><span class="w"> </span><span class="kn">import</span> <span class="n">chandra_models</span>
 
-<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">characteristics</span> <span class="k">as</span> <span class="n">ACA</span>
-<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">characteristics_acq</span> <span class="k">as</span> <span class="n">ACQ</span>
-<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">characteristics_fid</span> <span class="k">as</span> <span class="n">FID</span>
-<span class="kn">from</span> <span class="nn">..acq</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..</span><span class="w"> </span><span class="kn">import</span> <span class="n">characteristics</span> <span class="k">as</span> <span class="n">ACA</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..</span><span class="w"> </span><span class="kn">import</span> <span class="n">characteristics_acq</span> <span class="k">as</span> <span class="n">ACQ</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..</span><span class="w"> </span><span class="kn">import</span> <span class="n">characteristics_fid</span> <span class="k">as</span> <span class="n">FID</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..acq</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">AcqTable</span><span class="p">,</span>
     <span class="n">bin2x2</span><span class="p">,</span>
     <span class="n">calc_p_on_ccd</span><span class="p">,</span>
@@ -86,10 +86,10 @@
     <span class="n">get_imposter_stars</span><span class="p">,</span>
     <span class="n">get_p_man_err</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">..catalog</span> <span class="kn">import</span> <span class="n">get_aca_catalog</span>
-<span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">ACABox</span><span class="p">,</span> <span class="n">StarsTable</span>
-<span class="kn">from</span> <span class="nn">..report_acq</span> <span class="kn">import</span> <span class="n">make_report</span>
-<span class="kn">from</span> <span class="nn">.test_common</span> <span class="kn">import</span> <span class="n">DARK40</span><span class="p">,</span> <span class="n">OBS_INFO</span><span class="p">,</span> <span class="n">STD_INFO</span><span class="p">,</span> <span class="n">mod_std_info</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..catalog</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_aca_catalog</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core</span><span class="w"> </span><span class="kn">import</span> <span class="n">ACABox</span><span class="p">,</span> <span class="n">StarsTable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..report_acq</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_report</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.test_common</span><span class="w"> </span><span class="kn">import</span> <span class="n">DARK40</span><span class="p">,</span> <span class="n">OBS_INFO</span><span class="p">,</span> <span class="n">STD_INFO</span><span class="p">,</span> <span class="n">mod_std_info</span>
 
 <span class="n">TEST_DATE</span> <span class="o">=</span> <span class="s2">&quot;2018:144&quot;</span>  <span class="c1"># Fixed date for doing tests</span>
 <span class="n">ATT</span> <span class="o">=</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>  <span class="c1"># Arbitrary test attitude</span>
@@ -99,7 +99,7 @@
 
 <div class="viewcode-block" id="calc_p_brightest">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.calc_p_brightest">[docs]</a>
-<span class="k">def</span> <span class="nf">calc_p_brightest</span><span class="p">(</span><span class="n">acq</span><span class="p">,</span> <span class="n">box_size</span><span class="p">,</span> <span class="n">stars</span><span class="p">,</span> <span class="n">dark</span><span class="p">,</span> <span class="n">man_err</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">dither</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">bgd</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">calc_p_brightest</span><span class="p">(</span><span class="n">acq</span><span class="p">,</span> <span class="n">box_size</span><span class="p">,</span> <span class="n">stars</span><span class="p">,</span> <span class="n">dark</span><span class="p">,</span> <span class="n">man_err</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">dither</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">bgd</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Stub for original functional version of acq.calc_p_brightest, which was</span>
 <span class="sd">    turned into an AcqTable method.</span>
@@ -115,7 +115,7 @@
 
 <div class="viewcode-block" id="add_imposter">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.add_imposter">[docs]</a>
-<span class="k">def</span> <span class="nf">add_imposter</span><span class="p">(</span><span class="n">dark</span><span class="p">,</span> <span class="n">acq</span><span class="p">,</span> <span class="n">dyang</span><span class="p">,</span> <span class="n">dzang</span><span class="p">,</span> <span class="n">dmag</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">add_imposter</span><span class="p">(</span><span class="n">dark</span><span class="p">,</span> <span class="n">acq</span><span class="p">,</span> <span class="n">dyang</span><span class="p">,</span> <span class="n">dzang</span><span class="p">,</span> <span class="n">dmag</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    For testing, add an imposter (single hot pixel) at the specified delta location</span>
 <span class="sd">    and mag relative to an ``acq`` star.  Returns a new dark map.</span>
@@ -134,7 +134,7 @@
 
 <div class="viewcode-block" id="add_spoiler">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.add_spoiler">[docs]</a>
-<span class="k">def</span> <span class="nf">add_spoiler</span><span class="p">(</span><span class="n">stars</span><span class="p">,</span> <span class="n">acq</span><span class="p">,</span> <span class="n">dyang</span><span class="p">,</span> <span class="n">dzang</span><span class="p">,</span> <span class="n">dmag</span><span class="p">,</span> <span class="n">mag_err</span><span class="o">=</span><span class="mf">0.05</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">add_spoiler</span><span class="p">(</span><span class="n">stars</span><span class="p">,</span> <span class="n">acq</span><span class="p">,</span> <span class="n">dyang</span><span class="p">,</span> <span class="n">dzang</span><span class="p">,</span> <span class="n">dmag</span><span class="p">,</span> <span class="n">mag_err</span><span class="o">=</span><span class="mf">0.05</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    For testing, add a spoiler stars at the specified delta location</span>
 <span class="sd">    and mag relative to an ``acq`` star.  Returns a new stars table.</span>
@@ -160,7 +160,7 @@
 
 <div class="viewcode-block" id="test_get_p_man_err">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.test_get_p_man_err">[docs]</a>
-<span class="k">def</span> <span class="nf">test_get_p_man_err</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_get_p_man_err</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Test the get_p_man_err function.</span>
 
 <span class="sd">    P_man_errs is a table that defines the probability of a maneuver error being</span>
@@ -195,7 +195,7 @@
 
 <div class="viewcode-block" id="test_bin2x2">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.test_bin2x2">[docs]</a>
-<span class="k">def</span> <span class="nf">test_bin2x2</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_bin2x2</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Test the bin2x2 function&quot;&quot;&quot;</span>
     <span class="n">arr</span> <span class="o">=</span> <span class="n">bin2x2</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">16</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
     <span class="k">assert</span> <span class="n">arr</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
@@ -205,7 +205,7 @@
 
 <div class="viewcode-block" id="test_get_image_props">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.test_get_image_props">[docs]</a>
-<span class="k">def</span> <span class="nf">test_get_image_props</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_get_image_props</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Test the get_image_props function&quot;&quot;&quot;</span>
     <span class="n">c_row</span> <span class="o">=</span> <span class="mi">10</span>
     <span class="n">c_col</span> <span class="o">=</span> <span class="mi">20</span>
@@ -224,7 +224,7 @@
 
 <div class="viewcode-block" id="setup_get_imposter_stars">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.setup_get_imposter_stars">[docs]</a>
-<span class="k">def</span> <span class="nf">setup_get_imposter_stars</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">setup_get_imposter_stars</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Setup for testing with the get_imposter_stars function.&quot;&quot;&quot;</span>
     <span class="n">bgd</span> <span class="o">=</span> <span class="mi">40</span>
     <span class="n">dark</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="mi">100</span><span class="p">,</span> <span class="mi">100</span><span class="p">),</span> <span class="n">fill_value</span><span class="o">=</span><span class="n">bgd</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
@@ -242,7 +242,7 @@
 
 <div class="viewcode-block" id="test_get_imposters_3500">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.test_get_imposters_3500">[docs]</a>
-<span class="k">def</span> <span class="nf">test_get_imposters_3500</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_get_imposters_3500</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test three nearby hits that don&#39;t make the cut.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -259,7 +259,7 @@
 
 <div class="viewcode-block" id="test_get_imposters_5000">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.test_get_imposters_5000">[docs]</a>
-<span class="k">def</span> <span class="nf">test_get_imposters_5000</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_get_imposters_5000</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test get_imposters with an imposter of 5000.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -280,13 +280,13 @@
 
 
 
-<span class="k">def</span> <span class="nf">get_test_stars</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_test_stars</span><span class="p">():</span>
     <span class="k">if</span> <span class="s2">&quot;stars&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">CACHE</span><span class="p">:</span>
         <span class="n">CACHE</span><span class="p">[</span><span class="s2">&quot;stars&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">StarsTable</span><span class="o">.</span><span class="n">from_agasc</span><span class="p">(</span><span class="n">ATT</span><span class="p">,</span> <span class="n">date</span><span class="o">=</span><span class="s2">&quot;2018:230&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">CACHE</span><span class="p">[</span><span class="s2">&quot;stars&quot;</span><span class="p">]</span>
 
 
-<span class="k">def</span> <span class="nf">get_test_cand_acqs</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_test_cand_acqs</span><span class="p">():</span>
     <span class="k">if</span> <span class="s2">&quot;cand_acqs&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">CACHE</span><span class="p">:</span>
         <span class="n">acqs</span> <span class="o">=</span> <span class="n">AcqTable</span><span class="p">()</span>
         <span class="n">acqs</span><span class="o">.</span><span class="n">p_man_errs</span> <span class="o">=</span> <span class="n">ACQ</span><span class="o">.</span><span class="n">p_man_errs</span><span class="p">[</span><span class="s2">&quot;120-180&quot;</span><span class="p">]</span>
@@ -298,7 +298,7 @@
 
 <div class="viewcode-block" id="test_calc_p_brightest_same_bright">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.test_calc_p_brightest_same_bright">[docs]</a>
-<span class="k">def</span> <span class="nf">test_calc_p_brightest_same_bright</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_calc_p_brightest_same_bright</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test for an easy situation of three spoiler/imposters with exactly</span>
 <span class="sd">    the same brightness as acq star so that p_brighter is always 0.5.</span>
@@ -333,7 +333,7 @@
 
 <div class="viewcode-block" id="test_calc_p_brightest_same_bright_asymm_dither">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.test_calc_p_brightest_same_bright_asymm_dither">[docs]</a>
-<span class="k">def</span> <span class="nf">test_calc_p_brightest_same_bright_asymm_dither</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_calc_p_brightest_same_bright_asymm_dither</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test for an easy situation of three spoiler/imposters with exactly</span>
 <span class="sd">    the same brightness as acq star so that p_brighter is always 0.5.</span>
@@ -405,7 +405,7 @@
 
 <div class="viewcode-block" id="test_calc_p_brightest_1mag_brighter">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.test_calc_p_brightest_1mag_brighter">[docs]</a>
-<span class="k">def</span> <span class="nf">test_calc_p_brightest_1mag_brighter</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_calc_p_brightest_1mag_brighter</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test for the situation of spoiler/imposter that is 1 mag brighter.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -445,7 +445,7 @@
 
 <div class="viewcode-block" id="test_calc_p_on_ccd">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.test_calc_p_on_ccd">[docs]</a>
-<span class="k">def</span> <span class="nf">test_calc_p_on_ccd</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_calc_p_on_ccd</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test the calculation of probability of star being on usable area on the CCD.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -477,7 +477,7 @@
 
 <div class="viewcode-block" id="test_calc_p_on_ccd_asymmetric_dither">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.test_calc_p_on_ccd_asymmetric_dither">[docs]</a>
-<span class="k">def</span> <span class="nf">test_calc_p_on_ccd_asymmetric_dither</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_calc_p_on_ccd_asymmetric_dither</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test the calculation of probability of star being on usable area on the CCD</span>
 <span class="sd">    for the case of asymmetric dither.</span>
@@ -534,7 +534,7 @@
 
 <div class="viewcode-block" id="test_get_acq_catalog_19387">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.test_get_acq_catalog_19387">[docs]</a>
-<span class="k">def</span> <span class="nf">test_get_acq_catalog_19387</span><span class="p">(</span><span class="n">proseco_agasc_1p7</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_get_acq_catalog_19387</span><span class="p">(</span><span class="n">proseco_agasc_1p7</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Put it all together.  Regression test for selected stars.  This obsid</span>
 <span class="sd">    actually changes out one of the initial catalog candidates.</span>
 
@@ -572,7 +572,7 @@
 
 <div class="viewcode-block" id="test_get_acq_catalog_21007">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.test_get_acq_catalog_21007">[docs]</a>
-<span class="k">def</span> <span class="nf">test_get_acq_catalog_21007</span><span class="p">(</span><span class="n">proseco_agasc_1p7</span><span class="p">,</span> <span class="n">disable_overlap_penalty</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_get_acq_catalog_21007</span><span class="p">(</span><span class="n">proseco_agasc_1p7</span><span class="p">,</span> <span class="n">disable_overlap_penalty</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Put it all together.  Regression test for selected stars.</span>
 
 <span class="sd">    Also test that the acq prob model info dict is correctly set.</span>
@@ -653,7 +653,7 @@
 
 <div class="viewcode-block" id="test_box_strategy_20603">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.test_box_strategy_20603">[docs]</a>
-<span class="k">def</span> <span class="nf">test_box_strategy_20603</span><span class="p">(</span><span class="n">proseco_agasc_1p7</span><span class="p">,</span> <span class="n">disable_overlap_penalty</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_box_strategy_20603</span><span class="p">(</span><span class="n">proseco_agasc_1p7</span><span class="p">,</span> <span class="n">disable_overlap_penalty</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Test for PR #32 that doesn&#39;t allow p_acq to be reduced below 0.1.</span>
 
 <span class="sd">    The idx=8 (mag=10.50) star was previously selected with 160 arsec box.</span>
@@ -702,7 +702,7 @@
 
 
 
-<span class="k">def</span> <span class="nf">test_overlap_penalty</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_overlap_penalty</span><span class="p">():</span>
     <span class="c1"># Default setting which is to have overlap penalty</span>
     <span class="n">stars</span> <span class="o">=</span> <span class="n">StarsTable</span><span class="o">.</span><span class="n">empty</span><span class="p">()</span>
 
@@ -733,7 +733,7 @@
 
 <div class="viewcode-block" id="test_make_report">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.test_make_report">[docs]</a>
-<span class="k">def</span> <span class="nf">test_make_report</span><span class="p">(</span><span class="n">tmpdir</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_make_report</span><span class="p">(</span><span class="n">tmpdir</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Test making an acquisition report.</span>
 
 <span class="sd">    Use a big-box dither here to test handling of that in report (after passing</span>
@@ -777,7 +777,7 @@
 
 <div class="viewcode-block" id="test_cand_acqs_include_exclude">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.test_cand_acqs_include_exclude">[docs]</a>
-<span class="k">def</span> <span class="nf">test_cand_acqs_include_exclude</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_cand_acqs_include_exclude</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Test include and exclude stars.</span>
 
 <span class="sd">    This uses a catalog with 11 stars:</span>
@@ -883,7 +883,7 @@
 
 <div class="viewcode-block" id="test_dither_as_sequence">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.test_dither_as_sequence">[docs]</a>
-<span class="k">def</span> <span class="nf">test_dither_as_sequence</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_dither_as_sequence</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test that calling get_acq_catalog with a 2-element sequence (dither_y, dither_z)</span>
 <span class="sd">    gives the expected response.  (Basically that it still returns a catalog).</span>
@@ -902,7 +902,7 @@
 
 <div class="viewcode-block" id="test_n_acq">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.test_n_acq">[docs]</a>
-<span class="k">def</span> <span class="nf">test_n_acq</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_n_acq</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test that specifying n_acq with a value less than 8 gives the expected result.</span>
 <span class="sd">    This test ensures that the optimization code that is testing against n_acq is</span>
@@ -940,7 +940,7 @@
 
 <div class="viewcode-block" id="test_warnings">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.test_warnings">[docs]</a>
-<span class="k">def</span> <span class="nf">test_warnings</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_warnings</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test that the ACACatalogTable warnings infrastructure works via a</span>
 <span class="sd">    specific expected warning in get_acq_catalog (too few stars selected).</span>
@@ -954,7 +954,7 @@
 
 <div class="viewcode-block" id="test_no_candidates">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.test_no_candidates">[docs]</a>
-<span class="k">def</span> <span class="nf">test_no_candidates</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_no_candidates</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test that get_acq_catalog returns a well-formed but zero-length table for</span>
 <span class="sd">    a star field with no acceptable candidates.</span>
@@ -971,7 +971,7 @@
 
 <div class="viewcode-block" id="get_dark_stars_simple">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.get_dark_stars_simple">[docs]</a>
-<span class="k">def</span> <span class="nf">get_dark_stars_simple</span><span class="p">(</span><span class="n">box_size_thresh</span><span class="p">,</span> <span class="n">dither</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_dark_stars_simple</span><span class="p">(</span><span class="n">box_size_thresh</span><span class="p">,</span> <span class="n">dither</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Set-up for tests of optimized acq and fid selection::</span>
 
@@ -1008,7 +1008,7 @@
 
 <div class="viewcode-block" id="test_acq_fid_catalog_probs_low_level">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.test_acq_fid_catalog_probs_low_level">[docs]</a>
-<span class="k">def</span> <span class="nf">test_acq_fid_catalog_probs_low_level</span><span class="p">(</span><span class="n">disable_fid_offsets</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_acq_fid_catalog_probs_low_level</span><span class="p">(</span><span class="n">disable_fid_offsets</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Low-level tests of machinery to handle different fid light sets within</span>
 <span class="sd">    acquisition probabilities.</span>
@@ -1108,7 +1108,7 @@
 <div class="viewcode-block" id="test_acq_fid_catalog_n_fid">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.test_acq_fid_catalog_n_fid">[docs]</a>
 <span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span><span class="s2">&quot;n_fid_exp_fid_ids&quot;</span><span class="p">,</span> <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">]),</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">])])</span>
-<span class="k">def</span> <span class="nf">test_acq_fid_catalog_n_fid</span><span class="p">(</span><span class="n">n_fid_exp_fid_ids</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_acq_fid_catalog_n_fid</span><span class="p">(</span><span class="n">n_fid_exp_fid_ids</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test optimizing acq and fid in a simple case (which does exercise acq-fid</span>
 <span class="sd">    optimization) with n_fid=1, 2, 3::</span>
@@ -1167,7 +1167,7 @@
 
 <div class="viewcode-block" id="test_acq_fid_catalog_zero_cand_fid">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.test_acq_fid_catalog_zero_cand_fid">[docs]</a>
-<span class="k">def</span> <span class="nf">test_acq_fid_catalog_zero_cand_fid</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_acq_fid_catalog_zero_cand_fid</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test catalog selection with n_fid=3 requested but zero candidate fids.</span>
 <span class="sd">    This should not happen in practice.</span>
@@ -1199,7 +1199,7 @@
 
 <div class="viewcode-block" id="test_acq_fid_catalog_one_cand_fid">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.test_acq_fid_catalog_one_cand_fid">[docs]</a>
-<span class="k">def</span> <span class="nf">test_acq_fid_catalog_one_cand_fid</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_acq_fid_catalog_one_cand_fid</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test optimizing acq and fid for an ACIS-S observation with large sim_offset</span>
 <span class="sd">    (-55000) such that only ACIS-6 is still on the ACA CCD.  Add a couple of stars:</span>
@@ -1255,7 +1255,7 @@
 
     <span class="c1"># Not enough fids</span>
     <span class="k">assert</span> <span class="n">aca</span><span class="o">.</span><span class="n">warnings</span> <span class="o">==</span> <span class="p">[</span>
-        <span class="s2">&quot;WARNING: No acq-fid combination was &quot;</span> <span class="s2">&quot;found that met stage requirements&quot;</span>
+        <span class="s2">&quot;WARNING: No acq-fid combination was found that met stage requirements&quot;</span>
     <span class="p">]</span></div>
 
 
@@ -1263,7 +1263,7 @@
 <div class="viewcode-block" id="test_acq_fid_catalog_two_cand_fid">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.test_acq_fid_catalog_two_cand_fid">[docs]</a>
 <span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span><span class="s2">&quot;n_fid&quot;</span><span class="p">,</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
-<span class="k">def</span> <span class="nf">test_acq_fid_catalog_two_cand_fid</span><span class="p">(</span><span class="n">n_fid</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_acq_fid_catalog_two_cand_fid</span><span class="p">(</span><span class="n">n_fid</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test optimizing acq and fid for an HRC-I observation with large sim_offset</span>
 <span class="sd">    (29829) such that only two fids id=(1, 2) are still on the ACA CCD.  This</span>
@@ -1320,7 +1320,7 @@
 
 <div class="viewcode-block" id="test_0_5_degree_man_angle_bin">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.test_0_5_degree_man_angle_bin">[docs]</a>
-<span class="k">def</span> <span class="nf">test_0_5_degree_man_angle_bin</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_0_5_degree_man_angle_bin</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    It was decided at the 2018-09-26 SSAWG to set the probability of</span>
 <span class="sd">    man_err &gt; 60 to 0.0 for the 0-5 degree maneuver angle bin.  This tests</span>
@@ -1345,7 +1345,7 @@
 
 <div class="viewcode-block" id="test_0_5_degree_man_angle_bin_diff_t_ccd">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.test_0_5_degree_man_angle_bin_diff_t_ccd">[docs]</a>
-<span class="k">def</span> <span class="nf">test_0_5_degree_man_angle_bin_diff_t_ccd</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_0_5_degree_man_angle_bin_diff_t_ccd</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    It was decided at the 2018-09-26 SSAWG to set the probability of</span>
 <span class="sd">    man_err &gt; 60 to 0.0 for the 0-5 degree maneuver angle bin.  This tests</span>
@@ -1372,7 +1372,7 @@
 
 <div class="viewcode-block" id="test_bad_star_list">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.test_bad_star_list">[docs]</a>
-<span class="k">def</span> <span class="nf">test_bad_star_list</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_bad_star_list</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test that a star with ID in the bad star list is not selected.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -1395,7 +1395,7 @@
 
 <div class="viewcode-block" id="test_acq_include_optimize_halfw_ids">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.test_acq_include_optimize_halfw_ids">[docs]</a>
-<span class="k">def</span> <span class="nf">test_acq_include_optimize_halfw_ids</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_acq_include_optimize_halfw_ids</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test that force-include acq stars with halfw=0 get halfw optimized.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -1433,7 +1433,7 @@
 <div class="viewcode-block" id="test_acq_include_ids_no_halfws">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.test_acq_include_ids_no_halfws">[docs]</a>
 <span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span><span class="s2">&quot;halfw_kwargs&quot;</span><span class="p">,</span> <span class="p">({},</span> <span class="p">{</span><span class="s2">&quot;include_halfws_acq&quot;</span><span class="p">:</span> <span class="p">[]}))</span>
-<span class="k">def</span> <span class="nf">test_acq_include_ids_no_halfws</span><span class="p">(</span><span class="n">halfw_kwargs</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_acq_include_ids_no_halfws</span><span class="p">(</span><span class="n">halfw_kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test that force-include acq stars with no halfw provides works.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -1467,7 +1467,7 @@
 
 <div class="viewcode-block" id="test_acq_include_ids_no_halfws_full_catalog">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.test_acq_include_ids_no_halfws_full_catalog">[docs]</a>
-<span class="k">def</span> <span class="nf">test_acq_include_ids_no_halfws_full_catalog</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_acq_include_ids_no_halfws_full_catalog</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Test for all 8 acq_ids provided with no include_halfws provided&quot;&quot;&quot;</span>
     <span class="n">stars</span> <span class="o">=</span> <span class="n">StarsTable</span><span class="o">.</span><span class="n">empty</span><span class="p">()</span>
     <span class="n">dark</span> <span class="o">=</span> <span class="n">DARK40</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
@@ -1490,7 +1490,7 @@
 
 <div class="viewcode-block" id="test_acq_include_ids_all_halfws_full_catalog">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.test_acq_include_ids_all_halfws_full_catalog">[docs]</a>
-<span class="k">def</span> <span class="nf">test_acq_include_ids_all_halfws_full_catalog</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_acq_include_ids_all_halfws_full_catalog</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Test for all 8 acq_ids provided with no include_halfws provided&quot;&quot;&quot;</span>
     <span class="n">stars</span> <span class="o">=</span> <span class="n">StarsTable</span><span class="o">.</span><span class="n">empty</span><span class="p">()</span>
     <span class="n">dark</span> <span class="o">=</span> <span class="n">DARK40</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
@@ -1514,7 +1514,7 @@
 
 <div class="viewcode-block" id="test_acq_include_ids_all_halfws_full_catalog_with_spoiler">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_acq.test_acq_include_ids_all_halfws_full_catalog_with_spoiler">[docs]</a>
-<span class="k">def</span> <span class="nf">test_acq_include_ids_all_halfws_full_catalog_with_spoiler</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_acq_include_ids_all_halfws_full_catalog_with_spoiler</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Test for all 8 acq_ids provided with all include_halfws provided.</span>
 
 <span class="sd">    Importantly include stars for which the p_acq is not increasing in the</span>
@@ -1554,7 +1554,7 @@
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
         <div class="sphinxsidebarwrapper"><h3>Page Contents</h3>
 
 
@@ -1572,7 +1572,7 @@
     <a href="#">Back to Top</a></p>
   <p>
     &copy; Copyright 2018, Tom Aldcroft, Jean Connelly.<br/>
-    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 7.2.6. &nbsp;
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 9.1.0. &nbsp;
   </p>
 </footer>
   </body>

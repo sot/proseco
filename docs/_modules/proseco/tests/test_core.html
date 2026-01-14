@@ -4,13 +4,13 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>proseco.tests.test_core &#8212; proseco 5.16.0 documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=fa44fd50" />
+    <title>proseco.tests.test_core &#8212; proseco 5.18.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../../_static/bootstrap-astropy.css?v=f4f7060c" />
     
-    <script src="../../../_static/documentation_options.js?v=f23352e5"></script>
-    <script src="../../../_static/doctools.js?v=888ff710"></script>
-    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/documentation_options.js?v=35f5b738"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script type="text/javascript" src="../../../_static/sidebar.js"></script>
     <script type="text/javascript" src="../../../_static/copybutton.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
@@ -44,7 +44,7 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../../index.html">proseco 5.16.0 documentation</a>
+	<a href="../../../index.html">proseco 5.18.0 documentation</a>
 	 &#187;
       </li>
       <li><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
@@ -62,32 +62,33 @@
   <h1>Source code for proseco.tests.test_core</h1><div class="highlight"><pre>
 <span></span><span class="c1"># Licensed under a 3-clause BSD style license - see LICENSE.rst</span>
 
-<span class="kn">import</span> <span class="nn">pickle</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
 
-<span class="kn">import</span> <span class="nn">agasc</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">pytest</span>
-<span class="kn">import</span> <span class="nn">tables</span>
-<span class="kn">from</span> <span class="nn">astropy.io</span> <span class="kn">import</span> <span class="n">ascii</span>
-<span class="kn">from</span> <span class="nn">packaging.version</span> <span class="kn">import</span> <span class="n">Version</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">agasc</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tables</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">astropy.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">ascii</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">packaging.version</span><span class="w"> </span><span class="kn">import</span> <span class="n">Version</span>
 
-<span class="kn">from</span> <span class="nn">proseco</span> <span class="kn">import</span> <span class="n">get_aca_catalog</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">proseco</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_aca_catalog</span>
 
-<span class="kn">from</span> <span class="nn">..acq</span> <span class="kn">import</span> <span class="n">AcqTable</span>
-<span class="kn">from</span> <span class="nn">..characteristics</span> <span class="kn">import</span> <span class="n">bad_star_set</span>
-<span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..acq</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcqTable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..characteristics</span><span class="w"> </span><span class="kn">import</span> <span class="n">bad_star_set</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ACABox</span><span class="p">,</span>
     <span class="n">StarsTable</span><span class="p">,</span>
     <span class="n">calc_spoiler_impact</span><span class="p">,</span>
     <span class="n">get_dim_res</span><span class="p">,</span>
     <span class="n">get_kwargs_from_starcheck_text</span><span class="p">,</span>
+    <span class="n">get_mag_std</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">..guide</span> <span class="kn">import</span> <span class="n">GuideTable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..guide</span><span class="w"> </span><span class="kn">import</span> <span class="n">GuideTable</span>
 
 
 <div class="viewcode-block" id="test_agasc_1p8_or_later">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_core.test_agasc_1p8_or_later">[docs]</a>
-<span class="k">def</span> <span class="nf">test_agasc_1p8_or_later</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_agasc_1p8_or_later</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Check that AGASC 1.8 or later (including RC&#39;s) is being used.&quot;&quot;&quot;</span>
     <span class="n">agasc_file</span> <span class="o">=</span> <span class="n">agasc</span><span class="o">.</span><span class="n">get_agasc_filename</span><span class="p">()</span>
     <span class="k">with</span> <span class="n">tables</span><span class="o">.</span><span class="n">open_file</span><span class="p">(</span><span class="n">agasc_file</span><span class="p">)</span> <span class="k">as</span> <span class="n">h5</span><span class="p">:</span>
@@ -99,7 +100,7 @@
 
 <div class="viewcode-block" id="test_agasc_1p7">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_core.test_agasc_1p7">[docs]</a>
-<span class="k">def</span> <span class="nf">test_agasc_1p7</span><span class="p">(</span><span class="n">miniagasc_1p7</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_agasc_1p7</span><span class="p">(</span><span class="n">miniagasc_1p7</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Ensure that AGASC 1.7 is being used.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -115,14 +116,14 @@
 
 
 
-<span class="k">def</span> <span class="nf">test_agasc_supplement</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_agasc_supplement</span><span class="p">():</span>
     <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">bad_star_set</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">300</span>
     <span class="k">assert</span> <span class="mi">36178592</span> <span class="ow">in</span> <span class="n">bad_star_set</span>  <span class="c1"># From original starcheck list</span>
 
 
 <div class="viewcode-block" id="test_box_init">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_core.test_box_init">[docs]</a>
-<span class="k">def</span> <span class="nf">test_box_init</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_box_init</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;ACABox initialization functionality&quot;&quot;&quot;</span>
     <span class="n">box</span> <span class="o">=</span> <span class="n">ACABox</span><span class="p">()</span>
     <span class="k">assert</span> <span class="n">box</span><span class="o">.</span><span class="n">y</span> <span class="o">==</span> <span class="mi">20</span>
@@ -152,7 +153,7 @@
 
 <div class="viewcode-block" id="test_box_row_col_max">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_core.test_box_row_col_max">[docs]</a>
-<span class="k">def</span> <span class="nf">test_box_row_col_max</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_box_row_col_max</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;ACABox row, col properties and max() method&quot;&quot;&quot;</span>
     <span class="n">box</span> <span class="o">=</span> <span class="n">ACABox</span><span class="p">((</span><span class="mi">15</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
     <span class="k">assert</span> <span class="n">box</span><span class="o">.</span><span class="n">row</span> <span class="o">==</span> <span class="mi">3</span>
@@ -163,7 +164,7 @@
 
 <div class="viewcode-block" id="test_box_eq">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_core.test_box_eq">[docs]</a>
-<span class="k">def</span> <span class="nf">test_box_eq</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_box_eq</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;ACABox equality and inequality&quot;&quot;&quot;</span>
     <span class="n">dither1</span> <span class="o">=</span> <span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
     <span class="n">dither3</span> <span class="o">=</span> <span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
@@ -185,7 +186,7 @@
 
 <div class="viewcode-block" id="test_box_add">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_core.test_box_add">[docs]</a>
-<span class="k">def</span> <span class="nf">test_box_add</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_box_add</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;ACABox left and right addition&quot;&quot;&quot;</span>
     <span class="n">box1</span> <span class="o">=</span> <span class="n">ACABox</span><span class="p">((</span><span class="mi">10</span><span class="p">,</span> <span class="mi">15</span><span class="p">))</span>
 
@@ -205,7 +206,7 @@
 
 <div class="viewcode-block" id="test_box_greater">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_core.test_box_greater">[docs]</a>
-<span class="k">def</span> <span class="nf">test_box_greater</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_box_greater</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;ACABox &#39;greater than&#39; comparison&quot;&quot;&quot;</span>
     <span class="n">box1</span> <span class="o">=</span> <span class="n">ACABox</span><span class="p">((</span><span class="mi">10</span><span class="p">,</span> <span class="mi">15</span><span class="p">))</span>
 
@@ -220,7 +221,7 @@
 
 
 
-<span class="k">def</span> <span class="nf">test_get_kwargs_from_starcheck_text</span><span class="p">(</span><span class="n">proseco_agasc_1p7</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_get_kwargs_from_starcheck_text</span><span class="p">(</span><span class="n">proseco_agasc_1p7</span><span class="p">):</span>
     <span class="n">text</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
 <span class="s2">    OBSID: 21071  Kapteyn&#39;s Star         ACIS-S SIM Z offset:0     (0.00mm) Grating: NONE</span>
 <span class="s2">    RA, Dec, Roll (deg):    77.976747   -45.066796    85.007351</span>
@@ -288,7 +289,7 @@
     <span class="k">assert</span> <span class="n">mon</span><span class="p">[</span><span class="s2">&quot;zang&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mf">500.0</span>
 
 
-<span class="k">def</span> <span class="nf">test_get_kwargs_from_starcheck_text2</span><span class="p">(</span><span class="n">monkeypatch</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_get_kwargs_from_starcheck_text2</span><span class="p">(</span><span class="n">monkeypatch</span><span class="p">):</span>
     <span class="n">text2</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
 <span class="s2">    OBSID: 23156  WR 140                 ACIS-S SIM Z offset:0     (0.00mm) Grating: HETG</span>
 <span class="s2">    RA, Dec, Roll (deg):   305.083054    43.865507   310.023234</span>
@@ -379,7 +380,7 @@
 <div class="viewcode-block" id="test_calc_spoiler_impact">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_core.test_calc_spoiler_impact">[docs]</a>
 <span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span><span class="s2">&quot;case&quot;</span><span class="p">,</span> <span class="n">cases</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">test_calc_spoiler_impact</span><span class="p">(</span><span class="n">case</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_calc_spoiler_impact</span><span class="p">(</span><span class="n">case</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test that calc_spoiler_impact gives reasonable answer.  See also:</span>
 <span class="sd">    http://nbviewer.jupyter.org/url/asc.harvard.edu/mta/ASPECT/proseco/spoiler-impact.ipynb</span>
@@ -397,7 +398,7 @@
 
 <div class="viewcode-block" id="test_calc_spoiler_impact_21068">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_core.test_calc_spoiler_impact_21068">[docs]</a>
-<span class="k">def</span> <span class="nf">test_calc_spoiler_impact_21068</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_calc_spoiler_impact_21068</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Confirm that for the Dragonfly-44 field that the impact of the spoiler</span>
 <span class="sd">    is acceptable and the star can be used as a candidate.</span>
@@ -415,7 +416,7 @@
 
 <div class="viewcode-block" id="test_mag_err_clip">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_core.test_mag_err_clip">[docs]</a>
-<span class="k">def</span> <span class="nf">test_mag_err_clip</span><span class="p">(</span><span class="n">proseco_agasc_1p7</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_mag_err_clip</span><span class="p">(</span><span class="n">proseco_agasc_1p7</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test clipping magnitudes</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -440,7 +441,7 @@
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_core.test_alias_attributes">[docs]</a>
 <span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span><span class="s2">&quot;cls&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">AcqTable</span><span class="p">,</span> <span class="n">GuideTable</span><span class="p">])</span>
 <span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span><span class="s2">&quot;attr&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;include_ids&quot;</span><span class="p">,</span> <span class="s2">&quot;exclude_ids&quot;</span><span class="p">])</span>
-<span class="k">def</span> <span class="nf">test_alias_attributes</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">attr</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_alias_attributes</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">attr</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Unit testing of descriptors, in particular the alias attributes</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -460,7 +461,7 @@
 
 <div class="viewcode-block" id="test_pickle_stars">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_core.test_pickle_stars">[docs]</a>
-<span class="k">def</span> <span class="nf">test_pickle_stars</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_pickle_stars</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Test that pickling a StarsTable object roundtrips&quot;&quot;&quot;</span>
     <span class="n">att</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
     <span class="n">stars</span> <span class="o">=</span> <span class="n">StarsTable</span><span class="o">.</span><span class="n">from_agasc</span><span class="p">(</span><span class="n">att</span><span class="p">)</span>
@@ -473,7 +474,7 @@
 
 <div class="viewcode-block" id="test_starstable_from_stars">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_core.test_starstable_from_stars">[docs]</a>
-<span class="k">def</span> <span class="nf">test_starstable_from_stars</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_starstable_from_stars</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Test initializing a StarsTable from stars where att can be different.</span>
 
 <span class="sd">    Tests with an attitude is 0.0005 arsec different (OK) and 0.002 arcsec</span>
@@ -498,7 +499,7 @@
 
 <div class="viewcode-block" id="test_get_dim_res">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_core.test_get_dim_res">[docs]</a>
-<span class="k">def</span> <span class="nf">test_get_dim_res</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_get_dim_res</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Test getting ACA DIM and RES for an array of halfws&quot;&quot;&quot;</span>
     <span class="n">halfws</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">20</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">337</span><span class="p">,</span> <span class="mi">338</span><span class="p">,</span> <span class="mi">420</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
     <span class="n">exp_dim</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">63</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
@@ -508,13 +509,18 @@
     <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">dim</span> <span class="o">==</span> <span class="n">exp_dim</span><span class="p">)</span>
     <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">res</span> <span class="o">==</span> <span class="n">exp_res</span><span class="p">)</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_get_mag_std_extrapolate</span><span class="p">():</span>
+    <span class="n">mag_err</span> <span class="o">=</span> <span class="n">get_mag_std</span><span class="p">(</span><span class="mi">25</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">mag_err</span><span class="p">,</span> <span class="mf">1.428</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 </pre></div>
 
             <div class="clearer"></div>
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
         <div class="sphinxsidebarwrapper"><h3>Page Contents</h3>
 
 
@@ -532,7 +538,7 @@
     <a href="#">Back to Top</a></p>
   <p>
     &copy; Copyright 2018, Tom Aldcroft, Jean Connelly.<br/>
-    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 7.2.6. &nbsp;
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 9.1.0. &nbsp;
   </p>
 </footer>
   </body>

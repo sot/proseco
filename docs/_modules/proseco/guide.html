@@ -4,13 +4,13 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>proseco.guide &#8212; proseco 5.16.0 documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <title>proseco.guide &#8212; proseco 5.18.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/bootstrap-astropy.css?v=f4f7060c" />
     
-    <script src="../../_static/documentation_options.js?v=f23352e5"></script>
-    <script src="../../_static/doctools.js?v=888ff710"></script>
-    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/documentation_options.js?v=35f5b738"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script type="text/javascript" src="../../_static/sidebar.js"></script>
     <script type="text/javascript" src="../../_static/copybutton.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
@@ -44,7 +44,7 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../index.html">proseco 5.16.0 documentation</a>
+	<a href="../../index.html">proseco 5.18.0 documentation</a>
 	 &#187;
       </li>
       <li><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
@@ -62,23 +62,27 @@
   <h1>Source code for proseco.guide</h1><div class="highlight"><pre>
 <span></span><span class="c1"># Licensed under a 3-clause BSD style license - see LICENSE.rst</span>
 
-<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">combinations</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">combinations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
 
-<span class="kn">import</span> <span class="nn">chandra_aca.aca_image</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">chandra_aca.aca_image</span> <span class="kn">import</span> <span class="n">ACAImage</span><span class="p">,</span> <span class="n">AcaPsfLibrary</span>
-<span class="kn">from</span> <span class="nn">chandra_aca.transform</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">chandra_aca.aca_image</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">chandra_aca.aca_image</span><span class="w"> </span><span class="kn">import</span> <span class="n">ACAImage</span><span class="p">,</span> <span class="n">AcaPsfLibrary</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">chandra_aca.transform</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">count_rate_to_mag</span><span class="p">,</span>
     <span class="n">mag_to_count_rate</span><span class="p">,</span>
     <span class="n">snr_mag_for_t_ccd</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="kn">from</span> <span class="nn">proseco.characteristics</span> <span class="kn">import</span> <span class="n">MonFunc</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">proseco.characteristics</span><span class="w"> </span><span class="kn">import</span> <span class="n">MonFunc</span>
 
-<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">characteristics</span> <span class="k">as</span> <span class="n">ACA</span>
-<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">characteristics_guide</span> <span class="k">as</span> <span class="n">GUIDE</span>
-<span class="kn">from</span> <span class="nn">.core</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">astropy.table</span><span class="w"> </span><span class="kn">import</span> <span class="n">Table</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">characteristics</span> <span class="k">as</span> <span class="n">ACA</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">characteristics_fid</span> <span class="k">as</span> <span class="n">FID</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">characteristics_guide</span> <span class="k">as</span> <span class="n">GUIDE</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.core</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ACACatalogTable</span><span class="p">,</span>
     <span class="n">AliasAttribute</span><span class="p">,</span>
     <span class="n">MetaAttribute</span><span class="p">,</span>
@@ -87,25 +91,111 @@
     <span class="n">get_img_size</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">astropy.table</span> <span class="kn">import</span> <span class="n">Table</span>
-
-
 <span class="n">CCD</span> <span class="o">=</span> <span class="n">ACA</span><span class="o">.</span><span class="n">CCD</span>
 <span class="n">APL</span> <span class="o">=</span> <span class="n">AcaPsfLibrary</span><span class="p">()</span>
 
 <span class="n">STAR_PAIR_DIST_CACHE</span> <span class="o">=</span> <span class="p">{}</span>
 
 
+<span class="c1"># Minimum number of &quot;anchor stars&quot; that are always evaluated *without* the bonus</span>
+<span class="c1"># from dynamic background when dyn_bgd_n_faint &gt; 0. This is mostly to avoid the</span>
+<span class="c1"># situation where 4 stars are selected and 2 are faint bonus stars. In this case</span>
+<span class="c1"># there would be only 2 anchor stars that ensure good tracking even without</span>
+<span class="c1"># dyn bgd.</span>
+<span class="n">MIN_DYN_BGD_ANCHOR_STARS</span> <span class="o">=</span> <span class="mi">3</span>
+
+
+<div class="viewcode-block" id="get_t_ccds_bonus">
+<a class="viewcode-back" href="../../api.html#proseco.guide.get_t_ccds_bonus">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_t_ccds_bonus</span><span class="p">(</span><span class="n">mags</span><span class="p">,</span> <span class="n">t_ccd</span><span class="p">,</span> <span class="n">dyn_bgd_n_faint</span><span class="p">,</span> <span class="n">dyn_bgd_dt_ccd</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return array of t_ccds with dynamic background bonus applied.</span>
+
+<span class="sd">    This adds ``dyn_bgd_dt_ccd`` to the effective CCD temperature for the</span>
+<span class="sd">    ``dyn_bgd_n_faint`` faintest stars, ensuring that at least MIN_DYN_BGD_ANCHOR_STARS</span>
+<span class="sd">    are evaluated without the bonus. See:</span>
+<span class="sd">    https://nbviewer.org/urls/cxc.harvard.edu/mta/ASPECT/ipynb/misc/guide-count-dyn-bgd.ipynb</span>
+
+<span class="sd">    :param mags: array of star magnitudes</span>
+<span class="sd">    :param t_ccd: single T_ccd value (degC)</span>
+<span class="sd">    :param dyn_bgd_n_faint: number of faintest stars to apply bonus</span>
+<span class="sd">    :param dyn_bgd_dt_ccd: temperature offset to apply for dynamic background bonus (degC)</span>
+<span class="sd">    :returns: array of t_ccds (matching ``mags``) with dynamic background bonus applied</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">t_ccds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">mags</span><span class="p">,</span> <span class="n">t_ccd</span><span class="p">)</span>
+
+    <span class="c1"># If no bonus stars then just return the input t_ccd broadcast to all stars</span>
+    <span class="k">if</span> <span class="n">dyn_bgd_n_faint</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">t_ccds</span>
+
+    <span class="n">idxs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">mags</span><span class="p">)</span>
+    <span class="n">n_faint</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">dyn_bgd_n_faint</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">t_ccds</span><span class="p">))</span>
+    <span class="n">idx_bonus</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">t_ccds</span><span class="p">)</span> <span class="o">-</span> <span class="n">n_faint</span><span class="p">,</span> <span class="n">MIN_DYN_BGD_ANCHOR_STARS</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">idxs</span><span class="p">[</span><span class="n">idx_bonus</span><span class="p">:]:</span>
+        <span class="n">t_ccds</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">+=</span> <span class="n">dyn_bgd_dt_ccd</span>
+
+    <span class="k">return</span> <span class="n">t_ccds</span></div>
+
+
+
+<div class="viewcode-block" id="get_guide_candidates">
+<a class="viewcode-back" href="../../api.html#proseco.guide.get_guide_candidates">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_guide_candidates</span><span class="p">(</span><span class="n">obsid</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get initial guide star candidates.</span>
+
+<span class="sd">    This function creates a GuideTable and performs the initial filtering</span>
+<span class="sd">    to generate candidate guide stars. The returned Table can be reused</span>
+<span class="sd">    across multiple calls to get_guide_catalog() during optimization by</span>
+<span class="sd">    passing a copy (via .copy()) to prevent modification.</span>
+
+<span class="sd">    This explicitly ignores fid lights and monitor windows requests; these</span>
+<span class="sd">    considerations are handled later in get_guide_catalog().</span>
+
+<span class="sd">    :param obsid: obsid (default=0)</span>
+<span class="sd">    :param att: attitude (any object that can initialize Quat)</span>
+<span class="sd">    :param t_ccd: ACA CCD temperature (degC)</span>
+<span class="sd">    :param date: date of acquisition (any DateTime-compatible format)</span>
+<span class="sd">    :param dither: dither size (float or 2-element sequence (dither_y, dither_z), arcsec)</span>
+<span class="sd">    :param stars: astropy.Table of AGASC stars (will be fetched from agasc if None)</span>
+<span class="sd">    :param dark: ACAImage of dark map (fetched based on time and t_ccd if None)</span>
+<span class="sd">    :param **kwargs: additional keyword arguments passed to GuideTable</span>
+
+<span class="sd">    :returns: Astropy Table of initial guide candidates</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">guides</span> <span class="o">=</span> <span class="n">GuideTable</span><span class="p">()</span>
+    <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;fids&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;mons&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">guides</span><span class="o">.</span><span class="n">set_attrs_from_kwargs</span><span class="p">(</span><span class="n">obsid</span><span class="o">=</span><span class="n">obsid</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">guides</span><span class="o">.</span><span class="n">set_stars</span><span class="p">()</span>
+
+    <span class="c1"># Do a first cut of the stars to get a set of reasonable candidates.</span>
+    <span class="n">cand_guides</span> <span class="o">=</span> <span class="n">guides</span><span class="o">.</span><span class="n">get_initial_guide_candidates</span><span class="p">()</span>
+
+    <span class="c1"># For the candidates table, we do want it to have any manual include</span>
+    <span class="c1"># or exclude ids applied, so do that processing here.  For example, if</span>
+    <span class="c1"># the user wants to manually include a guide star, that star should be</span>
+    <span class="c1"># explicitly included in the initial candidates list so that it can be</span>
+    <span class="c1"># &quot;considered&quot; by the fid selection and optimization later.</span>
+    <span class="c1"># These operations work in-place on cand_guides.</span>
+    <span class="n">guides</span><span class="o">.</span><span class="n">process_include_ids</span><span class="p">(</span><span class="n">cand_guides</span><span class="p">,</span> <span class="n">guides</span><span class="o">.</span><span class="n">stars</span><span class="p">)</span>
+    <span class="n">guides</span><span class="o">.</span><span class="n">process_exclude_ids</span><span class="p">(</span><span class="n">cand_guides</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">cand_guides</span></div>
+
+
+
 <div class="viewcode-block" id="get_guide_catalog">
 <a class="viewcode-back" href="../../api.html#proseco.guide.get_guide_catalog">[docs]</a>
-<span class="k">def</span> <span class="nf">get_guide_catalog</span><span class="p">(</span><span class="n">obsid</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_guide_catalog</span><span class="p">(</span><span class="n">obsid</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">initial_guide_cands</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Get a catalog of guide stars</span>
 
 <span class="sd">    If ``obsid`` corresponds to an already-scheduled obsid then the parameters</span>
 <span class="sd">    ``att``, ``t_ccd``, ``date``, and ``dither`` will</span>
 <span class="sd">    be fetched via ``mica.starcheck`` if not explicitly provided here.</span>
+
+<span class="sd">    If ``initial_guide_cands`` is provided as an argument, it is assumed to be a</span>
+<span class="sd">    Table of initial guide candidates (typically from get_guide_candidates().copy()).</span>
 
 <span class="sd">    :param obsid: obsid (default=0)</span>
 <span class="sd">    :param att: attitude (any object that can initialize Quat)</span>
@@ -115,6 +205,8 @@
 <span class="sd">    :param n_guide: number of guide stars to attempt to get</span>
 <span class="sd">    :param fids: selected fids (used for guide star exclusion)</span>
 <span class="sd">    :param stars: astropy.Table of AGASC stars (will be fetched from agasc if None)</span>
+<span class="sd">    :param initial_guide_cands: Astropy Table of initial guide candidates</span>
+<span class="sd">        (if None, a new one is created)</span>
 <span class="sd">    :param include_ids: list of AGASC IDs of stars to include in guide catalog</span>
 <span class="sd">    :param exclude_ids: list of AGASC IDs of stars to exclude from guide catalog</span>
 <span class="sd">    :param dark: ACAImage of dark map (fetched based on time and t_ccd if None)</span>
@@ -122,24 +214,41 @@
 
 <span class="sd">    :returns: GuideTable of acquisition stars</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">STAR_PAIR_DIST_CACHE</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
 
     <span class="n">guides</span> <span class="o">=</span> <span class="n">GuideTable</span><span class="p">()</span>
     <span class="n">guides</span><span class="o">.</span><span class="n">set_attrs_from_kwargs</span><span class="p">(</span><span class="n">obsid</span><span class="o">=</span><span class="n">obsid</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="n">guides</span><span class="o">.</span><span class="n">set_stars</span><span class="p">()</span>
 
     <span class="c1"># Process monitor window requests, converting them into fake stars that</span>
-    <span class="c1"># are added to the include_ids list.</span>
+    <span class="c1"># are added to the include_ids list. This also modifies n_guide.</span>
     <span class="n">guides</span><span class="o">.</span><span class="n">process_monitors_pre</span><span class="p">()</span>
 
     <span class="c1"># Do a first cut of the stars to get a set of reasonable candidates</span>
-    <span class="n">guides</span><span class="o">.</span><span class="n">cand_guides</span> <span class="o">=</span> <span class="n">guides</span><span class="o">.</span><span class="n">get_initial_guide_candidates</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">initial_guide_cands</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">guides</span><span class="o">.</span><span class="n">cand_guides</span> <span class="o">=</span> <span class="n">guides</span><span class="o">.</span><span class="n">get_initial_guide_candidates</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Use the provided initial guide candidates table</span>
+        <span class="n">guides</span><span class="o">.</span><span class="n">cand_guides</span> <span class="o">=</span> <span class="n">initial_guide_cands</span>
 
-    <span class="c1"># Process guide-from-monitor requests by finding corresponding star in</span>
-    <span class="c1"># cand_guides and adding to the include_ids list.</span>
-    <span class="c1"># guides.process_monitors_pre2()</span>
+    <span class="c1"># Refilter candidates for the current fid set if needed</span>
+    <span class="k">if</span> <span class="n">guides</span><span class="o">.</span><span class="n">fids</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">guides</span><span class="o">.</span><span class="n">fids</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">guides</span><span class="o">.</span><span class="n">cand_guides</span> <span class="o">=</span> <span class="n">guides</span><span class="o">.</span><span class="n">filter_candidates_for_fids</span><span class="p">(</span><span class="n">guides</span><span class="o">.</span><span class="n">cand_guides</span><span class="p">)</span>
+
+    <span class="c1"># Refilter candidates for monitor keep-out zones</span>
+    <span class="n">guides</span><span class="o">.</span><span class="n">cand_guides</span> <span class="o">=</span> <span class="n">guides</span><span class="o">.</span><span class="n">filter_candidates_for_monitors</span><span class="p">(</span><span class="n">guides</span><span class="o">.</span><span class="n">cand_guides</span><span class="p">)</span>
+
+    <span class="c1"># Put back any include/excludes</span>
+    <span class="c1"># Note explicitly that the monitor star processing in process_monitors_pre()</span>
+    <span class="c1"># can add stars to include_ids.  In the standard flow in get_aca_catalog,</span>
+    <span class="c1"># that means that the initial guide candidates selection did not have those</span>
+    <span class="c1"># include_ids applied, so we need to do it here. The exclude_ids is probably</span>
+    <span class="c1"># not necessary to re-apply, but do it for symmetry.</span>
+    <span class="c1"># These operations work in-place on guides.cand_guides.</span>
+    <span class="n">guides</span><span class="o">.</span><span class="n">process_include_ids</span><span class="p">(</span><span class="n">guides</span><span class="o">.</span><span class="n">cand_guides</span><span class="p">,</span> <span class="n">guides</span><span class="o">.</span><span class="n">stars</span><span class="p">)</span>
+    <span class="n">guides</span><span class="o">.</span><span class="n">process_exclude_ids</span><span class="p">(</span><span class="n">guides</span><span class="o">.</span><span class="n">cand_guides</span><span class="p">)</span>
 
     <span class="c1"># Run through search stages to select stars</span>
+    <span class="n">STAR_PAIR_DIST_CACHE</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
     <span class="n">selected</span> <span class="o">=</span> <span class="n">guides</span><span class="o">.</span><span class="n">run_search_stages</span><span class="p">()</span>
 
     <span class="c1"># Transfer to table (which at this point is an empty table)</span>
@@ -169,7 +278,7 @@
 
 <div class="viewcode-block" id="get_guide_candidates_mask">
 <a class="viewcode-back" href="../../api.html#proseco.guide.get_guide_candidates_mask">[docs]</a>
-<span class="k">def</span> <span class="nf">get_guide_candidates_mask</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_guide_candidates_mask</span><span class="p">(</span>
     <span class="n">stars</span><span class="p">:</span> <span class="s2">&quot;Table&quot;</span><span class="p">,</span>
     <span class="n">t_ccd</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">10.0</span><span class="p">,</span>
     <span class="n">dyn_bgd</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
@@ -215,7 +324,7 @@
         <span class="o">&amp;</span> <span class="p">(</span><span class="n">mag</span> <span class="o">&gt;</span> <span class="mf">5.2</span><span class="p">)</span>
         <span class="o">&amp;</span> <span class="p">(</span><span class="n">mag</span> <span class="o">&lt;</span> <span class="n">faint_mag_limit</span><span class="p">)</span>
         <span class="o">&amp;</span> <span class="p">(</span><span class="n">mag_err</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">)</span>
-        <span class="o">&amp;</span> <span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;COLOR1&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="mf">0.7</span><span class="p">)</span>
+        <span class="o">&amp;</span> <span class="p">(</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;COLOR1&quot;</span><span class="p">],</span> <span class="mf">0.7</span><span class="p">))</span>
         <span class="o">&amp;</span> <span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;ASPQ1&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">20</span><span class="p">)</span>  <span class="c1"># Less than 1 arcsec offset from nearby spoiler</span>
         <span class="o">&amp;</span> <span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;ASPQ2&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>  <span class="c1"># Unknown proper motion, or PM &lt; 500 milli-arcsec/year</span>
         <span class="o">&amp;</span> <span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;POS_ERR&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">1250</span><span class="p">)</span>  <span class="c1"># Position error &lt; 1.25 arcsec</span>
@@ -225,8 +334,8 @@
 
 
 
-<span class="k">class</span> <span class="nc">ImgSizeMetaAttribute</span><span class="p">(</span><span class="n">MetaAttribute</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__set__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ImgSizeMetaAttribute</span><span class="p">(</span><span class="n">MetaAttribute</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__set__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;img_size must be 4, 6, 8, or None&quot;</span><span class="p">)</span>
         <span class="n">instance</span><span class="o">.</span><span class="n">meta</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
@@ -234,7 +343,7 @@
 
 <div class="viewcode-block" id="GuideTable">
 <a class="viewcode-back" href="../../api.html#proseco.guide.GuideTable">[docs]</a>
-<span class="k">class</span> <span class="nc">GuideTable</span><span class="p">(</span><span class="n">ACACatalogTable</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GuideTable</span><span class="p">(</span><span class="n">ACACatalogTable</span><span class="p">):</span>
     <span class="c1"># Define base set of allowed keyword args to __init__. Subsequent MetaAttribute</span>
     <span class="c1"># or AliasAttribute properties will add to this.</span>
     <span class="n">allowed_kwargs</span> <span class="o">=</span> <span class="n">ACACatalogTable</span><span class="o">.</span><span class="n">allowed_kwargs</span> <span class="o">|</span> <span class="nb">set</span><span class="p">([</span><span class="s2">&quot;fids&quot;</span><span class="p">])</span>
@@ -256,10 +365,11 @@
     <span class="n">cand_guides</span> <span class="o">=</span> <span class="n">MetaAttribute</span><span class="p">(</span><span class="n">is_kwarg</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">reject_info</span> <span class="o">=</span> <span class="n">MetaAttribute</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[],</span> <span class="n">is_kwarg</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">img_size</span> <span class="o">=</span> <span class="n">ImgSizeMetaAttribute</span><span class="p">()</span>
+    <span class="n">fids</span> <span class="o">=</span> <span class="n">MetaAttribute</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 
 <div class="viewcode-block" id="GuideTable.reject">
 <a class="viewcode-back" href="../../api.html#proseco.guide.GuideTable.reject">[docs]</a>
-    <span class="k">def</span> <span class="nf">reject</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reject</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reject</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reject</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add a reject dict to self.reject_info</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -272,36 +382,24 @@
     <span class="n">include_ids</span> <span class="o">=</span> <span class="n">AliasAttribute</span><span class="p">()</span>
     <span class="n">exclude_ids</span> <span class="o">=</span> <span class="n">AliasAttribute</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">process_monitors_pre</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process_monitors_pre</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># No action required if there are no monitor stars requested</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mons</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">mons</span><span class="o">.</span><span class="n">monitors</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span>
 
         <span class="n">monitors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mons</span><span class="o">.</span><span class="n">monitors</span>
         <span class="n">is_mon</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">monitors</span><span class="p">[</span><span class="s2">&quot;function&quot;</span><span class="p">],</span> <span class="p">[</span><span class="n">MonFunc</span><span class="o">.</span><span class="n">MON_FIXED</span><span class="p">,</span> <span class="n">MonFunc</span><span class="o">.</span><span class="n">MON_TRACK</span><span class="p">])</span>
-        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">is_mon</span><span class="p">):</span>
-            <span class="c1"># For MON fixed and tracked, the dark cal map gets hacked to make a</span>
-            <span class="c1"># local blob of hot pixels. Make a copy to avoid modifying the global</span>
-            <span class="c1"># dark map which is shared by reference between acqs, guides and fids.</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">dark</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dark</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
-        <span class="k">for</span> <span class="n">monitor</span> <span class="ow">in</span> <span class="n">monitors</span><span class="p">[</span><span class="n">is_mon</span><span class="p">]:</span>
-            <span class="c1"># Make a square blob of saturated pixels that will keep away any</span>
-            <span class="c1"># star selection.</span>
-            <span class="n">is_track</span> <span class="o">=</span> <span class="n">monitor</span><span class="p">[</span><span class="s2">&quot;function&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">MonFunc</span><span class="o">.</span><span class="n">MON_TRACK</span>
-            <span class="n">dr</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mi">4</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dither</span><span class="o">.</span><span class="n">row</span> <span class="k">if</span> <span class="n">is_track</span> <span class="k">else</span> <span class="mi">0</span><span class="p">))</span>
-            <span class="n">dc</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mi">4</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dither</span><span class="o">.</span><span class="n">col</span> <span class="k">if</span> <span class="n">is_track</span> <span class="k">else</span> <span class="mi">0</span><span class="p">))</span>
-            <span class="n">row</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">monitor</span><span class="p">[</span><span class="s2">&quot;row&quot;</span><span class="p">])</span> <span class="o">+</span> <span class="mi">512</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">monitor</span><span class="p">[</span><span class="s2">&quot;col&quot;</span><span class="p">])</span> <span class="o">+</span> <span class="mi">512</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">dark</span><span class="p">[</span><span class="n">row</span> <span class="o">-</span> <span class="n">dr</span> <span class="p">:</span> <span class="n">row</span> <span class="o">+</span> <span class="n">dr</span><span class="p">,</span> <span class="n">col</span> <span class="o">-</span> <span class="n">dc</span> <span class="p">:</span> <span class="n">col</span> <span class="o">+</span> <span class="n">dc</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">ACA</span><span class="o">.</span><span class="n">bad_pixel_dark_current</span>
-            <span class="p">)</span>
+        <span class="n">monitors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mons</span><span class="o">.</span><span class="n">monitors</span>
+        <span class="n">is_mon</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">monitors</span><span class="p">[</span><span class="s2">&quot;function&quot;</span><span class="p">],</span> <span class="p">[</span><span class="n">MonFunc</span><span class="o">.</span><span class="n">MON_FIXED</span><span class="p">,</span> <span class="n">MonFunc</span><span class="o">.</span><span class="n">MON_TRACK</span><span class="p">])</span>
 
-            <span class="c1"># Reduce n_guide for each MON. On input the n_guide arg is the</span>
-            <span class="c1"># number of GUI + MON, but for guide selection we need to make the</span>
-            <span class="c1"># MON slots unavailable.</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">n_guide</span> <span class="o">-=</span> <span class="mi">1</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_guide</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;too many MON requests leaving &lt; 2 guide stars&quot;</span><span class="p">)</span>
+        <span class="c1"># Reduce n_guide for each MON. On input the n_guide arg is the</span>
+        <span class="c1"># number of GUI + MON, but for guide selection we need to make the</span>
+        <span class="c1"># MON slots unavailable.</span>
+        <span class="n">n_mon</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">is_mon</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_guide</span> <span class="o">-=</span> <span class="n">n_mon</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_guide</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;too many MON requests leaving &lt; 2 guide stars&quot;</span><span class="p">)</span>
 
         <span class="n">is_guide</span> <span class="o">=</span> <span class="n">monitors</span><span class="p">[</span><span class="s2">&quot;function&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">MonFunc</span><span class="o">.</span><span class="n">GUIDE</span>
         <span class="k">for</span> <span class="n">monitor</span> <span class="ow">in</span> <span class="n">monitors</span><span class="p">[</span><span class="n">is_guide</span><span class="p">]:</span>
@@ -309,22 +407,15 @@
 
 <div class="viewcode-block" id="GuideTable.process_monitors_post">
 <a class="viewcode-back" href="../../api.html#proseco.guide.GuideTable.process_monitors_post">[docs]</a>
-    <span class="k">def</span> <span class="nf">process_monitors_post</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process_monitors_post</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Post-processing of monitor windows.</span>
 
-<span class="sd">        - Clean up fake stars from stars and cand_guides</span>
-<span class="sd">        - Restore the dark current map</span>
 <span class="sd">        - Set type, sz, res, dim columns for relevant entries to reflect</span>
 <span class="sd">          status as monitor or guide-from-monitor in the guides catalog.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># No action required if there are no monitor stars requested</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mons</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">mons</span><span class="o">.</span><span class="n">monitors</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span>
-
-        <span class="c1"># Mon window processing munges the dark cal to impose a keep-out zone.</span>
-        <span class="c1"># Put the dark current back to the standard one if possible</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">acqs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">dark</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">acqs</span><span class="o">.</span><span class="n">dark</span>
 
         <span class="c1"># Find the guide stars that are actually from a MON request (converted</span>
         <span class="c1"># to guide) and set the size and type.</span>
@@ -335,9 +426,107 @@
                 <span class="n">row</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;GFM&quot;</span>  <span class="c1"># Guide From Monitor, changed in merge_catalog</span></div>
 
 
+<div class="viewcode-block" id="GuideTable.filter_candidates_for_fids">
+<a class="viewcode-back" href="../../api.html#proseco.guide.GuideTable.filter_candidates_for_fids">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">filter_candidates_for_fids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cand_guides</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Filter candidate guide stars with regard to the selected fid lights.</span>
+
+<span class="sd">        This method removes guide star candidates that would spoil or be spoiled by</span>
+<span class="sd">        fid lights</span>
+<span class="sd">        1. Fid trap effect: candidates that trigger readout artifacts from fid lights</span>
+<span class="sd">        2. Direct spoiling: candidates too close to fid lights (within spoiler margin)</span>
+
+<span class="sd">        :param cand_guides: Table of candidate guide stars</span>
+<span class="sd">        :returns: filtered Table of candidate guide stars with spoiled stars removed</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fids</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fids</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">cand_guides</span>
+
+        <span class="c1"># Collect all rows to exclude, then filter once at the end</span>
+        <span class="n">all_spoiled</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cand_guides</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+
+        <span class="c1"># Handle the fid trap</span>
+        <span class="n">fid_trap_spoilers</span><span class="p">,</span> <span class="n">fid_rej</span> <span class="o">=</span> <span class="n">check_fid_trap</span><span class="p">(</span>
+            <span class="n">cand_guides</span><span class="p">,</span> <span class="n">fids</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fids</span><span class="p">,</span> <span class="n">dither</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dither</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">rej</span> <span class="ow">in</span> <span class="n">fid_rej</span><span class="p">:</span>
+            <span class="n">rej</span><span class="p">[</span><span class="s2">&quot;stage&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reject</span><span class="p">(</span><span class="n">rej</span><span class="p">)</span>
+        <span class="n">all_spoiled</span> <span class="o">|=</span> <span class="n">fid_trap_spoilers</span>
+
+        <span class="c1"># Exclude guide stars directly spoiled by fid lights</span>
+        <span class="n">spoiler_margin</span> <span class="o">=</span> <span class="n">FID</span><span class="o">.</span><span class="n">spoiler_margin</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dither</span> <span class="o">+</span> <span class="mi">25</span>
+        <span class="k">for</span> <span class="n">fid</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fids</span><span class="p">:</span>
+            <span class="n">dy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;yang&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">cand_guides</span><span class="p">[</span><span class="s2">&quot;yang&quot;</span><span class="p">])</span>
+            <span class="n">dz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;zang&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">cand_guides</span><span class="p">[</span><span class="s2">&quot;zang&quot;</span><span class="p">])</span>
+            <span class="n">spoiled</span> <span class="o">=</span> <span class="p">(</span><span class="n">dy</span> <span class="o">&lt;</span> <span class="n">spoiler_margin</span><span class="o">.</span><span class="n">y</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">dz</span> <span class="o">&lt;</span> <span class="n">spoiler_margin</span><span class="o">.</span><span class="n">z</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">star_id</span> <span class="ow">in</span> <span class="n">cand_guides</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">][</span><span class="n">spoiled</span><span class="p">]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">reject</span><span class="p">(</span>
+                    <span class="p">{</span>
+                        <span class="s2">&quot;stage&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+                        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;spoiled by fid&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">star_id</span><span class="p">,</span>
+                        <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Cand </span><span class="si">{</span><span class="n">star_id</span><span class="si">}</span><span class="s2"> rejected.  Spoiled by fid </span><span class="si">{</span><span class="n">fid</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="p">}</span>
+                <span class="p">)</span>
+            <span class="n">all_spoiled</span> <span class="o">|=</span> <span class="n">spoiled</span>
+
+        <span class="c1"># Filter once with combined mask</span>
+        <span class="k">return</span> <span class="n">cand_guides</span><span class="p">[</span><span class="o">~</span><span class="n">all_spoiled</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="GuideTable.filter_candidates_for_monitors">
+<a class="viewcode-back" href="../../api.html#proseco.guide.GuideTable.filter_candidates_for_monitors">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">filter_candidates_for_monitors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cand_guides</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Filter candidate guide stars that fall in monitor window keep-out zones.</span>
+
+<span class="sd">        This directly excludes candidates near MON_FIXED and MON_TRACK windows,</span>
+<span class="sd">        replacing the old approach of modifying the dark map.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mons</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">mons</span><span class="o">.</span><span class="n">monitors</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">cand_guides</span>
+
+        <span class="n">monitors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mons</span><span class="o">.</span><span class="n">monitors</span>
+        <span class="n">is_mon</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">monitors</span><span class="p">[</span><span class="s2">&quot;function&quot;</span><span class="p">],</span> <span class="p">[</span><span class="n">MonFunc</span><span class="o">.</span><span class="n">MON_FIXED</span><span class="p">,</span> <span class="n">MonFunc</span><span class="o">.</span><span class="n">MON_TRACK</span><span class="p">])</span>
+
+        <span class="c1"># Collect all rows to exclude, then filter once at the end</span>
+        <span class="n">all_in_keepout</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cand_guides</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">monitor</span> <span class="ow">in</span> <span class="n">monitors</span><span class="p">[</span><span class="n">is_mon</span><span class="p">]:</span>
+            <span class="n">is_track</span> <span class="o">=</span> <span class="n">monitor</span><span class="p">[</span><span class="s2">&quot;function&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">MonFunc</span><span class="o">.</span><span class="n">MON_TRACK</span>
+            <span class="c1"># Keep-out zone in pixels</span>
+            <span class="n">dr</span> <span class="o">=</span> <span class="mi">4</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dither</span><span class="o">.</span><span class="n">row</span> <span class="k">if</span> <span class="n">is_track</span> <span class="k">else</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">dc</span> <span class="o">=</span> <span class="mi">4</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dither</span><span class="o">.</span><span class="n">col</span> <span class="k">if</span> <span class="n">is_track</span> <span class="k">else</span> <span class="mi">0</span><span class="p">)</span>
+
+            <span class="c1"># Find candidates in the keep-out zone plus a pad</span>
+            <span class="c1"># The 7.5 pixel pad was selected to at least cover the previous dark-map</span>
+            <span class="c1"># modification approach</span>
+            <span class="n">monitor_pad</span> <span class="o">=</span> <span class="mf">7.5</span>
+            <span class="n">drow</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">cand_guides</span><span class="p">[</span><span class="s2">&quot;row&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">monitor</span><span class="p">[</span><span class="s2">&quot;row&quot;</span><span class="p">])</span>
+            <span class="n">dcol</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">cand_guides</span><span class="p">[</span><span class="s2">&quot;col&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">monitor</span><span class="p">[</span><span class="s2">&quot;col&quot;</span><span class="p">])</span>
+            <span class="n">in_keepout</span> <span class="o">=</span> <span class="p">(</span><span class="n">drow</span> <span class="o">&lt;</span> <span class="n">dr</span> <span class="o">+</span> <span class="n">monitor_pad</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">dcol</span> <span class="o">&lt;</span> <span class="n">dc</span> <span class="o">+</span> <span class="n">monitor_pad</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">star_id</span> <span class="ow">in</span> <span class="n">cand_guides</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">][</span><span class="n">in_keepout</span><span class="p">]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">reject</span><span class="p">(</span>
+                    <span class="p">{</span>
+                        <span class="s2">&quot;stage&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+                        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;monitor keepout&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">star_id</span><span class="p">,</span>
+                        <span class="s2">&quot;monitor_id&quot;</span><span class="p">:</span> <span class="n">monitor</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">],</span>
+                        <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Cand </span><span class="si">{</span><span class="n">star_id</span><span class="si">}</span><span class="s2"> rejected. &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;In monitor </span><span class="si">{</span><span class="n">monitor</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> keep-out zone&quot;</span><span class="p">,</span>
+                    <span class="p">}</span>
+                <span class="p">)</span>
+            <span class="n">all_in_keepout</span> <span class="o">|=</span> <span class="n">in_keepout</span>
+
+        <span class="c1"># Filter once with combined mask</span>
+        <span class="k">return</span> <span class="n">cand_guides</span><span class="p">[</span><span class="o">~</span><span class="n">all_in_keepout</span><span class="p">]</span></div>
+
+
 <div class="viewcode-block" id="GuideTable.get_img_size">
 <a class="viewcode-back" href="../../api.html#proseco.guide.GuideTable.get_img_size">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_img_size</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_fids</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_img_size</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_fids</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get guide image readout size from ``img_size`` and ``n_fids``.</span>
 
 <span class="sd">        If img_size is None (typical case) then this uses the default rules</span>
@@ -371,7 +560,7 @@
 
 <div class="viewcode-block" id="GuideTable.make_report">
 <a class="viewcode-back" href="../../api.html#proseco.guide.GuideTable.make_report">[docs]</a>
-    <span class="k">def</span> <span class="nf">make_report</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rootdir</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">make_report</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rootdir</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Make summary HTML report for guide selection process and outputs.</span>
 
@@ -381,14 +570,14 @@
 <span class="sd">        :param rootdir: root directory for outputs</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="kn">from</span> <span class="nn">.report_guide</span> <span class="kn">import</span> <span class="n">make_report</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.report_guide</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_report</span>
 
         <span class="n">make_report</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rootdir</span><span class="o">=</span><span class="n">rootdir</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="GuideTable.run_search_stages">
 <a class="viewcode-back" href="../../api.html#proseco.guide.GuideTable.run_search_stages">[docs]</a>
-    <span class="k">def</span> <span class="nf">run_search_stages</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run_search_stages</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Run search stages as necessary to select up to the requested number of guide stars.</span>
 
@@ -457,7 +646,7 @@
 
 <div class="viewcode-block" id="GuideTable.drop_excess_bonus_stars">
 <a class="viewcode-back" href="../../api.html#proseco.guide.GuideTable.drop_excess_bonus_stars">[docs]</a>
-    <span class="k">def</span> <span class="nf">drop_excess_bonus_stars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">guides</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">drop_excess_bonus_stars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">guides</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Drop excess dynamic background faint &quot;bonus&quot; stars if necessary.</span>
 
 <span class="sd">        For dyn bgd with dyn_bgd_n_faint &gt; 0, candidates fainter then the</span>
@@ -496,7 +685,7 @@
 
 <div class="viewcode-block" id="GuideTable.exclude_overlaps">
 <a class="viewcode-back" href="../../api.html#proseco.guide.GuideTable.exclude_overlaps">[docs]</a>
-    <span class="k">def</span> <span class="nf">exclude_overlaps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stage_cands</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">exclude_overlaps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stage_cands</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Review the stars selected at any stage and exclude stars that overlap in</span>
 <span class="sd">        tracking space with another. Overlap is defined as being within 12 pixels.</span>
@@ -525,8 +714,8 @@
                             <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">star</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">],</span>
                             <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;overlap&quot;</span><span class="p">,</span>
                             <span class="s2">&quot;stage&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
-                            <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;Cand </span><span class="si">{</span><span class="n">star</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1"> has track overlap (12 pixels) &#39;</span>
-                            <span class="sa">f</span><span class="s1">&#39;with star </span><span class="si">{</span><span class="n">other_star</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
+                            <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Cand </span><span class="si">{</span><span class="n">star</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> has track overlap (12 pixels) &quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot;with star </span><span class="si">{</span><span class="n">other_star</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
                         <span class="p">}</span>
                     <span class="p">)</span>
                     <span class="n">nok</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
@@ -535,16 +724,21 @@
 
 <div class="viewcode-block" id="GuideTable.select_catalog">
 <a class="viewcode-back" href="../../api.html#proseco.guide.GuideTable.select_catalog">[docs]</a>
-    <span class="k">def</span> <span class="nf">select_catalog</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stage_cands</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">select_catalog</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stage_cands</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        For the candidates selected at any stage (stage-assigned candidates?) select the</span>
-<span class="sd">        first combination that satisfies the most number of extra tests.</span>
-<span class="sd">        Here the extra tests are just the 3 checks for guide stars that are</span>
-<span class="sd">        too tightly clustered.</span>
+<span class="sd">        Select a catalog from the candidates.</span>
+
+<span class="sd">        For the candidates selected at any stage, select the first combination that satisfies</span>
+<span class="sd">        either all of the additional checks or the most checks.  The checks are manually weighted</span>
+<span class="sd">        so that the jupiter check is weighted more heavily than the cluster checks (but</span>
+<span class="sd">        the jupiter check only applies if jupiter is present).</span>
+
+<span class="sd">        :param stage_cands: Table of stage-selected candidates</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Selecting catalog from </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">stage_cands</span><span class="p">)</span><span class="si">}</span><span class="s2"> stage-selected stars&quot;</span><span class="p">)</span>
 
-        <span class="k">def</span> <span class="nf">index_combinations</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">m</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">index_combinations</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">m</span><span class="p">):</span>
             <span class="n">seen</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
             <span class="k">for</span> <span class="n">n_tmp</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
                 <span class="k">for</span> <span class="n">comb</span> <span class="ow">in</span> <span class="n">combinations</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n_tmp</span><span class="p">),</span> <span class="n">m</span><span class="p">):</span>
@@ -552,53 +746,68 @@
                         <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">comb</span><span class="p">)</span>
                         <span class="k">yield</span> <span class="n">comb</span>
 
-        <span class="c1"># Set a dictionary to save the first combination of that satisfies N tests.</span>
-        <span class="c1"># This will be used if no combination satisfies all the tests.</span>
-        <span class="n">select_results</span> <span class="o">=</span> <span class="p">{}</span>
-
-        <span class="c1"># I should come back to this and see if the &quot;min&quot; is needed or if the combinations</span>
-        <span class="c1"># code runs fine even if we have fewer-than-expected stage_cands to start</span>
         <span class="n">choose_m</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">stage_cands</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_guide</span><span class="p">)</span>
-
         <span class="n">n_tries</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c1"># Try to find the combination with the highest weighted sum of passing checks</span>
+        <span class="n">best_score</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="n">best_cands</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># The best possible score is 3 for 3 cluster checks or 8 for 3 cluster checks plus</span>
+        <span class="c1"># a weighted-5 jupiter check</span>
+        <span class="n">best_possible_score</span> <span class="o">=</span> <span class="mi">8</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">jupiter</span> <span class="k">else</span> <span class="mi">3</span>
+
         <span class="k">for</span> <span class="n">comb</span> <span class="ow">in</span> <span class="n">index_combinations</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">stage_cands</span><span class="p">),</span> <span class="n">choose_m</span><span class="p">):</span>
-            <span class="n">cands</span> <span class="o">=</span> <span class="n">stage_cands</span><span class="p">[</span>
-                <span class="nb">list</span><span class="p">(</span><span class="n">comb</span><span class="p">)</span>
-            <span class="p">]</span>  <span class="c1"># (note that [(1,2)] is not the same as list((1,2))</span>
+            <span class="n">cands</span> <span class="o">=</span> <span class="n">stage_cands</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">comb</span><span class="p">)]</span>
 
             <span class="c1"># If there are any include_ids, then the selected stars must include them.</span>
-            <span class="c1"># If not, skip this combination.</span>
+            <span class="c1"># If they aren&#39;t included, skip this combination.</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_ids</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">include_ids</span><span class="p">)</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="n">cands</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]):</span>
                 <span class="k">continue</span>
 
             <span class="n">n_tries</span> <span class="o">+=</span> <span class="mi">1</span>
 
-            <span class="n">n_pass</span><span class="p">,</span> <span class="n">n_tests</span> <span class="o">=</span> <span class="n">run_select_checks</span><span class="p">(</span>
-                <span class="n">cands</span>
-            <span class="p">)</span>  <span class="c1"># This function knows how many tests get run</span>
-            <span class="k">if</span> <span class="n">n_pass</span> <span class="o">==</span> <span class="n">n_tests</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Selected stars passing all tests at combination </span><span class="si">{</span><span class="n">n_tries</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-                    <span class="n">tried_combinations</span><span class="o">=</span><span class="n">n_tries</span><span class="p">,</span>
-                <span class="p">)</span>
-                <span class="k">return</span> <span class="n">cands</span>
-            <span class="k">elif</span> <span class="n">n_pass</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">select_results</span><span class="p">:</span>
-                <span class="c1"># Keep a copy of the first cands table with n_pass passing tests</span>
-                <span class="n">select_results</span><span class="p">[</span><span class="n">n_pass</span><span class="p">]</span> <span class="o">=</span> <span class="n">cands</span>
+            <span class="n">score</span> <span class="o">=</span> <span class="mi">0</span>
 
-        <span class="c1"># Return the catalog with the maximum n_pass key value</span>
-        <span class="n">max_n_pass</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">select_results</span><span class="p">)</span>
+            <span class="n">cluster_weights</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="n">cluster_check_status</span> <span class="o">=</span> <span class="n">run_cluster_checks</span><span class="p">(</span><span class="n">cands</span><span class="p">)</span>
+            <span class="n">score</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">cluster_check_status</span><span class="p">)</span> <span class="o">*</span> <span class="n">cluster_weights</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">jupiter</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">jupiter_weight</span> <span class="o">=</span> <span class="mi">5</span>
+                <span class="kn">from</span><span class="w"> </span><span class="nn">proseco.jupiter</span><span class="w"> </span><span class="kn">import</span> <span class="n">jupiter_distribution_check</span>
+
+                <span class="n">jupiter_check_status</span> <span class="o">=</span> <span class="n">jupiter_distribution_check</span><span class="p">(</span><span class="n">cands</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">jupiter</span><span class="p">)</span>
+                <span class="n">score</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">([</span><span class="n">jupiter_check_status</span><span class="p">])</span> <span class="o">*</span> <span class="n">jupiter_weight</span>
+
+            <span class="k">if</span> <span class="n">score</span> <span class="o">&gt;</span> <span class="n">best_score</span><span class="p">:</span>
+                <span class="n">best_score</span> <span class="o">=</span> <span class="n">score</span>
+                <span class="n">best_cands</span> <span class="o">=</span> <span class="n">cands</span>
+
+            <span class="k">if</span> <span class="n">best_score</span> <span class="o">==</span> <span class="n">best_possible_score</span><span class="p">:</span>
+                <span class="k">break</span>
+
+        <span class="k">if</span> <span class="n">best_cands</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Selected stars with weighted score </span><span class="si">{</span><span class="n">best_score</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">warning</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">tried_combinations</span><span class="o">=</span><span class="n">n_tries</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">best_cands</span>
+
+        <span class="c1"># Fallback: return the first choose_m stars if nothing else worked.</span>
+        <span class="c1"># The code should only get here if there are more include_ids than n_guide.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;Settled for combination that satisfied </span><span class="si">{</span><span class="n">max_n_pass</span><span class="si">}</span><span class="s2"> cluster checks&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;No combination satisfied any checks, returning first available set&quot;</span><span class="p">,</span>
             <span class="n">warning</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="n">tried_combinations</span><span class="o">=</span><span class="n">n_tries</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">select_results</span><span class="p">[</span><span class="n">max_n_pass</span><span class="p">]</span></div>
+        <span class="k">return</span> <span class="n">stage_cands</span><span class="p">[:</span><span class="n">choose_m</span><span class="p">]</span></div>
 
 
 <div class="viewcode-block" id="GuideTable.search_stage">
 <a class="viewcode-back" href="../../api.html#proseco.guide.GuideTable.search_stage">[docs]</a>
-    <span class="k">def</span> <span class="nf">search_stage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stage</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">search_stage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stage</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Review the candidates with the criteria defined in ``stage`` and return a mask that</span>
 <span class="sd">        marks the candidates that are &quot;ok&quot; for this search stage.  This is used to then</span>
@@ -690,7 +899,7 @@
 
         <span class="c1"># Adopt the SAUSAGE convention of a bit array for errors</span>
         <span class="c1"># Not all items will be checked for each star (allow short circuit)</span>
-        <span class="n">scol</span> <span class="o">=</span> <span class="s2">&quot;stat_</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">stage</span><span class="p">[</span><span class="s2">&quot;Stage&quot;</span><span class="p">])</span>
+        <span class="n">scol</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;stat_</span><span class="si">{</span><span class="n">stage</span><span class="p">[</span><span class="s1">&#39;Stage&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="n">cand_guides</span><span class="p">[</span><span class="n">scol</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
 
         <span class="n">n_sigma</span> <span class="o">=</span> <span class="n">stage</span><span class="p">[</span><span class="s2">&quot;SigErrMultiplier&quot;</span><span class="p">]</span>
@@ -729,7 +938,7 @@
                     <span class="s2">&quot;cand_mag&quot;</span><span class="p">:</span> <span class="n">cand_guides</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">][</span><span class="n">idx</span><span class="p">],</span>
                     <span class="s2">&quot;cand_mag_err_times_sigma&quot;</span><span class="p">:</span> <span class="n">n_sigma</span> <span class="o">*</span> <span class="n">mag_err</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span>
                     <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="p">(</span>
-                        <span class="sa">f</span><span class="s1">&#39;Cand </span><span class="si">{</span><span class="n">cand_guides</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">][</span><span class="n">idx</span><span class="p">]</span><span class="si">}</span><span class="s1"> rejected with &#39;</span>
+                        <span class="sa">f</span><span class="s2">&quot;Cand </span><span class="si">{</span><span class="n">cand_guides</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">]</span><span class="si">}</span><span class="s2"> rejected with &quot;</span>
                         <span class="s2">&quot;mag outside range for stage&quot;</span>
                     <span class="p">),</span>
                 <span class="p">}</span>
@@ -747,8 +956,8 @@
                     <span class="s2">&quot;stage&quot;</span><span class="p">:</span> <span class="n">stage</span><span class="p">[</span><span class="s2">&quot;Stage&quot;</span><span class="p">],</span>
                     <span class="s2">&quot;aspq1_lim&quot;</span><span class="p">:</span> <span class="n">stage</span><span class="p">[</span><span class="s2">&quot;ASPQ1Lim&quot;</span><span class="p">],</span>
                     <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="p">(</span>
-                        <span class="sa">f</span><span class="s1">&#39;Cand </span><span class="si">{</span><span class="n">cand_guides</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">][</span><span class="n">idx</span><span class="p">]</span><span class="si">}</span><span class="s1"> rejected with &#39;</span>
-                        <span class="sa">f</span><span class="s1">&#39;aspq1 &gt; </span><span class="si">{</span><span class="n">stage</span><span class="p">[</span><span class="s2">&quot;ASPQ1Lim&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span>
+                        <span class="sa">f</span><span class="s2">&quot;Cand </span><span class="si">{</span><span class="n">cand_guides</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">]</span><span class="si">}</span><span class="s2"> rejected with &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;aspq1 &gt; </span><span class="si">{</span><span class="n">stage</span><span class="p">[</span><span class="s1">&#39;ASPQ1Lim&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
                     <span class="p">),</span>
                 <span class="p">}</span>
             <span class="p">)</span>
@@ -775,7 +984,7 @@
                     <span class="s2">&quot;imp_row_start&quot;</span><span class="p">:</span> <span class="n">cand</span><span class="p">[</span><span class="s2">&quot;imp_r&quot;</span><span class="p">],</span>
                     <span class="s2">&quot;imp_col_start&quot;</span><span class="p">:</span> <span class="n">cand</span><span class="p">[</span><span class="s2">&quot;imp_c&quot;</span><span class="p">],</span>
                     <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="p">(</span>
-                        <span class="sa">f</span><span class="s1">&#39;Cand </span><span class="si">{</span><span class="n">cand</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1"> mag </span><span class="si">{</span><span class="n">cand</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">]</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1"> imposter with &#39;</span>
+                        <span class="sa">f</span><span class="s2">&quot;Cand </span><span class="si">{</span><span class="n">cand</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> mag </span><span class="si">{</span><span class="n">cand</span><span class="p">[</span><span class="s1">&#39;mag&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> imposter with &quot;</span>
                         <span class="sa">f</span><span class="s1">&#39;&quot;mag&quot; </span><span class="si">{</span><span class="n">cand</span><span class="p">[</span><span class="s2">&quot;imp_mag&quot;</span><span class="p">]</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1"> &#39;</span>
                         <span class="sa">f</span><span class="s2">&quot;limit </span><span class="si">{</span><span class="n">pixmag_lims</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> with offset lim </span><span class="si">{</span><span class="n">cen_limit</span><span class="si">}</span><span class="s2"> at stage&quot;</span>
                     <span class="p">),</span>
@@ -822,7 +1031,7 @@
                         <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">cand_guides</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">][</span><span class="n">idx</span><span class="p">],</span>
                         <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;bad color&quot;</span><span class="p">,</span>
                         <span class="s2">&quot;stage&quot;</span><span class="p">:</span> <span class="n">stage</span><span class="p">[</span><span class="s2">&quot;Stage&quot;</span><span class="p">],</span>
-                        <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;Cand </span><span class="si">{</span><span class="n">cand_guides</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">][</span><span class="n">idx</span><span class="p">]</span><span class="si">}</span><span class="s1"> has bad color (0.7)&#39;</span><span class="p">,</span>
+                        <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Cand </span><span class="si">{</span><span class="n">cand_guides</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">]</span><span class="si">}</span><span class="s2"> has bad color (0.7)&quot;</span><span class="p">,</span>
                     <span class="p">}</span>
                 <span class="p">)</span>
             <span class="n">cand_guides</span><span class="p">[</span><span class="n">scol</span><span class="p">][</span><span class="n">bad_color</span><span class="p">]</span> <span class="o">+=</span> <span class="n">GUIDE</span><span class="o">.</span><span class="n">errs</span><span class="p">[</span><span class="s2">&quot;bad color&quot;</span><span class="p">]</span>
@@ -832,24 +1041,87 @@
 
 <div class="viewcode-block" id="GuideTable.process_include_ids">
 <a class="viewcode-back" href="../../api.html#proseco.guide.GuideTable.process_include_ids">[docs]</a>
-    <span class="k">def</span> <span class="nf">process_include_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cand_guides</span><span class="p">,</span> <span class="n">stars</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process_include_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cand_guides</span><span class="p">,</span> <span class="n">stars</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Ensure that the cand_guides table has stars that were forced to be included.</span>
 
 <span class="sd">        :param cand_guides: candidate guide stars table</span>
 <span class="sd">        :param stars: stars table</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">include_ids</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Check to see if the include_ids are already in cand_guides</span>
+        <span class="n">missing_ids</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">star_id</span> <span class="k">for</span> <span class="n">star_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_ids</span> <span class="k">if</span> <span class="n">star_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cand_guides</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">missing_ids</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;All include_ids already in candidate list: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">include_ids</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+
         <span class="n">row_max</span> <span class="o">=</span> <span class="n">CCD</span><span class="p">[</span><span class="s2">&quot;row_max&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">CCD</span><span class="p">[</span><span class="s2">&quot;row_pad&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">CCD</span><span class="p">[</span><span class="s2">&quot;window_pad&quot;</span><span class="p">]</span>
         <span class="n">col_max</span> <span class="o">=</span> <span class="n">CCD</span><span class="p">[</span><span class="s2">&quot;col_max&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">CCD</span><span class="p">[</span><span class="s2">&quot;col_pad&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">CCD</span><span class="p">[</span><span class="s2">&quot;window_pad&quot;</span><span class="p">]</span>
 
         <span class="n">ok</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;row&quot;</span><span class="p">])</span> <span class="o">&lt;</span> <span class="n">row_max</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;col&quot;</span><span class="p">])</span> <span class="o">&lt;</span> <span class="n">col_max</span><span class="p">)</span>
 
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">process_include_ids</span><span class="p">(</span><span class="n">cand_guides</span><span class="p">,</span> <span class="n">stars</span><span class="p">[</span><span class="n">ok</span><span class="p">])</span></div>
+        <span class="c1"># Let&#39;s get a smaller set of the possible stars in the field and</span>
+        <span class="c1"># populate the imposter mags for them and initialize other columns</span>
+        <span class="n">isin_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">],</span> <span class="n">missing_ids</span><span class="p">,</span> <span class="n">assume_unique</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">new_stars</span> <span class="o">=</span> <span class="n">stars</span><span class="p">[</span><span class="n">isin_mask</span> <span class="o">&amp;</span> <span class="n">ok</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="c1"># Now compute imposter mags for these stars</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_stars</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">imp_mag</span><span class="p">,</span> <span class="n">imp_row</span><span class="p">,</span> <span class="n">imp_col</span> <span class="o">=</span> <span class="n">get_imposter_mags</span><span class="p">(</span>
+                <span class="n">new_stars</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dark</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dither</span>
+            <span class="p">)</span>
+            <span class="n">new_stars</span><span class="p">[</span><span class="s2">&quot;imp_mag&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">imp_mag</span>
+            <span class="n">new_stars</span><span class="p">[</span><span class="s2">&quot;imp_r&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">imp_row</span>
+            <span class="n">new_stars</span><span class="p">[</span><span class="s2">&quot;imp_c&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">imp_col</span>
+
+            <span class="c1"># And add the other standard columns</span>
+            <span class="c1"># I&#39;d like to add stage set to -1 and stat_1 to stat_6 set to 0</span>
+            <span class="n">new_stars</span><span class="p">[</span><span class="s2">&quot;stage&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+            <span class="k">for</span> <span class="n">stage_num</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">GUIDE</span><span class="o">.</span><span class="n">stages</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">scol</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;stat_</span><span class="si">{</span><span class="n">stage_num</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="n">new_stars</span><span class="p">[</span><span class="n">scol</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+            <span class="c1"># Reorder columns to match cand_guides</span>
+            <span class="n">new_stars</span> <span class="o">=</span> <span class="n">new_stars</span><span class="p">[</span><span class="n">cand_guides</span><span class="o">.</span><span class="n">colnames</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;In process_include_ids trying to include </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">include_ids</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">process_include_ids</span><span class="p">(</span><span class="n">cand_guides</span><span class="p">,</span> <span class="n">new_stars</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GuideTable.process_exclude_ids">
+<a class="viewcode-back" href="../../api.html#proseco.guide.GuideTable.process_exclude_ids">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process_exclude_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cand_guides</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Remove any stars from cand_guides that are in exclude_ids.</span>
+
+<span class="sd">        This works in-place on cand_guides.</span>
+
+<span class="sd">        :param cand_guides: candidate guide stars table</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Deal with exclude_ids by removing rows from the candidate list</span>
+        <span class="c1"># This works in-place on cand_guides</span>
+        <span class="k">for</span> <span class="n">star_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">exclude_ids</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">star_id</span> <span class="ow">in</span> <span class="n">cand_guides</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">reject</span><span class="p">(</span>
+                    <span class="p">{</span>
+                        <span class="s2">&quot;stage&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+                        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;exclude_id&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">star_id</span><span class="p">,</span>
+                        <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Cand </span><span class="si">{</span><span class="n">star_id</span><span class="si">}</span><span class="s2"> rejected.  In exclude_ids&quot;</span><span class="p">,</span>
+                    <span class="p">}</span>
+                <span class="p">)</span>
+                <span class="c1"># Remove the row in-place</span>
+                <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">cand_guides</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">star_id</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">cand_guides</span><span class="o">.</span><span class="n">remove_rows</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="GuideTable.get_candidates_mask">
 <a class="viewcode-back" href="../../api.html#proseco.guide.GuideTable.get_candidates_mask">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_candidates_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stars</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_candidates_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stars</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get base filter for acceptable candidates.</span>
 
 <span class="sd">        This does not include spatial filtering.</span>
@@ -870,7 +1142,7 @@
 
 <div class="viewcode-block" id="GuideTable.get_initial_guide_candidates">
 <a class="viewcode-back" href="../../api.html#proseco.guide.GuideTable.get_initial_guide_candidates">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_initial_guide_candidates</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_initial_guide_candidates</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create a candidate list from the available stars in the field.</span>
 
@@ -902,22 +1174,16 @@
 <span class="sd">        `has_spoiler_in_box` method and is the first of many spoiler checks.  This spoiler</span>
 <span class="sd">        check is not stage dependent.</span>
 
-<span class="sd">        9. Filters the candidates to remova any that are spoiled by the fid trap (using</span>
-<span class="sd">        `check_fid_trap` method).</span>
+<span class="sd">        9. If Jupiter is present, filters the candidates to remove any that are within</span>
+<span class="sd">        15 columns of Jupiter.</span>
 
-<span class="sd">        10. Puts any force include candidates from the include_ids parameter back in the candidate</span>
-<span class="sd">        list if they were filtered out by an earlier filter in this routine.</span>
-
-<span class="sd">        11. Filters/removes any candidates that are force excluded (in exclude_ids).</span>
-
-<span class="sd">        12. Uses the local dark current around each candidate to calculate an &quot;imposter mag&quot;</span>
+<span class="sd">        10. Uses the local dark current around each candidate to calculate an &quot;imposter mag&quot;</span>
 <span class="sd">        describing the brightest 2x2 in the region the star would dither over.  This is</span>
 <span class="sd">        saved to the candidate star table.</span>
 
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">stars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stars</span>
-        <span class="n">dark</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dark</span>
 
         <span class="c1"># Mark stars that are off chip</span>
         <span class="n">offchip</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;row&quot;</span><span class="p">])</span> <span class="o">&gt;</span> <span class="n">CCD</span><span class="p">[</span><span class="s2">&quot;row_max&quot;</span><span class="p">])</span> <span class="o">|</span> <span class="p">(</span>
@@ -943,11 +1209,20 @@
         <span class="c1"># selection filter from acq, but allows bad color and limits to brighter stars).</span>
         <span class="n">ok</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_candidates_mask</span><span class="p">(</span><span class="n">stars</span><span class="p">)</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">outofbounds</span>
         <span class="n">cand_guides</span> <span class="o">=</span> <span class="n">stars</span><span class="p">[</span><span class="n">ok</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="s2">&quot;Filtering on CLASS, mag, row/col, &quot;</span> <span class="s2">&quot;mag_err, ASPQ1/2, POS_ERR:&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="s2">&quot;Filtering on CLASS, mag, row/col, mag_err, ASPQ1/2, POS_ERR:&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;Reduced star list from </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">stars</span><span class="p">)</span><span class="si">}</span><span class="s2"> to &quot;</span>
             <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">cand_guides</span><span class="p">)</span><span class="si">}</span><span class="s2"> candidate guide stars&quot;</span>
         <span class="p">)</span>
+
+        <span class="c1"># Add extra columns used by guide selection to the candidate table</span>
+        <span class="n">cand_guides</span><span class="p">[</span><span class="s2">&quot;stage&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">for</span> <span class="n">stage_num</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">GUIDE</span><span class="o">.</span><span class="n">stages</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">scol</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;stat_</span><span class="si">{</span><span class="n">stage_num</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">cand_guides</span><span class="p">[</span><span class="n">scol</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">cand_guides</span><span class="p">[</span><span class="s2">&quot;imp_mag&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="n">cand_guides</span><span class="p">[</span><span class="s2">&quot;imp_r&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="n">cand_guides</span><span class="p">[</span><span class="s2">&quot;imp_c&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
 
         <span class="n">bp</span><span class="p">,</span> <span class="n">bp_rej</span> <span class="o">=</span> <span class="n">spoiled_by_bad_pixel</span><span class="p">(</span><span class="n">cand_guides</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dither</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">rej</span> <span class="ow">in</span> <span class="n">bp_rej</span><span class="p">:</span>
@@ -967,7 +1242,7 @@
                     <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">cand_guides</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">][</span><span class="n">idx</span><span class="p">],</span>
                     <span class="s2">&quot;stage&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
                     <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;bad star list&quot;</span><span class="p">,</span>
-                    <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;Cand </span><span class="si">{</span><span class="n">cand_guides</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">][</span><span class="n">idx</span><span class="p">]</span><span class="si">}</span><span class="s1"> in bad star list&#39;</span><span class="p">,</span>
+                    <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Cand </span><span class="si">{</span><span class="n">cand_guides</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">]</span><span class="si">}</span><span class="s2"> in bad star list&quot;</span><span class="p">,</span>
                 <span class="p">}</span>
             <span class="p">)</span>
         <span class="n">cand_guides</span> <span class="o">=</span> <span class="n">cand_guides</span><span class="p">[</span><span class="o">~</span><span class="n">bs</span><span class="p">]</span>
@@ -993,32 +1268,23 @@
             <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">cand_guides</span><span class="p">)</span><span class="si">}</span><span class="s2"> candidate guide stars&quot;</span>
         <span class="p">)</span>
 
-        <span class="n">fid_trap_spoilers</span><span class="p">,</span> <span class="n">fid_rej</span> <span class="o">=</span> <span class="n">check_fid_trap</span><span class="p">(</span>
-            <span class="n">cand_guides</span><span class="p">,</span> <span class="n">fids</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fids</span><span class="p">,</span> <span class="n">dither</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dither</span>
-        <span class="p">)</span>
-        <span class="k">for</span> <span class="n">rej</span> <span class="ow">in</span> <span class="n">fid_rej</span><span class="p">:</span>
-            <span class="n">rej</span><span class="p">[</span><span class="s2">&quot;stage&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">reject</span><span class="p">(</span><span class="n">rej</span><span class="p">)</span>
-        <span class="n">cand_guides</span> <span class="o">=</span> <span class="n">cand_guides</span><span class="p">[</span><span class="o">~</span><span class="n">fid_trap_spoilers</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">jupiter</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">proseco.jupiter</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_spoiled_by_jupiter</span>
 
-        <span class="c1"># Deal with include_ids by putting them back in candidate table if necessary</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">process_include_ids</span><span class="p">(</span><span class="n">cand_guides</span><span class="p">,</span> <span class="n">stars</span><span class="p">)</span>
-
-        <span class="c1"># Deal with exclude_ids by cutting from the candidate list</span>
-        <span class="k">for</span> <span class="n">star_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">exclude_ids</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">star_id</span> <span class="ow">in</span> <span class="n">cand_guides</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">reject</span><span class="p">(</span>
-                    <span class="p">{</span>
-                        <span class="s2">&quot;stage&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
-                        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;exclude_id&quot;</span><span class="p">,</span>
-                        <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">star_id</span><span class="p">,</span>
-                        <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Cand </span><span class="si">{</span><span class="n">star_id</span><span class="si">}</span><span class="s2"> rejected.  In exclude_ids&quot;</span><span class="p">,</span>
-                    <span class="p">}</span>
-                <span class="p">)</span>
-                <span class="n">cand_guides</span> <span class="o">=</span> <span class="n">cand_guides</span><span class="p">[</span><span class="n">cand_guides</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">star_id</span><span class="p">]</span>
+            <span class="c1"># Exclude candidates within 15 columns of Jupiter</span>
+            <span class="n">spoiled_by_jupiter</span><span class="p">,</span> <span class="n">jupiter_rej</span> <span class="o">=</span> <span class="n">check_spoiled_by_jupiter</span><span class="p">(</span>
+                <span class="n">cand_guides</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">jupiter</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">spoiled_by_jupiter</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">rej</span> <span class="ow">in</span> <span class="n">jupiter_rej</span><span class="p">:</span>
+                    <span class="n">rej</span><span class="p">[</span><span class="s2">&quot;stage&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">reject</span><span class="p">(</span><span class="n">rej</span><span class="p">)</span>
+                <span class="n">cand_guides</span> <span class="o">=</span> <span class="n">cand_guides</span><span class="p">[</span><span class="o">~</span><span class="n">spoiled_by_jupiter</span><span class="p">]</span>
 
         <span class="c1"># Get the brightest 2x2 in the dark map for each candidate and save value and location</span>
-        <span class="n">imp_mag</span><span class="p">,</span> <span class="n">imp_row</span><span class="p">,</span> <span class="n">imp_col</span> <span class="o">=</span> <span class="n">get_imposter_mags</span><span class="p">(</span><span class="n">cand_guides</span><span class="p">,</span> <span class="n">dark</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dither</span><span class="p">)</span>
+        <span class="n">imp_mag</span><span class="p">,</span> <span class="n">imp_row</span><span class="p">,</span> <span class="n">imp_col</span> <span class="o">=</span> <span class="n">get_imposter_mags</span><span class="p">(</span>
+            <span class="n">cand_guides</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dark</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dither</span>
+        <span class="p">)</span>
         <span class="n">cand_guides</span><span class="p">[</span><span class="s2">&quot;imp_mag&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">imp_mag</span>
         <span class="n">cand_guides</span><span class="p">[</span><span class="s2">&quot;imp_r&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">imp_row</span>
         <span class="n">cand_guides</span><span class="p">[</span><span class="s2">&quot;imp_c&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">imp_col</span>
@@ -1029,14 +1295,15 @@
 
 <div class="viewcode-block" id="GuideTable.in_bad_star_list">
 <a class="viewcode-back" href="../../api.html#proseco.guide.GuideTable.in_bad_star_list">[docs]</a>
-    <span class="k">def</span> <span class="nf">in_bad_star_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cand_guides</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">in_bad_star_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cand_guides</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Mark star bad if candidate AGASC ID in bad star list.</span>
 
 <span class="sd">        :param cand_guides: Table of candidate stars</span>
 <span class="sd">        :returns: boolean mask where True means star is in bad star list</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">bad</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">cand_guides</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">],</span> <span class="nb">list</span><span class="p">(</span><span class="n">ACA</span><span class="o">.</span><span class="n">bad_star_set</span><span class="p">))</span>
+        <span class="n">bad_star_ids</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">ACA</span><span class="o">.</span><span class="n">bad_star_set</span><span class="p">)</span>
+        <span class="n">bad</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">cand_guides</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">],</span> <span class="n">bad_star_ids</span><span class="p">)</span>
 
         <span class="c1"># Set any matching bad stars as bad for plotting</span>
         <span class="k">for</span> <span class="n">bad_id</span> <span class="ow">in</span> <span class="n">cand_guides</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">][</span><span class="n">bad</span><span class="p">]:</span>
@@ -1050,9 +1317,11 @@
 
 <div class="viewcode-block" id="check_fid_trap">
 <a class="viewcode-back" href="../../api.html#proseco.guide.check_fid_trap">[docs]</a>
-<span class="k">def</span> <span class="nf">check_fid_trap</span><span class="p">(</span><span class="n">cand_stars</span><span class="p">,</span> <span class="n">fids</span><span class="p">,</span> <span class="n">dither</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_fid_trap</span><span class="p">(</span><span class="n">cand_stars</span><span class="p">,</span> <span class="n">fids</span><span class="p">,</span> <span class="n">dither</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Search for guide stars that would cause the fid trap issue and mark as spoilers.</span>
+
+<span class="sd">    The &quot;fid trap&quot; issue is documented at https://cxc.cfa.harvard.edu/mta/ASPECT/aca_weird_pixels/ .</span>
 
 <span class="sd">    :param cand_stars: candidate star Table</span>
 <span class="sd">    :param fids: fid Table</span>
@@ -1091,7 +1360,7 @@
                         <span class="s2">&quot;fid_id&quot;</span><span class="p">:</span> <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">],</span>
                         <span class="s2">&quot;fid_dist_to_trap&quot;</span><span class="p">:</span> <span class="n">fid_dist_to_trap</span><span class="p">,</span>
                         <span class="s2">&quot;star_dist_to_register&quot;</span><span class="p">:</span> <span class="n">star_dist_to_register</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span>
-                        <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;Cand </span><span class="si">{</span><span class="n">cand</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1"> in trap zone for fid </span><span class="si">{</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
+                        <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Cand </span><span class="si">{</span><span class="n">cand</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> in trap zone for fid </span><span class="si">{</span><span class="n">fid</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
                     <span class="p">}</span>
                 <span class="p">)</span>
     <span class="k">return</span> <span class="n">spoilers</span><span class="p">,</span> <span class="n">rej</span></div>
@@ -1100,7 +1369,7 @@
 
 <div class="viewcode-block" id="check_spoil_contrib">
 <a class="viewcode-back" href="../../api.html#proseco.guide.check_spoil_contrib">[docs]</a>
-<span class="k">def</span> <span class="nf">check_spoil_contrib</span><span class="p">(</span><span class="n">cand_stars</span><span class="p">,</span> <span class="n">ok</span><span class="p">,</span> <span class="n">stars</span><span class="p">,</span> <span class="n">regfrac</span><span class="p">,</span> <span class="n">bgthresh</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_spoil_contrib</span><span class="p">(</span><span class="n">cand_stars</span><span class="p">,</span> <span class="n">ok</span><span class="p">,</span> <span class="n">stars</span><span class="p">,</span> <span class="n">regfrac</span><span class="p">,</span> <span class="n">bgthresh</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Check that there are no spoiler stars contributing more than a fraction</span>
 <span class="sd">    of the candidate star to the candidate star&#39;s 8x8 pixel region or more than bgthresh</span>
@@ -1164,7 +1433,7 @@
                     <span class="s2">&quot;fraction&quot;</span><span class="p">:</span> <span class="n">fraction</span><span class="p">,</span>
                     <span class="s2">&quot;sum_in_region&quot;</span><span class="p">:</span> <span class="n">sum_in_region</span><span class="p">,</span>
                     <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="p">(</span>
-                        <span class="sa">f</span><span class="s1">&#39;Cand </span><span class="si">{</span><span class="n">cand_stars</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1"> has too much contribution &#39;</span>
+                        <span class="sa">f</span><span class="s2">&quot;Cand </span><span class="si">{</span><span class="n">cand_stars</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> has too much contribution &quot;</span>
                         <span class="s2">&quot;to region from spoilers&quot;</span>
                     <span class="p">),</span>
                 <span class="p">}</span>
@@ -1184,7 +1453,7 @@
                         <span class="s2">&quot;bg_thresh&quot;</span><span class="p">:</span> <span class="n">bgthresh</span><span class="p">,</span>
                         <span class="s2">&quot;bg_pix_val&quot;</span><span class="p">:</span> <span class="n">val</span><span class="p">,</span>
                         <span class="s2">&quot;pix_id&quot;</span><span class="p">:</span> <span class="n">pixlabel</span><span class="p">,</span>
-                        <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;Cand </span><span class="si">{</span><span class="n">cand</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1"> has bg pix spoiled by spoilers&#39;</span><span class="p">,</span>
+                        <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Cand </span><span class="si">{</span><span class="n">cand</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> has bg pix spoiled by spoilers&quot;</span><span class="p">,</span>
                     <span class="p">}</span>
                 <span class="p">)</span>
                 <span class="k">continue</span>
@@ -1195,7 +1464,7 @@
 
 <div class="viewcode-block" id="check_mag_spoilers">
 <a class="viewcode-back" href="../../api.html#proseco.guide.check_mag_spoilers">[docs]</a>
-<span class="k">def</span> <span class="nf">check_mag_spoilers</span><span class="p">(</span><span class="n">cand_stars</span><span class="p">,</span> <span class="n">ok</span><span class="p">,</span> <span class="n">stars</span><span class="p">,</span> <span class="n">n_sigma</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_mag_spoilers</span><span class="p">(</span><span class="n">cand_stars</span><span class="p">,</span> <span class="n">ok</span><span class="p">,</span> <span class="n">stars</span><span class="p">,</span> <span class="n">n_sigma</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Use the slope-intercept mag-spoiler relationship to exclude all</span>
 <span class="sd">    stars that have a &quot;mag spoiler&quot;.  This is basically equivalent to the</span>
@@ -1259,7 +1528,7 @@
                         <span class="s2">&quot;actual_dist&quot;</span><span class="p">:</span> <span class="n">dist</span><span class="p">,</span>
                         <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;spoiler by distance-mag line&quot;</span><span class="p">,</span>
                         <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="p">(</span>
-                            <span class="sa">f</span><span class="s1">&#39;Cand </span><span class="si">{</span><span class="n">cand</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1"> spoiled by </span><span class="si">{</span><span class="n">spoil</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1">, &#39;</span>
+                            <span class="sa">f</span><span class="s2">&quot;Cand </span><span class="si">{</span><span class="n">cand</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> spoiled by </span><span class="si">{</span><span class="n">spoil</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, &quot;</span>
                             <span class="sa">f</span><span class="s2">&quot;too close (</span><span class="si">{</span><span class="n">dist</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">) pix for magdiff (</span><span class="si">{</span><span class="n">delmag</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">)&quot;</span>
                         <span class="p">),</span>
                     <span class="p">}</span>
@@ -1273,7 +1542,7 @@
 
 <div class="viewcode-block" id="check_column_spoilers">
 <a class="viewcode-back" href="../../api.html#proseco.guide.check_column_spoilers">[docs]</a>
-<span class="k">def</span> <span class="nf">check_column_spoilers</span><span class="p">(</span><span class="n">cand_stars</span><span class="p">,</span> <span class="n">ok</span><span class="p">,</span> <span class="n">stars</span><span class="p">,</span> <span class="n">n_sigma</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_column_spoilers</span><span class="p">(</span><span class="n">cand_stars</span><span class="p">,</span> <span class="n">ok</span><span class="p">,</span> <span class="n">stars</span><span class="p">,</span> <span class="n">n_sigma</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    For each candidate, check for stars &#39;MagDiff&#39; brighter and within &#39;Separation&#39; columns</span>
 <span class="sd">    between the star and the readout register, i.e. Column Spoilers.</span>
@@ -1324,9 +1593,9 @@
                     <span class="s2">&quot;dmag_lim&quot;</span><span class="p">:</span> <span class="n">ACA</span><span class="o">.</span><span class="n">col_spoiler_mag_diff</span><span class="p">,</span>
                     <span class="s2">&quot;dcol&quot;</span><span class="p">:</span> <span class="n">cand</span><span class="p">[</span><span class="s2">&quot;col&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">spoiler</span><span class="p">[</span><span class="s2">&quot;col&quot;</span><span class="p">],</span>
                     <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="p">(</span>
-                        <span class="sa">f</span><span class="s1">&#39;Cand </span><span class="si">{</span><span class="n">cand</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1"> has column spoiler </span><span class="si">{</span><span class="n">spoiler</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1"> &#39;</span>
-                        <span class="sa">f</span><span class="s1">&#39;at (</span><span class="si">{</span><span class="n">spoiler</span><span class="p">[</span><span class="s2">&quot;row&quot;</span><span class="p">]</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">, </span><span class="si">{</span><span class="n">spoiler</span><span class="p">[</span><span class="s2">&quot;row&quot;</span><span class="p">]</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">), &#39;</span>
-                        <span class="sa">f</span><span class="s1">&#39;mag </span><span class="si">{</span><span class="n">spoiler</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">]</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">&#39;</span>
+                        <span class="sa">f</span><span class="s2">&quot;Cand </span><span class="si">{</span><span class="n">cand</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> has column spoiler </span><span class="si">{</span><span class="n">spoiler</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;at (</span><span class="si">{</span><span class="n">spoiler</span><span class="p">[</span><span class="s1">&#39;row&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">spoiler</span><span class="p">[</span><span class="s1">&#39;row&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">), &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;mag </span><span class="si">{</span><span class="n">spoiler</span><span class="p">[</span><span class="s1">&#39;mag&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span>
                     <span class="p">),</span>
                 <span class="p">}</span>
             <span class="p">)</span>
@@ -1336,7 +1605,7 @@
 
 <div class="viewcode-block" id="get_ax_range">
 <a class="viewcode-back" href="../../api.html#proseco.guide.get_ax_range">[docs]</a>
-<span class="k">def</span> <span class="nf">get_ax_range</span><span class="p">(</span><span class="n">rc</span><span class="p">,</span> <span class="n">extent</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_ax_range</span><span class="p">(</span><span class="n">rc</span><span class="p">,</span> <span class="n">extent</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Given a float pixel row or col value and an &quot;extent&quot; in float pixels,</span>
 <span class="sd">    generally 4 + 1.6 for 8&quot; dither and 4 + 5.0 for 20&quot; dither,</span>
@@ -1363,7 +1632,7 @@
 
 <div class="viewcode-block" id="get_imposter_mags">
 <a class="viewcode-back" href="../../api.html#proseco.guide.get_imposter_mags">[docs]</a>
-<span class="k">def</span> <span class="nf">get_imposter_mags</span><span class="p">(</span><span class="n">cand_stars</span><span class="p">,</span> <span class="n">dark</span><span class="p">,</span> <span class="n">dither</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_imposter_mags</span><span class="p">(</span><span class="n">cand_stars</span><span class="p">,</span> <span class="n">dark</span><span class="p">,</span> <span class="n">dither</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Get &quot;pseudo-mag&quot; of max pixel value in each candidate star region</span>
 
@@ -1412,7 +1681,7 @@
 
 <div class="viewcode-block" id="get_pixmag_for_offset">
 <a class="viewcode-back" href="../../api.html#proseco.guide.get_pixmag_for_offset">[docs]</a>
-<span class="k">def</span> <span class="nf">get_pixmag_for_offset</span><span class="p">(</span><span class="n">cand_mag</span><span class="p">,</span> <span class="n">offset</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_pixmag_for_offset</span><span class="p">(</span><span class="n">cand_mag</span><span class="p">,</span> <span class="n">offset</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Determine the magnitude an individual bad pixel would need to spoil the centroid of</span>
 <span class="sd">    the candidate star by ``offset``.  This just constructs the worst case as the bad pixel</span>
@@ -1433,7 +1702,7 @@
 
 <div class="viewcode-block" id="has_spoiler_in_box">
 <a class="viewcode-back" href="../../api.html#proseco.guide.has_spoiler_in_box">[docs]</a>
-<span class="k">def</span> <span class="nf">has_spoiler_in_box</span><span class="p">(</span><span class="n">cand_guides</span><span class="p">,</span> <span class="n">stars</span><span class="p">,</span> <span class="n">halfbox</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">magdiff</span><span class="o">=-</span><span class="mi">4</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">has_spoiler_in_box</span><span class="p">(</span><span class="n">cand_guides</span><span class="p">,</span> <span class="n">stars</span><span class="p">,</span> <span class="n">halfbox</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">magdiff</span><span class="o">=-</span><span class="mi">4</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Check each candidate star for spoilers that would fall in a box centered on the star.</span>
 <span class="sd">    Mark candidate spoiled if there&#39;s a spoiler in the box and brighter than magdiff fainter</span>
@@ -1470,8 +1739,8 @@
                     <span class="s2">&quot;dmag&quot;</span><span class="p">:</span> <span class="n">cand</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">spoiler</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">],</span>
                     <span class="s2">&quot;n&quot;</span><span class="p">:</span> <span class="n">n</span><span class="p">,</span>
                     <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="p">(</span>
-                        <span class="sa">f</span><span class="s1">&#39;Cand </span><span class="si">{</span><span class="n">cand</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1"> spoiled by </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s1"> stars in </span><span class="si">{</span><span class="n">boxsize</span><span class="si">}</span><span class="s1">x</span><span class="si">{</span><span class="n">boxsize</span><span class="si">}</span><span class="s1"> &#39;</span>
-                        <span class="sa">f</span><span class="s1">&#39; including </span><span class="si">{</span><span class="n">spoiler</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span>
+                        <span class="sa">f</span><span class="s2">&quot;Cand </span><span class="si">{</span><span class="n">cand</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> spoiled by </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> stars in </span><span class="si">{</span><span class="n">boxsize</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">boxsize</span><span class="si">}</span><span class="s2"> &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot; including </span><span class="si">{</span><span class="n">spoiler</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
                     <span class="p">),</span>
                 <span class="p">}</span>
             <span class="p">)</span>
@@ -1481,7 +1750,7 @@
 
 <div class="viewcode-block" id="spoiled_by_bad_pixel">
 <a class="viewcode-back" href="../../api.html#proseco.guide.spoiled_by_bad_pixel">[docs]</a>
-<span class="k">def</span> <span class="nf">spoiled_by_bad_pixel</span><span class="p">(</span><span class="n">cand_guides</span><span class="p">,</span> <span class="n">dither</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">spoiled_by_bad_pixel</span><span class="p">(</span><span class="n">cand_guides</span><span class="p">,</span> <span class="n">dither</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Mark star bad if spoiled by a bad pixel in the bad pixel list (not hot)</span>
 
@@ -1534,7 +1803,7 @@
                     <span class="s2">&quot;pixel&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">bp_row</span><span class="p">[</span><span class="n">bps</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">bp_col</span><span class="p">[</span><span class="n">bps</span><span class="p">][</span><span class="mi">0</span><span class="p">]),</span>
                     <span class="s2">&quot;n_bad&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">bps</span><span class="p">),</span>
                     <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="p">(</span>
-                        <span class="sa">f</span><span class="s1">&#39;Cand </span><span class="si">{</span><span class="n">cand</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1"> spoiled by </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">bps</span><span class="p">)</span><span class="si">}</span><span class="s1"> bad pixels &#39;</span>
+                        <span class="sa">f</span><span class="s2">&quot;Cand </span><span class="si">{</span><span class="n">cand</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> spoiled by </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">bps</span><span class="p">)</span><span class="si">}</span><span class="s2"> bad pixels &quot;</span>
                         <span class="sa">f</span><span class="s2">&quot;including </span><span class="si">{</span><span class="p">(</span><span class="n">bp_row</span><span class="p">[</span><span class="n">bps</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span><span class="w"> </span><span class="n">bp_col</span><span class="p">[</span><span class="n">bps</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span>
                     <span class="p">),</span>
                 <span class="p">}</span>
@@ -1545,7 +1814,7 @@
 
 <div class="viewcode-block" id="dist2">
 <a class="viewcode-back" href="../../api.html#proseco.guide.dist2">[docs]</a>
-<span class="k">def</span> <span class="nf">dist2</span><span class="p">(</span><span class="n">g1</span><span class="p">,</span> <span class="n">g2</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">dist2</span><span class="p">(</span><span class="n">g1</span><span class="p">,</span> <span class="n">g2</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Calculate squared distance between a pair of stars in a star table.</span>
 
@@ -1561,7 +1830,7 @@
 
 <div class="viewcode-block" id="check_single_cluster">
 <a class="viewcode-back" href="../../api.html#proseco.guide.check_single_cluster">[docs]</a>
-<span class="k">def</span> <span class="nf">check_single_cluster</span><span class="p">(</span><span class="n">cand_guide_set</span><span class="p">,</span> <span class="n">threshold</span><span class="p">,</span> <span class="n">n_minus</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_single_cluster</span><span class="p">(</span><span class="n">cand_guide_set</span><span class="p">,</span> <span class="n">threshold</span><span class="p">,</span> <span class="n">n_minus</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Confirm that a set of stars satisfies the minimum separation threshold when n_minus</span>
 <span class="sd">    stars are removed from the set.  For example, for a threshold of 1000, n_minus of 1,</span>
@@ -1585,27 +1854,29 @@
 
 
 
-<div class="viewcode-block" id="run_select_checks">
-<a class="viewcode-back" href="../../api.html#proseco.guide.run_select_checks">[docs]</a>
-<span class="k">def</span> <span class="nf">run_select_checks</span><span class="p">(</span><span class="n">cand_guide_set</span><span class="p">):</span>
+<div class="viewcode-block" id="run_cluster_checks">
+<a class="viewcode-back" href="../../api.html#proseco.guide.run_cluster_checks">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">run_cluster_checks</span><span class="p">(</span><span class="n">cand_guide_set</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Run boolean checks on a combination of candidate guide stars.</span>
-<span class="sd">    Returns a sum of the status of the checks and the number of checks run.</span>
+<span class="sd">    Perform cluster checks on a combination of candidate guide stars.</span>
 
-<span class="sd">    Presently this runs three checks to confirm that the set of stars</span>
-<span class="sd">    is not too tightly packed.</span>
+<span class="sd">    This performs a set of specific cluster checks on the provided cand_guide_set</span>
+<span class="sd">    and returns a list of bools, one for each cluster check run.</span>
 
-<span class="sd">    :returns: tuple (status sum, number of tests run)</span>
+<span class="sd">    :returns: list of bools, one for each cluster check run</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">status</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">test_status</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">n_minus</span><span class="p">,</span> <span class="n">threshold</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">GUIDE</span><span class="o">.</span><span class="n">cluster_thresholds</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">n_minus</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">cand_guide_set</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">status</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">test_status</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">check_single_cluster</span><span class="p">(</span>
                     <span class="n">cand_guide_set</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span> <span class="n">n_minus</span><span class="o">=</span><span class="n">n_minus</span>
                 <span class="p">)</span>
             <span class="p">)</span>
-    <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="n">status</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">status</span><span class="p">)</span></div>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">test_status</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">test_status</span></div>
 
 </pre></div>
 
@@ -1613,7 +1884,7 @@
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
         <div class="sphinxsidebarwrapper"><h3>Page Contents</h3>
 
 
@@ -1631,7 +1902,7 @@
     <a href="#">Back to Top</a></p>
   <p>
     &copy; Copyright 2018, Tom Aldcroft, Jean Connelly.<br/>
-    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 7.2.6. &nbsp;
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 9.1.0. &nbsp;
   </p>
 </footer>
   </body>

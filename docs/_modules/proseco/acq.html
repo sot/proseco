@@ -4,13 +4,13 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>proseco.acq &#8212; proseco 5.16.0 documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <title>proseco.acq &#8212; proseco 5.18.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/bootstrap-astropy.css?v=f4f7060c" />
     
-    <script src="../../_static/documentation_options.js?v=f23352e5"></script>
-    <script src="../../_static/doctools.js?v=888ff710"></script>
-    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/documentation_options.js?v=35f5b738"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script type="text/javascript" src="../../_static/sidebar.js"></script>
     <script type="text/javascript" src="../../_static/copybutton.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
@@ -44,7 +44,7 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../index.html">proseco 5.16.0 documentation</a>
+	<a href="../../index.html">proseco 5.18.0 documentation</a>
 	 &#187;
       </li>
       <li><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
@@ -67,25 +67,25 @@
 <span class="sd">https://docs.google.com/presentation/d/1VtFKAW9he2vWIQAnb6unpK4u1bVAVziIdX9TnqRS3a8</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
 
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">chandra_aca.star_probs</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">chandra_aca.star_probs</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">acq_success_prob</span><span class="p">,</span>
     <span class="n">get_default_acq_prob_model_info</span><span class="p">,</span>
     <span class="n">prob_n_acq</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">chandra_aca.transform</span> <span class="kn">import</span> <span class="n">mag_to_count_rate</span><span class="p">,</span> <span class="n">pixels_to_yagzag</span><span class="p">,</span> <span class="n">snr_mag_for_t_ccd</span>
-<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">ndimage</span><span class="p">,</span> <span class="n">stats</span>
-<span class="kn">from</span> <span class="nn">scipy.interpolate</span> <span class="kn">import</span> <span class="n">interp1d</span>
-<span class="kn">from</span> <span class="nn">ska_helpers.utils</span> <span class="kn">import</span> <span class="n">LazyDict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">chandra_aca.transform</span><span class="w"> </span><span class="kn">import</span> <span class="n">mag_to_count_rate</span><span class="p">,</span> <span class="n">pixels_to_yagzag</span><span class="p">,</span> <span class="n">snr_mag_for_t_ccd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">ndimage</span><span class="p">,</span> <span class="n">stats</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.interpolate</span><span class="w"> </span><span class="kn">import</span> <span class="n">interp1d</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ska_helpers.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">LazyDict</span>
 
-<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">characteristics</span> <span class="k">as</span> <span class="n">ACA</span>
-<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">characteristics_acq</span> <span class="k">as</span> <span class="n">ACQ</span>
-<span class="kn">from</span> <span class="nn">.core</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">characteristics</span> <span class="k">as</span> <span class="n">ACA</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">characteristics_acq</span> <span class="k">as</span> <span class="n">ACQ</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.core</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ACABox</span><span class="p">,</span>
     <span class="n">ACACatalogTable</span><span class="p">,</span>
     <span class="n">AliasAttribute</span><span class="p">,</span>
@@ -99,7 +99,7 @@
 <span class="p">)</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">astropy.table</span> <span class="kn">import</span> <span class="n">Table</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">astropy.table</span><span class="w"> </span><span class="kn">import</span> <span class="n">Table</span>
 
 
 <span class="c1"># See https://github.com/sot/skanb/blob/master/aca-acq/acq-fails-bright-stars.ipynb</span>
@@ -110,7 +110,7 @@
 
 <div class="viewcode-block" id="load_maxmags">
 <a class="viewcode-back" href="../../api.html#proseco.acq.load_maxmags">[docs]</a>
-<span class="k">def</span> <span class="nf">load_maxmags</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_maxmags</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Load maxmags from disk.</span>
 
@@ -131,7 +131,7 @@
 
 <div class="viewcode-block" id="get_maxmag">
 <a class="viewcode-back" href="../../api.html#proseco.acq.get_maxmag">[docs]</a>
-<span class="k">def</span> <span class="nf">get_maxmag</span><span class="p">(</span><span class="n">box_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">t_ccd</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_maxmag</span><span class="p">(</span><span class="n">box_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">t_ccd</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Get maxmag for given box_size and t_ccd.</span>
 
@@ -160,7 +160,7 @@
 
 <div class="viewcode-block" id="filter_box_sizes_for_maxmag">
 <a class="viewcode-back" href="../../api.html#proseco.acq.filter_box_sizes_for_maxmag">[docs]</a>
-<span class="k">def</span> <span class="nf">filter_box_sizes_for_maxmag</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">filter_box_sizes_for_maxmag</span><span class="p">(</span>
     <span class="n">mag</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">mag_err</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">box_sizes</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">t_ccd</span><span class="p">:</span> <span class="nb">float</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Filter the list of box sizes</span>
@@ -199,7 +199,7 @@
 
 <div class="viewcode-block" id="box_overlap">
 <a class="viewcode-back" href="../../api.html#proseco.acq.box_overlap">[docs]</a>
-<span class="k">def</span> <span class="nf">box_overlap</span><span class="p">(</span><span class="n">y1</span><span class="p">,</span> <span class="n">z1</span><span class="p">,</span> <span class="n">halfw1</span><span class="p">,</span> <span class="n">y2</span><span class="p">,</span> <span class="n">z2</span><span class="p">,</span> <span class="n">halfw2</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">box_overlap</span><span class="p">(</span><span class="n">y1</span><span class="p">,</span> <span class="n">z1</span><span class="p">,</span> <span class="n">halfw1</span><span class="p">,</span> <span class="n">y2</span><span class="p">,</span> <span class="n">z2</span><span class="p">,</span> <span class="n">halfw2</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return True if boxes overlap, False otherwise.</span>
 
 <span class="sd">    :param y1: y centroid of first box (float, arcsec)</span>
@@ -218,7 +218,7 @@
 
 <div class="viewcode-block" id="boxes_overlap">
 <a class="viewcode-back" href="../../api.html#proseco.acq.boxes_overlap">[docs]</a>
-<span class="k">def</span> <span class="nf">boxes_overlap</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">boxes_overlap</span><span class="p">(</span>
     <span class="n">y1</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="n">z1</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="n">halfw1</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
@@ -262,7 +262,7 @@
 
 <div class="viewcode-block" id="get_acq_candidates_mask">
 <a class="viewcode-back" href="../../api.html#proseco.acq.get_acq_candidates_mask">[docs]</a>
-<span class="k">def</span> <span class="nf">get_acq_candidates_mask</span><span class="p">(</span><span class="n">stars</span><span class="p">:</span> <span class="s2">&quot;Table&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_acq_candidates_mask</span><span class="p">(</span><span class="n">stars</span><span class="p">:</span> <span class="s2">&quot;Table&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Get filter on ``stars`` for acceptable acquisition star candidates.</span>
 
 <span class="sd">    This does not include spatial filtering.</span>
@@ -300,7 +300,7 @@
 
 <div class="viewcode-block" id="get_acq_catalog">
 <a class="viewcode-back" href="../../api.html#proseco.acq.get_acq_catalog">[docs]</a>
-<span class="k">def</span> <span class="nf">get_acq_catalog</span><span class="p">(</span><span class="n">obsid</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_acq_catalog</span><span class="p">(</span><span class="n">obsid</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Get a catalog of acquisition stars using the algorithm described in</span>
 <span class="sd">    https://docs.google.com/presentation/d/1VtFKAW9he2vWIQAnb6unpK4u1bVAVziIdX9TnqRS3a8</span>
@@ -336,6 +336,15 @@
     <span class="n">acqs</span> <span class="o">=</span> <span class="n">AcqTable</span><span class="p">()</span>
     <span class="n">acqs</span><span class="o">.</span><span class="n">set_attrs_from_kwargs</span><span class="p">(</span><span class="n">obsid</span><span class="o">=</span><span class="n">obsid</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="n">acqs</span><span class="o">.</span><span class="n">set_stars</span><span class="p">()</span>
+
+    <span class="c1"># If Jupiter in the target name and field, update the stars with it as a bright</span>
+    <span class="c1"># object.</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">acqs</span><span class="o">.</span><span class="n">jupiter</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">proseco.jupiter</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_jupiter_as_lots_of_acq_spoilers</span>
+
+        <span class="n">acqs</span><span class="o">.</span><span class="n">stars</span> <span class="o">=</span> <span class="n">add_jupiter_as_lots_of_acq_spoilers</span><span class="p">(</span>
+            <span class="n">date</span><span class="o">=</span><span class="n">acqs</span><span class="o">.</span><span class="n">date</span><span class="p">,</span> <span class="n">stars</span><span class="o">=</span><span class="n">acqs</span><span class="o">.</span><span class="n">stars</span><span class="p">,</span> <span class="n">jupiter</span><span class="o">=</span><span class="n">acqs</span><span class="o">.</span><span class="n">jupiter</span>
+        <span class="p">)</span>
 
     <span class="c1"># Only allow imposters that are statistical outliers and are brighter than</span>
     <span class="c1"># this (temperature-dependent) threshold.  See characterisics.py for more</span>
@@ -406,7 +415,7 @@
 
 <div class="viewcode-block" id="AcqTable">
 <a class="viewcode-back" href="../../api.html#proseco.acq.AcqTable">[docs]</a>
-<span class="k">class</span> <span class="nc">AcqTable</span><span class="p">(</span><span class="n">ACACatalogTable</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AcqTable</span><span class="p">(</span><span class="n">ACACatalogTable</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Catalog of acquisition stars</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -450,7 +459,7 @@
 <div class="viewcode-block" id="AcqTable.empty">
 <a class="viewcode-back" href="../../api.html#proseco.acq.AcqTable.empty">[docs]</a>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">empty</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">empty</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return a minimal ACACatalogTable which satisfies API requirements.  For AcqTable</span>
 <span class="sd">        it should have &#39;id&#39; and &#39;halfw&#39; columns.</span>
@@ -463,13 +472,13 @@
 
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">fid_set</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fid_set</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_fid_set&quot;</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_fid_set</span> <span class="o">=</span> <span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fid_set</span>
 
     <span class="nd">@fid_set</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">fid_set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fid_ids</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fid_set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fid_ids</span><span class="p">):</span>
         <span class="c1"># No action required if fid_set is already fid_ids</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fid_set</span> <span class="o">==</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">fid_ids</span><span class="p">):</span>
             <span class="k">return</span>
@@ -500,7 +509,7 @@
 
 <div class="viewcode-block" id="AcqTable.make_report">
 <a class="viewcode-back" href="../../api.html#proseco.acq.AcqTable.make_report">[docs]</a>
-    <span class="k">def</span> <span class="nf">make_report</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rootdir</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">make_report</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rootdir</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Make summary HTML report for acq selection process and outputs.</span>
 
@@ -510,14 +519,14 @@
 <span class="sd">        :param rootdir: root directory for outputs</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="kn">from</span> <span class="nn">.report_acq</span> <span class="kn">import</span> <span class="n">make_report</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.report_acq</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_report</span>
 
         <span class="n">make_report</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rootdir</span><span class="o">=</span><span class="n">rootdir</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="AcqTable.update_p_acq_column">
 <a class="viewcode-back" href="../../api.html#proseco.acq.AcqTable.update_p_acq_column">[docs]</a>
-    <span class="k">def</span> <span class="nf">update_p_acq_column</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">acqs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_p_acq_column</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">acqs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Update (in-place) the marginalized acquisition probability column</span>
 <span class="sd">        &#39;p_acq&#39;.  This is typically called after a change in catalog or</span>
@@ -533,7 +542,7 @@
 
 <div class="viewcode-block" id="AcqTable.update_idxs_halfws">
 <a class="viewcode-back" href="../../api.html#proseco.acq.AcqTable.update_idxs_halfws">[docs]</a>
-    <span class="k">def</span> <span class="nf">update_idxs_halfws</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idxs</span><span class="p">,</span> <span class="n">halfws</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_idxs_halfws</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idxs</span><span class="p">,</span> <span class="n">halfws</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Update the rows of self to match the specified ``agasc_ids``</span>
 <span class="sd">        and half widths.  These two input lists must match the length</span>
@@ -555,7 +564,7 @@
 
 <div class="viewcode-block" id="AcqTable.get_log_p_2_or_fewer">
 <a class="viewcode-back" href="../../api.html#proseco.acq.AcqTable.get_log_p_2_or_fewer">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_log_p_2_or_fewer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_log_p_2_or_fewer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return the starcheck acquisition merit function of the probability of</span>
 <span class="sd">        acquiring two or fewer stars.</span>
@@ -572,7 +581,7 @@
 
 <div class="viewcode-block" id="AcqTable.get_obs_info">
 <a class="viewcode-back" href="../../api.html#proseco.acq.AcqTable.get_obs_info">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_obs_info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_obs_info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Convenience method to return the parts of meta that are needed</span>
 <span class="sd">        for test_common OBS_INFO.</span>
@@ -597,7 +606,7 @@
 
 <div class="viewcode-block" id="AcqTable.get_candidates_mask">
 <a class="viewcode-back" href="../../api.html#proseco.acq.AcqTable.get_candidates_mask">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_candidates_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stars</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_candidates_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stars</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get base filter for acceptable candidates.</span>
 
 <span class="sd">        This does not include spatial filtering.</span>
@@ -611,7 +620,7 @@
 
 <div class="viewcode-block" id="AcqTable.get_acq_candidates">
 <a class="viewcode-back" href="../../api.html#proseco.acq.AcqTable.get_acq_candidates">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_acq_candidates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stars</span><span class="p">,</span> <span class="n">max_candidates</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StarsTable</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_acq_candidates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stars</span><span class="p">,</span> <span class="n">max_candidates</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StarsTable</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get candidates for acquisition stars from ``stars`` table.</span>
 
@@ -634,9 +643,7 @@
         <span class="n">cand_acqs</span> <span class="o">=</span> <span class="n">stars</span><span class="p">[</span><span class="n">ok</span><span class="p">]</span>
 
         <span class="n">cand_acqs</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="s2">&quot;mag&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
-            <span class="s2">&quot;Filtering on CLASS, mag, COLOR1, row/col, &quot;</span> <span class="s2">&quot;mag_err, ASPQ1/2, POS_ERR:&quot;</span>
-        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="s2">&quot;Filtering on CLASS, mag, COLOR1, row/col, mag_err, ASPQ1/2, POS_ERR:&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;Reduced star list from </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">stars</span><span class="p">)</span><span class="si">}</span><span class="s2"> to &quot;</span>
             <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">cand_acqs</span><span class="p">)</span><span class="si">}</span><span class="s2"> candidate acq stars&quot;</span>
@@ -710,7 +717,7 @@
 
 <div class="viewcode-block" id="AcqTable.get_box_sizes">
 <a class="viewcode-back" href="../../api.html#proseco.acq.AcqTable.get_box_sizes">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_box_sizes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cand_acqs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_box_sizes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cand_acqs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the available box sizes for each cand_acq as all those with size &lt;= the</span>
 <span class="sd">        largest man_error with non-zero probability.  E.g. in the 5-20 deg man</span>
 <span class="sd">        angle bin the 80-100&quot; row is 0.1 and the 100-120&quot; row is 0.0.  So this</span>
@@ -763,7 +770,7 @@
 
 <div class="viewcode-block" id="AcqTable.in_bad_star_set">
 <a class="viewcode-back" href="../../api.html#proseco.acq.AcqTable.in_bad_star_set">[docs]</a>
-    <span class="k">def</span> <span class="nf">in_bad_star_set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">acq</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">in_bad_star_set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">acq</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns True if ``acq`` is in the bad star set.</span>
 
@@ -772,7 +779,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">acq</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">ACA</span><span class="o">.</span><span class="n">bad_star_set</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s1">&#39;Rejecting star </span><span class="si">{</span><span class="n">acq</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1"> which is in bad star list&#39;</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="n">acq</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span>
+                <span class="sa">f</span><span class="s2">&quot;Rejecting star </span><span class="si">{</span><span class="n">acq</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> which is in bad star list&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="n">acq</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span>
             <span class="p">)</span>
             <span class="n">idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stars</span><span class="o">.</span><span class="n">get_id_idx</span><span class="p">(</span><span class="n">acq</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">])</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">bad_stars_mask</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
@@ -784,7 +791,7 @@
 
 <div class="viewcode-block" id="AcqTable.has_nearby_spoiler">
 <a class="viewcode-back" href="../../api.html#proseco.acq.AcqTable.has_nearby_spoiler">[docs]</a>
-    <span class="k">def</span> <span class="nf">has_nearby_spoiler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">acq</span><span class="p">,</span> <span class="n">stars</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">has_nearby_spoiler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">acq</span><span class="p">,</span> <span class="n">stars</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns True if ``acq`` has a nearby star that could spoil acquisition.</span>
 
@@ -798,7 +805,7 @@
         <span class="n">dy</span><span class="p">,</span> <span class="n">dz</span><span class="p">,</span> <span class="n">frac_norm</span> <span class="o">=</span> <span class="n">calc_spoiler_impact</span><span class="p">(</span><span class="n">acq</span><span class="p">,</span> <span class="n">stars</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">dy</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1.5</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">dz</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1.5</span> <span class="ow">or</span> <span class="n">frac_norm</span> <span class="o">&lt;</span> <span class="mf">0.95</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s1">&#39;Candidate acq star </span><span class="si">{</span><span class="n">acq</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1"> rejected due to nearby spoiler(s) &#39;</span>
+                <span class="sa">f</span><span class="s2">&quot;Candidate acq star </span><span class="si">{</span><span class="n">acq</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> rejected due to nearby spoiler(s) &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;dy=</span><span class="si">{</span><span class="n">dy</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> dz=</span><span class="si">{</span><span class="n">dz</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> frac_norm=</span><span class="si">{</span><span class="n">frac_norm</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
                 <span class="nb">id</span><span class="o">=</span><span class="n">acq</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">],</span>
             <span class="p">)</span>
@@ -809,7 +816,7 @@
 
 <div class="viewcode-block" id="AcqTable.process_include_ids">
 <a class="viewcode-back" href="../../api.html#proseco.acq.AcqTable.process_include_ids">[docs]</a>
-    <span class="k">def</span> <span class="nf">process_include_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cand_acqs</span><span class="p">,</span> <span class="n">stars</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process_include_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cand_acqs</span><span class="p">,</span> <span class="n">stars</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Ensure that the cand_acqs table has stars that were forced to be included.</span>
 
 <span class="sd">        Also do validation of include_ids and include_halfws.</span>
@@ -842,7 +849,7 @@
 
 <div class="viewcode-block" id="AcqTable.select_best_p_acqs">
 <a class="viewcode-back" href="../../api.html#proseco.acq.AcqTable.select_best_p_acqs">[docs]</a>
-    <span class="k">def</span> <span class="nf">select_best_p_acqs</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">select_best_p_acqs</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">cand_acqs</span><span class="p">,</span> <span class="n">min_p_acq</span><span class="p">,</span> <span class="n">acq_indices</span><span class="p">,</span> <span class="n">box_sizes</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">False</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -923,8 +930,8 @@
                 <span class="n">accepted</span> <span class="o">=</span> <span class="n">p_acq</span> <span class="o">&gt;</span> <span class="n">min_p_acq</span>
                 <span class="n">status</span> <span class="o">=</span> <span class="s2">&quot;ACCEPTED&quot;</span> <span class="k">if</span> <span class="n">accepted</span> <span class="k">else</span> <span class="s2">&quot;rejected&quot;</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s1">&#39;Star idx=</span><span class="si">{</span><span class="n">acq_idx</span><span class="si">:</span><span class="s1">2d</span><span class="si">}</span><span class="s1"> id=</span><span class="si">{</span><span class="n">acq</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span><span class="si">:</span><span class="s1">10d</span><span class="si">}</span><span class="s1"> &#39;</span>
-                    <span class="sa">f</span><span class="s1">&#39;box=</span><span class="si">{</span><span class="n">box_size</span><span class="si">:</span><span class="s1">3d</span><span class="si">}</span><span class="s1"> mag=</span><span class="si">{</span><span class="n">acq</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">]</span><span class="si">:</span><span class="s1">5.1f</span><span class="si">}</span><span class="s1"> p_acq=</span><span class="si">{</span><span class="n">p_acq</span><span class="si">:</span><span class="s1">.3f</span><span class="si">}</span><span class="s1"> &#39;</span>
+                    <span class="sa">f</span><span class="s2">&quot;Star idx=</span><span class="si">{</span><span class="n">acq_idx</span><span class="si">:</span><span class="s2">2d</span><span class="si">}</span><span class="s2"> id=</span><span class="si">{</span><span class="n">acq</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">10d</span><span class="si">}</span><span class="s2"> &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;box=</span><span class="si">{</span><span class="n">box_size</span><span class="si">:</span><span class="s2">3d</span><span class="si">}</span><span class="s2"> mag=</span><span class="si">{</span><span class="n">acq</span><span class="p">[</span><span class="s1">&#39;mag&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">5.1f</span><span class="si">}</span><span class="s2"> p_acq=</span><span class="si">{</span><span class="n">p_acq</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> &quot;</span>
                     <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">status</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
                     <span class="nb">id</span><span class="o">=</span><span class="n">acq</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">],</span>
                     <span class="n">level</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
@@ -941,7 +948,7 @@
 
 <div class="viewcode-block" id="AcqTable.get_initial_catalog">
 <a class="viewcode-back" href="../../api.html#proseco.acq.AcqTable.get_initial_catalog">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_initial_catalog</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_initial_catalog</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get the initial catalog of up to ``n_acq`` candidate acquisition stars.  This</span>
 <span class="sd">        updates the current AcqTable (self) in place to add selected stars.</span>
@@ -972,7 +979,7 @@
             <span class="p">)</span>
 
             <span class="c1"># Re-order candidate acqs to put those in the include list first</span>
-            <span class="n">ok</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">cand_acqs</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_ids</span><span class="p">)</span>
+            <span class="n">ok</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">cand_acqs</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_ids</span><span class="p">)</span>
             <span class="n">idxs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">ok</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="o">~</span><span class="n">ok</span><span class="p">)[</span><span class="mi">0</span><span class="p">]])</span>
             <span class="n">cand_acqs</span> <span class="o">=</span> <span class="n">cand_acqs</span><span class="p">[</span><span class="n">idxs</span><span class="p">]</span>
 
@@ -1032,7 +1039,7 @@
 
 <div class="viewcode-block" id="AcqTable.calc_p_brightest">
 <a class="viewcode-back" href="../../api.html#proseco.acq.AcqTable.calc_p_brightest">[docs]</a>
-    <span class="k">def</span> <span class="nf">calc_p_brightest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">acq</span><span class="p">,</span> <span class="n">box_size</span><span class="p">,</span> <span class="n">man_err</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">bgd</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calc_p_brightest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">acq</span><span class="p">,</span> <span class="n">box_size</span><span class="p">,</span> <span class="n">man_err</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">bgd</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Calculate the probability that the `acq` star is the brightest</span>
 <span class="sd">        candidate in the search box.</span>
@@ -1093,7 +1100,7 @@
 
 <div class="viewcode-block" id="AcqTable.get_overlap_penalties">
 <a class="viewcode-back" href="../../api.html#proseco.acq.AcqTable.get_overlap_penalties">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_overlap_penalties</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_overlap_penalties</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get the probability penalties for overlapping boxes.</span>
 
@@ -1135,7 +1142,7 @@
 
 <div class="viewcode-block" id="AcqTable.calc_p_safe">
 <a class="viewcode-back" href="../../api.html#proseco.acq.AcqTable.calc_p_safe">[docs]</a>
-    <span class="k">def</span> <span class="nf">calc_p_safe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calc_p_safe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Calculate the probability of a safing action resulting from failure</span>
 <span class="sd">        to acquire at least two (2) acquisition stars.</span>
@@ -1189,7 +1196,7 @@
 
 <div class="viewcode-block" id="AcqTable.optimize_acq_halfw">
 <a class="viewcode-back" href="../../api.html#proseco.acq.AcqTable.optimize_acq_halfw">[docs]</a>
-    <span class="k">def</span> <span class="nf">optimize_acq_halfw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">p_safe</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">optimize_acq_halfw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">p_safe</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Optimize the box size (halfw) for the acq star ``idx`` in the current acqs</span>
 <span class="sd">        table.  Assume current ``p_safe``.</span>
@@ -1203,7 +1210,7 @@
         <span class="n">orig_halfw</span> <span class="o">=</span> <span class="n">acq</span><span class="p">[</span><span class="s2">&quot;halfw&quot;</span><span class="p">]</span>
         <span class="n">orig_p_acq</span> <span class="o">=</span> <span class="n">acq</span><span class="p">[</span><span class="s2">&quot;probs&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">p_acq_marg</span><span class="p">(</span><span class="n">acq</span><span class="p">[</span><span class="s2">&quot;halfw&quot;</span><span class="p">],</span> <span class="bp">self</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Optimizing halfw for idx=</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s1"> id=</span><span class="si">{</span><span class="n">acq</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="n">acq</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Optimizing halfw for idx=</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2"> id=</span><span class="si">{</span><span class="n">acq</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="n">acq</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">])</span>
 
         <span class="c1"># Compute p_safe for each possible halfw for the current star</span>
         <span class="n">p_safes</span> <span class="o">=</span> <span class="p">[]</span>
@@ -1266,7 +1273,7 @@
 
 <div class="viewcode-block" id="AcqTable.optimize_acqs_halfw">
 <a class="viewcode-back" href="../../api.html#proseco.acq.AcqTable.optimize_acqs_halfw">[docs]</a>
-    <span class="k">def</span> <span class="nf">optimize_acqs_halfw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">optimize_acqs_halfw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Optimize the box_size (halfw) for the acq stars in the current catalog.</span>
 <span class="sd">        This cycles through each star and optimizes the box size for that star</span>
@@ -1297,7 +1304,7 @@
 
 <div class="viewcode-block" id="AcqTable.optimize_catalog">
 <a class="viewcode-back" href="../../api.html#proseco.acq.AcqTable.optimize_catalog">[docs]</a>
-    <span class="k">def</span> <span class="nf">optimize_catalog</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">optimize_catalog</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Optimize the current acquisition catalog.</span>
 
@@ -1377,7 +1384,7 @@
 
 <div class="viewcode-block" id="get_spoiler_stars">
 <a class="viewcode-back" href="../../api.html#proseco.acq.get_spoiler_stars">[docs]</a>
-<span class="k">def</span> <span class="nf">get_spoiler_stars</span><span class="p">(</span><span class="n">stars</span><span class="p">,</span> <span class="n">acq</span><span class="p">,</span> <span class="n">box_size</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_spoiler_stars</span><span class="p">(</span><span class="n">stars</span><span class="p">,</span> <span class="n">acq</span><span class="p">,</span> <span class="n">box_size</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Get acq spoiler stars, i.e. any star in the specified box_size (which</span>
 <span class="sd">    would normally be an extended box including man_err).</span>
@@ -1426,7 +1433,7 @@
 
 <div class="viewcode-block" id="get_imposter_stars">
 <a class="viewcode-back" href="../../api.html#proseco.acq.get_imposter_stars">[docs]</a>
-<span class="k">def</span> <span class="nf">get_imposter_stars</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_imposter_stars</span><span class="p">(</span>
     <span class="n">dark</span><span class="p">,</span>
     <span class="n">star_row</span><span class="p">,</span>
     <span class="n">star_col</span><span class="p">,</span>
@@ -1592,7 +1599,7 @@
 
 <div class="viewcode-block" id="calc_p_brightest_compare">
 <a class="viewcode-back" href="../../api.html#proseco.acq.calc_p_brightest_compare">[docs]</a>
-<span class="k">def</span> <span class="nf">calc_p_brightest_compare</span><span class="p">(</span><span class="n">acq</span><span class="p">,</span> <span class="n">mags</span><span class="p">,</span> <span class="n">mag_errs</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">calc_p_brightest_compare</span><span class="p">(</span><span class="n">acq</span><span class="p">,</span> <span class="n">mags</span><span class="p">,</span> <span class="n">mag_errs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    For given ``acq`` star and intruders mag, mag_err,</span>
 <span class="sd">    do the probability calculation to see if the acq star is brighter</span>
@@ -1631,7 +1638,7 @@
 
 <div class="viewcode-block" id="get_intruders">
 <a class="viewcode-back" href="../../api.html#proseco.acq.get_intruders">[docs]</a>
-<span class="k">def</span> <span class="nf">get_intruders</span><span class="p">(</span><span class="n">acq</span><span class="p">,</span> <span class="n">box_size</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">n_sigma</span><span class="p">,</span> <span class="n">get_func</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_intruders</span><span class="p">(</span><span class="n">acq</span><span class="p">,</span> <span class="n">box_size</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">n_sigma</span><span class="p">,</span> <span class="n">get_func</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Get intruders table for name=&#39;spoilers&#39; or &#39;imposters&#39; from ``acq``.</span>
 <span class="sd">    If not already in acq then call ``get_func(**kwargs)`` to get it.</span>
@@ -1680,7 +1687,7 @@
 
 <div class="viewcode-block" id="calc_p_on_ccd">
 <a class="viewcode-back" href="../../api.html#proseco.acq.calc_p_on_ccd">[docs]</a>
-<span class="k">def</span> <span class="nf">calc_p_on_ccd</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">,</span> <span class="n">box_size</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">calc_p_on_ccd</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">,</span> <span class="n">box_size</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Calculate the probability that star and initial tracked readout box</span>
 <span class="sd">    are fully within the usable part of the CCD.</span>
@@ -1734,8 +1741,8 @@
 
 
 
-<span class="k">class</span> <span class="nc">AcqProbs</span><span class="p">:</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">acqs</span><span class="p">,</span> <span class="n">acq</span><span class="p">,</span> <span class="n">dither</span><span class="p">,</span> <span class="n">stars</span><span class="p">,</span> <span class="n">dark</span><span class="p">,</span> <span class="n">t_ccd</span><span class="p">,</span> <span class="n">date</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AcqProbs</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">acqs</span><span class="p">,</span> <span class="n">acq</span><span class="p">,</span> <span class="n">dither</span><span class="p">,</span> <span class="n">stars</span><span class="p">,</span> <span class="n">dark</span><span class="p">,</span> <span class="n">t_ccd</span><span class="p">,</span> <span class="n">date</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate probabilities related to acquisition, in particular an element</span>
 <span class="sd">        in the ``p_acqs`` matrix which specifies star acquisition probability</span>
 <span class="sd">        for given search box size and maneuver error.</span>
@@ -1812,18 +1819,20 @@
             <span class="n">p_on_ccd</span> <span class="o">=</span> <span class="n">calc_p_on_ccd</span><span class="p">(</span><span class="n">acq</span><span class="p">[</span><span class="s2">&quot;row&quot;</span><span class="p">],</span> <span class="n">acq</span><span class="p">[</span><span class="s2">&quot;col&quot;</span><span class="p">],</span> <span class="n">box_size</span><span class="o">=</span><span class="n">man_err</span> <span class="o">+</span> <span class="n">dither</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_p_on_ccd</span><span class="p">[</span><span class="n">man_err</span><span class="p">]</span> <span class="o">=</span> <span class="n">p_on_ccd</span>
 
-    <span class="k">def</span> <span class="nf">p_on_ccd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">man_err</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">p_on_ccd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">man_err</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_p_on_ccd</span><span class="p">[</span><span class="n">man_err</span><span class="p">]</span>
 
-    <span class="k">def</span> <span class="nf">p_brightest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">box_size</span><span class="p">,</span> <span class="n">man_err</span><span class="p">,</span> <span class="n">acqs</span><span class="p">):</span>
-        <span class="k">assert</span> <span class="n">acqs</span><span class="o">.</span><span class="n">cand_acqs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">p_brightest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">box_size</span><span class="p">,</span> <span class="n">man_err</span><span class="p">,</span> <span class="n">acqs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">acqs</span><span class="o">.</span><span class="n">cand_acqs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AssertionError</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_p_brightest</span><span class="p">[</span><span class="n">box_size</span><span class="p">,</span> <span class="n">man_err</span><span class="p">]</span>
 
-    <span class="k">def</span> <span class="nf">p_acq_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">box_size</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">p_acq_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">box_size</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_p_acq_model</span><span class="p">[</span><span class="n">box_size</span><span class="p">]</span>
 
-    <span class="k">def</span> <span class="nf">p_acqs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">box_size</span><span class="p">,</span> <span class="n">man_err</span><span class="p">,</span> <span class="n">acqs</span><span class="p">):</span>
-        <span class="k">assert</span> <span class="n">acqs</span><span class="o">.</span><span class="n">cand_acqs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">p_acqs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">box_size</span><span class="p">,</span> <span class="n">man_err</span><span class="p">,</span> <span class="n">acqs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">acqs</span><span class="o">.</span><span class="n">cand_acqs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AssertionError</span>
         <span class="n">fid_set</span> <span class="o">=</span> <span class="n">acqs</span><span class="o">.</span><span class="n">fid_set</span>
 
         <span class="k">try</span><span class="p">:</span>
@@ -1838,8 +1847,9 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_p_acqs</span><span class="p">[</span><span class="n">box_size</span><span class="p">,</span> <span class="n">man_err</span><span class="p">,</span> <span class="n">fid_set</span><span class="p">]</span> <span class="o">=</span> <span class="n">p_acq</span>
             <span class="k">return</span> <span class="n">p_acq</span>
 
-    <span class="k">def</span> <span class="nf">p_acq_marg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">box_size</span><span class="p">,</span> <span class="n">acqs</span><span class="p">):</span>
-        <span class="k">assert</span> <span class="n">acqs</span><span class="o">.</span><span class="n">cand_acqs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">p_acq_marg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">box_size</span><span class="p">,</span> <span class="n">acqs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">acqs</span><span class="o">.</span><span class="n">cand_acqs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AssertionError</span>
         <span class="n">fid_set</span> <span class="o">=</span> <span class="n">acqs</span><span class="o">.</span><span class="n">fid_set</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_p_acq_marg</span><span class="p">[</span><span class="n">box_size</span><span class="p">,</span> <span class="n">fid_set</span><span class="p">]</span>
@@ -1850,7 +1860,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_p_acq_marg</span><span class="p">[</span><span class="n">box_size</span><span class="p">,</span> <span class="n">fid_set</span><span class="p">]</span> <span class="o">=</span> <span class="n">p_acq_marg</span>
             <span class="k">return</span> <span class="n">p_acq_marg</span>
 
-    <span class="k">def</span> <span class="nf">p_fid_spoiler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">box_size</span><span class="p">,</span> <span class="n">acqs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">p_fid_spoiler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">box_size</span><span class="p">,</span> <span class="n">acqs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return the probability multiplier based on any fid in the current fid set spoiling</span>
 <span class="sd">        this acq star (within ``box_size``).  The current fid set is a property of the</span>
@@ -1863,7 +1873,8 @@
 <span class="sd">        :param box_size: search box size in arcsec</span>
 <span class="sd">        :returns: probability multiplier (0 or 1)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">assert</span> <span class="n">acqs</span><span class="o">.</span><span class="n">cand_acqs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">acqs</span><span class="o">.</span><span class="n">cand_acqs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AssertionError</span>
         <span class="n">fid_set</span> <span class="o">=</span> <span class="n">acqs</span><span class="o">.</span><span class="n">fid_set</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_p_fid_spoiler</span><span class="p">[</span><span class="n">box_size</span><span class="p">,</span> <span class="n">fid_set</span><span class="p">]</span>
@@ -1877,7 +1888,7 @@
 
             <span class="k">return</span> <span class="n">p_fid_spoiler</span>
 
-    <span class="k">def</span> <span class="nf">p_fid_id_spoiler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">box_size</span><span class="p">,</span> <span class="n">fid_id</span><span class="p">,</span> <span class="n">acqs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">p_fid_id_spoiler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">box_size</span><span class="p">,</span> <span class="n">fid_id</span><span class="p">,</span> <span class="n">acqs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return the probability multiplier for fid ``fid_id`` spoiling this acq star (within</span>
 <span class="sd">        ``box_size``).  The output value will be 0.0 if this fid spoils this acq, otherwise</span>
@@ -1889,15 +1900,15 @@
 <span class="sd">        :param box_size: search box size in arcsec</span>
 <span class="sd">        :returns: probability multiplier (0 or 1)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">assert</span> <span class="n">acqs</span><span class="o">.</span><span class="n">cand_acqs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">acqs</span><span class="o">.</span><span class="n">cand_acqs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AssertionError</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_p_fid_id_spoiler</span><span class="p">[</span><span class="n">box_size</span><span class="p">,</span> <span class="n">fid_id</span><span class="p">]</span>
         <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
             <span class="n">fids</span> <span class="o">=</span> <span class="n">acqs</span><span class="o">.</span><span class="n">fids</span>
             <span class="k">if</span> <span class="n">fids</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">acqs</span><span class="o">.</span><span class="n">add_warning</span><span class="p">(</span>
-                    <span class="s2">&quot;Requested fid spoiler probability without &quot;</span>
-                    <span class="s2">&quot;setting acqs.fids first&quot;</span>
+                    <span class="s2">&quot;Requested fid spoiler probability without setting acqs.fids first&quot;</span>
                 <span class="p">)</span>
                 <span class="k">return</span> <span class="mf">1.0</span>
 
@@ -1913,7 +1924,7 @@
                     <span class="sa">f</span><span class="s2">&quot;not a candidate&quot;</span>
                 <span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">fids</span><span class="o">.</span><span class="n">spoils</span><span class="p">(</span><span class="n">fid</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">acq</span><span class="p">,</span> <span class="n">box_size</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">fids</span><span class="o">.</span><span class="n">spoils</span><span class="p">(</span><span class="n">fid</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">acq</span><span class="p">,</span> <span class="n">box_size</span><span class="p">,</span> <span class="n">fids</span><span class="o">.</span><span class="n">dither_acq</span><span class="p">):</span>
                     <span class="n">p_fid_id_spoiler</span> <span class="o">=</span> <span class="mf">0.0</span>
 
             <span class="bp">self</span><span class="o">.</span><span class="n">_p_fid_id_spoiler</span><span class="p">[</span><span class="n">box_size</span><span class="p">,</span> <span class="n">fid_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">p_fid_id_spoiler</span>
@@ -1923,7 +1934,7 @@
 
 <div class="viewcode-block" id="get_p_man_err">
 <a class="viewcode-back" href="../../api.html#proseco.acq.get_p_man_err">[docs]</a>
-<span class="k">def</span> <span class="nf">get_p_man_err</span><span class="p">(</span><span class="n">man_err</span><span class="p">,</span> <span class="n">man_angle</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_p_man_err</span><span class="p">(</span><span class="n">man_err</span><span class="p">,</span> <span class="n">man_angle</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Probability for given ``man_err`` given maneuver angle ``man_angle``.</span>
 
@@ -1939,7 +1950,7 @@
 
     <span class="n">man_err_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">pme</span><span class="p">[</span><span class="s2">&quot;man_err_hi&quot;</span><span class="p">],</span> <span class="n">man_err</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">man_err_idx</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">pme</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;man_err must be &lt;= </span><span class="si">{</span><span class="n">pme</span><span class="p">[</span><span class="s2">&quot;man_err_hi&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;man_err must be &lt;= </span><span class="si">{</span><span class="n">pme</span><span class="p">[</span><span class="s1">&#39;man_err_hi&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">pme</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="n">man_err_idx</span><span class="p">]</span></div>
 
@@ -1949,7 +1960,7 @@
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
         <div class="sphinxsidebarwrapper"><h3>Page Contents</h3>
 
 
@@ -1967,7 +1978,7 @@
     <a href="#">Back to Top</a></p>
   <p>
     &copy; Copyright 2018, Tom Aldcroft, Jean Connelly.<br/>
-    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 7.2.6. &nbsp;
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 9.1.0. &nbsp;
   </p>
 </footer>
   </body>

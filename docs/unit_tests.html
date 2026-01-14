@@ -5,13 +5,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Unit tests &#8212; proseco 5.16.0 documentation</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <title>Unit tests &#8212; proseco 5.18.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/bootstrap-astropy.css?v=f4f7060c" />
     
-    <script src="_static/documentation_options.js?v=f23352e5"></script>
-    <script src="_static/doctools.js?v=888ff710"></script>
-    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/documentation_options.js?v=35f5b738"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script type="text/javascript" src="_static/sidebar.js"></script>
     <script type="text/javascript" src="_static/copybutton.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -52,7 +52,7 @@
 	
       </li>
       <li>
-	<a href="index.html">proseco 5.16.0 documentation</a>
+	<a href="index.html">proseco 5.18.0 documentation</a>
 	 &#187;
       </li>
       
@@ -113,7 +113,7 @@ observation like 20168.</p>
 <dt class="sig sig-object py" id="proseco.tests.test_catalog.test_big_sim_offset">
 <span class="sig-prename descclassname"><span class="pre">proseco.tests.test_catalog.</span></span><span class="sig-name descname"><span class="pre">test_big_sim_offset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_catalog.html#test_big_sim_offset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_catalog.test_big_sim_offset" title="Link to this definition">¶</a></dt>
 <dd><p>Check getting a catalog for a large SIM offset that means there are
-no candidates.</p>
+no fid light candidates.</p>
 <p>Bonus: check that duration and target_name can be set.</p>
 </dd></dl>
 
@@ -571,7 +571,7 @@ actually changes out one of the initial catalog candidates.</p>
 <dd><p>Put it all together.  Regression test for selected stars.</p>
 <p>Also test that the acq prob model info dict is correctly set.</p>
 <p>From ipython:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">proseco.acq</span> <span class="kn">import</span> <span class="n">AcqTable</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">proseco.acq</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcqTable</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">acqs</span> <span class="o">=</span> <span class="n">get_acq_catalog</span><span class="p">(</span><span class="mi">21007</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">TEST_COLS</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;idx&#39;</span><span class="p">,</span> <span class="s1">&#39;slot&#39;</span><span class="p">,</span> <span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="s1">&#39;yang&#39;</span><span class="p">,</span> <span class="s1">&#39;zang&#39;</span><span class="p">,</span> <span class="s1">&#39;halfw&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">repr</span><span class="p">(</span><span class="n">acqs</span><span class="o">.</span><span class="n">cand_acqs</span><span class="p">[</span><span class="n">TEST_COLS</span><span class="p">])</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
@@ -759,6 +759,12 @@ center pixel locations and extents (extent = 4 + pix_dither)</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="proseco.tests.test_guide.test_get_t_ccds_bonus_no_bonus_stars">
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_guide.</span></span><span class="sig-name descname"><span class="pre">test_get_t_ccds_bonus_no_bonus_stars</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_guide.html#test_get_t_ccds_bonus_no_bonus_stars"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_guide.test_get_t_ccds_bonus_no_bonus_stars" title="Link to this definition">¶</a></dt>
+<dd><p>When dyn_bgd_n_faint=0, all t_ccds should equal input t_ccd.</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="proseco.tests.test_guide.test_guides_include_bad">
 <span class="sig-prename descclassname"><span class="pre">proseco.tests.test_guide.</span></span><span class="sig-name descname"><span class="pre">test_guides_include_bad</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_guide.html#test_guides_include_bad"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_guide.test_guides_include_bad" title="Link to this definition">¶</a></dt>
 <dd><p>Test include stars for guide where star is bad for some reason.</p>
@@ -784,6 +790,12 @@ clustering.</p>
 - 1 very faint (bad) stars 12.0 mag is INCLUDED</p>
 <p>Both the 7.0 and 10.1 would normally get picked either initially
 or swapped in during optimization, and 12.0 would never get picked.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="proseco.tests.test_guide.test_initial_guide_cands_do_not_change">
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_guide.</span></span><span class="sig-name descname"><span class="pre">test_initial_guide_cands_do_not_change</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_guide.html#test_initial_guide_cands_do_not_change"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_guide.test_initial_guide_cands_do_not_change" title="Link to this definition">¶</a></dt>
+<dd><p>Test that .copy() prevents modifications to initial guide candidates.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -819,6 +831,15 @@ stars is in includes_ids_guide.</p>
 <span class="sig-prename descclassname"><span class="pre">proseco.tests.test_guide.</span></span><span class="sig-name descname"><span class="pre">test_pix_spoiler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">case</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_guide.html#test_pix_spoiler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_guide.test_pix_spoiler" title="Link to this definition">¶</a></dt>
 <dd><p>Check that for various dither configurations, a hot pixel near a star will
 result in that star not being selected.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="proseco.tests.test_guide.test_process_include_ids_columns">
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_guide.</span></span><span class="sig-name descname"><span class="pre">test_process_include_ids_columns</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_guide.html#test_process_include_ids_columns"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_guide.test_process_include_ids_columns" title="Link to this definition">¶</a></dt>
+<dd><p>Test that process_include_ids properly initializes columns for include_ids stars.</p>
+<p>This verifies that when stars are added via include_ids, they have the imposter
+magnitude columns properly initialized and not NaN or zero.  They aren’t used
+for force-included stars anyway, but might as well go through the motions.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -1032,7 +1053,7 @@ different (not OK).</p>
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
         <div class="sphinxsidebarwrapper"><h3>Page Contents</h3>
 <ul>
 <li><a class="reference internal" href="#">Unit tests</a><ul>
@@ -1123,14 +1144,17 @@ different (not OK).</p>
 <li><a class="reference internal" href="#proseco.tests.test_guide.test_common_column_obsid_19904"><code class="docutils literal notranslate"><span class="pre">test_common_column_obsid_19904()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.tests.test_guide.test_edge_star"><code class="docutils literal notranslate"><span class="pre">test_edge_star()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.tests.test_guide.test_get_ax_range"><code class="docutils literal notranslate"><span class="pre">test_get_ax_range()</span></code></a></li>
+<li><a class="reference internal" href="#proseco.tests.test_guide.test_get_t_ccds_bonus_no_bonus_stars"><code class="docutils literal notranslate"><span class="pre">test_get_t_ccds_bonus_no_bonus_stars()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.tests.test_guide.test_guides_include_bad"><code class="docutils literal notranslate"><span class="pre">test_guides_include_bad()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.tests.test_guide.test_guides_include_close"><code class="docutils literal notranslate"><span class="pre">test_guides_include_close()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.tests.test_guide.test_guides_include_exclude"><code class="docutils literal notranslate"><span class="pre">test_guides_include_exclude()</span></code></a></li>
+<li><a class="reference internal" href="#proseco.tests.test_guide.test_initial_guide_cands_do_not_change"><code class="docutils literal notranslate"><span class="pre">test_initial_guide_cands_do_not_change()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.tests.test_guide.test_make_report_guide"><code class="docutils literal notranslate"><span class="pre">test_make_report_guide()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.tests.test_guide.test_obsid_19461"><code class="docutils literal notranslate"><span class="pre">test_obsid_19461()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.tests.test_guide.test_overlap_spoiler"><code class="docutils literal notranslate"><span class="pre">test_overlap_spoiler()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.tests.test_guide.test_overlap_spoiler_include"><code class="docutils literal notranslate"><span class="pre">test_overlap_spoiler_include()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.tests.test_guide.test_pix_spoiler"><code class="docutils literal notranslate"><span class="pre">test_pix_spoiler()</span></code></a></li>
+<li><a class="reference internal" href="#proseco.tests.test_guide.test_process_include_ids_columns"><code class="docutils literal notranslate"><span class="pre">test_process_include_ids_columns()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.tests.test_guide.test_region_contrib"><code class="docutils literal notranslate"><span class="pre">test_region_contrib()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.tests.test_guide.test_select"><code class="docutils literal notranslate"><span class="pre">test_select()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.tests.test_guide.test_warnings"><code class="docutils literal notranslate"><span class="pre">test_warnings()</span></code></a></li>
@@ -1201,7 +1225,7 @@ different (not OK).</p>
     <a href="#">Back to Top</a></p>
   <p>
     &copy; Copyright 2018, Tom Aldcroft, Jean Connelly.<br/>
-    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 7.2.6. &nbsp;
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 9.1.0. &nbsp;
   </p>
 </footer>
   </body>
