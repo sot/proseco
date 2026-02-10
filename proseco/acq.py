@@ -45,6 +45,10 @@ OVERLAP_P_ACQ_PENALTY = 0.7  # p_acq multiplier for search box overlap
 OVERLAP_MAG_DEADBAND = 0.2  # overlap penalty applies for mag difference > deadband
 OVERLAP_PAD = 20  # arcsec, extra padding for overlap check
 
+# Constants in get_box_edge_dmag() function
+BOX_EDGE_DMAG_OFFSETS = np.array([-20.0, -10.0, -5.0, 0.0, 5.0, 12.5, 17.0, 20.0])
+BOX_EDGE_DMAG_VALUES = np.array([0.0, 0.03, 0.18, 0.75, 2.03, 5.12, 6.28, 10.0])
+
 
 def load_maxmags() -> dict:
     """
@@ -450,7 +454,7 @@ class AcqTable(ACACatalogTable):
         """
         Update the rows of self to match the specified ``agasc_ids``
         and half widths.  These two input lists must match the length
-        of self and correspond to stars in self.cand_acqs.
+        of acqs and correspond to stars in self.cand_acqs.
 
         :param agasc_ids: list of AGASC IDs
         :param halfws: list of search box half widths
@@ -1282,6 +1286,22 @@ def get_spoiler_stars(stars, acq, box_size):
     return spoilers
 
 
+def force_even_and_on_ccd(val: int, offset: int) -> int:
+    """Force val to be even and on the CCD (0-1024).
+
+    Parameters
+    ----------
+    val : int
+        Input value.
+    offset : int
+        If ``val`` is odd then add ``sign(offset)`` to make even.
+    """
+    if val % 2 == 1:
+        val += np.sign(offset)
+    val = np.clip(val, 0, 1024)
+    return val
+
+
 def get_imposter_stars(
     dark,
     star_row,
@@ -1320,26 +1340,10 @@ def get_imposter_stars(
     box_col = int(box_size.col)
 
     # Make sure box is within CCD
-    box_r0 = np.clip(acq_row - box_row, 0, 1024)
-    box_r1 = np.clip(acq_row + box_row, 0, 1024)
-    box_c0 = np.clip(acq_col - box_col, 0, 1024)
-    box_c1 = np.clip(acq_col + box_col, 0, 1024)
-
-    # Make sure box has even number of pixels on each edge.  Increase
-    # box by one if needed.
-    #
-    # TO DO: Test the clipping and shrinking code
-    #
-    if (box_r1 - box_r0) % 2 == 1:
-        if box_r1 == 1024:
-            box_r0 -= 1
-        else:
-            box_r1 += 1
-    if (box_c1 - box_c0) % 2 == 1:
-        if box_c1 == 1024:
-            box_c0 -= 1
-        else:
-            box_c1 += 1
+    box_r0 = force_even_and_on_ccd(acq_row - box_row, -1)
+    box_r1 = force_even_and_on_ccd(acq_row + box_row, 1)
+    box_c0 = force_even_and_on_ccd(acq_col - box_col, -1)
+    box_c1 = force_even_and_on_ccd(acq_col + box_col, 1)
 
     # Get bgd-subtracted dark current image corresponding to the search box
     # and bin in 2x2 blocks.
@@ -1517,14 +1521,59 @@ def get_intruders(acq, box_size, name, n_sigma, get_func, kwargs):
 
     colnames = ["yang", "zang", "mag", "mag_err"]
     if len(intruders) == 0:
-        intruders = {name: np.array([], dtype=np.float64) for name in colnames}
+        out = {name: np.array([], dtype=np.float64) for name in colnames}
     else:
-        ok = (np.abs(intruders["yang"] - acq["yang"]) < box_size.y) & (
-            np.abs(intruders["zang"] - acq["zang"]) < box_size.z
+        dys = intruders["yang"] - acq["yang"]
+        dzs = intruders["zang"] - acq["zang"]
+        box_margin = (
+            0.0 if os.environ.get("PROSECO_DISABLE_BOX_EDGE_DMAG") == "True" else 20.0
         )
-        intruders = {name: intruders[name][ok] for name in ["mag", "mag_err"]}
+        ok = (np.abs(dys) < box_size.y + box_margin) & (
+            np.abs(dzs) < box_size.z + box_margin
+        )
+        intruders = intruders[ok]
+        mags = []
+        for dy, dz, mag in zip(dys, dzs, intruders["mag"]):
+            mag += get_box_edge_dmag(dy, box_size.y)  # noqa: PLW2901
+            mag += get_box_edge_dmag(dz, box_size.z)  # noqa: PLW2901
+            mags.append(mag)
+        out = {
+            "yang": intruders["yang"],
+            "zang": intruders["zang"],
+            "mag": np.array(mags),
+            "mag_err": intruders["mag_err"],
+        }
 
-    return intruders
+    return out
+
+
+def get_box_edge_dmag(dyz, box_size):
+    """
+    Calculate the magnitude penalty for an intruder near the edge of a search box.
+
+    This uses linear interpolation of an empirical relationship determined in the
+    ``pr409-intruders-at-search-box-edge.ipynb`` notebook.
+
+    Parameters
+    ----------
+    dyz : float
+        Offset from the box center to the intruder (arcsec).
+    box_size : float
+        Size of the box (arcsec).
+
+    Returns
+    -------
+    dmag : float
+        Magnitude penalty for being near the box edge.
+    """
+    if os.environ.get("PROSECO_DISABLE_BOX_EDGE_DMAG") == "True":
+        return 0.0
+
+    d_box_edge = abs(dyz) - box_size
+    # Note: np.interp is at least 5x faster than scipy.interpolate.interp1d (even with
+    # that returning a lambda func).
+    dmag = np.interp(x=d_box_edge, xp=BOX_EDGE_DMAG_OFFSETS, fp=BOX_EDGE_DMAG_VALUES)
+    return dmag
 
 
 def calc_p_on_ccd(row, col, box_size):

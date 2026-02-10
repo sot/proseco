@@ -311,6 +311,9 @@ The following environment variables are used by proseco:
   If this is a relative path then it is relative to ``<default_agasc_dir>``.
 - ``AGASC_SUPPLEMENT_ENABLED``: set to ``"False"`` to disable using the AGASC
    supplement. This is for testing and should not be used in production.
+- ``PROSECO_DISABLE_BOX_EDGE_DMAG``: If set to ``"True"`` then disable the
+  box edge dmag offset in the acq star selection. This is for testing and should not
+  be used in production.
 - ``PROSECO_DISABLE_OVERLAP_PENALTY``: if set to ``"True"`` then disable the
   overlap penalty in the acq star selection. This is for testing and should not
   be used in production.
