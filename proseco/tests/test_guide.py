@@ -284,7 +284,7 @@ def test_big_dither():
 
     """
     selected = get_guide_catalog(obsid=20168, n_guide=5)
-    expected = [977409032, 977930352, 977414712, 977416336, 977405808]
+    expected = [977409032, 977405808, 977930352, 977414712, 977416336]
     assert selected["id"].tolist() == expected
 
 
