@@ -808,9 +808,13 @@ class ACACatalogTable(BaseCatalogTable):
         """
         if acqs is None:
             if self.stars is None:
-                stars = StarsTable.from_agasc(self.att, date=self.date, logger=self.log)
+                stars = StarsTable.from_agasc(
+                    self.att, date=self.date, logger=self.log, t_aca=self.t_aca
+                )
             else:
-                stars = StarsTable.from_stars(self.att, self.stars, logger=self.log)
+                stars = StarsTable.from_stars(
+                    self.att, self.stars, logger=self.log, t_aca=self.t_aca
+                )
         else:
             stars = acqs.stars
 
@@ -870,6 +874,10 @@ class ACACatalogTable(BaseCatalogTable):
     @t_ccd.setter
     def t_ccd(self, value):
         raise NotImplementedError
+
+    @property
+    def t_aca(self):
+        return self.t_ccd + ACA.t_aca_minus_t_ccd
 
     @classmethod
     def empty(cls):
@@ -1202,7 +1210,9 @@ class StarsTable(BaseCatalogTable):
         return super().plot(ax, **kwargs)
 
     @classmethod
-    def from_agasc(cls, att, date=None, radius=1.2, logger=None):
+    def from_agasc(
+        cls, att, date=None, radius=1.2, logger=None, t_aca=35.0
+    ) -> "StarsTable":
         """
         Get AGASC stars in the ACA FOV.  This uses the proseco-AGASC, so only stars
         within 3-sigma of 11.5 mag or those nearby a potential guide/acq star are
@@ -1216,6 +1226,7 @@ class StarsTable(BaseCatalogTable):
         :param date: DateTime compatible date for star proper motion (default=NOW)
         :param radius: star cone radius [deg] (default=1.2)
         :param logger: logger object (default=None)
+        :param t_aca: ACA housing temperature (degC, default=35.0)
 
         :returns: StarsTable of stars
         """
@@ -1226,7 +1237,7 @@ class StarsTable(BaseCatalogTable):
         agasc_stars = agasc.get_agasc_cone(
             q_att.ra, q_att.dec, radius=radius, date=date
         )
-        stars = StarsTable.from_stars(att, agasc_stars, copy=False)
+        stars = StarsTable.from_stars(att, agasc_stars, copy=False, t_aca=t_aca)
 
         logger = StarsTable.get_logger(logger)
         logger(
@@ -1238,7 +1249,9 @@ class StarsTable(BaseCatalogTable):
         return stars
 
     @classmethod
-    def from_agasc_ids(cls, att, agasc_ids, date=None, logger=None):
+    def from_agasc_ids(
+        cls, att, agasc_ids, date=None, logger=None, t_aca=35.0
+    ) -> "StarsTable":
         """
         Get AGASC stars in the ACA FOV using a list of AGASC IDs.
 
@@ -1246,6 +1259,7 @@ class StarsTable(BaseCatalogTable):
         :param agasc_ids: sequence of AGASC ID values
         :param date: DateTime compatible date for star proper motion (default=NOW)
         :param logger: logger object (default=None)
+        :param t_aca: ACA housing temperature (degC, default=35.0)
 
         :returns: StarsTable of stars
         """
@@ -1258,10 +1272,10 @@ class StarsTable(BaseCatalogTable):
             else:
                 agasc_stars.append(star)
         agasc_stars = Table(rows=agasc_stars, names=agasc_stars[0].colnames)
-        return StarsTable.from_stars(att, stars=agasc_stars)
+        return StarsTable.from_stars(att, stars=agasc_stars, t_aca=t_aca)
 
     @classmethod
-    def from_stars(cls, att, stars, logger=None, copy=True) -> "StarsTable":
+    def from_stars(cls, att, stars, logger=None, copy=True, t_aca=35.0) -> "StarsTable":
         """
         Return a StarsTable from an existing AGASC stars query.  This just updates
         columns in place.
@@ -1273,6 +1287,7 @@ class StarsTable(BaseCatalogTable):
         :param stars: Table of stars
         :param logger: logger object (default=None)
         :param copy: copy ``stars`` table columns
+        :param t_aca: ACA housing temperature (degC, default=35.0)
 
         :returns: StarsTable of stars
 
@@ -1303,7 +1318,7 @@ class StarsTable(BaseCatalogTable):
 
         stars.meta["q_att"] = q_att
         yag, zag = radec_to_yagzag(stars["RA_PMCORR"], stars["DEC_PMCORR"], q_att)
-        row, col = yagzag_to_pixels(yag, zag, allow_bad=True, pix_zero_loc="edge")
+        row, col = yagzag_to_pixels(yag, zag, t_aca=t_aca)
 
         stars.remove_columns(
             [name for name in AGASC_COLS_DROP if name in stars.colnames]

@@ -952,6 +952,7 @@ class AcqTable(ACACatalogTable):
             dark=dark,
             bgd=bgd,  # TO DO deal with this
             mag_limit=self.imposters_mag_limit,
+            t_aca=self.t_aca,
         )
         imposters = get_intruders(
             acq,
@@ -1286,12 +1287,14 @@ def get_imposter_stars(
     dark,
     star_row,
     star_col,
+    *,
     thresh=None,
     maxmag=11.5,
     box_size=120,
     bgd=40,
     mag_limit=20.0,
     test=False,
+    t_aca=35.0,  # typical circa 2026
 ):
     """
     Note: current alg purposely avoids using the actual flight background
@@ -1406,7 +1409,7 @@ def get_imposter_stars(
             c_row -= 512
             c_col -= 512
 
-        yang, zang = pixels_to_yagzag(row, col, allow_bad=True)
+        yang, zang = pixels_to_yagzag(row, col, allow_bad=True, t_aca=t_aca)
 
         out = (
             row,
