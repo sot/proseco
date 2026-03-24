@@ -644,7 +644,9 @@ class ACACatalogTable(BaseCatalogTable):
 
         from proseco.jupiter import get_jupiter_position
 
-        self._jupiter = get_jupiter_position(self.date, self.duration, self.att)
+        self._jupiter = get_jupiter_position(
+            self.date, self.duration, self.att, t_aca=self.t_aca
+        )
         return self._jupiter
 
     @jupiter.setter

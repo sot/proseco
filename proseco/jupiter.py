@@ -9,6 +9,7 @@ from cheta.comps import ephem_stk
 from cxotime import CxoTime, CxoTimeLike
 from Quaternion import QuatLike
 
+import proseco.characteristics as ACA
 from proseco import characteristics_jupiter
 from proseco.characteristics_jupiter import JupiterPositionTable
 
@@ -47,6 +48,7 @@ def get_jupiter_position(
     date: CxoTimeLike,
     duration: float,
     att: QuatLike,
+    t_aca: float = ACA.t_aca_default,
 ) -> JupiterPositionTable:
     """
     Get the position of Jupiter on the ACA CCD.
@@ -59,6 +61,9 @@ def get_jupiter_position(
         The duration of the observation in seconds.
     att : Quaternion or Quat-compatible
         The attitude Quaternion.
+    t_aca : float, optional
+        The ACA housing temperature in degC to use for the pixel <=> angle transforms.
+        This defaults to ACA.t_aca_default.
 
     Returns
     -------
@@ -93,7 +98,7 @@ def get_jupiter_position(
     # Convert ECI position to RA, Dec => yag, zag => row, col
     ra, dec = eci_to_radec(eci)
     yag, zag = radec_to_yagzag(ra, dec, att)
-    row, col = yagzag_to_pixels(yag, zag, allow_bad=True)
+    row, col = yagzag_to_pixels(yag, zag, t_aca=t_aca)
 
     # Row/col limit in pixels to check for bright object - this is padded past the edge of
     # the CCD so the checks will continue to run if the coords of Jupiter are off
