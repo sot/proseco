@@ -1409,7 +1409,7 @@ def get_imposter_stars(
             c_row -= 512
             c_col -= 512
 
-        yang, zang = pixels_to_yagzag(row, col, allow_bad=True, t_aca=t_aca)
+        yang, zang = pixels_to_yagzag(row, col, t_aca=t_aca)
 
         out = (
             row,

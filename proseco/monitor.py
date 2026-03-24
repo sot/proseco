@@ -127,7 +127,7 @@ class MonTable(ACACatalogTable):
                     monitor["ra"], monitor["dec"], self.att
                 )
                 monitor["row"], monitor["col"] = yagzag_to_pixels(
-                    monitor["yang"], monitor["zang"], allow_bad=True, t_aca=self.t_aca
+                    monitor["yang"], monitor["zang"], t_aca=self.t_aca
                 )
 
             elif monitor["coord_type"] == MonCoord.ROWCOL:
@@ -136,7 +136,6 @@ class MonTable(ACACatalogTable):
                 monitor["yang"], monitor["zang"] = pixels_to_yagzag(
                     monitor["row"],
                     monitor["col"],
-                    allow_bad=True,
                     flight=True,
                     t_aca=self.t_aca,
                 )
@@ -148,7 +147,7 @@ class MonTable(ACACatalogTable):
                 # Yag, zag
                 monitor["yang"], monitor["zang"] = monitor["coord0"], monitor["coord1"]
                 monitor["row"], monitor["col"] = yagzag_to_pixels(
-                    monitor["yang"], monitor["zang"], allow_bad=True, t_aca=self.t_aca
+                    monitor["yang"], monitor["zang"], t_aca=self.t_aca
                 )
                 monitor["ra"], monitor["dec"] = yagzag_to_radec(
                     monitor["yang"], monitor["zang"], self.att

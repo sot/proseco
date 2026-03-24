@@ -1511,18 +1511,18 @@ class StarsTable(BaseCatalogTable):
         if "ra" in star and "dec" in star:
             out["yang"], out["zang"] = radec_to_yagzag(out["ra"], out["dec"], q_att)
             out["row"], out["col"] = yagzag_to_pixels(
-                out["yang"], out["zang"], t_aca=t_aca, allow_bad=True
+                out["yang"], out["zang"], t_aca=t_aca
             )
 
         elif "yang" in star and "zang" in star:
             out["ra"], out["dec"] = yagzag_to_radec(out["yang"], out["zang"], q_att)
             out["row"], out["col"] = yagzag_to_pixels(
-                out["yang"], out["zang"], t_aca=t_aca, allow_bad=True
+                out["yang"], out["zang"], t_aca=t_aca
             )
 
         elif "row" in star and "col" in star:
             out["yang"], out["zang"] = pixels_to_yagzag(
-                out["row"], out["col"], t_aca=t_aca, allow_bad=True
+                out["row"], out["col"], t_aca=t_aca
             )
             out["ra"], out["dec"] = yagzag_to_radec(out["yang"], out["zang"], q_att)
 
