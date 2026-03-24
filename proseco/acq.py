@@ -1294,7 +1294,7 @@ def get_imposter_stars(
     bgd=40,
     mag_limit=20.0,
     test=False,
-    t_aca=35.0,  # typical circa 2026
+    t_aca=ACA.t_aca_default,
 ):
     """
     Note: current alg purposely avoids using the actual flight background

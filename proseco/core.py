@@ -877,7 +877,11 @@ class ACACatalogTable(BaseCatalogTable):
 
     @property
     def t_aca(self):
-        return self.t_ccd + ACA.t_aca_minus_t_ccd
+        return (
+            ACA.t_aca_default
+            if ACA.t_aca_use_default
+            else self.t_ccd + ACA.t_aca_minus_t_ccd
+        )
 
     @classmethod
     def empty(cls):
@@ -1211,7 +1215,7 @@ class StarsTable(BaseCatalogTable):
 
     @classmethod
     def from_agasc(
-        cls, att, date=None, radius=1.2, logger=None, t_aca=35.0
+        cls, att, date=None, radius=1.2, logger=None, t_aca=ACA.t_aca_default
     ) -> "StarsTable":
         """
         Get AGASC stars in the ACA FOV.  This uses the proseco-AGASC, so only stars
@@ -1226,7 +1230,7 @@ class StarsTable(BaseCatalogTable):
         :param date: DateTime compatible date for star proper motion (default=NOW)
         :param radius: star cone radius [deg] (default=1.2)
         :param logger: logger object (default=None)
-        :param t_aca: ACA housing temperature (degC, default=35.0)
+        :param t_aca: ACA housing temperature (degC, default=ACA.t_aca_default)
 
         :returns: StarsTable of stars
         """
@@ -1250,7 +1254,12 @@ class StarsTable(BaseCatalogTable):
 
     @classmethod
     def from_agasc_ids(
-        cls, att, agasc_ids, date=None, logger=None, t_aca=35.0
+        cls,
+        att,
+        agasc_ids,
+        date=None,
+        logger=None,
+        t_aca=ACA.t_aca_default,
     ) -> "StarsTable":
         """
         Get AGASC stars in the ACA FOV using a list of AGASC IDs.
@@ -1259,7 +1268,7 @@ class StarsTable(BaseCatalogTable):
         :param agasc_ids: sequence of AGASC ID values
         :param date: DateTime compatible date for star proper motion (default=NOW)
         :param logger: logger object (default=None)
-        :param t_aca: ACA housing temperature (degC, default=35.0)
+        :param t_aca: ACA housing temperature (degC, default=ACA.t_aca_default)
 
         :returns: StarsTable of stars
         """
@@ -1275,7 +1284,9 @@ class StarsTable(BaseCatalogTable):
         return StarsTable.from_stars(att, stars=agasc_stars, t_aca=t_aca)
 
     @classmethod
-    def from_stars(cls, att, stars, logger=None, copy=True, t_aca=35.0) -> "StarsTable":
+    def from_stars(
+        cls, att, stars, logger=None, copy=True, t_aca=ACA.t_aca_default
+    ) -> "StarsTable":
         """
         Return a StarsTable from an existing AGASC stars query.  This just updates
         columns in place.
@@ -1287,7 +1298,7 @@ class StarsTable(BaseCatalogTable):
         :param stars: Table of stars
         :param logger: logger object (default=None)
         :param copy: copy ``stars`` table columns
-        :param t_aca: ACA housing temperature (degC, default=35.0)
+        :param t_aca: ACA housing temperature (degC, default=ACA.t_aca_default)
 
         :returns: StarsTable of stars
 
@@ -1372,18 +1383,18 @@ class StarsTable(BaseCatalogTable):
 
         return stars
 
-    def add_agasc_id(self, agasc_id, t_aca=35.0):
+    def add_agasc_id(self, agasc_id, t_aca=ACA.t_aca_default):
         """
         Add a AGASC star to the current StarsTable.
 
         :param agasc_id: AGASC ID of the star to add
-        :param t_aca: ACA temperature (default=35.0)
+        :param t_aca: ACA temperature (default=ACA.t_aca_default)
         """
         stars = StarsTable.from_agasc_ids(self.meta["q_att"], [agasc_id], t_aca=t_aca)
         self.add_row(stars[0])
 
     def add_fake_constellation(
-        self, n_stars=8, size=1500, mag=7.0, t_aca=35.0, **attrs
+        self, n_stars=8, size=1500, mag=7.0, t_aca=ACA.t_aca_default, **attrs
     ):
         r"""
         Add a fake constellation of up to 8 stars consisting of a cross and square::
@@ -1417,7 +1428,7 @@ class StarsTable(BaseCatalogTable):
         :param n_stars: number of stars (default=8, max=8)
         :param size: size of constellation [arcsec] (default=2000)
         :param mag: star magnitudes (default=7.0)
-        :param t_aca: ACA temperature (default=35.0)
+        :param t_aca: ACA temperature (default=ACA.t_aca_default)
         :param \**attrs: other star table attributes
         """
         if n_stars > 8:
@@ -1445,7 +1456,7 @@ class StarsTable(BaseCatalogTable):
                 t_aca=t_aca, **{name: val for name, val in zip(names, vals)}
             )
 
-    def add_fake_star(self, t_aca=35.0, **star):
+    def add_fake_star(self, t_aca=ACA.t_aca_default, **star):
         r"""
         Add a star to the current StarsTable.
 
@@ -1542,7 +1553,7 @@ class StarsTable(BaseCatalogTable):
         id=None,
         detector="ACIS-S",
         sim_offset=0,
-        t_aca=35.0,
+        t_aca=ACA.t_aca_default,
     ):
         try:
             fids = FIDS_CACHE[detector, sim_offset]

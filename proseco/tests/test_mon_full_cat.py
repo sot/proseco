@@ -39,7 +39,7 @@ def test_monitor_input_processing_ra_dec(stars):
     assert len(monitors) == 1
     assert isinstance(monitors, Table)
     yang, zang = radec_to_yagzag(ra, dec, aca.att)
-    row, col = yagzag_to_pixels(yang, zang)
+    row, col = yagzag_to_pixels(yang, zang, t_aca=aca.t_aca)
     assert np.allclose(monitors["yang"][0], yang)
     assert np.allclose(monitors["zang"][0], zang)
     assert np.allclose(monitors["ra"][0], ra)
