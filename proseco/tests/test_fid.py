@@ -130,12 +130,12 @@ def test_get_initial_catalog(FIDS):
         "  id    yang     zang     row     col     mag   spoiler_score fid_trap_spoiler  idx   slot",
         "int64 float64  float64  float64 float64 float64     int64           bool       int64 int64",
         "----- -------- -------- ------- ------- ------- ------------- ---------------- ----- -----",
-        "    1   918.09 -1741.51 -179.11 -344.93    7.00             0            False     0   -99",
-        "    2  -777.70 -1745.65  161.78 -346.19    7.00             0            False     1     0",
-        "    3    35.52 -1874.72   -1.69 -371.84    7.00             0            False     2   -99",
-        "    4  2135.73   163.01 -423.68   38.42    7.00             0            False     3     1",
-        "    5 -1830.77   156.55  373.91   35.73    7.00             0            False     4     2",
-        "    6   384.10   800.13  -70.64  165.43    7.00             0            False     5   -99",
+        "    1   918.09 -1741.51 -179.16 -345.00    7.00             0            False     0   -99",
+        "    2  -777.70 -1745.65  161.82 -346.32    7.00             0            False     1     0",
+        "    3    35.52 -1874.72   -1.69 -371.95    7.00             0            False     2   -99",
+        "    4  2135.73   163.01 -423.80   38.50    7.00             0            False     3     1",
+        "    5 -1830.77   156.55  374.01   35.67    7.00             0            False     4     2",
+        "    6   384.10   800.13  -70.66  165.50    7.00             0            False     5   -99",
     ]
     cols = [
         "id",
@@ -149,9 +149,7 @@ def test_get_initial_catalog(FIDS):
         "idx",
         "slot",
     ]
-    assert (
-        FIDS.cand_fids[cols].pformat(show_dtype=True, max_width=-1, max_lines=-1) == exp
-    )
+    assert FIDS.cand_fids[cols].pformat(show_dtype=True) == exp
     assert np.all(FIDS["id"] == [2, 4, 5])
 
     # Make catalogs with some fake stars (at exactly fid positions) that spoil
@@ -168,12 +166,12 @@ def test_get_initial_catalog(FIDS):
         "  id    yang     zang     row     col     mag   spoiler_score fid_trap_spoiler  idx   slot",
         "int64 float64  float64  float64 float64 float64     int64           bool       int64 int64",
         "----- -------- -------- ------- ------- ------- ------------- ---------------- ----- -----",
-        "    1   918.09 -1741.51 -179.11 -344.93    7.00             4            False     0   -99",
-        "    2  -777.70 -1745.65  161.78 -346.19    7.00             4            False     1   -99",
-        "    3    35.52 -1874.72   -1.69 -371.84    7.00             0            False     2     0",
-        "    4  2135.73   163.01 -423.68   38.42    7.00             0            False     3     1",
-        "    5 -1830.77   156.55  373.91   35.73    7.00             0            False     4     2",
-        "    6   384.10   800.13  -70.64  165.43    7.00             0            False     5   -99",
+        "    1   918.09 -1741.51 -179.16 -345.00    7.00             4            False     0   -99",
+        "    2  -777.70 -1745.65  161.82 -346.32    7.00             4            False     1   -99",
+        "    3    35.52 -1874.72   -1.69 -371.95    7.00             0            False     2     0",
+        "    4  2135.73   163.01 -423.80   38.50    7.00             0            False     3     1",
+        "    5 -1830.77   156.55  374.01   35.67    7.00             0            False     4     2",
+        "    6   384.10   800.13  -70.66  165.50    7.00             0            False     5   -99",
     ]
     cols = [
         "id",
@@ -187,10 +185,7 @@ def test_get_initial_catalog(FIDS):
         "idx",
         "slot",
     ]
-    assert (
-        fids2.cand_fids[cols].pformat(show_dtype=True, max_width=-1, max_lines=-1)
-        == exp
-    )
+    assert fids2.cand_fids[cols].pformat(show_dtype=True) == exp
     assert np.all(fids2["id"] == [3, 4, 5])
 
     # Spoil fids 1, 2, 3
@@ -249,12 +244,12 @@ def test_fid_spoiling_acq(dither_z, FIDS):
         "  id    yang     zang     row     col     mag   spoiler_score fid_trap_spoiler  idx   slot",
         "int64 float64  float64  float64 float64 float64     int64           bool       int64 int64",
         "----- -------- -------- ------- ------- ------- ------------- ---------------- ----- -----",
-        "    1   918.09 -1741.51 -179.11 -344.93    7.00             0            False     0     0",
-        "    2  -777.70 -1745.65  161.78 -346.19    7.00             0            False     1   -99",
-        "    3    35.52 -1874.72   -1.69 -371.84    7.00             0            False     2   -99",
-        "    4  2135.73   163.01 -423.68   38.42    7.00             0            False     3   -99",
-        "    5 -1830.77   156.55  373.91   35.73    7.00             0            False     4     1",
-        "    6   384.10   800.13  -70.64  165.43    7.00             0            False     5     2",
+        "    1   918.09 -1741.51 -179.16 -345.00    7.00             0            False     0     0",
+        "    2  -777.70 -1745.65  161.82 -346.32    7.00             0            False     1   -99",
+        "    3    35.52 -1874.72   -1.69 -371.95    7.00             0            False     2   -99",
+        "    4  2135.73   163.01 -423.80   38.50    7.00             0            False     3   -99",
+        "    5 -1830.77   156.55  374.01   35.67    7.00             0            False     4     1",
+        "    6   384.10   800.13  -70.66  165.50    7.00             0            False     5     2",
     ]
     cols = [
         "id",
@@ -269,10 +264,7 @@ def test_fid_spoiling_acq(dither_z, FIDS):
         "slot",
     ]
 
-    assert (
-        fids5.cand_fids[cols].pformat(show_dtype=True, max_width=-1, max_lines=-1)
-        == exp
-    )
+    assert fids5.cand_fids[cols].pformat(show_dtype=True) == exp
 
 
 def test_fid_mult_spoilers(disable_fid_offsets, proseco_agasc_1p7):

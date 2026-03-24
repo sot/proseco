@@ -833,13 +833,15 @@ def test_dark_property():
     assert aca.dark.mean() > aca.acqs.dark.mean()
 
 
-def test_dense_star_field_regress(proseco_agasc_1p7):
+def test_dense_star_field_regress(proseco_agasc_1p7, monkeypatch):
     """
     Test getting stars at the most dense star field in the sky.  Taken from:
 
     https://github.com/sot/skanb/blob/master/star_selection/dense_sparse_cats.ipynb
 
     """
+    monkeypatch.setattr(ACA, "t_aca_default", 20.0)
+    monkeypatch.setattr(ACA, "t_aca_use_default", True)
     att = (167.0672, -59.1235, 0)
     aca = get_aca_catalog(**mod_std_info(att=att, n_fid=3, n_guide=5, n_acq=8))
     exp = [

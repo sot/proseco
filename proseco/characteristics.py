@@ -71,11 +71,12 @@ bad_pixels = [
 ]
 
 # Default value for t_aca (ACA housing temperature) for pixel <=> angle transforms.
-t_aca_default = 20.0
+t_aca_default = 35.0
 
 # If set to True then the ACACatalogTable.t_aca property returns t_aca_default instead
-# of t_ccd + 41.0 C. This is for regression testing by monkeypatching this attribute.
-t_aca_use_default = True
+# of t_ccd + 41.0 C. This is for regression testing by monkeypatching the two t_aca
+# attributes.
+t_aca_use_default = False
 
 # Average delta (degC) between ACA housing temperature and ACA CCD temperature. More
 # specifically, mean(mean(AACH1T, AAOTALT, AAOTASMT) - AACCCDPT). This is used to
