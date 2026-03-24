@@ -1372,16 +1372,19 @@ class StarsTable(BaseCatalogTable):
 
         return stars
 
-    def add_agasc_id(self, agasc_id):
+    def add_agasc_id(self, agasc_id, t_aca=35.0):
         """
         Add a AGASC star to the current StarsTable.
 
         :param agasc_id: AGASC ID of the star to add
+        :param t_aca: ACA temperature (default=35.0)
         """
-        stars = StarsTable.from_agasc_ids(self.meta["q_att"], [agasc_id])
+        stars = StarsTable.from_agasc_ids(self.meta["q_att"], [agasc_id], t_aca=t_aca)
         self.add_row(stars[0])
 
-    def add_fake_constellation(self, n_stars=8, size=1500, mag=7.0, **attrs):
+    def add_fake_constellation(
+        self, n_stars=8, size=1500, mag=7.0, t_aca=35.0, **attrs
+    ):
         r"""
         Add a fake constellation of up to 8 stars consisting of a cross and square::
 
@@ -1414,6 +1417,7 @@ class StarsTable(BaseCatalogTable):
         :param n_stars: number of stars (default=8, max=8)
         :param size: size of constellation [arcsec] (default=2000)
         :param mag: star magnitudes (default=7.0)
+        :param t_aca: ACA temperature (default=35.0)
         :param \**attrs: other star table attributes
         """
         if n_stars > 8:
@@ -1437,9 +1441,11 @@ class StarsTable(BaseCatalogTable):
 
         arrays = np.broadcast_arrays(*arrays)
         for vals in zip(*arrays):
-            self.add_fake_star(**{name: val for name, val in zip(names, vals)})
+            self.add_fake_star(
+                t_aca=t_aca, **{name: val for name, val in zip(names, vals)}
+            )
 
-    def add_fake_star(self, **star):
+    def add_fake_star(self, t_aca=35.0, **star):
         r"""
         Add a star to the current StarsTable.
 
@@ -1492,18 +1498,18 @@ class StarsTable(BaseCatalogTable):
         if "ra" in star and "dec" in star:
             out["yang"], out["zang"] = radec_to_yagzag(out["ra"], out["dec"], q_att)
             out["row"], out["col"] = yagzag_to_pixels(
-                out["yang"], out["zang"], allow_bad=True
+                out["yang"], out["zang"], t_aca=t_aca, allow_bad=True
             )
 
         elif "yang" in star and "zang" in star:
             out["ra"], out["dec"] = yagzag_to_radec(out["yang"], out["zang"], q_att)
             out["row"], out["col"] = yagzag_to_pixels(
-                out["yang"], out["zang"], allow_bad=True
+                out["yang"], out["zang"], t_aca=t_aca, allow_bad=True
             )
 
         elif "row" in star and "col" in star:
             out["yang"], out["zang"] = pixels_to_yagzag(
-                out["row"], out["col"], allow_bad=True
+                out["row"], out["col"], t_aca=t_aca, allow_bad=True
             )
             out["ra"], out["dec"] = yagzag_to_radec(out["yang"], out["zang"], q_att)
 
@@ -1536,6 +1542,7 @@ class StarsTable(BaseCatalogTable):
         id=None,
         detector="ACIS-S",
         sim_offset=0,
+        t_aca=35.0,
     ):
         try:
             fids = FIDS_CACHE[detector, sim_offset]
@@ -1563,7 +1570,7 @@ class StarsTable(BaseCatalogTable):
             )
             if id is not None:
                 kwargs["id"] = id
-            self.add_fake_star(**kwargs)
+            self.add_fake_star(t_aca=t_aca, **kwargs)
 
 
 def bin2x2(arr):
