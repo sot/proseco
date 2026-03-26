@@ -39,7 +39,7 @@ def test_monitor_input_processing_ra_dec(stars):
     assert len(monitors) == 1
     assert isinstance(monitors, Table)
     yang, zang = radec_to_yagzag(ra, dec, aca.att)
-    row, col = yagzag_to_pixels(yang, zang)
+    row, col = yagzag_to_pixels(yang, zang, t_aca=aca.t_aca)
     assert np.allclose(monitors["yang"][0], yang)
     assert np.allclose(monitors["zang"][0], zang)
     assert np.allclose(monitors["ra"][0], ra)
@@ -79,7 +79,7 @@ def test_monitor_mon_fixed_auto(proseco_agasc_1p7, disable_overlap_penalty):
         "   3   4    139192  BOT 8x8   587.27   802.49  28   1   160",
         "   7   5 611192384  BOT 8x8  1053.38  -275.16  28   1   160",
         "   4   6 611192064  GUI 8x8  2003.89 -1746.97   1   1    25",
-        "   5   7      1001  MON 8x8  -219.72  -273.87   2   0    20",
+        "   5   7      1001  MON 8x8  -219.63  -273.72   2   0    20",
         "   6   8      1000  MON 8x8 -1700.00  1900.00   6   0    20",
         "   0   9 688523960  ACQ 8x8  -202.71 -1008.91  28   1   160",
         "   1  10 688521312  ACQ 8x8  -739.68 -1799.85  28   1   160",

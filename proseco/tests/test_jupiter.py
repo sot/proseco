@@ -34,11 +34,11 @@ def test_jupiter_position():
     att = Quat(q=[-0.51186291, 0.27607314, -0.17243277, 0.79501379])
     date = "2021:290:11:33:16.000"
     duration = 36000
-    jupiter_proseco_data = jupiter.get_jupiter_position(date, duration, att)
+    jupiter_proseco_data = jupiter.get_jupiter_position(date, duration, att, t_aca=25.0)
     eci = planets.get_planet_chandra("jupiter", jupiter_proseco_data["time"])
     ra, dec = transform.eci_to_radec(eci)
     yag, zag = transform.radec_to_yagzag(ra, dec, att)
-    row, col = transform.yagzag_to_pixels(yag, zag, allow_bad=True)
+    row, col = transform.yagzag_to_pixels(yag, zag, t_aca=25.0)
 
     jupiter_aca_data = JupiterPositionTable(
         {"time": jupiter_proseco_data["time"], "row": row, "col": col}

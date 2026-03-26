@@ -357,7 +357,7 @@ class FidTable(ACACatalogTable):
             t_ccd=self.t_ccd_acq,
             date=self.date,
         )
-        row, col = yagzag_to_pixels(yang, zang, allow_bad=True)
+        row, col = yagzag_to_pixels(yang, zang, t_aca=self.t_aca)
         ids = np.arange(len(yang), dtype=np.int64) + 1  # E.g. 1 to 6 for ACIS
 
         # Set up candidate fids table (which copies relevant meta data) and add

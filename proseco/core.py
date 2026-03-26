@@ -644,7 +644,9 @@ class ACACatalogTable(BaseCatalogTable):
 
         from proseco.jupiter import get_jupiter_position
 
-        self._jupiter = get_jupiter_position(self.date, self.duration, self.att)
+        self._jupiter = get_jupiter_position(
+            self.date, self.duration, self.att, t_aca=self.t_aca
+        )
         return self._jupiter
 
     @jupiter.setter
@@ -808,9 +810,13 @@ class ACACatalogTable(BaseCatalogTable):
         """
         if acqs is None:
             if self.stars is None:
-                stars = StarsTable.from_agasc(self.att, date=self.date, logger=self.log)
+                stars = StarsTable.from_agasc(
+                    self.att, date=self.date, logger=self.log, t_aca=self.t_aca
+                )
             else:
-                stars = StarsTable.from_stars(self.att, self.stars, logger=self.log)
+                stars = StarsTable.from_stars(
+                    self.att, self.stars, logger=self.log, t_aca=self.t_aca
+                )
         else:
             stars = acqs.stars
 
@@ -870,6 +876,14 @@ class ACACatalogTable(BaseCatalogTable):
     @t_ccd.setter
     def t_ccd(self, value):
         raise NotImplementedError
+
+    @property
+    def t_aca(self):
+        return (
+            ACA.t_aca_default
+            if ACA.t_aca_use_default
+            else self.t_ccd + ACA.t_aca_minus_t_ccd
+        )
 
     @classmethod
     def empty(cls):
@@ -1202,7 +1216,9 @@ class StarsTable(BaseCatalogTable):
         return super().plot(ax, **kwargs)
 
     @classmethod
-    def from_agasc(cls, att, date=None, radius=1.2, logger=None):
+    def from_agasc(
+        cls, att, date=None, radius=1.2, logger=None, t_aca=ACA.t_aca_default
+    ) -> "StarsTable":
         """
         Get AGASC stars in the ACA FOV.  This uses the proseco-AGASC, so only stars
         within 3-sigma of 11.5 mag or those nearby a potential guide/acq star are
@@ -1216,6 +1232,7 @@ class StarsTable(BaseCatalogTable):
         :param date: DateTime compatible date for star proper motion (default=NOW)
         :param radius: star cone radius [deg] (default=1.2)
         :param logger: logger object (default=None)
+        :param t_aca: ACA housing temperature (degC, default=ACA.t_aca_default)
 
         :returns: StarsTable of stars
         """
@@ -1226,7 +1243,7 @@ class StarsTable(BaseCatalogTable):
         agasc_stars = agasc.get_agasc_cone(
             q_att.ra, q_att.dec, radius=radius, date=date
         )
-        stars = StarsTable.from_stars(att, agasc_stars, copy=False)
+        stars = StarsTable.from_stars(att, agasc_stars, copy=False, t_aca=t_aca)
 
         logger = StarsTable.get_logger(logger)
         logger(
@@ -1238,7 +1255,14 @@ class StarsTable(BaseCatalogTable):
         return stars
 
     @classmethod
-    def from_agasc_ids(cls, att, agasc_ids, date=None, logger=None):
+    def from_agasc_ids(
+        cls,
+        att,
+        agasc_ids,
+        date=None,
+        logger=None,
+        t_aca=ACA.t_aca_default,
+    ) -> "StarsTable":
         """
         Get AGASC stars in the ACA FOV using a list of AGASC IDs.
 
@@ -1246,6 +1270,7 @@ class StarsTable(BaseCatalogTable):
         :param agasc_ids: sequence of AGASC ID values
         :param date: DateTime compatible date for star proper motion (default=NOW)
         :param logger: logger object (default=None)
+        :param t_aca: ACA housing temperature (degC, default=ACA.t_aca_default)
 
         :returns: StarsTable of stars
         """
@@ -1258,10 +1283,12 @@ class StarsTable(BaseCatalogTable):
             else:
                 agasc_stars.append(star)
         agasc_stars = Table(rows=agasc_stars, names=agasc_stars[0].colnames)
-        return StarsTable.from_stars(att, stars=agasc_stars)
+        return StarsTable.from_stars(att, stars=agasc_stars, t_aca=t_aca)
 
     @classmethod
-    def from_stars(cls, att, stars, logger=None, copy=True) -> "StarsTable":
+    def from_stars(
+        cls, att, stars, logger=None, copy=True, t_aca=ACA.t_aca_default
+    ) -> "StarsTable":
         """
         Return a StarsTable from an existing AGASC stars query.  This just updates
         columns in place.
@@ -1273,6 +1300,7 @@ class StarsTable(BaseCatalogTable):
         :param stars: Table of stars
         :param logger: logger object (default=None)
         :param copy: copy ``stars`` table columns
+        :param t_aca: ACA housing temperature (degC, default=ACA.t_aca_default)
 
         :returns: StarsTable of stars
 
@@ -1303,7 +1331,7 @@ class StarsTable(BaseCatalogTable):
 
         stars.meta["q_att"] = q_att
         yag, zag = radec_to_yagzag(stars["RA_PMCORR"], stars["DEC_PMCORR"], q_att)
-        row, col = yagzag_to_pixels(yag, zag, allow_bad=True, pix_zero_loc="edge")
+        row, col = yagzag_to_pixels(yag, zag, t_aca=t_aca)
 
         stars.remove_columns(
             [name for name in AGASC_COLS_DROP if name in stars.colnames]
@@ -1357,16 +1385,19 @@ class StarsTable(BaseCatalogTable):
 
         return stars
 
-    def add_agasc_id(self, agasc_id):
+    def add_agasc_id(self, agasc_id, t_aca=ACA.t_aca_default):
         """
         Add a AGASC star to the current StarsTable.
 
         :param agasc_id: AGASC ID of the star to add
+        :param t_aca: ACA temperature (default=ACA.t_aca_default)
         """
-        stars = StarsTable.from_agasc_ids(self.meta["q_att"], [agasc_id])
+        stars = StarsTable.from_agasc_ids(self.meta["q_att"], [agasc_id], t_aca=t_aca)
         self.add_row(stars[0])
 
-    def add_fake_constellation(self, n_stars=8, size=1500, mag=7.0, **attrs):
+    def add_fake_constellation(
+        self, n_stars=8, size=1500, mag=7.0, t_aca=ACA.t_aca_default, **attrs
+    ):
         r"""
         Add a fake constellation of up to 8 stars consisting of a cross and square::
 
@@ -1399,6 +1430,7 @@ class StarsTable(BaseCatalogTable):
         :param n_stars: number of stars (default=8, max=8)
         :param size: size of constellation [arcsec] (default=2000)
         :param mag: star magnitudes (default=7.0)
+        :param t_aca: ACA temperature (default=ACA.t_aca_default)
         :param \**attrs: other star table attributes
         """
         if n_stars > 8:
@@ -1422,9 +1454,11 @@ class StarsTable(BaseCatalogTable):
 
         arrays = np.broadcast_arrays(*arrays)
         for vals in zip(*arrays):
-            self.add_fake_star(**{name: val for name, val in zip(names, vals)})
+            self.add_fake_star(
+                t_aca=t_aca, **{name: val for name, val in zip(names, vals)}
+            )
 
-    def add_fake_star(self, **star):
+    def add_fake_star(self, t_aca=ACA.t_aca_default, **star):
         r"""
         Add a star to the current StarsTable.
 
@@ -1477,18 +1511,18 @@ class StarsTable(BaseCatalogTable):
         if "ra" in star and "dec" in star:
             out["yang"], out["zang"] = radec_to_yagzag(out["ra"], out["dec"], q_att)
             out["row"], out["col"] = yagzag_to_pixels(
-                out["yang"], out["zang"], allow_bad=True
+                out["yang"], out["zang"], t_aca=t_aca
             )
 
         elif "yang" in star and "zang" in star:
             out["ra"], out["dec"] = yagzag_to_radec(out["yang"], out["zang"], q_att)
             out["row"], out["col"] = yagzag_to_pixels(
-                out["yang"], out["zang"], allow_bad=True
+                out["yang"], out["zang"], t_aca=t_aca
             )
 
         elif "row" in star and "col" in star:
             out["yang"], out["zang"] = pixels_to_yagzag(
-                out["row"], out["col"], allow_bad=True
+                out["row"], out["col"], t_aca=t_aca
             )
             out["ra"], out["dec"] = yagzag_to_radec(out["yang"], out["zang"], q_att)
 
@@ -1521,6 +1555,7 @@ class StarsTable(BaseCatalogTable):
         id=None,
         detector="ACIS-S",
         sim_offset=0,
+        t_aca=ACA.t_aca_default,
     ):
         try:
             fids = FIDS_CACHE[detector, sim_offset]
@@ -1548,7 +1583,7 @@ class StarsTable(BaseCatalogTable):
             )
             if id is not None:
                 kwargs["id"] = id
-            self.add_fake_star(**kwargs)
+            self.add_fake_star(t_aca=t_aca, **kwargs)
 
 
 def bin2x2(arr):

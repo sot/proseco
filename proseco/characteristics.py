@@ -70,6 +70,20 @@ bad_pixels = [
     [-319, -317, -299, -296],  # Diminished response
 ]
 
+# Default value for t_aca (ACA housing temperature) for pixel <=> angle transforms.
+t_aca_default = 35.0
+
+# If set to True then the ACACatalogTable.t_aca property returns t_aca_default instead
+# of t_ccd + 41.0 C. This is for regression testing by monkeypatching the two t_aca
+# attributes.
+t_aca_use_default = False
+
+# Average delta (degC) between ACA housing temperature and ACA CCD temperature. More
+# specifically, mean(mean(AACH1T, AAOTALT, AAOTASMT) - AACCCDPT). This is used to
+# convert from predicted T_ccd to T_aca for coordinate transformations. See
+# analysis/pr414-t_ccd-to-t_aca-conversion.ipynb (in TAs git repo only).
+t_aca_minus_t_ccd = 41.0
+
 
 def _load_bad_star_set():
     # Add in entries from the AGASC supplement file, if possible, warn otherwise
