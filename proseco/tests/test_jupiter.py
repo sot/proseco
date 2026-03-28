@@ -272,7 +272,7 @@ def test_jupiter_midline():
 
 
 @pytest.mark.parametrize("col_dist_arcsec", np.arange(-300, 305, 20))
-def test_jupiter_acquisition(col_dist_arcsec):
+def test_jupiter_acquisition(col_dist_arcsec, disable_box_edge_dmag):
     """
     Test how jupiter is handled during acquisition.
 

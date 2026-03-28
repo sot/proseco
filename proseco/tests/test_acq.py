@@ -207,7 +207,7 @@ def get_test_cand_acqs():
     return CACHE["cand_acqs"].copy()
 
 
-def test_calc_p_brightest_same_bright():
+def test_calc_p_brightest_same_bright(disable_box_edge_dmag):
     """
     Test for an easy situation of three spoiler/imposters with exactly
     the same brightness as acq star so that p_brighter is always 0.5.
@@ -239,7 +239,7 @@ def test_calc_p_brightest_same_bright():
     assert np.allclose(probs, [0.25, 0.25, 0.25, 0.3334, 0.5, 1.0], rtol=0, atol=0.01)
 
 
-def test_calc_p_brightest_same_bright_asymm_dither():
+def test_calc_p_brightest_same_bright_asymm_dither(disable_box_edge_dmag):
     """
     Test for an easy situation of three spoiler/imposters with exactly
     the same brightness as acq star so that p_brighter is always 0.5.
@@ -308,7 +308,7 @@ def test_calc_p_brightest_same_bright_asymm_dither():
     assert np.allclose(probs, [0.333, 0.333, 0.333, 0.5, 1.0, 1.0], rtol=0, atol=0.01)
 
 
-def test_calc_p_brightest_1mag_brighter():
+def test_calc_p_brightest_1mag_brighter(disable_box_edge_dmag):
     """
     Test for the situation of spoiler/imposter that is 1 mag brighter.
     """
@@ -541,7 +541,9 @@ def test_get_acq_catalog_21007(proseco_agasc_1p7, disable_overlap_penalty):
     assert info == exp
 
 
-def test_box_strategy_20603(proseco_agasc_1p7, disable_overlap_penalty):
+def test_box_strategy_20603(
+    proseco_agasc_1p7, disable_overlap_penalty, disable_box_edge_dmag
+):
     """Test for PR #32 that doesn't allow p_acq to be reduced below 0.1.
 
     The idx=8 (mag=10.50) star was previously selected with 160 arsec box.

@@ -105,12 +105,12 @@ def test_get_aca_catalog_20603(proseco_agasc_1p7):
         "   1   2         5  FID 8x8 -1829.63   156.96   1   1    25",
         "   2   3 116791824  BOT 6x6   622.00  -953.60  28   1   160",
         "   3   4  40114416  BOT 6x6   394.22  1204.43  24   1   140",
-        "   4   5  40112304  BOT 6x6 -1644.35  2032.47  12   1    80",
+        "   4   5  40112304  BOT 6x6 -1644.35  2032.47  16   1   100",
         "   5   6  40113544  GUI 6x6   102.74  1133.37   1   1    25",
         "   0   7 116923496  ACQ 6x6 -1337.79  1049.27  20   1   120",
         "   1   8 116923528  ACQ 6x6 -2418.65  1088.40  28   1   160",
         "   5   9 116791744  ACQ 6x6   985.38 -1210.19  28   1   160",
-        "   6  10  40108048  ACQ 6x6     2.21  1619.17  24   1   140",
+        "   6  10  40108048  ACQ 6x6     2.21  1619.17  16   1   100",
     ]
 
     assert aca[TEST_COLS].pformat(max_width=-1) == exp
@@ -649,16 +649,22 @@ def test_bad_obsid():
     assert "ValueError: text does not have OBSID" in aca.exception
 
 
-def test_bad_pixel_dark_current():
+@pytest.mark.parametrize("no_box_edge_dmag", [True, False])
+def test_bad_pixel_dark_current(monkeypatch, no_box_edge_dmag):
     """
     Test avoidance of bad_pixels = [[-245, 0, 454, 454]]
 
     - Put a bright star near this bad column and confirm it is not picked at
       all.
     - Put a bright star at col = 454 - 20 / 5 - 105 / 5 (dither and search box
-      size) and confirm it is picked with search box = 100 arcsec.
+      size) and confirm it is picked with appropriate search box size:
+       - 100 arcsec if the box edge dmag offset is disabled
+       - 80 arcsec if the box edge dmag offset is enabled (default). This means that
+         the bad pixel imposter is leaking into the search box as intended.
 
     """
+    if no_box_edge_dmag:
+        monkeypatch.setenv("PROSECO_DISABLE_BOX_EDGE_DMAG", "True")
     dark = DARK40.copy()
     stars = StarsTable.empty()
     stars.add_fake_constellation(mag=np.linspace(8.0, 8.1, 4), n_stars=4)
@@ -683,7 +689,8 @@ def test_bad_pixel_dark_current():
     exp_ids = [2, 100, 101, 102, 103]
     assert sorted(aca.guides["id"]) == sorted(exp_ids + [4])
     assert aca.acqs["id"].tolist() == exp_ids
-    assert aca.acqs["halfw"].tolist() == [100, 160, 160, 160, 160]
+    exp_halfw = 100 if no_box_edge_dmag else 80
+    assert aca.acqs["halfw"].tolist() == [exp_halfw, 160, 160, 160, 160]
 
 
 def test_fid_trap_effect():
