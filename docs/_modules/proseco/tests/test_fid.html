@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>proseco.tests.test_fid &#8212; proseco 5.18.0 documentation</title>
+    <title>proseco.tests.test_fid &#8212; proseco 5.19.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../../_static/bootstrap-astropy.css?v=f4f7060c" />
     
-    <script src="../../../_static/documentation_options.js?v=35f5b738"></script>
+    <script src="../../../_static/documentation_options.js?v=4420fd61"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script type="text/javascript" src="../../../_static/sidebar.js"></script>
@@ -44,7 +44,7 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../../index.html">proseco 5.18.0 documentation</a>
+	<a href="../../../index.html">proseco 5.19.0 documentation</a>
 	 &#187;
       </li>
       <li><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
@@ -200,12 +200,12 @@
         <span class="s2">&quot;  id    yang     zang     row     col     mag   spoiler_score fid_trap_spoiler  idx   slot&quot;</span><span class="p">,</span>
         <span class="s2">&quot;int64 float64  float64  float64 float64 float64     int64           bool       int64 int64&quot;</span><span class="p">,</span>
         <span class="s2">&quot;----- -------- -------- ------- ------- ------- ------------- ---------------- ----- -----&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;    1   918.09 -1741.51 -179.15 -344.83    7.00             0            False     0   -99&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;    2  -777.70 -1745.65  161.69 -346.09    7.00             0            False     1     0&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;    3    35.52 -1874.72   -1.77 -371.73    7.00             0            False     2   -99&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;    4  2135.73   163.01 -423.60   38.40    7.00             0            False     3     1&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;    5 -1830.77   156.55  373.88   35.74    7.00             0            False     4     2&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;    6   384.10   800.13  -70.59  165.37    7.00             0            False     5   -99&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;    1   918.09 -1741.51 -179.16 -345.00    7.00             0            False     0   -99&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;    2  -777.70 -1745.65  161.82 -346.32    7.00             0            False     1     0&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;    3    35.52 -1874.72   -1.69 -371.95    7.00             0            False     2   -99&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;    4  2135.73   163.01 -423.80   38.50    7.00             0            False     3     1&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;    5 -1830.77   156.55  374.01   35.67    7.00             0            False     4     2&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;    6   384.10   800.13  -70.66  165.50    7.00             0            False     5   -99&quot;</span><span class="p">,</span>
     <span class="p">]</span>
     <span class="n">cols</span> <span class="o">=</span> <span class="p">[</span>
         <span class="s2">&quot;id&quot;</span><span class="p">,</span>
@@ -219,9 +219,7 @@
         <span class="s2">&quot;idx&quot;</span><span class="p">,</span>
         <span class="s2">&quot;slot&quot;</span><span class="p">,</span>
     <span class="p">]</span>
-    <span class="k">assert</span> <span class="p">(</span>
-        <span class="n">FIDS</span><span class="o">.</span><span class="n">cand_fids</span><span class="p">[</span><span class="n">cols</span><span class="p">]</span><span class="o">.</span><span class="n">pformat</span><span class="p">(</span><span class="n">show_dtype</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">max_width</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_lines</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="n">exp</span>
-    <span class="p">)</span>
+    <span class="k">assert</span> <span class="n">FIDS</span><span class="o">.</span><span class="n">cand_fids</span><span class="p">[</span><span class="n">cols</span><span class="p">]</span><span class="o">.</span><span class="n">pformat</span><span class="p">(</span><span class="n">show_dtype</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">==</span> <span class="n">exp</span>
     <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">FIDS</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">])</span>
 
     <span class="c1"># Make catalogs with some fake stars (at exactly fid positions) that spoil</span>
@@ -238,12 +236,12 @@
         <span class="s2">&quot;  id    yang     zang     row     col     mag   spoiler_score fid_trap_spoiler  idx   slot&quot;</span><span class="p">,</span>
         <span class="s2">&quot;int64 float64  float64  float64 float64 float64     int64           bool       int64 int64&quot;</span><span class="p">,</span>
         <span class="s2">&quot;----- -------- -------- ------- ------- ------- ------------- ---------------- ----- -----&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;    1   918.09 -1741.51 -179.15 -344.83    7.00             4            False     0   -99&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;    2  -777.70 -1745.65  161.69 -346.09    7.00             4            False     1   -99&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;    3    35.52 -1874.72   -1.77 -371.73    7.00             0            False     2     0&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;    4  2135.73   163.01 -423.60   38.40    7.00             0            False     3     1&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;    5 -1830.77   156.55  373.88   35.74    7.00             0            False     4     2&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;    6   384.10   800.13  -70.59  165.37    7.00             0            False     5   -99&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;    1   918.09 -1741.51 -179.16 -345.00    7.00             4            False     0   -99&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;    2  -777.70 -1745.65  161.82 -346.32    7.00             4            False     1   -99&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;    3    35.52 -1874.72   -1.69 -371.95    7.00             0            False     2     0&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;    4  2135.73   163.01 -423.80   38.50    7.00             0            False     3     1&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;    5 -1830.77   156.55  374.01   35.67    7.00             0            False     4     2&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;    6   384.10   800.13  -70.66  165.50    7.00             0            False     5   -99&quot;</span><span class="p">,</span>
     <span class="p">]</span>
     <span class="n">cols</span> <span class="o">=</span> <span class="p">[</span>
         <span class="s2">&quot;id&quot;</span><span class="p">,</span>
@@ -257,10 +255,7 @@
         <span class="s2">&quot;idx&quot;</span><span class="p">,</span>
         <span class="s2">&quot;slot&quot;</span><span class="p">,</span>
     <span class="p">]</span>
-    <span class="k">assert</span> <span class="p">(</span>
-        <span class="n">fids2</span><span class="o">.</span><span class="n">cand_fids</span><span class="p">[</span><span class="n">cols</span><span class="p">]</span><span class="o">.</span><span class="n">pformat</span><span class="p">(</span><span class="n">show_dtype</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">max_width</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_lines</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="o">==</span> <span class="n">exp</span>
-    <span class="p">)</span>
+    <span class="k">assert</span> <span class="n">fids2</span><span class="o">.</span><span class="n">cand_fids</span><span class="p">[</span><span class="n">cols</span><span class="p">]</span><span class="o">.</span><span class="n">pformat</span><span class="p">(</span><span class="n">show_dtype</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">==</span> <span class="n">exp</span>
     <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">fids2</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">])</span>
 
     <span class="c1"># Spoil fids 1, 2, 3</span>
@@ -325,12 +320,12 @@
         <span class="s2">&quot;  id    yang     zang     row     col     mag   spoiler_score fid_trap_spoiler  idx   slot&quot;</span><span class="p">,</span>
         <span class="s2">&quot;int64 float64  float64  float64 float64 float64     int64           bool       int64 int64&quot;</span><span class="p">,</span>
         <span class="s2">&quot;----- -------- -------- ------- ------- ------- ------------- ---------------- ----- -----&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;    1   918.09 -1741.51 -179.15 -344.83    7.00             0            False     0     0&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;    2  -777.70 -1745.65  161.69 -346.09    7.00             0            False     1   -99&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;    3    35.52 -1874.72   -1.77 -371.73    7.00             0            False     2   -99&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;    4  2135.73   163.01 -423.60   38.40    7.00             0            False     3   -99&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;    5 -1830.77   156.55  373.88   35.74    7.00             0            False     4     1&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;    6   384.10   800.13  -70.59  165.37    7.00             0            False     5     2&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;    1   918.09 -1741.51 -179.16 -345.00    7.00             0            False     0     0&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;    2  -777.70 -1745.65  161.82 -346.32    7.00             0            False     1   -99&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;    3    35.52 -1874.72   -1.69 -371.95    7.00             0            False     2   -99&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;    4  2135.73   163.01 -423.80   38.50    7.00             0            False     3   -99&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;    5 -1830.77   156.55  374.01   35.67    7.00             0            False     4     1&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;    6   384.10   800.13  -70.66  165.50    7.00             0            False     5     2&quot;</span><span class="p">,</span>
     <span class="p">]</span>
     <span class="n">cols</span> <span class="o">=</span> <span class="p">[</span>
         <span class="s2">&quot;id&quot;</span><span class="p">,</span>
@@ -345,10 +340,7 @@
         <span class="s2">&quot;slot&quot;</span><span class="p">,</span>
     <span class="p">]</span>
 
-    <span class="k">assert</span> <span class="p">(</span>
-        <span class="n">fids5</span><span class="o">.</span><span class="n">cand_fids</span><span class="p">[</span><span class="n">cols</span><span class="p">]</span><span class="o">.</span><span class="n">pformat</span><span class="p">(</span><span class="n">show_dtype</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">max_width</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_lines</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="o">==</span> <span class="n">exp</span>
-    <span class="p">)</span></div>
+    <span class="k">assert</span> <span class="n">fids5</span><span class="o">.</span><span class="n">cand_fids</span><span class="p">[</span><span class="n">cols</span><span class="p">]</span><span class="o">.</span><span class="n">pformat</span><span class="p">(</span><span class="n">show_dtype</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">==</span> <span class="n">exp</span></div>
 
 
 

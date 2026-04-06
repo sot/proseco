@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>API documentation &#8212; proseco 5.18.0 documentation</title>
+    <title>API documentation &#8212; proseco 5.19.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/bootstrap-astropy.css?v=f4f7060c" />
     
-    <script src="_static/documentation_options.js?v=35f5b738"></script>
+    <script src="_static/documentation_options.js?v=4420fd61"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script type="text/javascript" src="_static/sidebar.js"></script>
@@ -58,7 +58,7 @@
 	 |
       </li>
       <li>
-	<a href="index.html">proseco 5.18.0 documentation</a>
+	<a href="index.html">proseco 5.19.0 documentation</a>
 	 &#187;
       </li>
       
@@ -876,7 +876,7 @@ For values of <code class="docutils literal notranslate"><span class="pre">0</sp
 
 <dl class="py function">
 <dt class="sig sig-object py" id="proseco.acq.get_imposter_stars">
-<span class="sig-prename descclassname"><span class="pre">proseco.acq.</span></span><span class="sig-name descname"><span class="pre">get_imposter_stars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dark</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">star_row</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">star_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxmag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">11.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">box_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">120</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bgd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">40</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/acq.html#get_imposter_stars"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.acq.get_imposter_stars" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">proseco.acq.</span></span><span class="sig-name descname"><span class="pre">get_imposter_stars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dark</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">star_row</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">star_col</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">thresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxmag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">11.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">box_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">120</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bgd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">40</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_aca</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">35.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/acq.html#get_imposter_stars"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.acq.get_imposter_stars" title="Link to this definition">¶</a></dt>
 <dd><p>Note: current alg purposely avoids using the actual flight background
 calculation because this is unstable to small fluctuations in values
 and often over-estimates background.  Using this can easily miss a
@@ -2235,18 +2235,21 @@ return ID for corresponding MON star (default=False)</p></li>
 </ul>
 <dl class="py method">
 <dt class="sig sig-object py" id="proseco.core.StarsTable.add_agasc_id">
-<span class="sig-name descname"><span class="pre">add_agasc_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">agasc_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/core.html#StarsTable.add_agasc_id"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.StarsTable.add_agasc_id" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">add_agasc_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">agasc_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_aca</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">35.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/core.html#StarsTable.add_agasc_id"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.StarsTable.add_agasc_id" title="Link to this definition">¶</a></dt>
 <dd><p>Add a AGASC star to the current StarsTable.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>agasc_id</strong> – AGASC ID of the star to add</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>agasc_id</strong> – AGASC ID of the star to add</p></li>
+<li><p><strong>t_aca</strong> – ACA temperature (default=ACA.t_aca_default)</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="proseco.core.StarsTable.add_fake_constellation">
-<span class="sig-name descname"><span class="pre">add_fake_constellation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_stars</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">7.0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">attrs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/core.html#StarsTable.add_fake_constellation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.StarsTable.add_fake_constellation" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">add_fake_constellation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_stars</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">7.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_aca</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">35.0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">attrs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/core.html#StarsTable.add_fake_constellation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.StarsTable.add_fake_constellation" title="Link to this definition">¶</a></dt>
 <dd><p>Add a fake constellation of up to 8 stars consisting of a cross and square:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>      <span class="o">*</span>
     <span class="o">*</span>   <span class="o">*</span>
@@ -2280,6 +2283,7 @@ attributes are broadcast as needed.</p>
 <li><p><strong>n_stars</strong> – number of stars (default=8, max=8)</p></li>
 <li><p><strong>size</strong> – size of constellation [arcsec] (default=2000)</p></li>
 <li><p><strong>mag</strong> – star magnitudes (default=7.0)</p></li>
+<li><p><strong>t_aca</strong> – ACA temperature (default=ACA.t_aca_default)</p></li>
 <li><p><strong>**attrs</strong> – other star table attributes</p></li>
 </ul>
 </dd>
@@ -2288,7 +2292,7 @@ attributes are broadcast as needed.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="proseco.core.StarsTable.add_fake_star">
-<span class="sig-name descname"><span class="pre">add_fake_star</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">star</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/core.html#StarsTable.add_fake_star"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.StarsTable.add_fake_star" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">add_fake_star</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_aca</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">35.0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">star</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/core.html#StarsTable.add_fake_star"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.StarsTable.add_fake_star" title="Link to this definition">¶</a></dt>
 <dd><p>Add a star to the current StarsTable.</p>
 <p>The input kwargs must have at least:
 - One of yang/zang, ra/dec, or row/col
@@ -2321,7 +2325,7 @@ to default “good”” values that will preclude initial exclusion of the star
 
 <dl class="py method">
 <dt class="sig sig-object py" id="proseco.core.StarsTable.from_agasc">
-<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_agasc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">att</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radius</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/core.html#StarsTable.from_agasc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.StarsTable.from_agasc" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_agasc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">att</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radius</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_aca</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">35.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#proseco.core.StarsTable" title="proseco.core.StarsTable"><span class="pre">StarsTable</span></a></span></span><a class="reference internal" href="_modules/proseco/core.html#StarsTable.from_agasc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.StarsTable.from_agasc" title="Link to this definition">¶</a></dt>
 <dd><p>Get AGASC stars in the ACA FOV.  This uses the proseco-AGASC, so only stars
 within 3-sigma of 11.5 mag or those nearby a potential guide/acq star are
 included.</p>
@@ -2335,6 +2339,7 @@ be set with the AGASC_DIR env var.</p>
 <li><p><strong>date</strong> – DateTime compatible date for star proper motion (default=NOW)</p></li>
 <li><p><strong>radius</strong> – star cone radius [deg] (default=1.2)</p></li>
 <li><p><strong>logger</strong> – logger object (default=None)</p></li>
+<li><p><strong>t_aca</strong> – ACA housing temperature (degC, default=ACA.t_aca_default)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2345,7 +2350,7 @@ be set with the AGASC_DIR env var.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="proseco.core.StarsTable.from_agasc_ids">
-<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_agasc_ids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">att</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">agasc_ids</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/core.html#StarsTable.from_agasc_ids"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.StarsTable.from_agasc_ids" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_agasc_ids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">att</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">agasc_ids</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_aca</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">35.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#proseco.core.StarsTable" title="proseco.core.StarsTable"><span class="pre">StarsTable</span></a></span></span><a class="reference internal" href="_modules/proseco/core.html#StarsTable.from_agasc_ids"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.StarsTable.from_agasc_ids" title="Link to this definition">¶</a></dt>
 <dd><p>Get AGASC stars in the ACA FOV using a list of AGASC IDs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2354,6 +2359,7 @@ be set with the AGASC_DIR env var.</p>
 <li><p><strong>agasc_ids</strong> – sequence of AGASC ID values</p></li>
 <li><p><strong>date</strong> – DateTime compatible date for star proper motion (default=NOW)</p></li>
 <li><p><strong>logger</strong> – logger object (default=None)</p></li>
+<li><p><strong>t_aca</strong> – ACA housing temperature (degC, default=ACA.t_aca_default)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2364,7 +2370,7 @@ be set with the AGASC_DIR env var.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="proseco.core.StarsTable.from_stars">
-<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_stars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">att</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stars</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#proseco.core.StarsTable" title="proseco.core.StarsTable"><span class="pre">StarsTable</span></a></span></span><a class="reference internal" href="_modules/proseco/core.html#StarsTable.from_stars"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.StarsTable.from_stars" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_stars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">att</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stars</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_aca</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">35.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#proseco.core.StarsTable" title="proseco.core.StarsTable"><span class="pre">StarsTable</span></a></span></span><a class="reference internal" href="_modules/proseco/core.html#StarsTable.from_stars"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.core.StarsTable.from_stars" title="Link to this definition">¶</a></dt>
 <dd><p>Return a StarsTable from an existing AGASC stars query.  This just updates
 columns in place.</p>
 <p>If <code class="docutils literal notranslate"><span class="pre">stars</span></code> is a StarsTable, the attitude of that object <code class="docutils literal notranslate"><span class="pre">stars.att</span></code> must
@@ -2376,6 +2382,7 @@ match <code class="docutils literal notranslate"><span class="pre">att</span></c
 <li><p><strong>stars</strong> – Table of stars</p></li>
 <li><p><strong>logger</strong> – logger object (default=None)</p></li>
 <li><p><strong>copy</strong> – copy <code class="docutils literal notranslate"><span class="pre">stars</span></code> table columns</p></li>
+<li><p><strong>t_aca</strong> – ACA housing temperature (degC, default=ACA.t_aca_default)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>

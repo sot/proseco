@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>proseco.fid &#8212; proseco 5.18.0 documentation</title>
+    <title>proseco.fid &#8212; proseco 5.19.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/bootstrap-astropy.css?v=f4f7060c" />
     
-    <script src="../../_static/documentation_options.js?v=35f5b738"></script>
+    <script src="../../_static/documentation_options.js?v=4420fd61"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script type="text/javascript" src="../../_static/sidebar.js"></script>
@@ -44,7 +44,7 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../index.html">proseco 5.18.0 documentation</a>
+	<a href="../../index.html">proseco 5.19.0 documentation</a>
 	 &#187;
       </li>
       <li><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
@@ -438,7 +438,7 @@
             <span class="n">t_ccd</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">t_ccd_acq</span><span class="p">,</span>
             <span class="n">date</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">date</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">row</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="n">yagzag_to_pixels</span><span class="p">(</span><span class="n">yang</span><span class="p">,</span> <span class="n">zang</span><span class="p">,</span> <span class="n">allow_bad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">row</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="n">yagzag_to_pixels</span><span class="p">(</span><span class="n">yang</span><span class="p">,</span> <span class="n">zang</span><span class="p">,</span> <span class="n">t_aca</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">t_aca</span><span class="p">)</span>
         <span class="n">ids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">yang</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>  <span class="c1"># E.g. 1 to 6 for ACIS</span>
 
         <span class="c1"># Set up candidate fids table (which copies relevant meta data) and add</span>

@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>proseco.tests.test_catalog &#8212; proseco 5.18.0 documentation</title>
+    <title>proseco.tests.test_catalog &#8212; proseco 5.19.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../../_static/bootstrap-astropy.css?v=f4f7060c" />
     
-    <script src="../../../_static/documentation_options.js?v=35f5b738"></script>
+    <script src="../../../_static/documentation_options.js?v=4420fd61"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script type="text/javascript" src="../../../_static/sidebar.js"></script>
@@ -44,7 +44,7 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../../index.html">proseco 5.18.0 documentation</a>
+	<a href="../../../index.html">proseco 5.19.0 documentation</a>
 	 &#187;
       </li>
       <li><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
@@ -966,13 +966,15 @@
 
 <div class="viewcode-block" id="test_dense_star_field_regress">
 <a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_catalog.test_dense_star_field_regress">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">test_dense_star_field_regress</span><span class="p">(</span><span class="n">proseco_agasc_1p7</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_dense_star_field_regress</span><span class="p">(</span><span class="n">proseco_agasc_1p7</span><span class="p">,</span> <span class="n">monkeypatch</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test getting stars at the most dense star field in the sky.  Taken from:</span>
 
 <span class="sd">    https://github.com/sot/skanb/blob/master/star_selection/dense_sparse_cats.ipynb</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">monkeypatch</span><span class="o">.</span><span class="n">setattr</span><span class="p">(</span><span class="n">ACA</span><span class="p">,</span> <span class="s2">&quot;t_aca_default&quot;</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">)</span>
+    <span class="n">monkeypatch</span><span class="o">.</span><span class="n">setattr</span><span class="p">(</span><span class="n">ACA</span><span class="p">,</span> <span class="s2">&quot;t_aca_use_default&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
     <span class="n">att</span> <span class="o">=</span> <span class="p">(</span><span class="mf">167.0672</span><span class="p">,</span> <span class="o">-</span><span class="mf">59.1235</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
     <span class="n">aca</span> <span class="o">=</span> <span class="n">get_aca_catalog</span><span class="p">(</span><span class="o">**</span><span class="n">mod_std_info</span><span class="p">(</span><span class="n">att</span><span class="o">=</span><span class="n">att</span><span class="p">,</span> <span class="n">n_fid</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">n_guide</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">n_acq</span><span class="o">=</span><span class="mi">8</span><span class="p">))</span>
     <span class="n">exp</span> <span class="o">=</span> <span class="p">[</span>

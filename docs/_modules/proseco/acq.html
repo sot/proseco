@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>proseco.acq &#8212; proseco 5.18.0 documentation</title>
+    <title>proseco.acq &#8212; proseco 5.19.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/bootstrap-astropy.css?v=f4f7060c" />
     
-    <script src="../../_static/documentation_options.js?v=35f5b738"></script>
+    <script src="../../_static/documentation_options.js?v=4420fd61"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script type="text/javascript" src="../../_static/sidebar.js"></script>
@@ -44,7 +44,7 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../index.html">proseco 5.18.0 documentation</a>
+	<a href="../../index.html">proseco 5.19.0 documentation</a>
 	 &#187;
       </li>
       <li><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
@@ -1081,6 +1081,7 @@
             <span class="n">dark</span><span class="o">=</span><span class="n">dark</span><span class="p">,</span>
             <span class="n">bgd</span><span class="o">=</span><span class="n">bgd</span><span class="p">,</span>  <span class="c1"># TO DO deal with this</span>
             <span class="n">mag_limit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">imposters_mag_limit</span><span class="p">,</span>
+            <span class="n">t_aca</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">t_aca</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">imposters</span> <span class="o">=</span> <span class="n">get_intruders</span><span class="p">(</span>
             <span class="n">acq</span><span class="p">,</span>
@@ -1437,12 +1438,14 @@
     <span class="n">dark</span><span class="p">,</span>
     <span class="n">star_row</span><span class="p">,</span>
     <span class="n">star_col</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
     <span class="n">thresh</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">maxmag</span><span class="o">=</span><span class="mf">11.5</span><span class="p">,</span>
     <span class="n">box_size</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span>
     <span class="n">bgd</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span>
     <span class="n">mag_limit</span><span class="o">=</span><span class="mf">20.0</span><span class="p">,</span>
     <span class="n">test</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">t_aca</span><span class="o">=</span><span class="n">ACA</span><span class="o">.</span><span class="n">t_aca_default</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Note: current alg purposely avoids using the actual flight background</span>
@@ -1557,7 +1560,7 @@
             <span class="n">c_row</span> <span class="o">-=</span> <span class="mi">512</span>
             <span class="n">c_col</span> <span class="o">-=</span> <span class="mi">512</span>
 
-        <span class="n">yang</span><span class="p">,</span> <span class="n">zang</span> <span class="o">=</span> <span class="n">pixels_to_yagzag</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">,</span> <span class="n">allow_bad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">yang</span><span class="p">,</span> <span class="n">zang</span> <span class="o">=</span> <span class="n">pixels_to_yagzag</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">,</span> <span class="n">t_aca</span><span class="o">=</span><span class="n">t_aca</span><span class="p">)</span>
 
         <span class="n">out</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">row</span><span class="p">,</span>
