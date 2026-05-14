@@ -38,7 +38,7 @@ get_dark_cal_image = functools.lru_cache(maxsize=6)(get_dark_cal_image)
 get_dark_cal_id = functools.lru_cache(maxsize=6)(get_dark_cal_id)
 
 if TYPE_CHECKING:
-    from proseco.characteristics_jupiter import JupiterPositionTable
+    from chandra_aca.planets import PlanetPositionTable
 
 
 def to_python(val):
@@ -626,38 +626,68 @@ class ACACatalogTable(BaseCatalogTable):
     log_info = MetaAttribute(default={}, is_kwarg=False)
 
     @property
-    def jupiter(self) -> "JupiterPositionTable":
-        if hasattr(self, "_jupiter"):
-            return self._jupiter
+    def planets(self) -> dict[str, "PlanetPositionTable"]:
+        """Dictionary of planet positions keyed by planet name (lowercase)."""
+        if hasattr(self, "_planets"):
+            return self._planets
 
-        from proseco.characteristics_jupiter import JupiterPositionTable
+        if self.att is None:
+            return {}
 
-        if "jupiter" not in self.target_name.lower():
-            self._jupiter = JupiterPositionTable.empty()
-            return self._jupiter
+        from proseco.bright_object import check_for_close_planets
 
-        from proseco.jupiter import date_is_excluded
+        self._planets = check_for_close_planets(self.date, self.duration, self.att)
 
-        if date_is_excluded(self.date):
-            self._jupiter = JupiterPositionTable.empty()
-            return self._jupiter
+        # Cache brightest state metadata on each planet table so downstream logic
+        # can use a single source of truth without re-querying state files.
+        if self.date is not None:
+            import astropy.units as u
+            import numpy as np
+            from chandra_aca.planets import get_planet_mag_states
+            from cxotime import CxoTime
 
-        from proseco.jupiter import get_jupiter_position
+            duration = self.duration if self.duration is not None else 0.0
+            for planet_name, planet_positions in self._planets.items():
+                if len(planet_positions) == 0:
+                    continue
 
-        self._jupiter = get_jupiter_position(
-            self.date, self.duration, self.att, t_aca=self.t_aca
-        )
-        return self._jupiter
+                mag_states = get_planet_mag_states(
+                    planet_name,
+                    self.date,
+                    CxoTime(self.date) + duration * u.s,
+                )
+                if len(mag_states) == 0:
+                    continue
 
-    @jupiter.setter
-    def jupiter(self, value: Any) -> None:
-        from proseco.characteristics_jupiter import JupiterPositionTable
+                min_state_idx = np.argmin(mag_states["mag_start"])
+                action_col = "label" if "label" in mag_states.colnames else "mag_action"
+                planet_positions.meta["brightest_mag_action"] = str(
+                    mag_states[action_col][min_state_idx]
+                )
+                planet_positions.meta["brightest_mag_start"] = float(
+                    mag_states["mag_start"][min_state_idx]
+                )
+                planet_positions.meta["brightest_mag_stop"] = float(
+                    mag_states["mag_stop"][min_state_idx]
+                )
 
-        self._jupiter = (
-            value
-            if isinstance(value, JupiterPositionTable)
-            else JupiterPositionTable(value)
-        )
+        return self._planets
+
+    @planets.setter
+    def planets(self, value: dict[str, Any]) -> None:
+        """Set planet positions dictionary."""
+        from chandra_aca.planets import PlanetPositionTable
+
+        self._planets = {}
+        if value is None:
+            return
+
+        for planet_name, planet_data in value.items():
+            self._planets[planet_name] = (
+                planet_data
+                if isinstance(planet_data, PlanetPositionTable)
+                else PlanetPositionTable(planet_data)
+            )
 
     @property
     def dark(self):

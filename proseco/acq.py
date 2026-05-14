@@ -255,13 +255,30 @@ def get_acq_catalog(obsid=0, **kwargs):
     acqs.set_attrs_from_kwargs(obsid=obsid, **kwargs)
     acqs.set_stars()
 
-    # If Jupiter in the target name and field, update the stars with it as a bright
-    # object.
-    if len(acqs.jupiter) > 0:
-        from proseco.jupiter import add_jupiter_as_lots_of_acq_spoilers
+    # If bright planets are on-CCD, update stars with synthetic spoilers around
+    # each bright object for acquisition selection.
+    import astropy.units as u
+    from chandra_aca.planets import get_planet_mag_states
+    from cxotime import CxoTime
 
-        acqs.stars = add_jupiter_as_lots_of_acq_spoilers(
-            date=acqs.date, stars=acqs.stars, jupiter=acqs.jupiter
+    from proseco.bright_object import add_bright_object_as_acq_spoilers
+
+    for planet, planet_pos in acqs.planets.items():
+        if len(planet_pos) == 0:
+            continue
+
+        duration = acqs.duration if acqs.duration is not None else 0
+        mag_states = get_planet_mag_states(
+            planet, start=acqs.date, stop=CxoTime(acqs.date) + duration * u.s
+        )
+        if len(mag_states) == 0:
+            continue
+
+        acqs.stars = add_bright_object_as_acq_spoilers(
+            date=acqs.date,
+            stars=acqs.stars,
+            bright_object=planet_pos,
+            mag=np.min(mag_states["mag_start"]),
         )
 
     # Only allow imposters that are statistical outliers and are brighter than

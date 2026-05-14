@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 from astropy.table import Table
 from chandra_aca.aca_image import ACAImage, AcaPsfLibrary
+from chandra_aca.planets import PlanetPositionTable
 from chandra_aca.transform import count_rate_to_mag, mag_to_count_rate
 from Quaternion import Quat
 
@@ -654,12 +655,26 @@ def test_select_catalog_jupiter_weighted():
     assert set(selected1["id"]) == set([2, 3])
 
     # Simulate Jupiter data so only stars on opposite sides pass
-    # For testing this accesses the internal _jupiter attribute
+    # For testing this accesses the internal _planets attribute
     # directly, but this is not part of the public API.
-    guides._jupiter = Table([{"row": [100], "col": [0]}])
+    guides._planets = {"jupiter": Table([{"row": [100], "col": [0]}])}
     selected2 = guides.select_catalog(stars)
     # Should select the combo that passes the Jupiter check
     assert set(selected2["id"]) == set([1, 3])
+
+    # No-action state should not apply the weighted distribution check.
+    no_action_planet = PlanetPositionTable({"row": [100], "col": [0]})
+    no_action_planet.meta["brightest_mag_action"] = "no action"
+    guides._planets = {"jupiter": no_action_planet}
+    selected3 = guides.select_catalog(stars)
+    assert set(selected3["id"]) == set([2, 3])
+
+    # Partial mitigation state should apply the weighted distribution check.
+    partial_planet = PlanetPositionTable({"row": [100], "col": [0]})
+    partial_planet.meta["brightest_mag_action"] = "partial mitigation"
+    guides._planets = {"jupiter": partial_planet}
+    selected4 = guides.select_catalog(stars)
+    assert set(selected4["id"]) == set([1, 3])
 
 
 def test_select_catalog_fallback():
