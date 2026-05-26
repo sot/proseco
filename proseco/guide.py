@@ -12,6 +12,10 @@ from chandra_aca.transform import (
     snr_mag_for_t_ccd,
 )
 
+from proseco.bright_object import (
+    bright_object_distribution_check,
+    check_spoiled_by_bright_object,
+)
 from proseco.characteristics import MonFunc
 
 if TYPE_CHECKING:
@@ -648,8 +652,6 @@ class GuideTable(ACACatalogTable):
         best_score = -1
         best_cands = None
 
-        from proseco.bright_object import bright_object_distribution_check
-
         # Weight the bright-object distribution check for planets on CCD that are in
         # partial or full mitigation states during the observation window.
         planets_for_distribution_check = []
@@ -1172,8 +1174,6 @@ class GuideTable(ACACatalogTable):
         )
 
         # Filter stars that are spoiled by any planet
-        from proseco.bright_object import check_spoiled_by_bright_object
-
         for _, planet_positions in self.planets.items():
             spoiled_by_planet, planet_rej = check_spoiled_by_bright_object(
                 cand_guides, planet_positions

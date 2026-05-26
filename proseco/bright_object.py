@@ -4,6 +4,11 @@ import astropy.units as u
 import numpy as np
 from astropy.table import Table
 from chandra_aca import planets
+from chandra_aca.planets import (
+    convert_time_format_spk,
+    get_planet_angular_sep,
+    get_planet_chandra_ccd_position,
+)
 from cxotime import CxoTime, CxoTimeLike
 from Quaternion import QuatLike
 
@@ -19,13 +24,6 @@ def check_for_close_planets(
     att: QuatLike,
     tol=2.0,
 ) -> dict[str, "PlanetPositionTable"]:
-    from chandra_aca.planets import (
-        convert_time_format_spk,
-        get_planet_angular_sep,
-        get_planet_chandra_ccd_position,
-    )
-    from cxotime import CxoTime
-
     date0 = CxoTime(date)
     if duration is None:
         time_secs = convert_time_format_spk(date0, "secs")

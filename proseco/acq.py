@@ -10,16 +10,21 @@ import warnings
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import astropy.units as u
 import numpy as np
+from chandra_aca.planets import get_planet_mag_states
 from chandra_aca.star_probs import (
     acq_success_prob,
     get_default_acq_prob_model_info,
     prob_n_acq,
 )
 from chandra_aca.transform import mag_to_count_rate, pixels_to_yagzag, snr_mag_for_t_ccd
+from cxotime import CxoTime
 from scipy import ndimage, stats
 from scipy.interpolate import interp1d
 from ska_helpers.utils import LazyDict
+
+from proseco.bright_object import add_bright_object_as_acq_spoilers
 
 from . import characteristics as ACA
 from . import characteristics_acq as ACQ
@@ -257,12 +262,6 @@ def get_acq_catalog(obsid=0, **kwargs):
 
     # If bright planets are on-CCD, update stars with synthetic spoilers around
     # each bright object for acquisition selection.
-    import astropy.units as u
-    from chandra_aca.planets import get_planet_mag_states
-    from cxotime import CxoTime
-
-    from proseco.bright_object import add_bright_object_as_acq_spoilers
-
     for planet, planet_pos in acqs.planets.items():
         if len(planet_pos) == 0:
             continue
