@@ -641,7 +641,10 @@ class ACACatalogTable(BaseCatalogTable):
 
         # Only include planets that are actually on the CCD (len > 0)
         self._planets = {
-            k: v for k, v in check_for_close_planets(self.date, self.duration, self.att).items()
+            k: v
+            for k, v in check_for_close_planets(
+                self.date, self.duration, self.att
+            ).items()
             if len(v) > 0
         }
 
