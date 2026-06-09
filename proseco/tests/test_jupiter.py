@@ -436,6 +436,16 @@ def test_add_jupiter_as_spoilers_no_jupiter():
     assert out is stars
 
 
+def test_add_jupiter_as_spoilers_delayed_entry():
+    # If bright object first appears on CCD too long after acquisition start,
+    # no synthetic acquisition spoilers should be added.
+    date = "2025:220:12:00:00"
+    stars = StarsTable.empty()
+    delayed = Table({"time": [CxoTime(date).secs + 2500], "row": [100], "col": [100]})
+    out = bright_object.add_bright_object_as_acq_spoilers(date, stars, delayed)
+    assert out is stars
+
+
 def test_check_for_close_planets_includes_non_jupiter(monkeypatch):
     monkeypatch.setattr(bright_object.planets, "BRIGHT_PLANETS", ("venus", "mars"))
 

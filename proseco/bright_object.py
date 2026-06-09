@@ -283,6 +283,11 @@ def add_bright_object_as_acq_spoilers(
     # Bright object acq position
     acq_pos = get_bright_object_acq_pos(date, bright_object=bright_object)
 
+    # If the bright object is not on CCD close enough to acquisition start,
+    # skip adding synthetic spoilers for acquisition selection.
+    if acq_pos.row is None or acq_pos.col is None:
+        return stars
+
     out = stars.copy()
     idincr = 0
     for irow in np.arange(-505, 510, 5):
