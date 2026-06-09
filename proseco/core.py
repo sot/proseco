@@ -629,25 +629,26 @@ class ACACatalogTable(BaseCatalogTable):
 
     @property
     def planets(self) -> dict[str, "PlanetPositionTable"]:
-        """Dictionary of planet positions keyed by planet name (lowercase)."""
+        """
+        Dictionary of planet positions keyed by planet name (lowercase),
+        including only planets that are actually on the ACA CCD (len > 0).
+        """
         if hasattr(self, "_planets"):
             return self._planets
 
         if self.att is None or self.date is None:
             return {}
 
-        self._planets = check_for_close_planets(self.date, self.duration, self.att)
+        # Only include planets that are actually on the CCD (len > 0)
+        self._planets = {
+            k: v for k, v in check_for_close_planets(self.date, self.duration, self.att).items()
+            if len(v) > 0
+        }
 
         # Cache brightest state metadata on each planet table so downstream logic
         # can use a single source of truth without re-querying state files.
         duration = self.duration if self.duration is not None else 0.0
         for planet_name, planet_positions in self._planets.items():
-
-            # planet_positions may have zero length if the planet is within the
-            # check_for_close_planets tolerance but not actually on the CCD
-            if len(planet_positions) == 0:
-                continue
-
             mag_states = get_planet_mag_states(
                 planet_name,
                 self.date,
@@ -655,7 +656,6 @@ class ACACatalogTable(BaseCatalogTable):
             )
             if len(mag_states) == 0:
                 continue
-
             # Min magnitude state is the brightest one
             min_state_idx = np.argmin(mag_states["mag_start"])
             action_col = "label" if "label" in mag_states.colnames else "mag_action"

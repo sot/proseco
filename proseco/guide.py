@@ -656,9 +656,6 @@ class GuideTable(ACACatalogTable):
         # partial or full mitigation states during the observation window.
         planets_for_distribution_check = []
         for _, planet_positions in self.planets.items():
-            if len(planet_positions) == 0:
-                continue
-
             brightest_mag_action = planet_positions.meta.get("brightest_mag_action")
 
             # Allow tests that directly set _planets and omit metadata.

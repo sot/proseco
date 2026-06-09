@@ -437,8 +437,6 @@ def test_add_jupiter_as_spoilers_no_jupiter():
 
 
 def test_check_for_close_planets_includes_non_jupiter(monkeypatch):
-    import chandra_aca.planets as planet_utils
-
     monkeypatch.setattr(bright_object.planets, "BRIGHT_PLANETS", ("venus", "mars"))
 
     def fake_get_planet_angular_sep(planet, ra, dec, time, observer_position):
@@ -452,11 +450,12 @@ def test_check_for_close_planets_includes_non_jupiter(monkeypatch):
             {"time": [CxoTime(date).secs], "row": [0.0], "col": [0.0]}
         )
 
+    # Patch on bright_object module since these are module-level bindings there
     monkeypatch.setattr(
-        planet_utils, "get_planet_angular_sep", fake_get_planet_angular_sep
+        bright_object, "get_planet_angular_sep", fake_get_planet_angular_sep
     )
     monkeypatch.setattr(
-        planet_utils,
+        bright_object,
         "get_planet_chandra_ccd_position",
         fake_get_planet_chandra_ccd_position,
     )

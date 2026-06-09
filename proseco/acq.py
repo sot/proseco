@@ -263,9 +263,6 @@ def get_acq_catalog(obsid=0, **kwargs):
     # If bright planets are on-CCD, update stars with synthetic spoilers around
     # each bright object for acquisition selection.
     for planet, planet_pos in acqs.planets.items():
-        if len(planet_pos) == 0:
-            continue
-
         duration = acqs.duration if acqs.duration is not None else 0
         mag_states = get_planet_mag_states(
             planet, start=acqs.date, stop=CxoTime(acqs.date) + duration * u.s
