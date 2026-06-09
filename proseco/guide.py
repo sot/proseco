@@ -12,6 +12,10 @@ from chandra_aca.transform import (
     snr_mag_for_t_ccd,
 )
 
+from proseco.bright_object import (
+    bright_object_distribution_check,
+    check_spoiled_by_bright_object,
+)
 from proseco.characteristics import MonFunc
 
 if TYPE_CHECKING:
@@ -648,9 +652,28 @@ class GuideTable(ACACatalogTable):
         best_score = -1
         best_cands = None
 
-        # The best possible score is 3 for 3 cluster checks or 8 for 3 cluster checks plus
-        # a weighted-5 jupiter check
-        best_possible_score = 8 if self.jupiter else 3
+        # Weight the bright-object distribution check for planets on CCD that are in
+        # partial or full mitigation states during the observation window.
+        planets_for_distribution_check = []
+        for _, planet_positions in self.planets.items():
+            brightest_mag_action = planet_positions.meta.get("brightest_mag_action")
+
+            # Allow tests that directly set _planets and omit metadata.
+            if brightest_mag_action is None:
+                planets_for_distribution_check.append(planet_positions)
+                continue
+
+            if brightest_mag_action not in ("partial mitigation", "full mitigation"):
+                continue
+
+            planets_for_distribution_check.append(planet_positions)
+
+        planet_check_weight = 5
+        # The best possible score is 3 for the 3 cluster checks plus any weighted
+        # bright-object distribution checks.
+        best_possible_score = 3 + planet_check_weight * len(
+            planets_for_distribution_check
+        )
 
         for comb in index_combinations(len(stage_cands), choose_m):
             cands = stage_cands[list(comb)]
@@ -668,12 +691,11 @@ class GuideTable(ACACatalogTable):
             cluster_check_status = run_cluster_checks(cands)
             score += np.sum(cluster_check_status) * cluster_weights
 
-            if len(self.jupiter) > 0:
-                jupiter_weight = 5
-                from proseco.jupiter import jupiter_distribution_check
-
-                jupiter_check_status = jupiter_distribution_check(cands, self.jupiter)
-                score += np.sum([jupiter_check_status]) * jupiter_weight
+            for planet_positions in planets_for_distribution_check:
+                distribution_check_status, _ = bright_object_distribution_check(
+                    cands, planet_positions
+                )
+                score += int(distribution_check_status) * planet_check_weight
 
             if score > best_score:
                 best_score = score
@@ -1148,18 +1170,16 @@ class GuideTable(ACACatalogTable):
             f"{len(cand_guides)} candidate guide stars"
         )
 
-        if len(self.jupiter) > 0:
-            from proseco.jupiter import check_spoiled_by_jupiter
-
-            # Exclude candidates within 15 columns of Jupiter
-            spoiled_by_jupiter, jupiter_rej = check_spoiled_by_jupiter(
-                cand_guides, self.jupiter
+        # Filter stars that are spoiled by any planet
+        for _, planet_positions in self.planets.items():
+            spoiled_by_planet, planet_rej = check_spoiled_by_bright_object(
+                cand_guides, planet_positions
             )
-            if np.any(spoiled_by_jupiter):
-                for rej in jupiter_rej:
+            if np.any(spoiled_by_planet):
+                for rej in planet_rej:
                     rej["stage"] = 0
                     self.reject(rej)
-                cand_guides = cand_guides[~spoiled_by_jupiter]
+                cand_guides = cand_guides[~spoiled_by_planet]
 
         # Get the brightest 2x2 in the dark map for each candidate and save value and location
         imp_mag, imp_row, imp_col = get_imposter_mags(

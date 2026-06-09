@@ -16,8 +16,8 @@ from . import characteristics as ACA
 from . import characteristics_acq as ACQ
 from . import characteristics_fid as FID
 from . import guide
+from .bright_object import is_spoiled_by_bright_object
 from .core import ACACatalogTable, AliasAttribute, MetaAttribute
-from .jupiter import is_spoiled_by_jupiter
 
 
 def get_fid_catalog(obsid=0, **kwargs):
@@ -392,7 +392,10 @@ class FidTable(ACACatalogTable):
                 or self.near_hot_or_bad_pixel(fid)
                 or self.has_column_spoiler(fid, self.stars, stars_mask)
                 or self.is_excluded(fid)
-                or is_spoiled_by_jupiter(fid, self.jupiter)
+                or any(
+                    is_spoiled_by_bright_object(fid, planet_positions)
+                    for planet_positions in self.planets.values()
+                )
             )
             included = fid["id"] in self.include_ids_fid
             if not included and excluded:

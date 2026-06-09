@@ -1,13 +1,12 @@
 import numpy as np
 import pytest
 from astropy.table import Table
-from chandra_aca import planets, transform
+from chandra_aca.planets import PlanetPositionTable
 from cheta import fetch
 from cxotime import CxoTime
 from Quaternion import Quat
 
-from proseco import get_aca_catalog, jupiter
-from proseco.characteristics_jupiter import JupiterPositionTable
+from proseco import bright_object, get_aca_catalog
 from proseco.core import StarsTable
 from proseco.tests.test_common import DARK40, mod_std_info
 
@@ -18,51 +17,6 @@ try:
     HAS_CHETA_EPHEM = True
 except Exception:
     HAS_CHETA_EPHEM = False
-
-
-@pytest.mark.skipif(not HAS_CHETA_EPHEM, reason="Requires cheta ephemeris access")
-def test_jupiter_position():
-    """
-    Test jupiter.get_jupiter_position
-
-    Test jupiter.get_jupiter_position against chandra_aca.planets.get_planet_chandra for
-    a known date and attitude. This is from obsid 23375.
-
-    The proseco code is using the stk ephemeris instead of the cheta predictive
-    ephemeris used by chandra_aca.planets.get_planet_chandra.
-    """
-    att = Quat(q=[-0.51186291, 0.27607314, -0.17243277, 0.79501379])
-    date = "2021:290:11:33:16.000"
-    duration = 36000
-    jupiter_proseco_data = jupiter.get_jupiter_position(date, duration, att, t_aca=25.0)
-    eci = planets.get_planet_chandra("jupiter", jupiter_proseco_data["time"])
-    ra, dec = transform.eci_to_radec(eci)
-    yag, zag = transform.radec_to_yagzag(ra, dec, att)
-    row, col = transform.yagzag_to_pixels(yag, zag, t_aca=25.0)
-
-    jupiter_aca_data = JupiterPositionTable(
-        {"time": jupiter_proseco_data["time"], "row": row, "col": col}
-    )
-    # Compare the two tables
-    assert len(jupiter_proseco_data) == len(jupiter_aca_data)
-    assert np.allclose(
-        jupiter_proseco_data["row"], jupiter_aca_data["row"], atol=0.1, rtol=0
-    )
-    assert np.allclose(
-        jupiter_proseco_data["col"], jupiter_aca_data["col"], atol=0.1, rtol=0
-    )
-
-
-def test_jupiter_exclude_dates():
-    # Dates within the exclude range should return True
-    assert jupiter.date_is_excluded("2026:150")
-    assert jupiter.date_is_excluded("2026-05-10")
-    assert jupiter.date_is_excluded("2026:300")
-    # Dates outside the exclude range should return False
-    assert not jupiter.date_is_excluded("2026:100")
-    assert not jupiter.date_is_excluded("2026:310")
-    assert not jupiter.date_is_excluded("2025-09-04")
-    assert not jupiter.date_is_excluded("2027:130")
 
 
 def test_jupiter_offset_left():
@@ -121,7 +75,7 @@ def test_jupiter_offset_left():
     assert len(aca.guides) == 2
 
     # Confirm Jupiter is all on the left side of the CCD
-    assert np.all(aca.jupiter["row"] < 0)
+    assert np.all(aca.planets["jupiter"]["row"] < 0)
 
     # Confirm two guide stars on the opposite side of the CCD
     # This checks optimization because there is a brighter star
@@ -129,7 +83,7 @@ def test_jupiter_offset_left():
     assert np.sum(aca.guides["row"] > 0) >= 2
 
     # Confirm no guide stars within 15 columns of Jupiter
-    for jcol in aca.jupiter["col"]:
+    for jcol in aca.planets["jupiter"]["col"]:
         dcol = np.abs(aca.guides["col"] - jcol)
         assert np.all(dcol > 15)
 
@@ -171,7 +125,7 @@ def test_jupiter_offset_right():
         )
     )
     # >>> aca.jupiter
-    # <JupiterPositionTable length=22>
+    # <PlanetPositionTable length=22>
     #        time              row                 col
     #      float64           float64             float64
     # ----------------- ------------------ -------------------
@@ -211,7 +165,7 @@ def test_jupiter_offset_right():
     assert len(aca.guides) == 2
 
     # Confirm Jupiter is all on the right side of the CCD
-    assert np.all(aca.jupiter["row"] > 0)
+    assert np.all(aca.planets["jupiter"]["row"] > 0)
 
     # Confirm two guide stars on the opposite side of the CCD
     # This checks optimization because there is a brighter star
@@ -219,7 +173,7 @@ def test_jupiter_offset_right():
     assert np.sum(aca.guides["row"] < 0) >= 2
 
     # Confirm no guide stars within 15 columns of Jupiter
-    for jcol in aca.jupiter["col"]:
+    for jcol in aca.planets["jupiter"]["col"]:
         dcol = np.abs(aca.guides["col"] - jcol)
         assert np.all(dcol > 15)
 
@@ -254,8 +208,8 @@ def test_jupiter_midline():
         )
     )
     # Confirm Jupiter is on both sides of the CCD
-    assert np.max(aca.jupiter["row"]) > 0
-    assert np.min(aca.jupiter["row"]) < 0
+    assert np.max(aca.planets["jupiter"]["row"]) > 0
+    assert np.min(aca.planets["jupiter"]["row"]) < 0
 
     # Confirm two guide stars on each side of the CCD
     assert np.sum(aca.guides["row"] > 0) >= 2
@@ -266,7 +220,7 @@ def test_jupiter_midline():
     assert 204 in aca.guides["id"]
 
     # Confirm no guide stars within 15 columns of Jupiter
-    for jcol in aca.jupiter["col"]:
+    for jcol in aca.planets["jupiter"]["col"]:
         dcol = np.abs(aca.guides["col"] - jcol)
         assert np.all(dcol > 15)
 
@@ -286,8 +240,12 @@ def test_jupiter_acquisition(col_dist_arcsec):
     att = Quat(q=[-0.49963289, 0.25613709, -0.16664083, 0.81055018])
     stars.att = att
     date = "2021:249:12:00:00.000"
-    jupiter_pos = jupiter.get_jupiter_position(date, 30000, att)
-    jupiter_acq_pos = jupiter.get_jupiter_acq_pos(date, jupiter=jupiter_pos)
+    from chandra_aca.planets import get_planet_chandra_ccd_position
+
+    jupiter_pos = get_planet_chandra_ccd_position("jupiter", date, 30000, att)
+    jupiter_acq_pos = bright_object.get_bright_object_acq_pos(
+        date, bright_object=jupiter_pos
+    )
 
     col_dist = int(col_dist_arcsec / 5)
     stars.add_fake_star(id=200, mag=6.5, row=-300, col=400)
@@ -390,10 +348,12 @@ def test_get_jupiter_position_returns_table():
     date = "2025:093:12:26:04.000"
     duration = 10500  # seconds
     att = Quat(q=[-0.43419701, -0.51408310, 0.33920339, 0.65736792])
-    out = jupiter.get_jupiter_position(date, duration, att)
+    from chandra_aca.planets import get_planet_chandra_ccd_position
 
-    # Should return a JupiterPositionTable
-    assert isinstance(out, JupiterPositionTable)
+    out = get_planet_chandra_ccd_position("jupiter", date, duration, att)
+
+    # Should return a PlanetPositionTable
+    assert isinstance(out, PlanetPositionTable)
     assert out.colnames == ["time", "row", "col"]
     assert len(out) == 12
 
@@ -404,31 +364,47 @@ def test_get_jupiter_position_returns_table():
 
 def test_jupiter_distribution_check_1():
     # Simulate jupiter_data crosses 0
-    jupiter_data = JupiterPositionTable({"row": [-10, 20]})
+    jupiter_data = PlanetPositionTable({"row": [-10, 20], "col": [-10, 10]})
     cand_guide_set = Table({"row": [-400, -300, 400, 300]})
     # Should pass: at least two on each side
-    assert jupiter.jupiter_distribution_check(cand_guide_set, jupiter_data)
+    distribution_ok, crosses_midline = bright_object.bright_object_distribution_check(
+        cand_guide_set, jupiter_data
+    )
+    assert distribution_ok
+    assert crosses_midline
     # Should fail: only with all on one side
     cand_guide_set = Table({"row": [-400, -300, -200]})
-    assert not jupiter.jupiter_distribution_check(cand_guide_set, jupiter_data)
+    distribution_ok, crosses_midline = bright_object.bright_object_distribution_check(
+        cand_guide_set, jupiter_data
+    )
+    assert not distribution_ok
+    assert crosses_midline
 
 
 def test_jupiter_distribution_check_2():
     # Simulate jupiter_data all positive
-    jupiter_data = JupiterPositionTable({"row": [10, 20]})
+    jupiter_data = PlanetPositionTable({"row": [10, 20], "col": [10, 20]})
     cand_guide_set = Table({"row": [-400, -300, 400, 300]})
     # Should pass: at least two on each side
-    assert jupiter.jupiter_distribution_check(cand_guide_set, jupiter_data)
+    distribution_ok, crosses_midline = bright_object.bright_object_distribution_check(
+        cand_guide_set, jupiter_data
+    )
+    assert distribution_ok
+    assert not crosses_midline
     # Should fail: only one on opposite side
     cand_guide_set = Table({"row": [400, 300, -200]})
-    assert not jupiter.jupiter_distribution_check(cand_guide_set, jupiter_data)
+    distribution_ok, crosses_midline = bright_object.bright_object_distribution_check(
+        cand_guide_set, jupiter_data
+    )
+    assert not distribution_ok
+    assert not crosses_midline
 
 
 def test_check_spoiled_by_jupiter():
     # Simulate candidate stars and jupiter data
     cand_stars = Table({"id": [1, 2, 3], "col": [10, 50, 100], "row": [0, 0, 0]})
-    jupiter_data = JupiterPositionTable({"col": [40, 60], "row": [0, 0]})
-    mask, rej = jupiter.check_spoiled_by_jupiter(cand_stars, jupiter_data)
+    jupiter_data = PlanetPositionTable({"col": [40, 60], "row": [0, 0]})
+    mask, rej = bright_object.check_spoiled_by_bright_object(cand_stars, jupiter_data)
     # Only star with col=50 should be spoiled (within 15 pixels of Jupiter)
     assert np.array_equal(mask, [False, True, False])
     assert len(rej) == 1
@@ -436,7 +412,7 @@ def test_check_spoiled_by_jupiter():
         "id": 2,
         "row": 0,
         "col": 50,
-        "reason": "spoiled by Jupiter",
+        "reason": "spoiled by bright object",
         "stage": 0,
     }
 
@@ -445,7 +421,7 @@ def test_add_jupiter_as_spoilers():
     date = "2025:220:12:00:00"
     stars = StarsTable.empty()
     jupiter_data = Table({"time": [CxoTime(date).secs], "row": [100], "col": [100]})
-    out = jupiter.add_jupiter_as_lots_of_acq_spoilers(date, stars, jupiter_data)
+    out = bright_object.add_bright_object_as_acq_spoilers(date, stars, jupiter_data)
     # Should add many new stars (>1000) with new ids starting at 1000
     assert len(out) > 1000
     assert 1000 in out["id"]
@@ -454,7 +430,50 @@ def test_add_jupiter_as_spoilers():
 def test_add_jupiter_as_spoilers_no_jupiter():
     # Should return stars unchanged if jupiter has zero length
     stars = Table({"row": [0], "col": [0], "mag": [8.0], "id": [1], "CLASS": [0]})
-    out = jupiter.add_jupiter_as_lots_of_acq_spoilers(
-        "2025:220:12:00:00", stars, JupiterPositionTable.empty()
+    out = bright_object.add_bright_object_as_acq_spoilers(
+        "2025:220:12:00:00", stars, PlanetPositionTable.empty()
     )
     assert out is stars
+
+
+def test_add_jupiter_as_spoilers_delayed_entry():
+    # If bright object first appears on CCD too long after acquisition start,
+    # no synthetic acquisition spoilers should be added.
+    date = "2025:220:12:00:00"
+    stars = StarsTable.empty()
+    delayed = Table({"time": [CxoTime(date).secs + 2500], "row": [100], "col": [100]})
+    out = bright_object.add_bright_object_as_acq_spoilers(date, stars, delayed)
+    assert out is stars
+
+
+def test_check_for_close_planets_includes_non_jupiter(monkeypatch):
+    monkeypatch.setattr(bright_object.planets, "BRIGHT_PLANETS", ("venus", "mars"))
+
+    def fake_get_planet_angular_sep(planet, ra, dec, time, observer_position):
+        return np.array([0.5])
+
+    def fake_get_planet_chandra_ccd_position(
+        planet, date, duration, att, ccd_pad, ephem_source
+    ):
+        assert ephem_source == "stk"
+        return PlanetPositionTable(
+            {"time": [CxoTime(date).secs], "row": [0.0], "col": [0.0]}
+        )
+
+    # Patch on bright_object module since these are module-level bindings there
+    monkeypatch.setattr(
+        bright_object, "get_planet_angular_sep", fake_get_planet_angular_sep
+    )
+    monkeypatch.setattr(
+        bright_object,
+        "get_planet_chandra_ccd_position",
+        fake_get_planet_chandra_ccd_position,
+    )
+
+    att = Quat(q=[-0.49963289, 0.25613709, -0.16664083, 0.81055018])
+    out = bright_object.check_for_close_planets(
+        date="2025:220:12:00:00", duration=1000, att=att
+    )
+
+    assert set(out) == {"venus", "mars"}
+    assert all(isinstance(tbl, PlanetPositionTable) for tbl in out.values())
