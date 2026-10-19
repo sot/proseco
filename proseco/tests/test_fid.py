@@ -232,7 +232,8 @@ def test_fid_spoiling_acq(dither_z, FIDS):
         stars.add_fake_star(
             yang=fid["yang"] + offset + dither_y,
             zang=fid["zang"] + offset + dither_z,
-            mag=7.0,
+            # Faint enough to not be a fid search spoiler
+            mag=7.5,
         )
 
     std_info = STD_INFO.copy()
@@ -301,7 +302,8 @@ def test_fid_spoiler_score(FIDS):
         stars.add_fake_star(
             yang=fid["yang"] + FID.spoiler_margin + dither_y + offset,
             zang=fid["zang"] + FID.spoiler_margin + dither_z + offset,
-            mag=7.0,
+            # Faint enough to not be a fid search spoiler
+            mag=8.0,
         )
 
     dither = (dither_y, dither_z)
@@ -310,6 +312,48 @@ def test_fid_spoiler_score(FIDS):
     std_info["dither"] = dither
     fids = get_fid_catalog(stars=stars, **std_info)
     assert np.all(fids.cand_fids["spoiler_score"] == [0, 4, 0, 0, 0, 0])
+
+
+@pytest.mark.parametrize("axis", ["yang", "zang"])
+def test_fid_search_spoiler(FIDS, axis):
+    """Test fid search spoiler (bright star acquired instead of fid in fid search).
+
+    Based on obsid 33497 where a 6.94 mag star at dy=29, dz=-68 from fid 6 was
+    acquired instead of the fid.
+    """
+    dither_y = 8
+    dither_z = 16
+    dither = {"yang": dither_y, "zang": dither_z}
+    margin = FID.search_box_halfwidth + FID.search_maneuver_error + dither[axis]
+    mag_lim = FID.fid_mag + FID.search_spoiler_mag_margin
+    stars = StarsTable.empty()
+    # (dist offset from margin, mag): only the first is a search spoiler.
+    # - Inside margin and bright enough: spoiler
+    # - Inside margin but too faint
+    # - Outside margin and bright
+    for fid, (offset, mag) in zip(
+        FIDS, [(-1, mag_lim - 0.01), (-1, mag_lim + 0.01), (1, mag_lim - 0.01)]
+    ):
+        pos = {"yang": fid["yang"], "zang": fid["zang"]}
+        pos[axis] -= margin + offset
+        stars.add_fake_star(**pos, mag=mag)
+
+    std_info = STD_INFO.copy()
+    std_info["dither"] = (dither_y, dither_z)
+    fids = get_fid_catalog(stars=stars, **std_info)
+    cand_fids = fids.cand_fids
+
+    scores = {fid["id"]: fid["spoiler_score"] for fid in cand_fids}
+    assert scores[FIDS["id"][0]] == 4
+    assert scores[FIDS["id"][1]] == 0
+    assert scores[FIDS["id"][2]] == 0
+    assert sum(scores.values()) == 4
+
+    spoilers = cand_fids.get_id(FIDS["id"][0])["spoilers"]
+    assert len(spoilers) == 1
+    assert spoilers["warn"][0] == "red"
+    # The fid set must not include the spoiled fid
+    assert FIDS["id"][0] not in fids["id"]
 
 
 def test_big_sim_offset():

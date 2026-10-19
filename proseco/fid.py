@@ -475,6 +475,13 @@ class FidTable(ACACatalogTable):
         It also sets the 'spoiler_score' based on:
         - 1 for yellow spoiler (4 <= star_mag - fid_mag < 5)
         - 4 for red spoiler (star_mag - fid_mag < 4)
+        - 4 for red search spoiler (see below)
+
+        A search spoiler is a star that could be acquired and tracked instead of the
+        fid light during the fid search at the end of a maneuver. This is a star with
+        star_mag < fid_mag + FID.search_spoiler_mag_margin (0.25) and offset from the
+        fid in each axis less than FID.search_box_halfwidth (40 arcsec, the on-board
+        value) + FID.search_maneuver_error (80 arcsec) + dither.
 
         Additionally, if the fid is in the fid_trap region and there is a potential guide
         candidate that would trigger the fid trap effect, the 'fid_trap_spoiler' flag is set.
@@ -500,22 +507,42 @@ class FidTable(ACACatalogTable):
                     level=1,
                 )
 
-        # Potential spoiler by position
-        spoil = (
-            np.abs(stars["yang"] - fid["yang"]) < FID.spoiler_margin + dither.y
-        ) & (np.abs(stars["zang"] - fid["zang"]) < FID.spoiler_margin + dither.z)
+        dy = np.abs(stars["yang"] - fid["yang"])
+        dz = np.abs(stars["zang"] - fid["zang"])
 
-        if not np.any(spoil):
+        # Potential fid spoiler during tracking which is near nominal fid position
+        spoil_track = (dy < FID.spoiler_margin + dither.y) & (
+            dz < FID.spoiler_margin + dither.z
+        )
+
+        # Potential search spoiler: star bright enough and close enough to be
+        # acquired instead of the fid light in the fid search.
+        search_margin = FID.search_box_halfwidth + FID.search_maneuver_error
+        spoil_search = (
+            (dy < search_margin + dither.y)
+            & (dz < search_margin + dither.z)
+            & (stars["mag"] < fid["mag"] + FID.search_spoiler_mag_margin)
+        )
+        if np.any(spoil_search):
+            self.log(
+                f"Fid {fid['id']} has search spoiler star(s) "
+                f"{stars['id'][spoil_search].tolist()}",
+                level=1,
+            )
+
+        if not np.any(spoil_track | spoil_search):
             # Make an empty table with same columns
             fid["spoilers"] = []
         else:
-            stars = stars[spoil]
+            # Select stars that are spoiled in one of two ways. Filter spoil_search in
+            # the same way to align with the filtered stars.
+            ok = spoil_track | spoil_search
+            stars = stars[ok]
+            spoil_search = spoil_search[ok]
 
-            # Now check mags
-            red = stars["mag"] - fid["mag"] < 4.0
-            yellow = (stars["mag"] - fid["mag"] >= 4.0) & (
-                stars["mag"] - fid["mag"] < 5.0
-            )
+            # Now set red and yellow based on either mag or search spoiler
+            red = (stars["mag"] - fid["mag"] < 4.0) | spoil_search
+            yellow = ~red & (stars["mag"] - fid["mag"] < 5.0)
 
             spoilers = stars[red | yellow]
             spoilers.sort("mag")
