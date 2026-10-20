@@ -530,13 +530,12 @@ class FidTable(ACACatalogTable):
                 level=1,
             )
 
-        if not np.any(spoil_track | spoil_search):
+        if not np.any(ok := (spoil_track | spoil_search)):
             # Make an empty table with same columns
             fid["spoilers"] = []
         else:
             # Select stars that are spoiled in one of two ways. Filter spoil_search in
             # the same way to align with the filtered stars.
-            ok = spoil_track | spoil_search
             stars = stars[ok]
             spoil_search = spoil_search[ok]
 
