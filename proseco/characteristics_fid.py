@@ -303,6 +303,19 @@ ccd_edge_margin = 11  # pixels
 # 2 pixel PSF of spoiler star = 10 pixels
 spoiler_margin = 50  # arcsec
 
+# Fid search spoiler: a star that the OBC could acquire and track instead of the
+# fid light during the fid search at the end of a maneuver. A star is a search
+# spoiler if it is brighter than fid_mag + search_spoiler_mag_margin and the star
+# offset from the fid is within (in each axis) the search box halfwidth + maneuver
+# error + acq dither.
+search_spoiler_mag_margin = 0.25  # mag
+# Fid search box halfwidth. This is hardcoded on-board (patched in 2022) and is NOT
+# the halfw value in the star catalog (25 arcsec).
+search_box_halfwidth = 40  # arcsec
+# Typical max attitude error at the end of the maneuver when fid search commands are
+# issued.
+search_maneuver_error = 80  # arcsec
+
 # Maximum hot pixel dark current which corresponds to a 1.5 arcsec FM centroid
 # offset for a 7.0 mag fid with hot pixel location at the edge of the 8x8 box.
 # This is the limit at which fid is rejected as a candidate if a pixel brighter
