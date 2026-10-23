@@ -307,7 +307,7 @@ spoiler_margin = 50  # arcsec
 # fid light during the fid search at the end of a maneuver. A star is a search
 # spoiler if it is brighter than fid_mag + search_spoiler_mag_margin and the star
 # offset from the fid is within (in each axis) the search box halfwidth + maneuver
-# error + dither.
+# error + acq dither.
 search_spoiler_mag_margin = 0.25  # mag
 # Fid search box halfwidth. This is hardcoded on-board (patched in 2022) and is NOT
 # the halfw value in the star catalog (25 arcsec).

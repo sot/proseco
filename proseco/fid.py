@@ -481,7 +481,7 @@ class FidTable(ACACatalogTable):
         fid light during the fid search at the end of a maneuver. This is a star with
         star_mag < fid_mag + FID.search_spoiler_mag_margin (0.25) and offset from the
         fid in each axis less than FID.search_box_halfwidth (40 arcsec, the on-board
-        value) + FID.search_maneuver_error (80 arcsec) + dither.
+        value) + FID.search_maneuver_error (80 arcsec) + acq dither.
 
         Additionally, if the fid is in the fid_trap region and there is a potential guide
         candidate that would trigger the fid trap effect, the 'fid_trap_spoiler' flag is set.
@@ -519,8 +519,8 @@ class FidTable(ACACatalogTable):
         # acquired instead of the fid light in the fid search.
         search_margin = FID.search_box_halfwidth + FID.search_maneuver_error
         spoil_search = (
-            (dy < search_margin + dither.y)
-            & (dz < search_margin + dither.z)
+            (dy < search_margin + self.dither_acq.y)
+            & (dz < search_margin + self.dither_acq.z)
             & (stars["mag"] < fid["mag"] + FID.search_spoiler_mag_margin)
         )
         if np.any(spoil_search):

@@ -320,10 +320,13 @@ def test_fid_search_spoiler(FIDS, axis):
 
     Based on obsid 33497 where a 6.94 mag star at dy=29, dz=-68 from fid 6 was
     acquired instead of the fid.
+
+    The search margin uses the acq dither. The guide dither is set larger so that the
+    star just outside the margin would be a spoiler if guide dither were used.
     """
-    dither_y = 8
-    dither_z = 16
-    dither = {"yang": dither_y, "zang": dither_z}
+    dither_acq = (8, 16)
+    dither_guide = (20, 40)
+    dither = dict(zip(["yang", "zang"], dither_acq))
     margin = FID.search_box_halfwidth + FID.search_maneuver_error + dither[axis]
     mag_lim = FID.fid_mag + FID.search_spoiler_mag_margin
     stars = StarsTable.empty()
@@ -339,8 +342,10 @@ def test_fid_search_spoiler(FIDS, axis):
         stars.add_fake_star(**pos, mag=mag)
 
     std_info = STD_INFO.copy()
-    std_info["dither"] = (dither_y, dither_z)
-    fids = get_fid_catalog(stars=stars, **std_info)
+    del std_info["dither"]
+    fids = get_fid_catalog(
+        stars=stars, dither_acq=dither_acq, dither_guide=dither_guide, **std_info
+    )
     cand_fids = fids.cand_fids
 
     scores = {fid["id"]: fid["spoiler_score"] for fid in cand_fids}
