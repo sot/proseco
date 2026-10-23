@@ -312,7 +312,8 @@ search_spoiler_mag_margin = 0.25  # mag
 # Fid search box halfwidth. This is hardcoded on-board (patched in 2022) and is NOT
 # the halfw value in the star catalog (25 arcsec).
 search_box_halfwidth = 40  # arcsec
-# Attitude error at the end of the maneuver when fid search commands are issued.
+# Typical max attitude error at the end of the maneuver when fid search commands are
+# issued.
 search_maneuver_error = 80  # arcsec
 
 # Maximum hot pixel dark current which corresponds to a 1.5 arcsec FM centroid
