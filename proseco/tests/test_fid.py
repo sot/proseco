@@ -314,6 +314,25 @@ def test_fid_spoiler_score(FIDS):
     assert np.all(fids.cand_fids["spoiler_score"] == [0, 4, 0, 0, 0, 0])
 
 
+def test_fid_spoiler_warn_labels(FIDS):
+    """Test that spoiler warn labels stay with the right star after sorting by mag.
+
+    Stars are added in reverse mag order (yellow then red) so that sorting by mag
+    reorders them.
+    """
+    fid = FIDS[0]
+    stars = StarsTable.empty()
+    # Yellow: 4 <= star_mag - fid_mag < 5
+    stars.add_fake_star(yang=fid["yang"] + 10, zang=fid["zang"] + 10, mag=11.5)
+    # Red: star_mag - fid_mag < 4
+    stars.add_fake_star(yang=fid["yang"] + 20, zang=fid["zang"] + 20, mag=8.0)
+
+    fids = get_fid_catalog(stars=stars, **STD_INFO)
+    spoilers = fids.cand_fids.get_id(fid["id"])["spoilers"]
+    assert spoilers["mag"].tolist() == [8.0, 11.5]
+    assert spoilers["warn"].tolist() == ["red", "yellow"]
+
+
 @pytest.mark.parametrize("axis", ["yang", "zang"])
 def test_fid_search_spoiler(FIDS, axis):
     """Test fid search spoiler (bright star acquired instead of fid in fid search).

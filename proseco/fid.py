@@ -544,8 +544,8 @@ class FidTable(ACACatalogTable):
             yellow = ~red & (stars["mag"] - fid["mag"] < 5.0)
 
             spoilers = stars[red | yellow]
-            spoilers.sort("mag")
             spoilers["warn"] = np.where(red[red | yellow], "red", "yellow")
+            spoilers.sort("mag")
             fid["spoilers"] = spoilers
 
             if np.any(red):
