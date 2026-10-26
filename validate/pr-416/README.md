@@ -28,19 +28,19 @@ git worktree add --detach $OUT/proseco-master origin/master
 
 # PYTHONPATH selects the proseco under test (script dir is first on sys.path, so
 # PYTHONPATH wins over the repo checkout).
-env PYTHONPATH=$OUT/proseco-master python validation/pr-416/rerun_loads.py \
+env PYTHONPATH=$OUT/proseco-master python validate/pr-416/rerun_loads.py \
     --out-dir $OUT/runs/master $LOADS
-env PYTHONPATH=$PWD python validation/pr-416/rerun_loads.py \
+env PYTHONPATH=$PWD python validate/pr-416/rerun_loads.py \
     --out-dir $OUT/runs/pr416 $LOADS
 
-python validation/pr-416/diff_loads.py $OUT/runs/master $OUT/runs/pr416
+python validate/pr-416/diff_loads.py $OUT/runs/master $OUT/runs/pr416
 
 # Flight fid acquisition for each changed catalog
 M=$SKA/data/mpcrit1/mplogs/2026
-python validation/pr-416/check_fid_acq.py $M/APR2026/oflsa/output/APR2026A_proseco.pkl.gz 31516 3
-python validation/pr-416/check_fid_acq.py $M/AUG3126/oflsa/output/AUG3126A_proseco.pkl.gz 32521 4
-python validation/pr-416/check_fid_acq.py $M/OCT1226/oflsa/output/OCT1226A_proseco.pkl.gz 31770 6
-python validation/pr-416/check_fid_acq.py $M/OCT1226/oflsa/output/OCT1226A_proseco.pkl.gz 33497 6
+python validate/pr-416/check_fid_acq.py $M/APR2026/oflsa/output/APR2026A_proseco.pkl.gz 31516 3
+python validate/pr-416/check_fid_acq.py $M/AUG3126/oflsa/output/AUG3126A_proseco.pkl.gz 32521 4
+python validate/pr-416/check_fid_acq.py $M/OCT1226/oflsa/output/OCT1226A_proseco.pkl.gz 31770 6
+python validate/pr-416/check_fid_acq.py $M/OCT1226/oflsa/output/OCT1226A_proseco.pkl.gz 33497 6
 ```
 
 Each `rerun_loads.py` run takes about 1 minute with 10 processes on an M-series Mac.

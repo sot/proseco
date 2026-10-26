@@ -17,7 +17,7 @@ frame. Requires cheta telemetry access.
 
 Example::
 
-  python validation/pr-416/check_fid_acq.py \\
+  python validate/pr-416/check_fid_acq.py \\
       $SKA/data/mpcrit1/mplogs/2026/OCT1226/oflsa/output/OCT1226A_proseco.pkl.gz 33497 6
 """
 

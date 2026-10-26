@@ -12,7 +12,7 @@ spoilers (star mag < fid mag + FID.search_spoiler_mag_margin) in the new run.
 
 Example from the proseco repo root::
 
-  python validation/pr-416/diff_loads.py runs/master runs/pr416
+  python validate/pr-416/diff_loads.py runs/master runs/pr416
 """
 
 import argparse

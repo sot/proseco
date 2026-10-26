@@ -12,9 +12,9 @@ Use ``PYTHONPATH`` to choose the proseco version, e.g. from the proseco repo roo
 
   git fetch origin
   git worktree add --detach /tmp/proseco-master origin/master
-  env PYTHONPATH=/tmp/proseco-master python validation/pr-416/rerun_loads.py \\
+  env PYTHONPATH=/tmp/proseco-master python validate/pr-416/rerun_loads.py \\
       --out-dir runs/master $SKA/data/mpcrit1/mplogs/2026/*/oflsa/output/*_proseco.pkl.gz
-  env PYTHONPATH=$PWD python validation/pr-416/rerun_loads.py \\
+  env PYTHONPATH=$PWD python validate/pr-416/rerun_loads.py \\
       --out-dir runs/pr416 $SKA/data/mpcrit1/mplogs/2026/*/oflsa/output/*_proseco.pkl.gz
 """
 
