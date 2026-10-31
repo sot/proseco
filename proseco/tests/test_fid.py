@@ -232,7 +232,8 @@ def test_fid_spoiling_acq(dither_z, FIDS):
         stars.add_fake_star(
             yang=fid["yang"] + offset + dither_y,
             zang=fid["zang"] + offset + dither_z,
-            mag=7.0,
+            # Faint enough to not be a fid search spoiler
+            mag=7.5,
         )
 
     std_info = STD_INFO.copy()
@@ -301,7 +302,8 @@ def test_fid_spoiler_score(FIDS):
         stars.add_fake_star(
             yang=fid["yang"] + FID.spoiler_margin + dither_y + offset,
             zang=fid["zang"] + FID.spoiler_margin + dither_z + offset,
-            mag=7.0,
+            # Faint enough to not be a fid search spoiler
+            mag=8.0,
         )
 
     dither = (dither_y, dither_z)
@@ -310,6 +312,72 @@ def test_fid_spoiler_score(FIDS):
     std_info["dither"] = dither
     fids = get_fid_catalog(stars=stars, **std_info)
     assert np.all(fids.cand_fids["spoiler_score"] == [0, 4, 0, 0, 0, 0])
+
+
+def test_fid_spoiler_warn_labels(FIDS):
+    """Test that spoiler warn labels stay with the right star after sorting by mag.
+
+    Stars are added in reverse mag order (yellow then red) so that sorting by mag
+    reorders them.
+    """
+    fid = FIDS[0]
+    stars = StarsTable.empty()
+    # Yellow: 4 <= star_mag - fid_mag < 5
+    stars.add_fake_star(yang=fid["yang"] + 10, zang=fid["zang"] + 10, mag=11.5)
+    # Red: star_mag - fid_mag < 4
+    stars.add_fake_star(yang=fid["yang"] + 20, zang=fid["zang"] + 20, mag=8.0)
+
+    fids = get_fid_catalog(stars=stars, **STD_INFO)
+    spoilers = fids.cand_fids.get_id(fid["id"])["spoilers"]
+    assert spoilers["mag"].tolist() == [8.0, 11.5]
+    assert spoilers["warn"].tolist() == ["red", "yellow"]
+
+
+@pytest.mark.parametrize("axis", ["yang", "zang"])
+def test_fid_search_spoiler(FIDS, axis):
+    """Test fid search spoiler (bright star acquired instead of fid in fid search).
+
+    Based on obsid 33497 where a 6.94 mag star at dy=29, dz=-68 from fid 6 was
+    acquired instead of the fid.
+
+    The search margin uses the acq dither. The guide dither is set larger so that the
+    star just outside the margin would be a spoiler if guide dither were used.
+    """
+    dither_acq = (8, 16)
+    dither_guide = (20, 40)
+    dither = dict(zip(["yang", "zang"], dither_acq))
+    margin = FID.search_box_halfwidth + FID.search_maneuver_error + dither[axis]
+    mag_lim = FID.fid_mag + FID.search_spoiler_mag_margin
+    stars = StarsTable.empty()
+    # (dist offset from margin, mag): only the first is a search spoiler.
+    # - Inside margin and bright enough: spoiler
+    # - Inside margin but too faint
+    # - Outside margin and bright
+    for fid, (offset, mag) in zip(
+        FIDS, [(-1, mag_lim - 0.01), (-1, mag_lim + 0.01), (1, mag_lim - 0.01)]
+    ):
+        pos = {"yang": fid["yang"], "zang": fid["zang"]}
+        pos[axis] -= margin + offset
+        stars.add_fake_star(**pos, mag=mag)
+
+    std_info = STD_INFO.copy()
+    del std_info["dither"]
+    fids = get_fid_catalog(
+        stars=stars, dither_acq=dither_acq, dither_guide=dither_guide, **std_info
+    )
+    cand_fids = fids.cand_fids
+
+    scores = {fid["id"]: fid["spoiler_score"] for fid in cand_fids}
+    assert scores[FIDS["id"][0]] == 4
+    assert scores[FIDS["id"][1]] == 0
+    assert scores[FIDS["id"][2]] == 0
+    assert sum(scores.values()) == 4
+
+    spoilers = cand_fids.get_id(FIDS["id"][0])["spoilers"]
+    assert len(spoilers) == 1
+    assert spoilers["warn"][0] == "red"
+    # The fid set must not include the spoiled fid
+    assert FIDS["id"][0] not in fids["id"]
 
 
 def test_big_sim_offset():
