@@ -23,6 +23,7 @@ from ..acq import (
     get_image_props,
     get_imposter_stars,
     get_p_man_err,
+    split_labeled_regions,
 )
 from ..catalog import get_aca_catalog
 from ..core import ACABox, StarsTable
@@ -1375,3 +1376,65 @@ def test_acq_include_ids_all_halfws_full_catalog_with_spoiler():
     assert np.all(aca.acqs["id"] == ids)
     assert np.allclose(aca.acqs["mag"], mags)
     assert np.all(aca.acqs["halfw"] == halfws)
+
+
+img_input = np.array(
+    [
+        [4, 4, 0, 1, 1, 0],
+        [0, 0, 0, 1, 1, 0],
+        [1, 1, 1, 1, 1, 0],
+        [0, 2, 2, 3, 1, 0],
+        [0, 2, 2, 0, 1, 0],
+        [0, 0, 0, 0, 0, 0],
+    ]
+)
+
+test_split_labeled_regions_cases = [
+    {
+        "img_exp": [
+            [4, 4, 0, 1, 1, 0],
+            [0, 0, 0, 1, 1, 0],
+            [1, 1, 1, 1, 1, 0],
+            [0, 2, 2, 3, 1, 0],
+            [0, 2, 2, 0, 1, 0],
+            [0, 0, 0, 0, 0, 0],
+        ],
+        "max_size": 5,
+        "n_region": 4,
+    },
+    {
+        "img_exp": [
+            [6, 6, 0, 1, 2, 0],
+            [0, 0, 0, 1, 2, 0],
+            [1, 1, 1, 1, 2, 0],
+            [0, 4, 4, 5, 2, 0],
+            [0, 4, 4, 0, 3, 0],
+            [0, 0, 0, 0, 0, 0],
+        ],
+        "max_size": 4,
+        "n_region": 6,
+    },
+    {
+        "img_exp": [
+            [9, 9, 0, 1, 2, 0],
+            [0, 0, 0, 1, 2, 0],
+            [3, 3, 4, 4, 5, 0],
+            [0, 7, 7, 8, 5, 0],
+            [0, 7, 7, 0, 6, 0],
+            [0, 0, 0, 0, 0, 0],
+        ],
+        "max_size": 2,
+        "n_region": 9,
+    },
+]
+
+
+@pytest.mark.parametrize("test_case", test_split_labeled_regions_cases)
+def test_split_labeled_regions(test_case):
+    img_exp = test_case["img_exp"]
+    max_size = test_case["max_size"]
+    n_region = test_case["n_region"]
+
+    img_split, n_regions = split_labeled_regions(img_input, max_size=max_size)
+    assert n_regions == n_region
+    assert np.all(img_split == img_exp)
