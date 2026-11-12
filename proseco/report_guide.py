@@ -15,7 +15,7 @@ from jinja2 import Template
 from matplotlib import patches
 
 from .core import table_to_html
-from .guide import GUIDE, GuideTable, get_ax_range
+from .guide import GUIDE, GuideTable, get_imposter_search_box
 
 # Do reporting for at-most MAX_CAND candidates
 MAX_CAND = 50
@@ -298,10 +298,9 @@ def plot_imposters(guide, cand_guides, ax):
     Make the hot pixel imposters plot for a given `guide` candidate.
     """
     # Figure out pixel region for dithered-over-pixels plot
-    row_extent = np.ceil(4 + cand_guides.dither.row)
-    col_extent = np.ceil(4 + cand_guides.dither.col)
-    rminus, rplus = get_ax_range(guide["row"], row_extent)
-    cminus, cplus = get_ax_range(guide["col"], col_extent)
+    rminus, rplus, cminus, cplus = get_imposter_search_box(
+        guide["row"], guide["col"], cand_guides.dither
+    )
 
     # Pixel region of the guide
     img = ACAImage(
@@ -351,7 +350,7 @@ def plot_imposters(guide, cand_guides, ax):
     patch = patches.Rectangle((x, y), 8, 8, edgecolor="y", facecolor="none", lw=1)
     ax.add_patch(patch)
 
-    # Plot a box showing the 8x8 image boundaries
+    # Plot a box showing the region searched for imposters
     patch = patches.Rectangle(
         (rminus, cminus),
         rplus - rminus,
