@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Unit tests &#8212; proseco 5.19.0 documentation</title>
+    <title>Unit tests &#8212; proseco 5.20.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/bootstrap-astropy.css?v=f4f7060c" />
     
-    <script src="_static/documentation_options.js?v=4420fd61"></script>
+    <script src="_static/documentation_options.js?v=3af7ad5c"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script type="text/javascript" src="_static/sidebar.js"></script>
@@ -52,7 +52,7 @@
 	
       </li>
       <li>
-	<a href="index.html">proseco 5.19.0 documentation</a>
+	<a href="index.html">proseco 5.20.0 documentation</a>
 	 &#187;
       </li>
       
@@ -900,9 +900,27 @@ gives the expected response.  (Basically that it still returns a catalog).</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="proseco.tests.test_fid.test_fid_search_spoiler">
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_fid.</span></span><span class="sig-name descname"><span class="pre">test_fid_search_spoiler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">FIDS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_fid.html#test_fid_search_spoiler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_fid.test_fid_search_spoiler" title="Link to this definition">¶</a></dt>
+<dd><p>Test fid search spoiler (bright star acquired instead of fid in fid search).</p>
+<p>Based on obsid 33497 where a 6.94 mag star at dy=29, dz=-68 from fid 6 was
+acquired instead of the fid.</p>
+<p>The search margin uses the acq dither. The guide dither is set larger so that the
+star just outside the margin would be a spoiler if guide dither were used.</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="proseco.tests.test_fid.test_fid_spoiler_score">
 <span class="sig-prename descclassname"><span class="pre">proseco.tests.test_fid.</span></span><span class="sig-name descname"><span class="pre">test_fid_spoiler_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">FIDS</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_fid.html#test_fid_spoiler_score"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_fid.test_fid_spoiler_score" title="Link to this definition">¶</a></dt>
 <dd><p>Test computing the fid spoiler score.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="proseco.tests.test_fid.test_fid_spoiler_warn_labels">
+<span class="sig-prename descclassname"><span class="pre">proseco.tests.test_fid.</span></span><span class="sig-name descname"><span class="pre">test_fid_spoiler_warn_labels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">FIDS</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/proseco/tests/test_fid.html#test_fid_spoiler_warn_labels"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#proseco.tests.test_fid.test_fid_spoiler_warn_labels" title="Link to this definition">¶</a></dt>
+<dd><p>Test that spoiler warn labels stay with the right star after sorting by mag.</p>
+<p>Stars are added in reverse mag order (yellow then red) so that sorting by mag
+reorders them.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -1166,7 +1184,9 @@ different (not OK).</p>
 <li><a class="reference internal" href="#proseco.tests.test_fid.test_fid_catalog_t_ccd"><code class="docutils literal notranslate"><span class="pre">test_fid_catalog_t_ccd()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.tests.test_fid.test_fid_hot_pixel_reject"><code class="docutils literal notranslate"><span class="pre">test_fid_hot_pixel_reject()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.tests.test_fid.test_fid_mult_spoilers"><code class="docutils literal notranslate"><span class="pre">test_fid_mult_spoilers()</span></code></a></li>
+<li><a class="reference internal" href="#proseco.tests.test_fid.test_fid_search_spoiler"><code class="docutils literal notranslate"><span class="pre">test_fid_search_spoiler()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.tests.test_fid.test_fid_spoiler_score"><code class="docutils literal notranslate"><span class="pre">test_fid_spoiler_score()</span></code></a></li>
+<li><a class="reference internal" href="#proseco.tests.test_fid.test_fid_spoiler_warn_labels"><code class="docutils literal notranslate"><span class="pre">test_fid_spoiler_warn_labels()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.tests.test_fid.test_fid_spoiling_acq"><code class="docutils literal notranslate"><span class="pre">test_fid_spoiling_acq()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.tests.test_fid.test_fids_include_bad"><code class="docutils literal notranslate"><span class="pre">test_fids_include_bad()</span></code></a></li>
 <li><a class="reference internal" href="#proseco.tests.test_fid.test_fids_include_exclude"><code class="docutils literal notranslate"><span class="pre">test_fids_include_exclude()</span></code></a></li>

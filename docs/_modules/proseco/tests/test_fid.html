@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>proseco.tests.test_fid &#8212; proseco 5.19.0 documentation</title>
+    <title>proseco.tests.test_fid &#8212; proseco 5.20.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../../_static/bootstrap-astropy.css?v=f4f7060c" />
     
-    <script src="../../../_static/documentation_options.js?v=4420fd61"></script>
+    <script src="../../../_static/documentation_options.js?v=3af7ad5c"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script type="text/javascript" src="../../../_static/sidebar.js"></script>
@@ -44,7 +44,7 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../../index.html">proseco 5.19.0 documentation</a>
+	<a href="../../../index.html">proseco 5.20.0 documentation</a>
 	 &#187;
       </li>
       <li><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
@@ -308,7 +308,8 @@
         <span class="n">stars</span><span class="o">.</span><span class="n">add_fake_star</span><span class="p">(</span>
             <span class="n">yang</span><span class="o">=</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;yang&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">offset</span> <span class="o">+</span> <span class="n">dither_y</span><span class="p">,</span>
             <span class="n">zang</span><span class="o">=</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;zang&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">offset</span> <span class="o">+</span> <span class="n">dither_z</span><span class="p">,</span>
-            <span class="n">mag</span><span class="o">=</span><span class="mf">7.0</span><span class="p">,</span>
+            <span class="c1"># Faint enough to not be a fid search spoiler</span>
+            <span class="n">mag</span><span class="o">=</span><span class="mf">7.5</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="n">std_info</span> <span class="o">=</span> <span class="n">STD_INFO</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
@@ -386,7 +387,8 @@
         <span class="n">stars</span><span class="o">.</span><span class="n">add_fake_star</span><span class="p">(</span>
             <span class="n">yang</span><span class="o">=</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;yang&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">FID</span><span class="o">.</span><span class="n">spoiler_margin</span> <span class="o">+</span> <span class="n">dither_y</span> <span class="o">+</span> <span class="n">offset</span><span class="p">,</span>
             <span class="n">zang</span><span class="o">=</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;zang&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">FID</span><span class="o">.</span><span class="n">spoiler_margin</span> <span class="o">+</span> <span class="n">dither_z</span> <span class="o">+</span> <span class="n">offset</span><span class="p">,</span>
-            <span class="n">mag</span><span class="o">=</span><span class="mf">7.0</span><span class="p">,</span>
+            <span class="c1"># Faint enough to not be a fid search spoiler</span>
+            <span class="n">mag</span><span class="o">=</span><span class="mf">8.0</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="n">dither</span> <span class="o">=</span> <span class="p">(</span><span class="n">dither_y</span><span class="p">,</span> <span class="n">dither_z</span><span class="p">)</span>
@@ -395,6 +397,78 @@
     <span class="n">std_info</span><span class="p">[</span><span class="s2">&quot;dither&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dither</span>
     <span class="n">fids</span> <span class="o">=</span> <span class="n">get_fid_catalog</span><span class="p">(</span><span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span> <span class="o">**</span><span class="n">std_info</span><span class="p">)</span>
     <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">fids</span><span class="o">.</span><span class="n">cand_fids</span><span class="p">[</span><span class="s2">&quot;spoiler_score&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span></div>
+
+
+
+<div class="viewcode-block" id="test_fid_spoiler_warn_labels">
+<a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_fid.test_fid_spoiler_warn_labels">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_fid_spoiler_warn_labels</span><span class="p">(</span><span class="n">FIDS</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test that spoiler warn labels stay with the right star after sorting by mag.</span>
+
+<span class="sd">    Stars are added in reverse mag order (yellow then red) so that sorting by mag</span>
+<span class="sd">    reorders them.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">fid</span> <span class="o">=</span> <span class="n">FIDS</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">stars</span> <span class="o">=</span> <span class="n">StarsTable</span><span class="o">.</span><span class="n">empty</span><span class="p">()</span>
+    <span class="c1"># Yellow: 4 &lt;= star_mag - fid_mag &lt; 5</span>
+    <span class="n">stars</span><span class="o">.</span><span class="n">add_fake_star</span><span class="p">(</span><span class="n">yang</span><span class="o">=</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;yang&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="mi">10</span><span class="p">,</span> <span class="n">zang</span><span class="o">=</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;zang&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="mi">10</span><span class="p">,</span> <span class="n">mag</span><span class="o">=</span><span class="mf">11.5</span><span class="p">)</span>
+    <span class="c1"># Red: star_mag - fid_mag &lt; 4</span>
+    <span class="n">stars</span><span class="o">.</span><span class="n">add_fake_star</span><span class="p">(</span><span class="n">yang</span><span class="o">=</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;yang&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="mi">20</span><span class="p">,</span> <span class="n">zang</span><span class="o">=</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;zang&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="mi">20</span><span class="p">,</span> <span class="n">mag</span><span class="o">=</span><span class="mf">8.0</span><span class="p">)</span>
+
+    <span class="n">fids</span> <span class="o">=</span> <span class="n">get_fid_catalog</span><span class="p">(</span><span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span> <span class="o">**</span><span class="n">STD_INFO</span><span class="p">)</span>
+    <span class="n">spoilers</span> <span class="o">=</span> <span class="n">fids</span><span class="o">.</span><span class="n">cand_fids</span><span class="o">.</span><span class="n">get_id</span><span class="p">(</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">])[</span><span class="s2">&quot;spoilers&quot;</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="n">spoilers</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="o">==</span> <span class="p">[</span><span class="mf">8.0</span><span class="p">,</span> <span class="mf">11.5</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="n">spoilers</span><span class="p">[</span><span class="s2">&quot;warn&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="o">==</span> <span class="p">[</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="s2">&quot;yellow&quot;</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="test_fid_search_spoiler">
+<a class="viewcode-back" href="../../../unit_tests.html#proseco.tests.test_fid.test_fid_search_spoiler">[docs]</a>
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span><span class="s2">&quot;axis&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;yang&quot;</span><span class="p">,</span> <span class="s2">&quot;zang&quot;</span><span class="p">])</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_fid_search_spoiler</span><span class="p">(</span><span class="n">FIDS</span><span class="p">,</span> <span class="n">axis</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test fid search spoiler (bright star acquired instead of fid in fid search).</span>
+
+<span class="sd">    Based on obsid 33497 where a 6.94 mag star at dy=29, dz=-68 from fid 6 was</span>
+<span class="sd">    acquired instead of the fid.</span>
+
+<span class="sd">    The search margin uses the acq dither. The guide dither is set larger so that the</span>
+<span class="sd">    star just outside the margin would be a spoiler if guide dither were used.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">dither_acq</span> <span class="o">=</span> <span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
+    <span class="n">dither_guide</span> <span class="o">=</span> <span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">40</span><span class="p">)</span>
+    <span class="n">dither</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">([</span><span class="s2">&quot;yang&quot;</span><span class="p">,</span> <span class="s2">&quot;zang&quot;</span><span class="p">],</span> <span class="n">dither_acq</span><span class="p">))</span>
+    <span class="n">margin</span> <span class="o">=</span> <span class="n">FID</span><span class="o">.</span><span class="n">search_box_halfwidth</span> <span class="o">+</span> <span class="n">FID</span><span class="o">.</span><span class="n">search_maneuver_error</span> <span class="o">+</span> <span class="n">dither</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span>
+    <span class="n">mag_lim</span> <span class="o">=</span> <span class="n">FID</span><span class="o">.</span><span class="n">fid_mag</span> <span class="o">+</span> <span class="n">FID</span><span class="o">.</span><span class="n">search_spoiler_mag_margin</span>
+    <span class="n">stars</span> <span class="o">=</span> <span class="n">StarsTable</span><span class="o">.</span><span class="n">empty</span><span class="p">()</span>
+    <span class="c1"># (dist offset from margin, mag): only the first is a search spoiler.</span>
+    <span class="c1"># - Inside margin and bright enough: spoiler</span>
+    <span class="c1"># - Inside margin but too faint</span>
+    <span class="c1"># - Outside margin and bright</span>
+    <span class="k">for</span> <span class="n">fid</span><span class="p">,</span> <span class="p">(</span><span class="n">offset</span><span class="p">,</span> <span class="n">mag</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+        <span class="n">FIDS</span><span class="p">,</span> <span class="p">[(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">mag_lim</span> <span class="o">-</span> <span class="mf">0.01</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">mag_lim</span> <span class="o">+</span> <span class="mf">0.01</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">mag_lim</span> <span class="o">-</span> <span class="mf">0.01</span><span class="p">)]</span>
+    <span class="p">):</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;yang&quot;</span><span class="p">:</span> <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;yang&quot;</span><span class="p">],</span> <span class="s2">&quot;zang&quot;</span><span class="p">:</span> <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;zang&quot;</span><span class="p">]}</span>
+        <span class="n">pos</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">-=</span> <span class="n">margin</span> <span class="o">+</span> <span class="n">offset</span>
+        <span class="n">stars</span><span class="o">.</span><span class="n">add_fake_star</span><span class="p">(</span><span class="o">**</span><span class="n">pos</span><span class="p">,</span> <span class="n">mag</span><span class="o">=</span><span class="n">mag</span><span class="p">)</span>
+
+    <span class="n">std_info</span> <span class="o">=</span> <span class="n">STD_INFO</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">del</span> <span class="n">std_info</span><span class="p">[</span><span class="s2">&quot;dither&quot;</span><span class="p">]</span>
+    <span class="n">fids</span> <span class="o">=</span> <span class="n">get_fid_catalog</span><span class="p">(</span>
+        <span class="n">stars</span><span class="o">=</span><span class="n">stars</span><span class="p">,</span> <span class="n">dither_acq</span><span class="o">=</span><span class="n">dither_acq</span><span class="p">,</span> <span class="n">dither_guide</span><span class="o">=</span><span class="n">dither_guide</span><span class="p">,</span> <span class="o">**</span><span class="n">std_info</span>
+    <span class="p">)</span>
+    <span class="n">cand_fids</span> <span class="o">=</span> <span class="n">fids</span><span class="o">.</span><span class="n">cand_fids</span>
+
+    <span class="n">scores</span> <span class="o">=</span> <span class="p">{</span><span class="n">fid</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]:</span> <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;spoiler_score&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">fid</span> <span class="ow">in</span> <span class="n">cand_fids</span><span class="p">}</span>
+    <span class="k">assert</span> <span class="n">scores</span><span class="p">[</span><span class="n">FIDS</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">]]</span> <span class="o">==</span> <span class="mi">4</span>
+    <span class="k">assert</span> <span class="n">scores</span><span class="p">[</span><span class="n">FIDS</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">][</span><span class="mi">1</span><span class="p">]]</span> <span class="o">==</span> <span class="mi">0</span>
+    <span class="k">assert</span> <span class="n">scores</span><span class="p">[</span><span class="n">FIDS</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">][</span><span class="mi">2</span><span class="p">]]</span> <span class="o">==</span> <span class="mi">0</span>
+    <span class="k">assert</span> <span class="nb">sum</span><span class="p">(</span><span class="n">scores</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="o">==</span> <span class="mi">4</span>
+
+    <span class="n">spoilers</span> <span class="o">=</span> <span class="n">cand_fids</span><span class="o">.</span><span class="n">get_id</span><span class="p">(</span><span class="n">FIDS</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">])[</span><span class="s2">&quot;spoilers&quot;</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">spoilers</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
+    <span class="k">assert</span> <span class="n">spoilers</span><span class="p">[</span><span class="s2">&quot;warn&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;red&quot;</span>
+    <span class="c1"># The fid set must not include the spoiled fid</span>
+    <span class="k">assert</span> <span class="n">FIDS</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fids</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span></div>
 
 
 

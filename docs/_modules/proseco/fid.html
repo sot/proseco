@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>proseco.fid &#8212; proseco 5.19.0 documentation</title>
+    <title>proseco.fid &#8212; proseco 5.20.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/bootstrap-astropy.css?v=f4f7060c" />
     
-    <script src="../../_static/documentation_options.js?v=4420fd61"></script>
+    <script src="../../_static/documentation_options.js?v=3af7ad5c"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script type="text/javascript" src="../../_static/sidebar.js"></script>
@@ -44,7 +44,7 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../index.html">proseco 5.19.0 documentation</a>
+	<a href="../../index.html">proseco 5.20.0 documentation</a>
 	 &#187;
       </li>
       <li><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
@@ -568,6 +568,13 @@
 <span class="sd">        It also sets the &#39;spoiler_score&#39; based on:</span>
 <span class="sd">        - 1 for yellow spoiler (4 &lt;= star_mag - fid_mag &lt; 5)</span>
 <span class="sd">        - 4 for red spoiler (star_mag - fid_mag &lt; 4)</span>
+<span class="sd">        - 4 for red search spoiler (see below)</span>
+
+<span class="sd">        A search spoiler is a star that could be acquired and tracked instead of the</span>
+<span class="sd">        fid light during the fid search at the end of a maneuver. This is a star with</span>
+<span class="sd">        star_mag &lt; fid_mag + FID.search_spoiler_mag_margin (0.25) and offset from the</span>
+<span class="sd">        fid in each axis less than FID.search_box_halfwidth (40 arcsec, the on-board</span>
+<span class="sd">        value) + FID.search_maneuver_error (80 arcsec) + acq dither.</span>
 
 <span class="sd">        Additionally, if the fid is in the fid_trap region and there is a potential guide</span>
 <span class="sd">        candidate that would trigger the fid trap effect, the &#39;fid_trap_spoiler&#39; flag is set.</span>
@@ -593,26 +600,45 @@
                     <span class="n">level</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
                 <span class="p">)</span>
 
-        <span class="c1"># Potential spoiler by position</span>
-        <span class="n">spoil</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;yang&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;yang&quot;</span><span class="p">])</span> <span class="o">&lt;</span> <span class="n">FID</span><span class="o">.</span><span class="n">spoiler_margin</span> <span class="o">+</span> <span class="n">dither</span><span class="o">.</span><span class="n">y</span>
-        <span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;zang&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;zang&quot;</span><span class="p">])</span> <span class="o">&lt;</span> <span class="n">FID</span><span class="o">.</span><span class="n">spoiler_margin</span> <span class="o">+</span> <span class="n">dither</span><span class="o">.</span><span class="n">z</span><span class="p">)</span>
+        <span class="n">dy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;yang&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;yang&quot;</span><span class="p">])</span>
+        <span class="n">dz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;zang&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;zang&quot;</span><span class="p">])</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">spoil</span><span class="p">):</span>
+        <span class="c1"># Potential fid spoiler during tracking which is near nominal fid position</span>
+        <span class="n">spoil_track</span> <span class="o">=</span> <span class="p">(</span><span class="n">dy</span> <span class="o">&lt;</span> <span class="n">FID</span><span class="o">.</span><span class="n">spoiler_margin</span> <span class="o">+</span> <span class="n">dither</span><span class="o">.</span><span class="n">y</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span>
+            <span class="n">dz</span> <span class="o">&lt;</span> <span class="n">FID</span><span class="o">.</span><span class="n">spoiler_margin</span> <span class="o">+</span> <span class="n">dither</span><span class="o">.</span><span class="n">z</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Potential search spoiler: star bright enough and close enough to be</span>
+        <span class="c1"># acquired instead of the fid light in the fid search.</span>
+        <span class="n">search_margin</span> <span class="o">=</span> <span class="n">FID</span><span class="o">.</span><span class="n">search_box_halfwidth</span> <span class="o">+</span> <span class="n">FID</span><span class="o">.</span><span class="n">search_maneuver_error</span>
+        <span class="n">spoil_search</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">(</span><span class="n">dy</span> <span class="o">&lt;</span> <span class="n">search_margin</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dither_acq</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
+            <span class="o">&amp;</span> <span class="p">(</span><span class="n">dz</span> <span class="o">&lt;</span> <span class="n">search_margin</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dither_acq</span><span class="o">.</span><span class="n">z</span><span class="p">)</span>
+            <span class="o">&amp;</span> <span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">FID</span><span class="o">.</span><span class="n">search_spoiler_mag_margin</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">spoil_search</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Fid </span><span class="si">{</span><span class="n">fid</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> has search spoiler star(s) &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">stars</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">][</span><span class="n">spoil_search</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">level</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">ok</span> <span class="o">:=</span> <span class="p">(</span><span class="n">spoil_track</span> <span class="o">|</span> <span class="n">spoil_search</span><span class="p">)):</span>
             <span class="c1"># Make an empty table with same columns</span>
             <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;spoilers&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">stars</span> <span class="o">=</span> <span class="n">stars</span><span class="p">[</span><span class="n">spoil</span><span class="p">]</span>
+            <span class="c1"># Select stars that are spoiled in one of two ways. Filter spoil_search in</span>
+            <span class="c1"># the same way to align with the filtered stars.</span>
+            <span class="n">stars</span> <span class="o">=</span> <span class="n">stars</span><span class="p">[</span><span class="n">ok</span><span class="p">]</span>
+            <span class="n">spoil_search</span> <span class="o">=</span> <span class="n">spoil_search</span><span class="p">[</span><span class="n">ok</span><span class="p">]</span>
 
-            <span class="c1"># Now check mags</span>
-            <span class="n">red</span> <span class="o">=</span> <span class="n">stars</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">4.0</span>
-            <span class="n">yellow</span> <span class="o">=</span> <span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mf">4.0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span>
-                <span class="n">stars</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">5.0</span>
-            <span class="p">)</span>
+            <span class="c1"># Now set red and yellow based on either mag or search spoiler</span>
+            <span class="n">red</span> <span class="o">=</span> <span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">4.0</span><span class="p">)</span> <span class="o">|</span> <span class="n">spoil_search</span>
+            <span class="n">yellow</span> <span class="o">=</span> <span class="o">~</span><span class="n">red</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">stars</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">5.0</span><span class="p">)</span>
 
             <span class="n">spoilers</span> <span class="o">=</span> <span class="n">stars</span><span class="p">[</span><span class="n">red</span> <span class="o">|</span> <span class="n">yellow</span><span class="p">]</span>
-            <span class="n">spoilers</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="s2">&quot;mag&quot;</span><span class="p">)</span>
             <span class="n">spoilers</span><span class="p">[</span><span class="s2">&quot;warn&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">red</span><span class="p">[</span><span class="n">red</span> <span class="o">|</span> <span class="n">yellow</span><span class="p">],</span> <span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="s2">&quot;yellow&quot;</span><span class="p">)</span>
+            <span class="n">spoilers</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="s2">&quot;mag&quot;</span><span class="p">)</span>
             <span class="n">fid</span><span class="p">[</span><span class="s2">&quot;spoilers&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">spoilers</span>
 
             <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">red</span><span class="p">):</span>
