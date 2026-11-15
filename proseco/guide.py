@@ -1490,6 +1490,26 @@ def get_ax_range(rc, extent):
     return minus, plus
 
 
+def get_imposter_search_box(row, col, dither):
+    """
+    Get the pixel region searched for hot pixel imposters around a candidate star.
+
+    The region is half the 8x8 image plus ``GUIDE.dither_pix_pad`` plus dither on each
+    side of the star, expanded by ``get_ax_range`` to an even number of pixels.
+
+    :param row: candidate star row (float, edge pixel coords)
+    :param col: candidate star col (float, edge pixel coords)
+    :param dither: dither ACABox
+    :returns: tuple (rminus, rplus, cminus, cplus) of region edges.  The pixels in the
+              region are rows rminus to rplus - 1 and cols cminus to cplus - 1.
+    """
+    row_extent = 4 + GUIDE.dither_pix_pad + dither.row
+    col_extent = 4 + GUIDE.dither_pix_pad + dither.col
+    rminus, rplus = get_ax_range(row, row_extent)
+    cminus, cplus = get_ax_range(col, col_extent)
+    return rminus, rplus, cminus, cplus
+
+
 def get_imposter_mags(cand_stars, dark, dither):
     """
     Get "pseudo-mag" of max pixel value in each candidate star region
@@ -1504,12 +1524,10 @@ def get_imposter_mags(cand_stars, dark, dither):
     pix_r = []
     pix_c = []
 
-    # Define the 1/2 pixel region as half the 8x8 plus a pad plus dither
-    row_extent = 4 + GUIDE.dither_pix_pad + dither.row
-    col_extent = 4 + GUIDE.dither_pix_pad + dither.col
     for cand in cand_stars:
-        rminus, rplus = get_ax_range(cand["row"], row_extent)
-        cminus, cplus = get_ax_range(cand["col"], col_extent)
+        rminus, rplus, cminus, cplus = get_imposter_search_box(
+            cand["row"], cand["col"], dither
+        )
         pix = np.array(dark[rminus + 512 : rplus + 512, cminus + 512 : cplus + 512])
         pixmax = 0
         max_r = None

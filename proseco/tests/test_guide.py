@@ -3,6 +3,8 @@
 import itertools
 from pathlib import Path
 
+import matplotlib
+import matplotlib.pyplot as plt
 import mica.starcheck
 import numpy as np
 import pytest
@@ -13,7 +15,7 @@ from Quaternion import Quat
 
 from ..characteristics import CCD, MonCoord, MonFunc
 from ..characteristics_guide import mag_spoiler
-from ..core import StarsTable
+from ..core import ACABox, StarsTable
 from ..fid import get_fid_catalog
 from ..guide import (
     GUIDE,
@@ -25,12 +27,13 @@ from ..guide import (
     get_ax_range,
     get_guide_candidates,
     get_guide_catalog,
+    get_imposter_search_box,
     get_pixmag_for_offset,
     get_t_ccds_bonus,
     run_cluster_checks,
 )
 from ..monitor import get_mon_catalog
-from ..report_guide import make_report
+from ..report_guide import make_report, plot_imposters
 from .test_common import DARK40, OBS_INFO, STD_INFO, mod_std_info
 
 HAS_SC_ARCHIVE = Path(mica.starcheck.starcheck.FILES["data_root"]).exists()
@@ -951,6 +954,45 @@ def test_get_ax_range():
         # Confirm the range does not contain more than 2 pix extra on either side
         assert n + extent + 2 > plus
         assert n - extent - 2 < minus
+
+
+def test_get_imposter_search_box():
+    """
+    Imposter search box for two rows on either side of the get_ax_range parity boundary.
+    These are the proseco and commanded rows of a guide star in obsid 32816 (NOV1626A).
+    """
+    dither = ACABox(15.9984)
+    col = 451.512
+    assert get_imposter_search_box(-471.382, col, dither) == (-479, -463, 443, 461)
+    assert get_imposter_search_box(-471.415, col, dither) == (-480, -462, 443, 461)
+
+
+def test_plot_imposters_matches_search_box():
+    """
+    The search region drawn in the guide report is the region used to compute imp_mag.
+    """
+    star_id = 1001
+    stars = StarsTable.empty()
+    stars.add_fake_constellation(n_stars=5, mag=8)
+    stars.add_fake_star(id=star_id, row=-471.382, col=451.512, mag=8)
+    dither = 15.9984
+    guides = get_guide_catalog(**mod_std_info(n_fid=0, dither=dither), stars=stars)
+
+    cand_guides = guides.cand_guides.copy()
+    cand_guides["forced"] = False
+    guide = cand_guides.get_id(star_id)
+
+    fig, ax = plt.subplots()
+    plot_imposters(guide, guides, ax)
+    green = matplotlib.colors.to_rgba("g")
+    (search_box,) = [patch for patch in ax.patches if patch.get_edgecolor() == green]
+    rminus, cminus, rplus, cplus = search_box.get_bbox().extents
+    plt.close(fig)
+
+    assert (rminus, rplus, cminus, cplus) == get_imposter_search_box(
+        guide["row"], guide["col"], ACABox(dither)
+    )
+    assert (rminus, rplus) == (-479, -463)
 
 
 def test_filter_candidates_for_fids():
