@@ -23,15 +23,16 @@ def time_get_aca_catalog(n_samples=100):
     ras = np.random.uniform(0, 360, size=n_samples)
     decs = np.random.uniform(-90, 90, size=n_samples)
     rolls = np.random.uniform(0, 360, size=n_samples)
+    duration = 10000
 
     # Get rid of initial imports or one-time startup stuff (e.g. in AGASC)
-    get_aca_catalog(**mod_std_info())
+    get_aca_catalog(**mod_std_info(duration=duration))
 
     t0 = time.time()
     for ra, dec, roll in zip(ras, decs, rolls):
         print(".", end="")
         sys.stdout.flush()
-        get_aca_catalog(**mod_std_info(att=(ra, dec, roll)))
+        get_aca_catalog(**mod_std_info(att=(ra, dec, roll), duration=duration))
 
     t1 = time.time()
     print()
