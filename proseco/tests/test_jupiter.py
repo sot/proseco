@@ -458,3 +458,18 @@ def test_add_jupiter_as_spoilers_no_jupiter():
         "2025:220:12:00:00", stars, JupiterPositionTable.empty()
     )
     assert out is stars
+
+
+def test_add_jupiter_as_spoilers_late_entry():
+    """
+    Jupiter first on the CCD more than 2 ks after acquisition adds no acq spoilers.
+
+    This used to raise a TypeError because the acquisition position is (None, None).
+    """
+    date = "2025:220:12:00:00"
+    stars = StarsTable.empty()
+    late_jupiter = JupiterPositionTable(
+        {"time": [CxoTime(date).secs + 2500], "row": [100], "col": [100]}
+    )
+    out = jupiter.add_jupiter_as_lots_of_acq_spoilers(date, stars, late_jupiter)
+    assert out is stars
