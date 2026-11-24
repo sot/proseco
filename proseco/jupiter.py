@@ -313,6 +313,11 @@ def add_jupiter_as_lots_of_acq_spoilers(
     # Jupiter acq position
     acq_pos = get_jupiter_acq_pos(date, jupiter=jupiter)
 
+    # Jupiter is not on the CCD near acquisition time (it drifts on later), so there
+    # is no acquisition keepout zone to enforce.
+    if acq_pos.col is None:
+        return stars
+
     out = stars.copy()
     idincr = 0
     for irow in np.arange(-505, 510, 5):
