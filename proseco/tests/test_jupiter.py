@@ -3,10 +3,10 @@ import pytest
 from astropy.table import Table
 from chandra_aca import planets, transform
 from cheta import fetch
-from cxotime import CxoTime
+from cxotime import CxoTime, CxoTimeLike
 from Quaternion import Quat
 
-from proseco import get_aca_catalog, jupiter
+from proseco import characteristics_jupiter, get_aca_catalog, jupiter
 from proseco.characteristics_jupiter import JupiterPositionTable
 from proseco.core import StarsTable
 from proseco.tests.test_common import DARK40, mod_std_info
@@ -506,3 +506,82 @@ def test_add_jupiter_as_spoilers_late_entry():
     )
     out = jupiter.add_jupiter_as_lots_of_acq_spoilers(date, stars, late_jupiter)
     assert out is stars
+
+
+def _jupiter_radec_from_earth(date: CxoTimeLike) -> tuple[float, float]:
+    """Earth-centred RA, Dec of Jupiter in degrees at ``date``."""
+    eci = planets.get_planet_eci("jupiter", CxoTime(date).secs)
+    ra, dec = transform.eci_to_radec(eci)
+    return float(ra), float(dec)
+
+
+@pytest.mark.parametrize(
+    "dec_offset_deg, expected",
+    [(0.0, True), (1.0, True), (1.2, True), (1.3, False), (5.0, False)],
+)
+def test_jupiter_may_be_on_ccd(dec_offset_deg, expected):
+    """
+    The quick check passes within the near-CCD radius of Jupiter and fails outside it.
+    """
+    date = "2025:093:12:26:04.000"
+    jupiter_ra, jupiter_dec = _jupiter_radec_from_earth(date)
+    att = Quat([jupiter_ra, jupiter_dec + dec_offset_deg, 0.0])
+    assert jupiter.jupiter_may_be_on_ccd(date, None, att) is expected
+
+
+def test_jupiter_may_be_on_ccd_uses_whole_observation():
+    """
+    Jupiter outside the radius at the start but inside it later still passes.
+    """
+    date = "2025:093:12:26:04.000"
+    duration = 2 * 86400
+    ra_start, dec_start = _jupiter_radec_from_earth(date)
+    ra_end, dec_end = _jupiter_radec_from_earth(CxoTime(date).secs + duration)
+
+    # Jupiter's motion over the observation in the local tangent plane (deg). It has
+    # to move far enough for the start and end to land on opposite sides of the radius.
+    cos_dec = np.cos(np.radians(dec_end))
+    motion = np.array([(ra_end - ra_start) * cos_dec, dec_end - dec_start])
+    motion_deg = np.hypot(*motion)
+    assert motion_deg > 0.15
+
+    # Point just inside the radius from Jupiter's end position, on the far side from
+    # its start position, so only the end of the observation is inside the radius.
+    offset = (characteristics_jupiter.near_ccd_radius_deg - 0.1) * motion / motion_deg
+    att = Quat([ra_end + offset[0] / cos_dec, dec_end + offset[1], 0.0])
+    assert not jupiter.jupiter_may_be_on_ccd(date, None, att)
+    assert jupiter.jupiter_may_be_on_ccd(date, duration, att)
+
+
+def test_jupiter_on_ccd_without_jupiter_in_target_name():
+    """
+    Jupiter on the CCD is avoided whatever the target name says.
+    """
+    aca = get_aca_catalog(
+        **mod_std_info(
+            date="2025:093:12:26:04.000",
+            att=Quat(q=[-0.43419701, -0.51408310, 0.33920339, 0.65736792]),
+            duration=25000,
+            detector="ACIS-S",
+            target_name="Europa",
+            raise_exc=True,
+        )
+    )
+    assert len(aca.jupiter) > 0
+    for jupiter_col in aca.jupiter["col"]:
+        assert np.all(np.abs(aca.guides["col"] - jupiter_col) > 15)
+
+
+def test_jupiter_in_target_name_far_from_jupiter(monkeypatch):
+    """
+    Far from Jupiter, the full position lookup is skipped even for a Jupiter target.
+    """
+
+    def fail_get_jupiter_position(*args, **kwargs):
+        raise AssertionError("get_jupiter_position should not be called")
+
+    monkeypatch.setattr(jupiter, "get_jupiter_position", fail_get_jupiter_position)
+    aca = get_aca_catalog(
+        **mod_std_info(target_name="Jupiter", duration=10000, raise_exc=True)
+    )
+    assert len(aca.jupiter) == 0

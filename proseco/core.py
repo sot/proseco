@@ -627,22 +627,31 @@ class ACACatalogTable(BaseCatalogTable):
 
     @property
     def jupiter(self) -> "JupiterPositionTable":
+        """
+        Jupiter positions on the CCD during the observation.
+
+        This is found from the pointing and date, not from the target name. It is
+        empty if Jupiter is not on the CCD, or if Jupiter is dim enough on this date
+        that no checks apply (see ``proseco.jupiter.date_is_excluded``).
+        """
         if hasattr(self, "_jupiter"):
             return self._jupiter
 
         from proseco.characteristics_jupiter import JupiterPositionTable
+        from proseco.jupiter import (
+            date_is_excluded,
+            get_jupiter_position,
+            jupiter_may_be_on_ccd,
+        )
 
-        if "jupiter" not in self.target_name.lower():
+        if (
+            self.date is None
+            or self.att is None
+            or date_is_excluded(self.date)
+            or not jupiter_may_be_on_ccd(self.date, self.duration, self.att)
+        ):
             self._jupiter = JupiterPositionTable.empty()
             return self._jupiter
-
-        from proseco.jupiter import date_is_excluded
-
-        if date_is_excluded(self.date):
-            self._jupiter = JupiterPositionTable.empty()
-            return self._jupiter
-
-        from proseco.jupiter import get_jupiter_position
 
         self._jupiter = get_jupiter_position(
             self.date, self.duration, self.att, t_aca=self.t_aca

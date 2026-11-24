@@ -15,6 +15,18 @@ class JupiterPositionTable(Table):
         return cls({"time": [], "row": [], "col": []})
 
 
+# Radius (deg) around the pointing used for the quick Earth-based check of whether
+# Jupiter could be on the ACA CCD. Only when Jupiter is inside this radius are the full
+# CCD positions computed. The radius needed is about 1.02 deg:
+# - 1.000 deg from the pointing to the corner of the CCD including the 10-pixel pad
+#   used in get_jupiter_position (0.981 deg without the pad).
+# - 0.012 deg (44 arcsec) for Earth-centred vs Chandra-centred Jupiter direction,
+#   the largest value in 2025-2026 sampled every 3 hours.
+# - up to 0.010 deg (35 arcsec) for Jupiter moving between the start, middle and end
+#   samples of a 200 ks observation (Jupiter moves at most 0.242 deg/day).
+# 1.25 deg leaves about 0.23 deg of extra margin.
+near_ccd_radius_deg = 1.25
+
 # Date range when jupiter vmag >= -2.0 (dim) and doesn't need to be checked.
 exclude_dates = [
     {"start": "2024:128:03:25:16.500", "stop": "2024:162:18:00:48.500"},

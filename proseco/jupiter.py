@@ -7,7 +7,7 @@ from chandra_aca import planets
 from chandra_aca.transform import eci_to_radec, radec_to_yagzag, yagzag_to_pixels
 from cheta.comps import ephem_stk
 from cxotime import CxoTime, CxoTimeLike
-from Quaternion import QuatLike
+from Quaternion import Quat, QuatLike
 
 import proseco.characteristics as ACA
 from proseco import characteristics_jupiter
@@ -42,6 +42,52 @@ def date_is_excluded(date: CxoTimeLike) -> bool:
         if exclude_date["start"] <= date_str <= exclude_date["stop"]:
             return True
     return False
+
+
+def jupiter_may_be_on_ccd(
+    date: CxoTimeLike,
+    duration: float | None,
+    att: QuatLike,
+) -> bool:
+    """
+    Quick check whether Jupiter could be on the ACA CCD during an observation.
+
+    This uses the Earth-centred direction to Jupiter at the start, middle and end of
+    the observation and checks whether any is within
+    ``characteristics_jupiter.near_ccd_radius_deg`` of the pointing. It is fast (no
+    Chandra ephemeris) and is meant to skip ``get_jupiter_position`` for the vast
+    majority of observations that are nowhere near Jupiter.
+
+    Parameters
+    ----------
+    date : CxoTimeLike
+        The start date of the observation (acquisition time).
+    duration : float or None
+        The duration of the observation in seconds. If None, only the start date is
+        checked.
+    att : Quaternion or Quat-compatible
+        The attitude Quaternion.
+
+    Returns
+    -------
+    bool
+        True if Jupiter is within the radius at any of the sampled times.
+
+    Examples
+    --------
+    >>> from proseco.jupiter import jupiter_may_be_on_ccd
+    >>> jupiter_may_be_on_ccd("2018:001", 10000, [0, 0, 0])
+    False
+    """
+    if duration is None:
+        duration = 0.0
+    att = Quat(att)
+    # Plain float seconds: astropy time arithmetic roughly doubles the cost here.
+    times = CxoTime(date).secs + np.array([0.0, 0.5, 1.0]) * duration
+    sep = planets.get_planet_angular_sep(
+        "jupiter", ra=att.ra, dec=att.dec, time=times, observer_position="earth"
+    )
+    return bool(np.any(sep < characteristics_jupiter.near_ccd_radius_deg))
 
 
 def get_jupiter_position(
