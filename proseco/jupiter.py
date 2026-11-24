@@ -46,7 +46,7 @@ def date_is_excluded(date: CxoTimeLike) -> bool:
 
 def get_jupiter_position(
     date: CxoTimeLike,
-    duration: float,
+    duration: float | None,
     att: QuatLike,
     t_aca: float = ACA.t_aca_default,
 ) -> JupiterPositionTable:
@@ -57,8 +57,9 @@ def get_jupiter_position(
     ----------
     date : CxoTimeLike
         The start date of the observation (acquisition time)
-    duration : float
-        The duration of the observation in seconds.
+    duration : float or None
+        The duration of the observation in seconds. If None, positions are
+        computed for the start date only.
     att : Quaternion or Quat-compatible
         The attitude Quaternion.
     t_aca : float, optional
@@ -71,12 +72,20 @@ def get_jupiter_position(
         A table with columns 'time', 'row', 'col' for the times when Jupiter
         is on the CCD. If Jupiter is never on the CCD this is a table with zero rows.
     """
+    if duration is None:
+        duration = 0.0
     date0 = CxoTime(date)
     # dates is a 1-d array with a minimum of 2 points (the end points)
     dates = CxoTime.linspace(date0, date0 + duration * u.s, step_max=1000 * u.s)
     times = dates.secs
 
-    chandra_ephem = ephem_stk.get_ephemeris_stk(start=dates[0], stop=dates[-1])
+    # The STK ephemeris is sampled every 300 s and only samples within [start, stop]
+    # are returned. Pad the window so a short (or zero) duration still gets samples
+    # on both sides of every time to interpolate between.
+    ephem_pad = 600 * u.s
+    chandra_ephem = ephem_stk.get_ephemeris_stk(
+        start=dates[0] - ephem_pad, stop=dates[-1] + ephem_pad
+    )
 
     # Get Jupiter positions using chandra_aca.planets
     ephem = {
