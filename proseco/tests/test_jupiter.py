@@ -402,6 +402,39 @@ def test_get_jupiter_position_returns_table():
     assert np.all((out["time"] >= start_sec) & (out["time"] <= start_sec + duration))
 
 
+def test_get_jupiter_position_no_duration():
+    """
+    With no duration, Jupiter positions are for the start time only.
+
+    This used to raise a TypeError from ``None * u.s``.
+    """
+    date = "2025:093:12:26:04.000"
+    att = Quat(q=[-0.43419701, -0.51408310, 0.33920339, 0.65736792])
+    out = jupiter.get_jupiter_position(date, None, att)
+
+    assert len(out) > 0
+    assert np.all(out["time"] == CxoTime(date).secs)
+
+
+def test_jupiter_catalog_no_duration():
+    """
+    A Jupiter target with no duration gives a catalog that avoids Jupiter at the start.
+    """
+    aca = get_aca_catalog(
+        **mod_std_info(
+            date="2025:093:12:26:04.000",
+            att=Quat(q=[-0.43419701, -0.51408310, 0.33920339, 0.65736792]),
+            detector="ACIS-S",
+            target_name="Jupiter",
+            raise_exc=True,
+        )
+    )
+    assert aca.duration is None
+    assert len(aca.jupiter) > 0
+    for jupiter_col in aca.jupiter["col"]:
+        assert np.all(np.abs(aca.guides["col"] - jupiter_col) > 15)
+
+
 def test_jupiter_distribution_check_1():
     # Simulate jupiter_data crosses 0
     jupiter_data = JupiterPositionTable({"row": [-10, 20]})
